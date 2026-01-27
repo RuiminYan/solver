@@ -70,7 +70,7 @@ void PruneTableManager::generateCrossPrune() {
 }
 
 void PruneTableManager::generateCrossC4Prune() {
-    if (loadTable(cross_c4_prune, "prune_table_cross_c4.bin")) {
+    if (loadTable(cross_c4_prune, "prune_table_cross_C4.bin")) {
         std::cout << "[PruneTable] Loaded cross+c4 prune table from file." << std::endl;
         return;
     }
@@ -84,11 +84,11 @@ void PruneTableManager::generateCrossC4Prune() {
     cross_c4_prune.resize((long long)24*22*20*18 * 24, 255);
     create_prune_table_cross_c4(IDX_MULTI_BASE, IDX_C4, 24*22*20*18, 24, 10, 
                                 mtm.getCrossTable(), mtm.getCornerTable(), cross_c4_prune);
-    saveTable(cross_c4_prune, "prune_table_cross_c4.bin");
+    saveTable(cross_c4_prune, "prune_table_cross_C4.bin");
 }
 
 void PruneTableManager::generatePairC4E0Prune() {
-    if (loadTable(pair_c4_e0_prune, "prune_table_pair_c4_e0.bin")) {
+    if (loadTable(pair_c4_e0_prune, "prune_table_pair_C4_E0.bin")) {
         std::cout << "[PruneTable] Loaded pair c4+e0 prune table from file." << std::endl;
         return;
     }
@@ -102,11 +102,11 @@ void PruneTableManager::generatePairC4E0Prune() {
     pair_c4_e0_prune.resize(24*24, 255);
     create_prune_table_pair_base(IDX_E0, IDX_C4, 24, 24, 8, 
                                 mtm.getEdgeTable(), mtm.getCornerTable(), pair_c4_e0_prune);
-    saveTable(pair_c4_e0_prune, "prune_table_pair_c4_e0.bin");
+    saveTable(pair_c4_e0_prune, "prune_table_pair_C4_E0.bin");
 }
 
 void PruneTableManager::generateXCrossC4E0Prune() {
-    if (loadTable(xcross_c4_e0_prune, "prune_table_xcross_c4_e0.bin")) {
+    if (loadTable(xcross_c4_e0_prune, "prune_table_xcross_C4_E0.bin")) {
         std::cout << "[PruneTable] Loaded xcross c4+e0 prune table from file." << std::endl;
         return;
     }
@@ -122,7 +122,7 @@ void PruneTableManager::generateXCrossC4E0Prune() {
     xcross_c4_e0_prune.resize(c_sz, 0xFF);
     create_prune_table_xcross_full(IDX_MULTI_BASE, IDX_C4, IDX_E0, 24*22*20*18, 24, 24, 11, 
                                   mtm.getCrossTable(), mtm.getCornerTable(), mtm.getEdgeTable(), xcross_c4_e0_prune);
-    saveTable(xcross_c4_e0_prune, "prune_table_xcross_c4_e0.bin");
+    saveTable(xcross_c4_e0_prune, "prune_table_xcross_C4_E0.bin");
 }
 
 void PruneTableManager::generateHugeNeighborPrune() {
