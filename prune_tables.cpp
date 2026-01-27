@@ -126,7 +126,7 @@ void PruneTableManager::generateXCrossC4E0Prune() {
 }
 
 void PruneTableManager::generateHugeNeighborPrune() {
-    if (loadTable(huge_neighbor_prune, "prune_table_huge_neighbor.bin")) {
+    if (loadTable(huge_neighbor_prune, "prune_table_cross_C4_E0_C5_E1.bin")) {
         std::cout << "[PruneTable] Loaded huge neighbor prune table from file." << std::endl;
         return;
     }
@@ -136,7 +136,7 @@ void PruneTableManager::generateHugeNeighborPrune() {
     
     create_prune_table_huge(42577920, 504, 15, {0, 2, 16, 18, 20, 22}, {12, 15}, 
                            mtm.getEdge6Table(), mtm.getCorner2Table(), huge_neighbor_prune);
-    saveTable(huge_neighbor_prune, "prune_table_huge_neighbor.bin");
+    saveTable(huge_neighbor_prune, "prune_table_cross_C4_E0_C5_E1.bin");
 }
 
 void PruneTableManager::generateHugeDiagonalPrune() {
@@ -145,7 +145,7 @@ void PruneTableManager::generateHugeDiagonalPrune() {
         return;
     }
     
-    if (loadTable(huge_diagonal_prune, "prune_table_huge_diagonal.bin")) {
+    if (loadTable(huge_diagonal_prune, "prune_table_cross_C4_E0_C6_E2.bin")) {
         std::cout << "[PruneTable] Loaded huge diagonal prune table from file." << std::endl;
         return;
     }
@@ -155,7 +155,7 @@ void PruneTableManager::generateHugeDiagonalPrune() {
     
     create_prune_table_huge(42577920, 504, 15, {0, 4, 16, 18, 20, 22}, {12, 18}, 
                            mtm.getEdge6Table(), mtm.getCorner2Table(), huge_diagonal_prune);
-    saveTable(huge_diagonal_prune, "prune_table_huge_diagonal.bin");
+    saveTable(huge_diagonal_prune, "prune_table_cross_C4_E0_C6_E2.bin");
 }
 
 // 1. Cross + C4 (Base)
