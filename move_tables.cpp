@@ -81,7 +81,7 @@ void MoveTableManager::generateEdges2Table() {
 }
 
 void MoveTableManager::generateEdge6Table() {
-    if (loadTable(edge6_table, "move_table_edge6.bin")) {
+    if (loadTable(edge6_table, "move_table_edges_6.bin")) {
         std::cout << "[MoveTable] Loaded edge6 table from file." << std::endl;
         return;
     }
@@ -89,11 +89,11 @@ void MoveTableManager::generateEdge6Table() {
     std::cout << "[MoveTable] Generating edge6 table..." << std::endl;
     // 6个棱块的组合 (用于巨型剪枝表)
     edge6_table = create_multi_move_table(6, 2, 12, 42577920, edge_table);
-    saveTable(edge6_table, "move_table_edge6.bin");
+    saveTable(edge6_table, "move_table_edges_6.bin");
 }
 
 void MoveTableManager::generateCorner2Table() {
-    if (loadTable(corner2_table, "move_table_corner2.bin")) {
+    if (loadTable(corner2_table, "move_table_corners_2.bin")) {
         std::cout << "[MoveTable] Loaded corner2 table from file." << std::endl;
         return;
     }
@@ -101,7 +101,7 @@ void MoveTableManager::generateCorner2Table() {
     std::cout << "[MoveTable] Generating corner2 table..." << std::endl;
     // 2个角块的组合 (504 states)
     corner2_table = create_multi_move_table(2, 3, 8, 504, corner_table);
-    saveTable(corner2_table, "move_table_corner2.bin");
+    saveTable(corner2_table, "move_table_corners_2.bin");
 }
 
 // --- 基础移动表生成函数 ---

@@ -16,9 +16,6 @@
 - **`pair_analyzer.cpp`** - 重构后的Pair分析器
 - **`std_analyzer.cpp`** - 重构后的标准分析器
 
-### 构建文件
-- **`Makefile`** - 编译配置
-
 ## 主要改进
 
 ### 1. 代码复用
