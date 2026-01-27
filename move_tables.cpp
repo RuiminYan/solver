@@ -3,7 +3,6 @@
  */
 
 #include "move_tables.h"
-#include "prune_tables.h"
 
 MoveTableManager* MoveTableManager::instance = nullptr;
 

@@ -63,4 +63,56 @@ void index_to_array(std::vector<int> &p, int index, int n, int c, int pn);
 std::vector<int> create_multi_move_table(int n, int c, int pn, int size, const std::vector<int> &basic_t);
 std::vector<int> create_multi_move_table2(int n, int c, int pn, int size, const std::vector<int> &basic_t);
 
+// --- 文件读写辅助 (Template Implementation) ---
+// 移动到此处，使所有模块均可使用，消除模块间不必要的依赖
+
+template <typename T>
+bool load_vector_chunked(std::vector<T>& vec, const std::string& filename) {
+    std::ifstream in(filename, std::ios::binary); 
+    if (!in) return false;
+    in.seekg(0, std::ios::end); size_t file_size = in.tellg(); in.seekg(0, std::ios::beg);
+    size_t size; in.read(reinterpret_cast<char*>(&size), sizeof(size));
+    if (!in) return false;
+    size_t expected = size * sizeof(T); 
+    if (file_size != expected + sizeof(size_t)) return false;
+    try { vec.resize(size); } catch(...) { return false; }
+    char* ptr = reinterpret_cast<char*>(vec.data()); size_t remain = expected;
+    while(remain > 0) { 
+        size_t to_read = std::min(remain, (size_t)64*1024*1024); // 64MB chunks
+        in.read(ptr, to_read); 
+        if(!in) return false; 
+        ptr += to_read; remain -= to_read; 
+    }
+    return true;
+}
+
+template <typename T>
+bool load_vector(std::vector<T>& vec, const std::string& filename) {
+    return load_vector_chunked(vec, filename);
+}
+
+template <typename T>
+bool save_vector(const std::vector<T>& vec, const std::string& filename) {
+    std::ofstream out(filename, std::ios::binary);
+    size_t size = vec.size();
+    out.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    out.write(reinterpret_cast<const char*>(vec.data()), size * sizeof(T));
+    return out.good();
+}
+
+template <typename T>
+bool save_vector_chunked(const std::vector<T>& vec, const std::string& filename) {
+    std::ofstream out(filename, std::ios::binary); 
+    size_t size = vec.size();
+    out.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    const char* ptr = reinterpret_cast<const char*>(vec.data()); 
+    size_t remain = size * sizeof(T);
+    while(remain > 0) { 
+        size_t to_write = std::min(remain, (size_t)64*1024*1024); 
+        out.write(ptr, to_write); 
+        ptr += to_write; remain -= to_write; 
+    }
+    return out.good();
+}
+
 #endif // CUBE_COMMON_H
