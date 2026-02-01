@@ -28,7 +28,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Linking pair analyzer...
-g++ -fopenmp -o pair_analyzer.exe cube_common.o move_tables.o prune_tables.o pair_analyzer.o
+g++ -fopenmp -o pair_analyzer.exe cube_common.o move_tables.o prune_tables.o pair_analyzer.o -lpsapi
 if %errorlevel% neq 0 (
     echo Error linking pair analyzer
     exit /b 1
@@ -42,9 +42,58 @@ if %errorlevel% neq 0 (
 )
 
 echo Linking std analyzer...
-g++ -fopenmp -o std_analyzer.exe cube_common.o move_tables.o prune_tables.o std_analyzer.o
+g++ -fopenmp -o std_analyzer.exe cube_common.o move_tables.o prune_tables.o std_analyzer.o -lpsapi
 if %errorlevel% neq 0 (
     echo Error linking std analyzer
+    exit /b 1
+)
+
+echo Compiling table generator...
+g++ -std=c++17 -O3 -fopenmp -Wall -Wextra -c table_generator.cpp -o table_generator.o
+if %errorlevel% neq 0 (
+    echo Error compiling table_generator.cpp
+    exit /b 1
+)
+
+echo Linking table generator...
+g++ -fopenmp -o table_generator.exe cube_common.o move_tables.o prune_tables.o table_generator.o -lpsapi
+if %errorlevel% neq 0 (
+    echo Error linking table generator
+    exit /b 1
+)
+
+echo Compiling pseudo analyzer...
+g++ -std=c++17 -O3 -fopenmp -Wall -Wextra -c pseudo_analyzer.cpp -o pseudo_analyzer.o
+if %errorlevel% neq 0 (
+    echo Error compiling pseudo_analyzer.cpp
+    exit /b 1
+)
+
+echo Linking pseudo analyzer...
+g++ -fopenmp -o pseudo_analyzer.exe cube_common.o move_tables.o prune_tables.o pseudo_analyzer.o -lpsapi
+if %errorlevel% neq 0 (
+    echo Error linking pseudo analyzer
+    exit /b 1
+)
+
+echo Compiling eo_cross_analyzer...
+g++ -std=c++17 -O3 -fopenmp -Wall -Wextra eo_cross_analyzer.cpp cube_common.o move_tables.o prune_tables.o -o eo_cross_analyzer.exe -lpsapi
+if %errorlevel% neq 0 (
+    echo Error compiling eo_cross_analyzer
+    exit /b 1
+)
+
+echo Compiling pseudo_pair_analyzer...
+g++ -std=c++17 -O3 -fopenmp -Wall -Wextra -c pseudo_pair_analyzer.cpp -o pseudo_pair_analyzer.o
+if %errorlevel% neq 0 (
+    echo Error compiling pseudo_pair_analyzer.cpp
+    exit /b 1
+)
+
+echo Linking pseudo_pair_analyzer...
+g++ -fopenmp -o pseudo_pair_analyzer.exe cube_common.o move_tables.o prune_tables.o pseudo_pair_analyzer.o -lpsapi
+if %errorlevel% neq 0 (
+    echo Error linking pseudo_pair_analyzer
     exit /b 1
 )
 
@@ -52,3 +101,7 @@ echo Build completed successfully!
 echo Generated files:
 echo - pair_analyzer.exe
 echo - std_analyzer.exe
+echo - table_generator.exe
+echo - pseudo_analyzer.exe
+echo - pseudo_pair_analyzer.exe
+echo - eo_cross_analyzer.exe

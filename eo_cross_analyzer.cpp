@@ -1,0 +1,839 @@
+#include "analyzer_executor.h"
+#include "cube_common.h"
+#include "move_tables.h"
+#include "prune_tables.h"
+
+// --- 全局统计变量重定向到 AnalyzerStats ---
+#define global_nodes AnalyzerStats::globalNodes
+#define completed_tasks AnalyzerStats::completedTasks
+#define is_solving AnalyzerStats::isSolving
+
+// NOTE: COUNT_NODE 宏已移至 analyzer_executor.h
+
+// --- Cross Analyzer (EO Cross) ---
+struct cross_analyzer {
+  // 静态成员：所有实例共享
+  static inline bool s_initialized = false;
+  static inline std::vector<int> s_eo_mt;
+  static inline const int *s_p_multi = nullptr;
+  static inline const unsigned char *s_p_prune = nullptr;
+
+  // 实例成员（指向静态数据）
+  const int *p_multi, *p_eo;
+  const unsigned char *p_prune;
+
+  static void static_init() {
+    if (s_initialized)
+      return;
+    auto &mm = MoveTableManager::getInstance();
+    auto &pm = PruneTableManager::getInstance();
+    mm.loadEdgeTable();
+    mm.loadEdges2Table();
+    if (!load_vector(s_eo_mt, "move_table_eo_12.bin")) {
+      s_eo_mt = create_eo_move_table();
+      save_vector(s_eo_mt, "move_table_eo_12.bin");
+    }
+    pm.generateCrossPrune();
+    s_p_multi = mm.getEdges2TablePtr();
+    s_p_prune = pm.getCrossPrunePtr();
+    s_initialized = true;
+  }
+
+  cross_analyzer() {
+    // 仅复制指针引用
+    p_multi = s_p_multi;
+    p_eo = s_eo_mt.data();
+    p_prune = s_p_prune;
+  }
+
+  void get_indices_sym(const std::vector<int> &alg, int sym_idx, int &i1,
+                       int &i2, int &i_eo) {
+    i1 = 416;
+    i2 = 520;
+    i_eo = 0;
+    for (int m : alg) {
+      int conj_m = sym_moves_flat[m][sym_idx];
+      i1 = p_multi[i1 * 18 + conj_m];
+      i2 = p_multi[i2 * 18 + conj_m];
+      i_eo = p_eo[i_eo + conj_m];
+    }
+  }
+
+  bool search(int i1, int i2, int i_eo, int depth, int prev, int &found_len,
+              int max_d) {
+    const int *moves = valid_moves_flat[prev];
+    const int count = valid_moves_count[prev];
+
+    for (int k = 0; k < count; ++k) {
+      COUNT_NODE
+      int m = moves[k];
+
+      // 级联: 先 Cross 查表
+      int n1 = p_multi[i1 + m], n2 = p_multi[i2 + m];
+      long long idx = (long long)n1 * 528 + n2;
+      int pr = get_prune_ptr(p_prune, idx);
+      if (pr >= depth)
+        continue;
+
+      // 后 EO 计算
+      int neo = p_eo[i_eo + m];
+
+      if (depth == 1) {
+        if (pr == 0 && neo == 0) {
+          found_len = max_d;
+          return true;
+        }
+      } else if (search(n1 * 18, n2 * 18, neo, depth - 1, m, found_len, max_d))
+        return true;
+    }
+    return false;
+  }
+
+  std::vector<int> get_stats(const std::vector<int> &base_alg) {
+    std::vector<int> res(12, 99);
+    std::vector<std::pair<int, int>> tasks;
+    for (int s = 0; s < 12; ++s) {
+      int i1, i2, ieo;
+      get_indices_sym(base_alg, s, i1, i2, ieo);
+      long long idx = (long long)i1 * 528 + i2;
+      int h = get_prune_ptr(p_prune, idx);
+      if (h == 0 && ieo != 0)
+        h = 1;
+      if (h == 0 && ieo == 0) {
+        res[s] = 0;
+        continue;
+      }
+      tasks.push_back({h, s});
+    }
+    std::sort(tasks.begin(), tasks.end());
+    for (auto &t : tasks) {
+      int s = t.second;
+      int i1, i2, ieo;
+      get_indices_sym(base_alg, s, i1, i2, ieo);
+      int found = 99;
+      for (int d = t.first; d <= 12; ++d) {
+        if (search(i1 * 18, i2 * 18, ieo, d, 18, found, d)) {
+          res[s] = found;
+          break;
+        }
+      }
+    }
+    return res;
+  }
+};
+
+// --- XCross Analyzer (Optimized with Symmetry + Single Base Tables) ---
+struct xcross_analyzer {
+  // 静态成员：所有实例共享
+  static inline bool s_initialized = false;
+  static inline std::vector<int> s_dep_mt, s_eo_mt;
+  static inline std::vector<unsigned char> s_prune_t, s_prune_dep_eo;
+  static inline std::vector<unsigned char> s_prune_xcross_base;
+  static inline std::vector<std::vector<unsigned char>> s_prune_plus_edge;
+  static inline std::vector<std::vector<unsigned char>> s_prune_plus_corn;
+  static inline std::vector<unsigned char> s_prune_3c;
+
+  static inline const int *s_p_multi = nullptr;
+  static inline const int *s_p_corner = nullptr;
+  static inline const int *s_p_edge = nullptr;
+  static inline const unsigned char *s_p_prune = nullptr;
+  static inline const unsigned char *s_p_prune_dep_eo = nullptr;
+  static inline const unsigned char *s_p_prune_base = nullptr;
+  static inline std::vector<const unsigned char *> s_p_plus_edge;
+  static inline std::vector<const unsigned char *> s_p_plus_corn;
+  static inline const unsigned char *s_p_prune_3c = nullptr;
+
+  // 实例成员（指向静态数据）
+  const int *p_multi, *p_corner, *p_edge, *p_dep, *p_eo;
+  const unsigned char *p_prune, *p_prune_dep_eo;
+  const unsigned char *p_prune_base = nullptr;
+  std::vector<const unsigned char *> p_plus_edge;
+  std::vector<const unsigned char *> p_plus_corn;
+  const unsigned char *p_prune_3c = nullptr;
+
+  const int SOLVED_MULTI = 187520 * 24;
+  const int SOLVED_CORNER = 12;
+  const int SOLVED_EDGE = 0;
+
+  static void static_init() {
+    if (s_initialized)
+      return;
+
+    MoveTableManager &mm = MoveTableManager::getInstance();
+    mm.loadEdgeTable();
+    mm.loadCornerTable();
+    mm.loadCrossTable();
+
+    std::vector<int> ep_mt;
+    if (!load_vector(ep_mt, "move_table_ep_1.bin")) {
+      ep_mt = create_ep_move_table();
+      save_vector(ep_mt, "move_table_ep_1.bin");
+    }
+    if (!load_vector(s_eo_mt, "move_table_eo_12_alt.bin")) {
+      s_eo_mt = create_eo_move_table2();
+      save_vector(s_eo_mt, "move_table_eo_12_alt.bin");
+    }
+    if (!load_vector(s_dep_mt, "move_table_ep_4.bin")) {
+      s_dep_mt = create_multi_move_table(4, 1, 12, 12 * 11 * 10 * 9, ep_mt);
+      save_vector(s_dep_mt, "move_table_ep_4.bin");
+    }
+
+    const char *pn_c4 = "prune_table_cross_C4.bin";
+    if (!load_vector(s_prune_t, pn_c4)) {
+      std::cout << "  Generating " << pn_c4 << " ..." << std::endl;
+      create_cascaded_prune_table2(187520, 12, 24 * 22 * 20 * 18, 24, 10,
+                                   mm.getCrossTable(), mm.getCornerTable(),
+                                   s_prune_t);
+      save_vector(s_prune_t, pn_c4);
+    }
+    s_p_prune = s_prune_t.data();
+
+    if (!load_vector(s_prune_dep_eo, "prune_table_ep_4_eo_12.bin")) {
+      std::cout << "  Generating prune_table_ep_4_eo_12.bin ..." << std::endl;
+      create_cascaded_prune_table3(11720, 0, 12 * 11 * 10 * 9, 2048, 11,
+                                   s_dep_mt, s_eo_mt, s_prune_dep_eo);
+      save_vector(s_prune_dep_eo, "prune_table_ep_4_eo_12.bin");
+    }
+
+    s_p_multi = mm.getCrossTablePtr();
+    s_p_corner = mm.getCornerTablePtr();
+    s_p_edge = mm.getEdgeTablePtr();
+    s_p_prune_dep_eo = s_prune_dep_eo.data();
+
+    // 1. 基准 XCross Table (C4 + E0)
+    std::cout << "[Init] Checking Base XCross Table (C4 + E0)..." << std::endl;
+    std::string fn_base = "prune_table_cross_C4_E0.bin";
+    if (!load_vector(s_prune_xcross_base, fn_base)) {
+      std::cout << "  Generating " << fn_base << " ..." << std::endl;
+      create_prune_table_xcross_full(
+          187520, 12, 0, 24 * 22 * 20 * 18, 24, 24, 11, mm.getCrossTable(),
+          mm.getCornerTable(), mm.getEdgeTable(), s_prune_xcross_base);
+      save_vector(s_prune_xcross_base, fn_base);
+    }
+    s_p_prune_base = s_prune_xcross_base.data();
+
+    // 2. Plus Tables (Relative: Right, Diag, Left)
+    std::vector<int> plus_edges = {2, 4, 6};
+    s_prune_plus_edge.resize(3);
+    s_p_plus_edge.resize(3);
+    for (int i = 0; i < 3; ++i) {
+      std::string fn = "prune_table_cross_C4_E0_E" +
+                       std::to_string(plus_edges[i] / 2) + ".bin";
+      if (!load_vector(s_prune_plus_edge[i], fn)) {
+        std::cout << "  Generating " << fn << " (Depth 14)..." << std::endl;
+        create_prune_table_xcross_plus(
+            187520, 12, 0, plus_edges[i], 24 * 22 * 20 * 18, 24, 24, 24, 14,
+            mm.getCrossTable(), mm.getCornerTable(), mm.getEdgeTable(),
+            mm.getEdgeTable(), s_prune_plus_edge[i]);
+        save_vector(s_prune_plus_edge[i], fn);
+      }
+      s_p_plus_edge[i] = s_prune_plus_edge[i].data();
+    }
+
+    std::vector<int> plus_corns = {15, 18, 21};
+    s_prune_plus_corn.resize(3);
+    s_p_plus_corn.resize(3);
+    for (int i = 0; i < 3; ++i) {
+      std::string fn = "prune_table_cross_C4_E0_C" +
+                       std::to_string(plus_corns[i] / 3) + ".bin";
+      if (!load_vector(s_prune_plus_corn[i], fn)) {
+        std::cout << "  Generating " << fn << " (Depth 14)..." << std::endl;
+        create_prune_table_xcross_plus(
+            187520, 12, 0, plus_corns[i], 24 * 22 * 20 * 18, 24, 24, 24, 14,
+            mm.getCrossTable(), mm.getCornerTable(), mm.getEdgeTable(),
+            mm.getCornerTable(), s_prune_plus_corn[i]);
+        save_vector(s_prune_plus_corn[i], fn);
+      }
+      s_p_plus_corn[i] = s_prune_plus_corn[i].data();
+    }
+
+    // 3. 3-Corner Table (C4+C5+C6)
+    std::cout << "[Init] Checking XCross+C4+C5+C6 Table..." << std::endl;
+    std::string fn_3c = "prune_table_cross_C4_C5_C6.bin";
+    if (!load_vector(s_prune_3c, fn_3c)) {
+      std::cout << "  Generating " << fn_3c << " (Depth 14) ..." << std::endl;
+      int c5 = 15;
+      int c6 = 18;
+      create_prune_table_xcross_corn3(187520, 12, c5, c6, 24 * 22 * 20 * 18, 24,
+                                      24, 24, 14, mm.getCrossTable(),
+                                      mm.getCornerTable(), mm.getCornerTable(),
+                                      mm.getCornerTable(), s_prune_3c);
+      save_vector(s_prune_3c, fn_3c);
+    }
+    s_p_prune_3c = s_prune_3c.data();
+
+    s_initialized = true;
+  }
+
+  xcross_analyzer() {
+    // 仅复制指针引用
+    p_multi = s_p_multi;
+    p_corner = s_p_corner;
+    p_edge = s_p_edge;
+    p_dep = s_dep_mt.data();
+    p_eo = s_eo_mt.data();
+    p_prune = s_p_prune;
+    p_prune_dep_eo = s_p_prune_dep_eo;
+    p_prune_base = s_p_prune_base;
+    p_plus_edge = s_p_plus_edge;
+    p_plus_corn = s_p_plus_corn;
+    p_prune_3c = s_p_prune_3c;
+  }
+
+  inline int get_plus_table_idx(int s_base, int s_target) {
+    int diff = (s_target - s_base + 4) % 4;
+    if (diff == 1)
+      return 0; // Right
+    if (diff == 2)
+      return 1; // Diag
+    if (diff == 3)
+      return 2; // Left
+    return -1;
+  }
+
+  void get_indices_conj_full(const std::vector<int> &alg, int sym_idx,
+                             int slot_idx, int &i1, int &i2, int &i3,
+                             int &i_dep, int &i_eo, int *track_e,
+                             int *track_c) {
+    i1 = SOLVED_MULTI;
+    i2 = SOLVED_CORNER;
+    i3 = SOLVED_EDGE;
+    i_dep = 11720;
+    i_eo = 0;
+
+    track_e[0] = 2;
+    track_e[1] = 4;
+    track_e[2] = 6;
+    track_c[0] = 15;
+    track_c[1] = 18;
+    track_c[2] = 21;
+
+    for (int m : alg) {
+      int m_global = sym_moves_flat[m][sym_idx];
+      int m_slot = conj_moves_flat[m_global][slot_idx];
+
+      i1 = p_multi[i1 + m_slot];
+      i2 = p_corner[i2 * 18 + m_slot];
+      i3 = p_edge[i3 * 18 + m_slot];
+
+      i_dep = p_dep[i_dep * 18 + m_global];
+      i_eo = p_eo[i_eo * 18 + m_global];
+
+      for (int k = 0; k < 3; ++k) {
+        track_e[k] = p_edge[track_e[k] * 18 + m_slot];
+        track_c[k] = p_corner[track_c[k] * 18 + m_slot];
+      }
+    }
+  }
+
+  // --- Search 1: XCross+EO (Optimized) ---
+  bool search_1(int i1, int i2, int i3, int i_dep, int i_eo, int depth,
+                int prev, int slot, int bound) {
+    if (depth > bound)
+      return false;
+
+    const int *moves = valid_moves_flat[prev];
+    const int count = valid_moves_count[prev];
+
+    for (int k = 0; k < count; ++k) {
+      COUNT_NODE
+      int m = moves[k];
+
+      // 级联 Check 1: Dependency (EO + Partial Cross)
+      int nd = p_dep[i_dep + m], neo = p_eo[i_eo + m];
+      if (get_prune_ptr(p_prune_dep_eo, (long long)nd * 2048 + neo) >= depth)
+        continue;
+
+      // 级联 Check 2: Main XCross
+      int m_slot = conj_moves_flat[m][slot];
+      int n1 = p_multi[i1 + m_slot], n2 = p_corner[i2 + m_slot],
+          n3 = p_edge[i3 + m_slot];
+      long long idx_xc = (long long)(n1 + n2) * 24 + n3;
+      if (get_prune_ptr(p_prune_base, idx_xc) >= depth)
+        continue;
+
+      if (depth == 1)
+        return true;
+      else if (search_1(n1, n2 * 18, n3 * 18, nd * 18, neo * 18, depth - 1, m,
+                        slot, bound))
+        return true;
+    }
+    return false;
+  }
+
+  // --- Search 2: XXCross+EO (Optimized) ---
+  bool search_2(int i1a, int i2a, int i3a, int i1b, int i2b, int i3b, int i_dep,
+                int i_eo, int depth, int prev, int s1, int s2, int bound,
+                int tab, int tba, int ea_rel, int ca_rel, int eb_rel,
+                int cb_rel) {
+    if (depth > bound)
+      return false;
+
+    const int *moves = valid_moves_flat[prev];
+    const int count = valid_moves_count[prev];
+
+    for (int k = 0; k < count; ++k) {
+      COUNT_NODE
+      int m = moves[k];
+
+      // 级联 Check 1: Dep + EO
+      int nd = p_dep[i_dep + m], neo = p_eo[i_eo + m];
+      if (get_prune_ptr(p_prune_dep_eo, (long long)nd * 2048 + neo) >= depth)
+        continue;
+
+      // 级联 Check 2: View A (Base + Plus)
+      int m1 = conj_moves_flat[m][s1];
+      int n1a = p_multi[i1a + m1], n2a = p_corner[i2a + m1],
+          n3a = p_edge[i3a + m1];
+      long long idx_a = (long long)(n1a + n2a) * 24 + n3a;
+      if (get_prune_ptr(p_prune_base, idx_a) >= depth)
+        continue;
+
+      int n_ea_rel = p_edge[ea_rel * 18 + m1];
+      if (get_prune_ptr(p_plus_edge[tab], idx_a * 24 + n_ea_rel) >= depth)
+        continue;
+      int n_ca_rel = p_corner[ca_rel * 18 + m1];
+      if (get_prune_ptr(p_plus_corn[tab], idx_a * 24 + n_ca_rel) >= depth)
+        continue;
+
+      // 级联 Check 3: View B (Base + Plus)
+      int m2 = conj_moves_flat[m][s2];
+      int n1b = p_multi[i1b + m2], n2b = p_corner[i2b + m2],
+          n3b = p_edge[i3b + m2];
+      long long idx_b = (long long)(n1b + n2b) * 24 + n3b;
+      if (get_prune_ptr(p_prune_base, idx_b) >= depth)
+        continue;
+
+      int n_eb_rel = p_edge[eb_rel * 18 + m2];
+      if (get_prune_ptr(p_plus_edge[tba], idx_b * 24 + n_eb_rel) >= depth)
+        continue;
+      int n_cb_rel = p_corner[cb_rel * 18 + m2];
+      if (get_prune_ptr(p_plus_corn[tba], idx_b * 24 + n_cb_rel) >= depth)
+        continue;
+
+      if (depth == 1)
+        return true;
+      else if (search_2(n1a, n2a * 18, n3a * 18, n1b, n2b * 18, n3b * 18,
+                        nd * 18, neo * 18, depth - 1, m, s1, s2, bound, tab,
+                        tba, n_ea_rel, n_ca_rel, n_eb_rel, n_cb_rel))
+        return true;
+    }
+    return false;
+  }
+
+  // --- Search 3: XXXCross+EO (Optimized) ---
+  bool search_3(int i1a, int i2a, int i3a, int i1b, int i2b, int i3b, int i1c,
+                int i2c, int i3c, int i_dep, int i_eo, int depth, int prev,
+                int s1, int s2, int s3, int bound, int t_ab, int t_ba, int t_bc,
+                int t_cb, int t_ac, int t_ca, int ea_b, int ca_b, int ea_c,
+                int ca_c, int eb_a, int cb_a, int eb_c, int cb_c, int ec_a,
+                int cc_a, int ec_b, int cc_b) {
+    if (depth > bound)
+      return false;
+
+    bool check_3c_A = (t_ab == 0 && t_ac == 1);
+    bool check_3c_B = (t_ba == 0 && t_bc == 1);
+    bool check_3c_C = (t_ca == 0 && t_cb == 1);
+
+    const int *moves = valid_moves_flat[prev];
+    const int count = valid_moves_count[prev];
+
+    for (int k = 0; k < count; ++k) {
+      COUNT_NODE
+      int m = moves[k];
+
+      // 级联 Check 1: Dep + EO
+      int nd = p_dep[i_dep + m], neo = p_eo[i_eo + m];
+      if (get_prune_ptr(p_prune_dep_eo, (long long)nd * 2048 + neo) >= depth)
+        continue;
+
+      // --- View A ---
+      int m1 = conj_moves_flat[m][s1];
+      int n1a = p_multi[i1a + m1], n2a = p_corner[i2a + m1],
+          n3a = p_edge[i3a + m1];
+      long long idx_a = (long long)(n1a + n2a) * 24 + n3a;
+      if (get_prune_ptr(p_prune_base, idx_a) >= depth)
+        continue;
+
+      int n_ea_b = p_edge[ea_b * 18 + m1], n_ca_b = p_corner[ca_b * 18 + m1];
+      if (get_prune_ptr(p_plus_edge[t_ab], idx_a * 24 + n_ea_b) >= depth)
+        continue;
+      if (get_prune_ptr(p_plus_corn[t_ab], idx_a * 24 + n_ca_b) >= depth)
+        continue;
+
+      int n_ea_c = p_edge[ea_c * 18 + m1], n_ca_c = p_corner[ca_c * 18 + m1];
+      if (get_prune_ptr(p_plus_edge[t_ac], idx_a * 24 + n_ea_c) >= depth)
+        continue;
+      if (get_prune_ptr(p_plus_corn[t_ac], idx_a * 24 + n_ca_c) >= depth)
+        continue;
+
+      if (check_3c_A) {
+        long long idx_3c = ((long long)(n1a + n2a) * 24 + n_ca_b) * 24 + n_ca_c;
+        if (get_prune_ptr(p_prune_3c, idx_3c) >= depth)
+          continue;
+      }
+
+      // --- View B ---
+      int m2 = conj_moves_flat[m][s2];
+      int n1b = p_multi[i1b + m2], n2b = p_corner[i2b + m2],
+          n3b = p_edge[i3b + m2];
+      long long idx_b = (long long)(n1b + n2b) * 24 + n3b;
+      if (get_prune_ptr(p_prune_base, idx_b) >= depth)
+        continue;
+
+      int n_eb_a = p_edge[eb_a * 18 + m2], n_cb_a = p_corner[cb_a * 18 + m2];
+      if (get_prune_ptr(p_plus_edge[t_ba], idx_b * 24 + n_eb_a) >= depth)
+        continue;
+      if (get_prune_ptr(p_plus_corn[t_ba], idx_b * 24 + n_cb_a) >= depth)
+        continue;
+
+      int n_eb_c = p_edge[eb_c * 18 + m2], n_cb_c = p_corner[cb_c * 18 + m2];
+      if (get_prune_ptr(p_plus_edge[t_bc], idx_b * 24 + n_eb_c) >= depth)
+        continue;
+      if (get_prune_ptr(p_plus_corn[t_bc], idx_b * 24 + n_cb_c) >= depth)
+        continue;
+
+      if (check_3c_B) {
+        long long idx_3c = ((long long)(n1b + n2b) * 24 + n_cb_a) * 24 + n_cb_c;
+        if (get_prune_ptr(p_prune_3c, idx_3c) >= depth)
+          continue;
+      }
+
+      // --- View C ---
+      int m3 = conj_moves_flat[m][s3];
+      int n1c = p_multi[i1c + m3], n2c = p_corner[i2c + m3],
+          n3c = p_edge[i3c + m3];
+      long long idx_c = (long long)(n1c + n2c) * 24 + n3c;
+      if (get_prune_ptr(p_prune_base, idx_c) >= depth)
+        continue;
+
+      int n_ec_a = p_edge[ec_a * 18 + m3], n_cc_a = p_corner[cc_a * 18 + m3];
+      if (get_prune_ptr(p_plus_edge[t_ca], idx_c * 24 + n_ec_a) >= depth)
+        continue;
+      if (get_prune_ptr(p_plus_corn[t_ca], idx_c * 24 + n_cc_a) >= depth)
+        continue;
+
+      int n_ec_b = p_edge[ec_b * 18 + m3], n_cc_b = p_corner[cc_b * 18 + m3];
+      if (get_prune_ptr(p_plus_edge[t_cb], idx_c * 24 + n_ec_b) >= depth)
+        continue;
+      if (get_prune_ptr(p_plus_corn[t_cb], idx_c * 24 + n_cc_b) >= depth)
+        continue;
+
+      if (check_3c_C) {
+        long long idx_3c = ((long long)(n1c + n2c) * 24 + n_cc_a) * 24 + n_cc_b;
+        if (get_prune_ptr(p_prune_3c, idx_3c) >= depth)
+          continue;
+      }
+
+      if (depth == 1)
+        return true;
+      else if (search_3(n1a, n2a * 18, n3a * 18, n1b, n2b * 18, n3b * 18, n1c,
+                        n2c * 18, n3c * 18, nd * 18, neo * 18, depth - 1, m, s1,
+                        s2, s3, bound, t_ab, t_ba, t_bc, t_cb, t_ac, t_ca,
+                        n_ea_b, n_ca_b, n_ea_c, n_ca_c, n_eb_a, n_cb_a, n_eb_c,
+                        n_cb_c, n_ec_a, n_cc_a, n_ec_b, n_cc_b))
+        return true;
+    }
+    return false;
+  }
+
+  std::vector<int> get_stats(const std::vector<int> &base_alg) {
+    std::vector<int> res(36, 99);
+
+    for (int sym = 0; sym < 12; ++sym) {
+      // Data Prep
+      struct SlotState {
+        int i1, i2, i3, idep, ieo;
+        int e_trk[3], c_trk[3];
+      };
+      std::vector<SlotState> st(4);
+      for (int s = 0; s < 4; ++s) {
+        get_indices_conj_full(base_alg, sym, s, st[s].i1, st[s].i2, st[s].i3,
+                              st[s].idep, st[s].ieo, st[s].e_trk, st[s].c_trk);
+      }
+
+      // --- 1. XCross+EO ---
+      {
+        std::vector<std::pair<int, int>> tasks;
+        for (int s = 0; s < 4; ++s) {
+          long long idx_xc = (long long)(st[s].i1 + st[s].i2) * 24 + st[s].i3;
+          int pr_xc = get_prune_ptr(p_prune_base, idx_xc);
+          int pr_de = get_prune_ptr(p_prune_dep_eo,
+                                    (long long)st[s].idep * 2048 + st[s].ieo);
+          tasks.push_back({std::max(pr_xc, pr_de), s});
+        }
+        std::sort(tasks.begin(), tasks.end());
+
+        int best = 99;
+        for (auto &t : tasks) {
+          if (t.first >= best)
+            break;
+          if (t.first == 0) {
+            best = 0;
+            break;
+          }
+          int s = t.second;
+          for (int d = t.first; d <= std::min(20, best - 1); ++d) {
+            if (search_1(st[s].i1, st[s].i2 * 18, st[s].i3 * 18,
+                         st[s].idep * 18, st[s].ieo * 18, d, 18, s, best - 1)) {
+              best = d;
+              break;
+            }
+          }
+        }
+        res[sym] = best;
+
+        // --- 2. XXCross+EO ---
+        {
+          int pairs[6][2] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}};
+          std::vector<std::pair<int, int>> tasks_xx;
+          for (int p = 0; p < 6; ++p) {
+            int s1 = pairs[p][0], s2 = pairs[p][1];
+            int t_ab = get_plus_table_idx(s1, s2);
+            int t_ba = get_plus_table_idx(s2, s1);
+
+            // View A
+            long long idx1 =
+                (long long)(st[s1].i1 + st[s1].i2) * 24 + st[s1].i3;
+            int h1 = get_prune_ptr(p_prune_base, idx1);
+            int h1_pe = get_prune_ptr(p_plus_edge[t_ab],
+                                      idx1 * 24 + st[s1].e_trk[t_ab]);
+            int h1_pc = get_prune_ptr(p_plus_corn[t_ab],
+                                      idx1 * 24 + st[s1].c_trk[t_ab]);
+
+            // View B
+            long long idx2 =
+                (long long)(st[s2].i1 + st[s2].i2) * 24 + st[s2].i3;
+            int h2 = get_prune_ptr(p_prune_base, idx2);
+            int h2_pe = get_prune_ptr(p_plus_edge[t_ba],
+                                      idx2 * 24 + st[s2].e_trk[t_ba]);
+            int h2_pc = get_prune_ptr(p_plus_corn[t_ba],
+                                      idx2 * 24 + st[s2].c_trk[t_ba]);
+
+            int h_de = get_prune_ptr(
+                p_prune_dep_eo, (long long)st[s1].idep * 2048 + st[s1].ieo);
+            int h = std::max({h1, h1_pe, h1_pc, h2, h2_pe, h2_pc, h_de});
+            tasks_xx.push_back({h, p});
+          }
+          std::sort(tasks_xx.begin(), tasks_xx.end());
+
+          int best_xx = 99;
+          for (auto &t : tasks_xx) {
+            if (t.first >= best_xx)
+              break;
+            if (t.first == 0) {
+              best_xx = 0;
+              break;
+            }
+            int s1 = pairs[t.second][0], s2 = pairs[t.second][1];
+            int t_ab = get_plus_table_idx(s1, s2);
+            int t_ba = get_plus_table_idx(s2, s1);
+
+            for (int d = t.first; d <= std::min(20, best_xx - 1); ++d) {
+              if (search_2(st[s1].i1, st[s1].i2 * 18, st[s1].i3 * 18, st[s2].i1,
+                           st[s2].i2 * 18, st[s2].i3 * 18, st[s1].idep * 18,
+                           st[s1].ieo * 18, d, 18, s1, s2, best_xx - 1, t_ab,
+                           t_ba, st[s1].e_trk[t_ab], st[s1].c_trk[t_ab],
+                           st[s2].e_trk[t_ba], st[s2].c_trk[t_ba])) {
+                best_xx = d;
+                break;
+              }
+            }
+          }
+          res[12 + sym] = best_xx;
+        }
+
+        // --- 3. XXXCross+EO ---
+        {
+          int trips[4][3] = {{0, 1, 2}, {0, 1, 3}, {0, 2, 3}, {1, 2, 3}};
+          std::vector<std::pair<int, int>> tasks_xxx;
+          for (int tr = 0; tr < 4; ++tr) {
+            int s1 = trips[tr][0], s2 = trips[tr][1], s3 = trips[tr][2];
+            int t_ab = get_plus_table_idx(s1, s2),
+                t_ba = get_plus_table_idx(s2, s1);
+            int t_bc = get_plus_table_idx(s2, s3),
+                t_cb = get_plus_table_idx(s3, s2);
+            int t_ac = get_plus_table_idx(s1, s3),
+                t_ca = get_plus_table_idx(s3, s1);
+
+            // Pruning check for all 3 views
+            long long idx1 =
+                (long long)(st[s1].i1 + st[s1].i2) * 24 + st[s1].i3;
+            int h1 = std::max({get_prune_ptr(p_prune_base, idx1),
+                               get_prune_ptr(p_plus_edge[t_ab],
+                                             idx1 * 24 + st[s1].e_trk[t_ab]),
+                               get_prune_ptr(p_plus_corn[t_ab],
+                                             idx1 * 24 + st[s1].c_trk[t_ab]),
+                               get_prune_ptr(p_plus_edge[t_ac],
+                                             idx1 * 24 + st[s1].e_trk[t_ac]),
+                               get_prune_ptr(p_plus_corn[t_ac],
+                                             idx1 * 24 + st[s1].c_trk[t_ac])});
+
+            long long idx2 =
+                (long long)(st[s2].i1 + st[s2].i2) * 24 + st[s2].i3;
+            int h2 = std::max({get_prune_ptr(p_prune_base, idx2),
+                               get_prune_ptr(p_plus_edge[t_ba],
+                                             idx2 * 24 + st[s2].e_trk[t_ba]),
+                               get_prune_ptr(p_plus_corn[t_ba],
+                                             idx2 * 24 + st[s2].c_trk[t_ba]),
+                               get_prune_ptr(p_plus_edge[t_bc],
+                                             idx2 * 24 + st[s2].e_trk[t_bc]),
+                               get_prune_ptr(p_plus_corn[t_bc],
+                                             idx2 * 24 + st[s2].c_trk[t_bc])});
+
+            long long idx3 =
+                (long long)(st[s3].i1 + st[s3].i2) * 24 + st[s3].i3;
+            int h3 = std::max({get_prune_ptr(p_prune_base, idx3),
+                               get_prune_ptr(p_plus_edge[t_ca],
+                                             idx3 * 24 + st[s3].e_trk[t_ca]),
+                               get_prune_ptr(p_plus_corn[t_ca],
+                                             idx3 * 24 + st[s3].c_trk[t_ca]),
+                               get_prune_ptr(p_plus_edge[t_cb],
+                                             idx3 * 24 + st[s3].e_trk[t_cb]),
+                               get_prune_ptr(p_plus_corn[t_cb],
+                                             idx3 * 24 + st[s3].c_trk[t_cb])});
+
+            // 3-Corner Pruning
+            int d_3c = 0;
+            if ((t_ab == 0 && t_ac == 1) ||
+                (t_ac == 0 && t_ab == 1)) { // View A
+              int c_r = (t_ab == 0) ? st[s1].c_trk[t_ab] : st[s1].c_trk[t_ac];
+              int c_d = (t_ab == 0) ? st[s1].c_trk[t_ac] : st[s1].c_trk[t_ab];
+              d_3c = std::max(
+                  d_3c, get_prune_ptr(p_prune_3c,
+                                      ((long long)(st[s1].i1 + st[s1].i2) * 24 +
+                                       c_r) * 24 +
+                                          c_d));
+            }
+            if ((t_ba == 0 && t_bc == 1) ||
+                (t_bc == 0 && t_ba == 1)) { // View B
+              int c_r = (t_ba == 0) ? st[s2].c_trk[t_ba] : st[s2].c_trk[t_bc];
+              int c_d = (t_ba == 0) ? st[s2].c_trk[t_bc] : st[s2].c_trk[t_ba];
+              d_3c = std::max(
+                  d_3c, get_prune_ptr(p_prune_3c,
+                                      ((long long)(st[s2].i1 + st[s2].i2) * 24 +
+                                       c_r) * 24 +
+                                          c_d));
+            }
+            if ((t_ca == 0 && t_cb == 1) ||
+                (t_cb == 0 && t_ca == 1)) { // View C
+              int c_r = (t_ca == 0) ? st[s3].c_trk[t_ca] : st[s3].c_trk[t_cb];
+              int c_d = (t_ca == 0) ? st[s3].c_trk[t_cb] : st[s3].c_trk[t_ca];
+              d_3c = std::max(
+                  d_3c, get_prune_ptr(p_prune_3c,
+                                      ((long long)(st[s3].i1 + st[s3].i2) * 24 +
+                                       c_r) * 24 +
+                                          c_d));
+            }
+
+            int pr_de = get_prune_ptr(
+                p_prune_dep_eo, (long long)st[s1].idep * 2048 + st[s1].ieo);
+            int h = std::max({h1, h2, h3, pr_de, d_3c});
+            tasks_xxx.push_back({h, tr});
+          }
+          std::sort(tasks_xxx.begin(), tasks_xxx.end());
+
+          int best_xxx = 99;
+          for (auto &t : tasks_xxx) {
+            if (t.first >= best_xxx)
+              break;
+            if (t.first == 0) {
+              best_xxx = 0;
+              break;
+            }
+            int s1 = trips[t.second][0], s2 = trips[t.second][1],
+                s3 = trips[t.second][2];
+            int t_ab = get_plus_table_idx(s1, s2),
+                t_ba = get_plus_table_idx(s2, s1);
+            int t_bc = get_plus_table_idx(s2, s3),
+                t_cb = get_plus_table_idx(s3, s2);
+            int t_ac = get_plus_table_idx(s1, s3),
+                t_ca = get_plus_table_idx(s3, s1);
+
+            for (int d = t.first; d <= std::min(20, best_xxx - 1); ++d) {
+              if (search_3(st[s1].i1, st[s1].i2 * 18, st[s1].i3 * 18, st[s2].i1,
+                           st[s2].i2 * 18, st[s2].i3 * 18, st[s3].i1,
+                           st[s3].i2 * 18, st[s3].i3 * 18, st[s1].idep * 18,
+                           st[s1].ieo * 18, d, 18, s1, s2, s3, best_xxx - 1,
+                           t_ab, t_ba, t_bc, t_cb, t_ac, t_ca,
+                           st[s1].e_trk[t_ab], st[s1].c_trk[t_ab],
+                           st[s1].e_trk[t_ac], st[s1].c_trk[t_ac],
+                           st[s2].e_trk[t_ba], st[s2].c_trk[t_ba],
+                           st[s2].e_trk[t_bc], st[s2].c_trk[t_bc],
+                           st[s3].e_trk[t_ca], st[s3].c_trk[t_ca],
+                           st[s3].e_trk[t_cb], st[s3].c_trk[t_cb])) {
+                best_xxx = d;
+                break;
+              }
+            }
+          }
+          res[24 + sym] = best_xxx;
+        }
+      }
+    }
+    return res;
+  }
+};
+
+// --- EOCrossSolverWrapper: 封装 EO Cross 求解器的统一接口 ---
+struct EOCrossSolverWrapper {
+  cross_analyzer crossSolver;
+  xcross_analyzer xcrossSolver;
+
+  static void global_init() {
+    init_matrix();
+
+    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET
+              << "Loading EO Cross analyzers..." << std::endl;
+    // 调用静态初始化方法，加载所有表（只执行一次）
+    cross_analyzer::static_init();
+    xcross_analyzer::static_init();
+    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET << "System Ready."
+              << std::endl;
+  }
+
+  static std::string get_csv_header() {
+    std::vector<std::string> suffixes = {"_z0", "_z1", "_z2",
+                                         "_z3", "_x1", "_x3"};
+    std::ostringstream oss;
+    oss << "id";
+    for (const auto &s : suffixes)
+      oss << ",eo_cross" << s;
+    for (const auto &s : suffixes)
+      oss << ",eo_xcross" << s;
+    for (const auto &s : suffixes)
+      oss << ",eo_xxcross" << s;
+    for (const auto &s : suffixes)
+      oss << ",eo_xxxcross" << s;
+    return oss.str();
+  }
+
+  std::string solve(const std::vector<int> &alg, const std::string &id) {
+    std::vector<int> cr = crossSolver.get_stats(alg);
+    std::vector<int> xr = xcrossSolver.get_stats(alg);
+
+    std::ostringstream oss;
+    oss << id;
+    // Cross+EO
+    for (int c = 0; c < 6; ++c)
+      oss << "," << std::min(cr[2 * c], cr[2 * c + 1]);
+    // XC+EO
+    for (int c = 0; c < 6; ++c)
+      oss << "," << std::min(xr[2 * c], xr[2 * c + 1]);
+    // XXC+EO
+    for (int c = 0; c < 6; ++c)
+      oss << "," << std::min(xr[12 + 2 * c], xr[12 + 2 * c + 1]);
+    // XXXC+EO
+    for (int c = 0; c < 6; ++c)
+      oss << "," << std::min(xr[24 + 2 * c], xr[24 + 2 * c + 1]);
+
+    return oss.str();
+  }
+
+  static void print_stats() {}
+};
+
+int main() {
+  run_analyzer_app<EOCrossSolverWrapper>("_eo");
+  return 0;
+}

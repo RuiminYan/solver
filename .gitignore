@@ -1,16 +1,12 @@
-# 排除编译生成的执行文件和对象文件
+# Binaries and Object files
 *.exe
+*.obj
 *.o
+*.dll
 
-# 排除大型二进制剪枝表和移动表
+# Pruning Tables (Large files)
 *.bin
 
-# 如果你有特定的 bin 文件想保留（比如极小的配置），可以使用 !
-# !small_config.bin
-
-# 排除临时文件
-*.log
-*.tmp
-
-# 排除旧版本备份文件夹
-old/
+# Temp/Output files
+*.csv
+output.txt
