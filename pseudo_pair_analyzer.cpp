@@ -74,27 +74,23 @@ struct xcross_analyzer2 {
     }
 
     // 2. Load XCross & Pair Prune Tables
-    xc_prune_tables.resize(16);
-    ec_prune_tables.resize(16);
+    // NOTE: 使用 Conj 复用 C4 表处理 C5/C6/C7，只需加载 4 张表
+    xc_prune_tables.resize(4);
+    ec_prune_tables.resize(4);
     for (int e = 0; e < 4; ++e) {
-      for (int c = 0; c < 4; ++c) {
-        int idx = e * 4 + c;
+      // 只加载 C4 的表，C5/C6/C7 通过 Conj 运算得到
+      std::string fn_xc =
+          "prune_table_pseudo_cross_C4_into_slot" + std::to_string(e) + ".bin";
+      if (!load_vector(xc_prune_tables[e], fn_xc)) {
+        std::cerr << "Error: Missing table " << fn_xc << std::endl;
+        exit(1);
+      }
 
-        std::string fn_xc = "prune_table_pseudo_cross_C" +
-                            std::to_string(c + 4) + "_into_slot" +
-                            std::to_string(e) + ".bin";
-        if (!load_vector(xc_prune_tables[idx], fn_xc)) {
-          std::cerr << "Error: Missing table " << fn_xc << std::endl;
-          exit(1);
-        }
-
-        std::string fn_ec = "prune_table_pseudo_pair_C" +
-                            std::to_string(c + 4) + "_E" + std::to_string(e) +
-                            ".bin";
-        if (!load_vector(ec_prune_tables[idx], fn_ec)) {
-          std::cerr << "Error: Missing table " << fn_ec << std::endl;
-          exit(1);
-        }
+      std::string fn_ec =
+          "prune_table_pseudo_pair_C4_E" + std::to_string(e) + ".bin";
+      if (!load_vector(ec_prune_tables[e], fn_ec)) {
+        std::cerr << "Error: Missing table " << fn_ec << std::endl;
+        exit(1);
       }
     }
 
@@ -255,9 +251,9 @@ struct xcross_analyzer2 {
     std::vector<int> base_alg = string_to_alg(scramble);
     for (int slot1_tmp = 0; slot1_tmp < 4; slot1_tmp++) {
       for (int pslot1_tmp = 0; pslot1_tmp < 4; pslot1_tmp++) {
-        int idx = slot1_tmp * 4 + pslot1_tmp;
-        start_search_1(slot1_tmp, pslot1_tmp, xc_prune_tables[idx],
-                       ec_prune_tables[idx], rotations, base_alg);
+        // NOTE: 使用 Conj 复用 C4 表，索引只用 slot
+        start_search_1(slot1_tmp, pslot1_tmp, xc_prune_tables[slot1_tmp],
+                       ec_prune_tables[slot1_tmp], rotations, base_alg);
       }
     }
   }
@@ -428,10 +424,9 @@ struct xcross_analyzer2 {
             if (pslot1_tmp == pslot2_tmp)
               continue;
             start_search_2(slot1_tmp, slot2_tmp, pslot1_tmp, pslot2_tmp,
-                           xc_prune_tables[slot1_tmp * 4 + pslot1_tmp],
+                           xc_prune_tables[slot1_tmp],
                            base_prune_tables[pslot2_tmp],
-                           ec_prune_tables[slot1_tmp * 4 + pslot1_tmp],
-                           rotations, base_alg);
+                           ec_prune_tables[slot1_tmp], rotations, base_alg);
           }
         }
       }
@@ -649,12 +644,10 @@ struct xcross_analyzer2 {
           for (int pslot1_tmp : a_pslot_tmps) {
             start_search_3(slot1_tmp, slot_tmps_set[i][0], slot_tmps_set[i][1],
                            pslot1_tmp, pslot_tmps_set[j][0],
-                           pslot_tmps_set[j][1],
-                           xc_prune_tables[slot1_tmp * 4 + pslot1_tmp],
+                           pslot_tmps_set[j][1], xc_prune_tables[slot1_tmp],
                            base_prune_tables[pslot_tmps_set[j][0]],
                            base_prune_tables[pslot_tmps_set[j][1]],
-                           ec_prune_tables[slot1_tmp * 4 + pslot1_tmp],
-                           rotations, base_alg);
+                           ec_prune_tables[slot1_tmp], rotations, base_alg);
           }
         }
       }
@@ -895,9 +888,9 @@ struct xcross_analyzer2 {
           if (k != j)
             p_rem.push_back(k);
         start_search_4(i, s_rem[0], s_rem[1], s_rem[2], j, p_rem[0], p_rem[1],
-                       p_rem[2], xc_prune_tables[i * 4 + j],
+                       p_rem[2], xc_prune_tables[i],
                        base_prune_tables[p_rem[0]], base_prune_tables[p_rem[1]],
-                       base_prune_tables[p_rem[2]], ec_prune_tables[i * 4 + j],
+                       base_prune_tables[p_rem[2]], ec_prune_tables[i],
                        rotations, base_alg);
       }
     }
