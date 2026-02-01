@@ -136,6 +136,23 @@ bool PruneTableManager::loadPseudoTables() {
   return true;
 }
 
+// --- 前向声明: Pseudo 表生成函数 ---
+void create_prune_table_pseudo_cross_corner(
+    int index2, int depth, const std::vector<int> &table1,
+    const std::vector<int> &table2, std::vector<unsigned char> &prune_table,
+    const std::string &log_prefix);
+void create_prune_table_pseudo_xcross(int index3, int index2, int depth,
+                                      const std::vector<int> &table1,
+                                      const std::vector<int> &table2,
+                                      std::vector<unsigned char> &prune_table,
+                                      const std::string &log_prefix);
+void create_prune_table_pseudo_pair(int index1, int index2, int size1,
+                                    int size2, int depth,
+                                    const std::vector<int> &table1,
+                                    const std::vector<int> &table2,
+                                    std::vector<unsigned char> &prune_table,
+                                    const std::string &log_prefix);
+
 void PruneTableManager::generateAllSequentially() {
   std::cout << "[PruneTable] Generating tables sequentially to save memory..."
             << std::endl;
@@ -293,6 +310,73 @@ void PruneTableManager::generateAllSequentially() {
     mtm.releaseCorner3Table();
   }
   std::vector<unsigned char>().swap(pseudo_cross_C4_C5_C6_prune);
+
+  // --- Pseudo Cross/XCross/Pair 变体表 (共 36 个) ---
+  std::vector<int> corner_indices = {12, 15, 18, 21}; // C4, C5, C6, C7
+  std::vector<int> edge_indices = {0, 2, 4, 6};       // E0, E1, E2, E3
+  std::vector<unsigned char> temp_table;
+
+  // 22. Pseudo Cross + Corner 变体表 (4 个: C4, C5, C6, C7)
+  std::cout << "[PruneTable] Generating Pseudo Cross + Corner variants..."
+            << std::endl;
+  mtm.loadCrossTable();
+  mtm.loadCornerTable();
+  for (int c = 0; c < 4; ++c) {
+    std::string fn =
+        "prune_table_pseudo_cross_C" + std::to_string(c + 4) + ".bin";
+    if (!loadTable(temp_table, fn)) {
+      std::cout << "  Generating " << fn << "..." << std::endl;
+      create_prune_table_pseudo_cross_corner(
+          corner_indices[c], 10, mtm.getCrossTable(), mtm.getCornerTable(),
+          temp_table, "[Gen Cross C" + std::to_string(c + 4) + "]");
+      saveTable(temp_table, fn);
+    }
+    std::vector<unsigned char>().swap(temp_table);
+  }
+
+  // 23. Pseudo XCross 变体表 (16 个: C{4-7}_into_slot{0-3})
+  std::cout << "[PruneTable] Generating Pseudo XCross variants..." << std::endl;
+  for (int c = 0; c < 4; ++c) {
+    for (int e = 0; e < 4; ++e) {
+      std::string fn = "prune_table_pseudo_cross_C" + std::to_string(c + 4) +
+                       "_into_slot" + std::to_string(e) + ".bin";
+      if (!loadTable(temp_table, fn)) {
+        std::cout << "  Generating " << fn << "..." << std::endl;
+        create_prune_table_pseudo_xcross(edge_indices[e], corner_indices[c], 10,
+                                         mtm.getCrossTable(),
+                                         mtm.getCornerTable(), temp_table,
+                                         "[Gen XC C" + std::to_string(c + 4) +
+                                             " S" + std::to_string(e) + "]");
+        saveTable(temp_table, fn);
+      }
+      std::vector<unsigned char>().swap(temp_table);
+    }
+  }
+  mtm.releaseCrossTable();
+  mtm.releaseCornerTable();
+
+  // 24. Pseudo Pair 变体表 (16 个: C{4-7}_E{0-3})
+  std::cout << "[PruneTable] Generating Pseudo Pair variants..." << std::endl;
+  mtm.loadEdgeTable();
+  mtm.loadCornerTable();
+  for (int c = 0; c < 4; ++c) {
+    for (int e = 0; e < 4; ++e) {
+      std::string fn = "prune_table_pseudo_pair_C" + std::to_string(c + 4) +
+                       "_E" + std::to_string(e) + ".bin";
+      if (!loadTable(temp_table, fn)) {
+        std::cout << "  Generating " << fn << "..." << std::endl;
+        create_prune_table_pseudo_pair(edge_indices[e], corner_indices[c], 24,
+                                       24, 8, mtm.getEdgeTable(),
+                                       mtm.getCornerTable(), temp_table,
+                                       "[Gen Pair C" + std::to_string(c + 4) +
+                                           " E" + std::to_string(e) + "]");
+        saveTable(temp_table, fn);
+      }
+      std::vector<unsigned char>().swap(temp_table);
+    }
+  }
+  mtm.releaseEdgeTable();
+  mtm.releaseCornerTable();
 
   std::cout << "[PruneTable] Sequential generation complete." << std::endl;
 }
@@ -1398,4 +1482,262 @@ void create_prune_table_xcross_corn3(
   for (long long i = 0; i < total; ++i)
     if (tmp[i] != 255)
       set_prune(pt, i, tmp[i]);
+}
+
+// --- Pseudo Cross/XCross/Pair 变体表生成函数 ---
+// NOTE: 以下函数用于生成 C{4-7} 变体的剪枝表
+
+// 生成 Pseudo Cross + Corner 表 (例如: prune_table_pseudo_cross_C4.bin)
+// index2: corner 初始索引 (如 12=C4, 15=C5, 18=C6, 21=C7)
+void create_prune_table_pseudo_cross_corner(
+    int index2, int depth, const std::vector<int> &table1,
+    const std::vector<int> &table2, std::vector<unsigned char> &prune_table,
+    const std::string &log_prefix) {
+  int size1 = 190080, size2 = 24, size = size1 * size2;
+  std::vector<unsigned char> temp_table(size, 0xF);
+  int next_i, index1_tmp, index2_tmp, next_d;
+  std::vector<int> a = {16, 18, 20, 22};
+  int index1 = array_to_index(a, 4, 2, 12);
+  temp_table[index1 * size2 + index2] = 0;
+  temp_table[table1[index1 * 24 + 3] + table2[index2 * 18 + 3]] = 0;
+  temp_table[table1[index1 * 24 + 4] + table2[index2 * 18 + 4]] = 0;
+  temp_table[table1[index1 * 24 + 5] + table2[index2 * 18 + 5]] = 0;
+  long long count = 0;
+  for (int i = 0; i < size; ++i)
+    if (temp_table[i] == 0)
+      count++;
+  std::cout << "  " << log_prefix << " Depth 0: " << count << std::endl;
+  for (int d = 0; d < depth; ++d) {
+    next_d = d + 1;
+    if (next_d >= 15)
+      break;
+    long long next_count = 0;
+    for (int i = 0; i < size; ++i) {
+      if (temp_table[i] == d) {
+        index1_tmp = (i / size2) * 24;
+        index2_tmp = (i % size2) * 18;
+        for (int j = 0; j < 18; ++j) {
+          next_i = table1[index1_tmp + j] + table2[index2_tmp + j];
+          if (temp_table[next_i] == 0xF) {
+            temp_table[next_i] = next_d;
+            next_count++;
+          }
+        }
+      }
+    }
+    std::cout << "  " << log_prefix << " Depth " << next_d << ": " << next_count
+              << std::endl;
+  }
+  prune_table.resize((size + 1) / 2);
+  std::fill(prune_table.begin(), prune_table.end(), 0xFF);
+  for (int i = 0; i < size; ++i)
+    if (temp_table[i] != 0xF)
+      set_prune(prune_table, i, temp_table[i]);
+}
+
+// 生成 Pseudo XCross 表 (例如: prune_table_pseudo_cross_C4_into_slot0.bin)
+// index3: edge 初始索引 (0, 2, 4, 6 for E0-E3)
+// index2: corner 初始索引 (12, 15, 18, 21 for C4-C7)
+void create_prune_table_pseudo_xcross(int index3, int index2, int depth,
+                                      const std::vector<int> &table1,
+                                      const std::vector<int> &table2,
+                                      std::vector<unsigned char> &prune_table,
+                                      const std::string &log_prefix) {
+  int size1 = 190080, size2 = 24, size = size1 * size2;
+  std::vector<unsigned char> temp_table(size, 0xF);
+  int next_i, index1_tmp, index2_tmp, next_d;
+
+  // NOTE: 统一使用 slot0 初始化序列，支持运行时 Conj 复用
+  // 原来的代码根据 index3 选择不同的 appl_moves，这导致表无法互换
+  // 现在所有表都使用相同的初始化，通过 Conj 变换在运行时适配不同 slot
+  std::vector<std::string> appl_moves = {"L U L'", "L U' L'", "B' U B",
+                                         "B' U' B"};
+  std::vector<int> tmp_moves = {0, 3, 4, 5};
+  (void)index3; // 参数保留但不再使用
+
+  std::vector<int> a = {16, 18, 20, 22};
+  int index1 = array_to_index(a, 4, 2, 12);
+  temp_table[index1 * size2 + index2] = 0;
+  temp_table[table1[index1 * 24 + 3] + table2[index2 * 18 + 3]] = 0;
+  temp_table[table1[index1 * 24 + 4] + table2[index2 * 18 + 4]] = 0;
+  temp_table[table1[index1 * 24 + 5] + table2[index2 * 18 + 5]] = 0;
+
+  // 初始化所有 pseudo 等效状态
+  for (int i = 0; i < 4; i++) {
+    int index1_tmp_2 = index1 * 24, index2_tmp_2 = index2;
+    index1_tmp_2 = table1[index1_tmp_2 + tmp_moves[index2 / 3 - 4]];
+    index2_tmp_2 = table2[index2_tmp_2 * 18 + tmp_moves[index2 / 3 - 4]];
+    for (int m : string_to_alg(appl_moves[i])) {
+      index1_tmp_2 = table1[index1_tmp_2 + m];
+      index2_tmp_2 = table2[index2_tmp_2 * 18 + m];
+    }
+    temp_table[index1_tmp_2 + index2_tmp_2] = 0;
+    temp_table[table1[index1_tmp_2 + 3] + table2[index2_tmp_2 * 18 + 3]] = 0;
+    temp_table[table1[index1_tmp_2 + 4] + table2[index2_tmp_2 * 18 + 4]] = 0;
+    temp_table[table1[index1_tmp_2 + 5] + table2[index2_tmp_2 * 18 + 5]] = 0;
+    temp_table[table1[table1[index1_tmp_2] + 3] +
+               table2[table2[index2_tmp_2 * 18] * 18 + 3]] = 0;
+    temp_table[table1[table1[index1_tmp_2] + 4] +
+               table2[table2[index2_tmp_2 * 18] * 18 + 4]] = 0;
+    temp_table[table1[table1[index1_tmp_2] + 5] +
+               table2[table2[index2_tmp_2 * 18] * 18 + 5]] = 0;
+    temp_table[table1[index1_tmp_2 + 1] + table2[index2_tmp_2 * 18 + 1]] = 0;
+    temp_table[table1[table1[index1_tmp_2 + 1] + 3] +
+               table2[table2[index2_tmp_2 * 18 + 1] * 18 + 3]] = 0;
+    temp_table[table1[table1[index1_tmp_2 + 1] + 4] +
+               table2[table2[index2_tmp_2 * 18 + 1] * 18 + 4]] = 0;
+    temp_table[table1[table1[index1_tmp_2 + 1] + 5] +
+               table2[table2[index2_tmp_2 * 18 + 1] * 18 + 5]] = 0;
+    temp_table[table1[index1_tmp_2 + 2] + table2[index2_tmp_2 * 18 + 2]] = 0;
+    temp_table[table1[table1[index1_tmp_2 + 2] + 3] +
+               table2[table2[index2_tmp_2 * 18 + 2] * 18 + 3]] = 0;
+    temp_table[table1[table1[index1_tmp_2 + 2] + 4] +
+               table2[table2[index2_tmp_2 * 18 + 2] * 18 + 4]] = 0;
+    temp_table[table1[table1[index1_tmp_2 + 2] + 5] +
+               table2[table2[index2_tmp_2 * 18 + 2] * 18 + 5]] = 0;
+  }
+
+  long long count = 0;
+  for (int i = 0; i < size; ++i)
+    if (temp_table[i] == 0)
+      count++;
+  std::cout << "  " << log_prefix << " Depth 0: " << count << std::endl;
+
+  for (int d = 0; d < depth; ++d) {
+    next_d = d + 1;
+    if (next_d >= 15)
+      break;
+    long long next_count = 0;
+    for (int i = 0; i < size; ++i) {
+      if (temp_table[i] == d) {
+        index1_tmp = (i / size2) * 24;
+        index2_tmp = (i % size2) * 18;
+        for (int j = 0; j < 18; ++j) {
+          next_i = table1[index1_tmp + j] + table2[index2_tmp + j];
+          if (temp_table[next_i] == 0xF) {
+            temp_table[next_i] = next_d;
+            next_count++;
+          }
+        }
+      }
+    }
+    std::cout << "  " << log_prefix << " Depth " << next_d << ": " << next_count
+              << std::endl;
+  }
+  prune_table.resize((size + 1) / 2);
+  std::fill(prune_table.begin(), prune_table.end(), 0xFF);
+  for (int i = 0; i < size; ++i)
+    if (temp_table[i] != 0xF)
+      set_prune(prune_table, i, temp_table[i]);
+}
+
+// 生成 Pseudo Pair 表 (例如: prune_table_pseudo_pair_C4_E0.bin)
+// index1: edge 初始索引 (0, 2, 4, 6)
+// index2: corner 初始索引 (12, 15, 18, 21)
+void create_prune_table_pseudo_pair(int index1, int index2, int size1,
+                                    int size2, int depth,
+                                    const std::vector<int> &table1,
+                                    const std::vector<int> &table2,
+                                    std::vector<unsigned char> &prune_table,
+                                    const std::string &log_prefix) {
+  int size = size1 * size2;
+  std::vector<unsigned char> temp_table(size, 0xF);
+  int start = index1 * size2 + index2, next_i, index1_tmp, index2_tmp, next_d;
+  temp_table[start] = 0;
+  temp_table[table1[index1 * 18 + 3] * size2 + table2[index2 * 18 + 3]] = 0;
+  temp_table[table1[index1 * 18 + 4] * size2 + table2[index2 * 18 + 4]] = 0;
+  temp_table[table1[index1 * 18 + 5] * size2 + table2[index2 * 18 + 5]] = 0;
+
+  std::vector<std::string> appl_moves;
+  std::vector<int> tmp_moves;
+  if (index1 == 0) {
+    appl_moves = {"L U L'", "L U' L'", "B' U B", "B' U' B"};
+    tmp_moves = {0, 3, 4, 5};
+  }
+  if (index1 == 2) {
+    appl_moves = {"R' U R", "R' U' R", "B U B'", "B U' B'"};
+    tmp_moves = {5, 0, 3, 4};
+  }
+  if (index1 == 4) {
+    appl_moves = {"R U R'", "R U' R'", "F' U F", "F' U' F"};
+    tmp_moves = {4, 5, 0, 3};
+  }
+  if (index1 == 6) {
+    appl_moves = {"L' U L", "L' U' L", "F U F'", "F U' F'"};
+    tmp_moves = {3, 4, 5, 0};
+  }
+
+  for (int i = 0; i < 4; i++) {
+    int index1_tmp_2 = index1, index2_tmp_2 = index2;
+    index1_tmp_2 = table1[index1_tmp_2 * 18 + tmp_moves[index2 / 3 - 4]];
+    index2_tmp_2 = table2[index2_tmp_2 * 18 + tmp_moves[index2 / 3 - 4]];
+    for (int m : string_to_alg(appl_moves[i])) {
+      index1_tmp_2 = table1[index1_tmp_2 * 18 + m];
+      index2_tmp_2 = table2[index2_tmp_2 * 18 + m];
+    }
+    temp_table[index1_tmp_2 * size2 + index2_tmp_2] = 0;
+    temp_table[table1[index1_tmp_2 * 18 + 3] * size2 +
+               table2[index2_tmp_2 * 18 + 3]] = 0;
+    temp_table[table1[index1_tmp_2 * 18 + 4] * size2 +
+               table2[index2_tmp_2 * 18 + 4]] = 0;
+    temp_table[table1[index1_tmp_2 * 18 + 5] * size2 +
+               table2[index2_tmp_2 * 18 + 5]] = 0;
+    temp_table[table1[index1_tmp_2 * 18] * size2 + table2[index2_tmp_2 * 18]] =
+        0;
+    temp_table[table1[table1[index1_tmp_2 * 18] * 18 + 3] * size2 +
+               table2[table2[index2_tmp_2 * 18] * 18 + 3]] = 0;
+    temp_table[table1[table1[index1_tmp_2 * 18] * 18 + 4] * size2 +
+               table2[table2[index2_tmp_2 * 18] * 18 + 4]] = 0;
+    temp_table[table1[table1[index1_tmp_2 * 18] * 18 + 5] * size2 +
+               table2[table2[index2_tmp_2 * 18] * 18 + 5]] = 0;
+    temp_table[table1[index1_tmp_2 * 18 + 1] * size2 +
+               table2[index2_tmp_2 * 18 + 1]] = 0;
+    temp_table[table1[table1[index1_tmp_2 * 18 + 1] * 18 + 3] * size2 +
+               table2[table2[index2_tmp_2 * 18 + 1] * 18 + 3]] = 0;
+    temp_table[table1[table1[index1_tmp_2 * 18 + 1] * 18 + 4] * size2 +
+               table2[table2[index2_tmp_2 * 18 + 1] * 18 + 4]] = 0;
+    temp_table[table1[table1[index1_tmp_2 * 18 + 1] * 18 + 5] * size2 +
+               table2[table2[index2_tmp_2 * 18 + 1] * 18 + 5]] = 0;
+    temp_table[table1[index1_tmp_2 * 18 + 2] * size2 +
+               table2[index2_tmp_2 * 18 + 2]] = 0;
+    temp_table[table1[table1[index1_tmp_2 * 18 + 2] * 18 + 3] * size2 +
+               table2[table2[index2_tmp_2 * 18 + 2] * 18 + 3]] = 0;
+    temp_table[table1[table1[index1_tmp_2 * 18 + 2] * 18 + 4] * size2 +
+               table2[table2[index2_tmp_2 * 18 + 2] * 18 + 4]] = 0;
+    temp_table[table1[table1[index1_tmp_2 * 18 + 2] * 18 + 5] * size2 +
+               table2[table2[index2_tmp_2 * 18 + 2] * 18 + 5]] = 0;
+  }
+
+  long long count = 0;
+  for (int i = 0; i < size; ++i)
+    if (temp_table[i] == 0)
+      count++;
+  std::cout << "  " << log_prefix << " Depth 0: " << count << std::endl;
+
+  for (int d = 0; d < depth; ++d) {
+    next_d = d + 1;
+    if (next_d >= 15)
+      break;
+    long long next_count = 0;
+    for (int i = 0; i < size; ++i) {
+      if (temp_table[i] == d) {
+        index1_tmp = (i / size2) * 18;
+        index2_tmp = (i % size2) * 18;
+        for (int j = 0; j < 18; ++j) {
+          next_i = table1[index1_tmp + j] * size2 + table2[index2_tmp + j];
+          if (temp_table[next_i] == 0xF) {
+            temp_table[next_i] = next_d;
+            next_count++;
+          }
+        }
+      }
+    }
+    std::cout << "  " << log_prefix << " Depth " << next_d << ": " << next_count
+              << std::endl;
+  }
+  prune_table.resize((size + 1) / 2);
+  std::fill(prune_table.begin(), prune_table.end(), 0xFF);
+  for (int i = 0; i < size; ++i)
+    if (temp_table[i] != 0xF)
+      set_prune(prune_table, i, temp_table[i]);
 }

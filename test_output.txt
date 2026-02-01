@@ -1,0 +1,75 @@
+=== Simple Conj Verification (Cross+Corner Only) ===
+[MoveTable] Loading move tables...
+[33m[LOAD] move_table_edges_6.bin: [------------------------------] 2.2% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#-----------------------------] 4.4% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#-----------------------------] 6.6% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [##----------------------------] 8.8% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [###---------------------------] 10.9% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [###---------------------------] 13.1% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [####--------------------------] 15.3% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#####-------------------------] 17.5% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#####-------------------------] 19.7% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [######------------------------] 21.9% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#######-----------------------] 24.1% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#######-----------------------] 26.3% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [########----------------------] 28.5% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#########---------------------] 30.6% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#########---------------------] 32.8% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [##########--------------------] 35.0% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [###########-------------------] 37.2% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [###########-------------------] 39.4% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [############------------------] 41.6% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#############-----------------] 43.8% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#############-----------------] 46.0% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [##############----------------] 48.2% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [###############---------------] 50.3% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [###############---------------] 52.5% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [################--------------] 54.7% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#################-------------] 56.9% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#################-------------] 59.1% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [##################------------] 61.3% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [###################-----------] 63.5% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [###################-----------] 65.7% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [####################----------] 67.9% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#####################---------] 70.1% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#####################---------] 72.2% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [######################--------] 74.4% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [######################--------] 76.6% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#######################-------] 78.8% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [########################------] 81.0% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [########################------] 83.2% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#########################-----] 85.4% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [##########################----] 87.6% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [##########################----] 89.8% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [###########################---] 91.9% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [############################--] 94.1% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [############################--] 96.3% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [#############################-] 98.5% (2.86GB)[0m
+[33m[LOAD] move_table_edges_6.bin: [##############################] 100.0% (2.86GB)[0m
+
+Tables loaded: C4_slot0=2280960 C5_slot1=2280960
+Starting 10000 tests...
+MISMATCH t=0 val_A(C5_s1)=4 val_B(C4_s0)=0
+  idx_a=1451743 idx_b=4500492
+MISMATCH t=1 val_A(C5_s1)=4 val_B(C4_s0)=0
+  idx_a=4229445 idx_b=4500492
+MISMATCH t=2 val_A(C5_s1)=4 val_B(C4_s0)=0
+  idx_a=49221 idx_b=4500492
+MISMATCH t=3 val_A(C5_s1)=3 val_B(C4_s0)=0
+  idx_a=911661 idx_b=4500492
+MISMATCH t=4 val_A(C5_s1)=5 val_B(C4_s0)=0
+  idx_a=3053860 idx_b=4500492
+Progress: 1000/10000 (mismatches=970)
+Progress: 2000/10000 (mismatches=1944)
+Progress: 3000/10000 (mismatches=2915)
+Progress: 4000/10000 (mismatches=3865)
+Progress: 5000/10000 (mismatches=4836)
+Progress: 6000/10000 (mismatches=5797)
+Progress: 7000/10000 (mismatches=6769)
+Progress: 8000/10000 (mismatches=7740)
+Progress: 9000/10000 (mismatches=8705)
+Progress: 10000/10000 (mismatches=9665)
+
+=== Results ===
+Tests: 10000 Mismatches: 9665
+FAIL: Tables are NOT equivalent via Conj.
