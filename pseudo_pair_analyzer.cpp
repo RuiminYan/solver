@@ -216,7 +216,7 @@ struct xcross_analyzer2 {
     }
     std::cout << "[Init] Corner3 Prune Tables loaded." << std::endl;
 
-    // 6. [新增] Load Corner2 Prune Tables for Search 3
+    // 6. [重构] Load Corner2 Prune Tables (只加载规范化表)
     mtm.loadCorner2Table();
     p_corner2_move_ptr = mtm.getCorner2TablePtr();
 
@@ -230,29 +230,10 @@ struct xcross_analyzer2 {
                 << std::endl;
       exit(1);
     }
-    if (!load_vector(prune_c4c7, "prune_table_pseudo_cross_C4_C7.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_C4_C7.bin"
-                << std::endl;
-      exit(1);
-    }
-    if (!load_vector(prune_c5c6, "prune_table_pseudo_cross_C5_C6.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_C5_C6.bin"
-                << std::endl;
-      exit(1);
-    }
-    if (!load_vector(prune_c5c7, "prune_table_pseudo_cross_C5_C7.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_C5_C7.bin"
-                << std::endl;
-      exit(1);
-    }
-    if (!load_vector(prune_c6c7, "prune_table_pseudo_cross_C6_C7.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_C6_C7.bin"
-                << std::endl;
-      exit(1);
-    }
-    std::cout << "[Init] Corner2 Prune Tables loaded." << std::endl;
+    std::cout << "[Init] Corner2 Prune Tables loaded (C4C5, C4C6 only)."
+              << std::endl;
 
-    // 7. [新增] Load Edge2 Prune Tables for Search 3
+    // 7. [重构] Load Edge2 Prune Tables (只加载规范化表)
     mtm.loadEdges2Table();
     p_edge2_move_ptr = mtm.getEdges2TablePtr();
 
@@ -266,27 +247,8 @@ struct xcross_analyzer2 {
                 << std::endl;
       exit(1);
     }
-    if (!load_vector(prune_e0e3, "prune_table_pseudo_cross_E0_E3.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_E0_E3.bin"
-                << std::endl;
-      exit(1);
-    }
-    if (!load_vector(prune_e1e2, "prune_table_pseudo_cross_E1_E2.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_E1_E2.bin"
-                << std::endl;
-      exit(1);
-    }
-    if (!load_vector(prune_e1e3, "prune_table_pseudo_cross_E1_E3.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_E1_E3.bin"
-                << std::endl;
-      exit(1);
-    }
-    if (!load_vector(prune_e2e3, "prune_table_pseudo_cross_E2_E3.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_E2_E3.bin"
-                << std::endl;
-      exit(1);
-    }
-    std::cout << "[Init] Edge2 Prune Tables loaded." << std::endl;
+    std::cout << "[Init] Edge2 Prune Tables loaded (E0E1, E0E2 only)."
+              << std::endl;
 
     // 8. [新增] Register aux_registry
     // Corner3 表 (multiplier = 9072)
@@ -299,20 +261,12 @@ struct xcross_analyzer2 {
     aux_registry[{0, 1, 3}] = {prune_e0e1e3.data(), p_edge3_move_ptr, 10560};
     aux_registry[{0, 2, 3}] = {prune_e0e2e3.data(), p_edge3_move_ptr, 10560};
     aux_registry[{1, 2, 3}] = {prune_e1e2e3.data(), p_edge3_move_ptr, 10560};
-    // Corner2 表 (multiplier = 504)
-    aux_registry[{4, 5}] = {prune_c4c5.data(), p_corner2_move_ptr, 504};
-    aux_registry[{4, 6}] = {prune_c4c6.data(), p_corner2_move_ptr, 504};
-    aux_registry[{4, 7}] = {prune_c4c7.data(), p_corner2_move_ptr, 504};
-    aux_registry[{5, 6}] = {prune_c5c6.data(), p_corner2_move_ptr, 504};
-    aux_registry[{5, 7}] = {prune_c5c7.data(), p_corner2_move_ptr, 504};
-    aux_registry[{6, 7}] = {prune_c6c7.data(), p_corner2_move_ptr, 504};
-    // Edge2 表 (multiplier = 528)
-    aux_registry[{0, 1}] = {prune_e0e1.data(), p_edge2_move_ptr, 528};
-    aux_registry[{0, 2}] = {prune_e0e2.data(), p_edge2_move_ptr, 528};
-    aux_registry[{0, 3}] = {prune_e0e3.data(), p_edge2_move_ptr, 528};
-    aux_registry[{1, 2}] = {prune_e1e2.data(), p_edge2_move_ptr, 528};
-    aux_registry[{1, 3}] = {prune_e1e3.data(), p_edge2_move_ptr, 528};
-    aux_registry[{2, 3}] = {prune_e2e3.data(), p_edge2_move_ptr, 528};
+    // Corner2 表 (multiplier = 504) - 只注册规范化表
+    aux_registry[{4, 5}] = {prune_c4c5.data(), p_corner2_move_ptr, 504}; // 邻接
+    aux_registry[{4, 6}] = {prune_c4c6.data(), p_corner2_move_ptr, 504}; // 对角
+    // Edge2 表 (multiplier = 528) - 只注册规范化表
+    aux_registry[{0, 1}] = {prune_e0e1.data(), p_edge2_move_ptr, 528}; // 邻接
+    aux_registry[{0, 2}] = {prune_e0e2.data(), p_edge2_move_ptr, 528}; // 对角
 
     std::cout << "All tables initialized." << std::endl;
     tables_initialized = true;
