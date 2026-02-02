@@ -447,3 +447,60 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 | **Huge** | `huge_neighbor` / `huge_diagonal` | 2 | 9.99 GB | 复用 Huge 表 |
 | **总计** | | **12** | **~28 GB** | (含 Huge 表) |
 
+
+## Search 阶段剪枝表使用详解 (Search Pipeline Tables)
+
+以下表格详细展示了各 Analyzer 在 4 个搜索阶段中如何组合使用剪枝表。
+
+### 1. Pseudo Pair Analyzer (V9.0 Optimized)
+核心策略：**Base/XC 表负责整体进度，EC 表负责 Pair 配对，Aux 表辅助 Corner/Edge 归位。**
+
+| 阶段 | 目标 (Target) | 主要剪枝表 (Primary) | 辅助/次要剪枝表 (Secondary) | 索引逻辑 (Indexing) |
+|---|---|---|---|---|
+| **S1** | Pseudo Cross + Pair | `XC[diff1]` | `EC[s1*4+ps1]` | `XC(conj) + EC(flat)` |
+| **S2** | Pseudo XCross + Pair | `PseudoBase[diff2]` | `XC[diff1]`, `EC`, `Base[C4]` | `Base(conj) + XC(conj)` |
+| **S3** | Pseudo XXCross + Pair | `XC[diff3]` | `Aux C2/E2`, `Base`, `EC` | `Aux(conj+rot) + XC(conj)` |
+| **S4** | Pseudo XXXCross + Pair | `XC[diff4]` | `Aux C3/E3`, `Base`, `EC` | `Aux(conj+rot) + XC(conj)` |
+
+> **注**: `PseudoBase` 和 `Base` 在代码中通过 Conj 状态追踪复用，实际物理表仅需 Base(1) + XC(4)。
+
+### 2. Std Analyzer
+策略：标准层级递进，后期依赖 Huge Table 解决复杂 F2L 情形。
+
+| 阶段 | 目标 | 核心剪枝表 | 备注 |
+|---|---|---|---|
+| **S1** | Cross | `Cross` | 基础剪枝 |
+| **S2** | XCross | `XCross Base` (C4+E0) | 加入第一个 F2L 组 |
+| **S3** | XXCross | `Huge Neighbor` / `Huge Diag` | 及其 Huge Table |
+| **S4** | XXXCross | `Huge Neighbor` / `Huge Diag` | 及其 Huge Table |
+
+### 3. Pseudo Analyzer
+策略：依赖 Aux 表辅助定位 Pseudo 块。
+
+| 阶段 | 目标 | 核心剪枝表 | 组合/辅助表 |
+|---|---|---|---|
+| **S1** | Pseudo Cross | `Pseudo Cross` | - |
+| **S2** | Pseudo XCross | `Pseudo Base` (C4+Ex) | `Aux Edge2` (E0E1/E0E2) |
+| **S3** | Pseudo XXCross | `Pseudo Base` | `Aux Corn2` (C4C5), `Aux Edge2` |
+| **S4** | Pseudo XXXCross | `Pseudo Base` | `Aux Corn3` (C4C5C6), `Aux Edge3` |
+
+### 4. Pair Analyzer
+策略：在 Std 基础上增加 Pair 表约束。
+
+| 阶段 | 目标 | 核心剪枝表 | 组合/辅助表 |
+|---|---|---|---|
+| **S1** | Cross + Pair | `Cross C4` | `Pair Base` (C4+E0) |
+| **S2** | XCross + Pair | `XCross Base` | `Pair Base` |
+| **S3** | XXCross + Pair | `Huge Neighbor` | `XCross`, `Pair Base` |
+| **S4** | XXXCross + Pair | `Huge Neighbor` | `XCross`, `Pair Base` |
+
+### 5. EO Cross Analyzer
+策略：级联剪枝 (Cascaded Pruning)，每一层都检查多个表。
+
+| 阶段 | 目标 | 级联检查 1 | 级联检查 2 | 级联检查 3 |
+|---|---|---|---|---|
+| **S1** | XC + EO | `Dep EO` | `XC Base` | - |
+| **S2** | XXC + EO | `Dep EO` | `XC Base` | `Plus Edge`, `Plus Corn` |
+| **S3** | XXXC + EO | `Dep EO` | `XC Base` | `Plus Edge/Corn`, `3 Corner` |
+| **S4** | XXXXC + EO | `Huge` | - | - |
+
