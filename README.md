@@ -493,10 +493,10 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 
 | 阶段 | 目标 | 核心剪枝表 | 组合/辅助表 |
 |---|---|---|---|
-| **S1** | Pseudo Cross | `Pseudo Cross` | - |
-| **S2** | Pseudo XCross | `Pseudo Base` (C4+Ex) | `Aux Edge2` (E0E1/E0E2) |
-| **S3** | Pseudo XXCross | `Pseudo Base` | `Aux Corn2` (C4C5), `Aux Edge2` |
-| **S4** | Pseudo XXXCross | `Pseudo Base` | `Aux Corn3` (C4C5C6), `Aux Edge3` |
+| **search_1** | Pseudo Cross | `Pseudo Cross` | - |
+| **search_2** | Pseudo XCross | `Pseudo Base` (C4+Ex) | `Aux Edge2` (E0E1/E0E2) |
+| **search_3** | Pseudo XXCross | `Pseudo Base` | `Aux Corn2` (C4C5), `Aux Edge2` |
+| **search_3** | Pseudo XXXCross | `Pseudo Base` | `Aux Corn3` (C4C5C6), `Aux Edge3` |
 
 ### 4. Pair Analyzer
 策略：在 Std 基础上增加 Pair 表约束。
