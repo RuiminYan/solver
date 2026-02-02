@@ -129,7 +129,6 @@ struct xcross_analyzer {
   static inline std::vector<int> s_dep_mt, s_eo_mt;
   static inline std::vector<unsigned char> s_prune_t, s_prune_dep_eo;
   static inline std::vector<unsigned char> s_prune_xcross_base;
-  static inline std::vector<unsigned char> s_prune_3c;
 
   static inline const int *s_p_multi = nullptr;
   static inline const int *s_p_corner = nullptr;
@@ -141,7 +140,6 @@ struct xcross_analyzer {
   static inline const unsigned char *s_p_prune = nullptr;
   static inline const unsigned char *s_p_prune_dep_eo = nullptr;
   static inline const unsigned char *s_p_prune_base = nullptr;
-  static inline const unsigned char *s_p_prune_3c = nullptr;
   static inline const unsigned char *s_p_huge_neighbor =
       nullptr; // Huge Neighbor 表
   static inline const unsigned char *s_p_huge_diagonal =
@@ -152,7 +150,6 @@ struct xcross_analyzer {
   const int *p_edge6 = nullptr, *p_corn2 = nullptr; // Edge6/Corner2 Move Tables
   const unsigned char *p_prune, *p_prune_dep_eo;
   const unsigned char *p_prune_base = nullptr;
-  const unsigned char *p_prune_3c = nullptr;
   const unsigned char *p_huge_neighbor = nullptr; // Huge Neighbor 表
   const unsigned char *p_huge_diagonal = nullptr; // Huge Diagonal 表
 
@@ -233,20 +230,7 @@ struct xcross_analyzer {
     // NOTE: Plus Tables (E1/E2/E3/C5/C6/C7) 已移除，改用 Huge Neighbor/Diagonal
     // 表
 
-    // 3. 3-Corner Table (C4+C5+C6)
-    std::cout << "[Init] Checking XCross+C4+C5+C6 Table..." << std::endl;
-    std::string fn_3c = "prune_table_cross_C4_C5_C6.bin";
-    if (!load_vector(s_prune_3c, fn_3c)) {
-      std::cout << "  Generating " << fn_3c << " (Depth 14) ..." << std::endl;
-      int c5 = 15;
-      int c6 = 18;
-      create_prune_table_xcross_corn3(187520, 12, c5, c6, 24 * 22 * 20 * 18, 24,
-                                      24, 24, 14, mm.getCrossTable(),
-                                      mm.getCornerTable(), mm.getCornerTable(),
-                                      mm.getCornerTable(), s_prune_3c);
-      save_vector(s_prune_3c, fn_3c);
-    }
-    s_p_prune_3c = s_prune_3c.data();
+    // NOTE: 3-Corner Table (C4+C5+C6) 已移除
 
     s_initialized = true;
   }
@@ -263,7 +247,6 @@ struct xcross_analyzer {
     p_prune = s_p_prune;
     p_prune_dep_eo = s_p_prune_dep_eo;
     p_prune_base = s_p_prune_base;
-    p_prune_3c = s_p_prune_3c;
     p_huge_neighbor = s_p_huge_neighbor; // Huge Neighbor 表
     p_huge_diagonal = s_p_huge_diagonal; // Huge Diagonal 表
   }
