@@ -382,62 +382,66 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 统计各 Analyzer 所需加载的剪枝表及优化情况。
 
 ### 1. Std Analyzer
-使用标准 Conj 优化，从 Slot 0 视角追踪所有 4 个槽位。
+资源占用最小，核心依赖 Great Huge Tables。
 
 | 表类型 | 文件名模式 | 数量 | 说明 |
 |---|---|---|---|
-| **Cross** | (PruneTableManager) | 1 | 标准 Cross 剪枝表 |
-| **XCross Base** | `prune_table_cross_C4_E0.bin` | 1 | XCross 基准表 (C4+E0) |
-| **Huge Neighbor** | `prune_table_huge_neighbor.bin` | 1 | 邻近 F2L 对表 (Edge6+Corn2) |
-| **Huge Diagonal** | `prune_table_huge_diagonal.bin` | 1 | 对角 F2L 对表 (Edge6+Corn2) |
+| **Cross** | `prune_table_cross.bin` | 1 | 标准 Cross (24MB) |
+| **XCross Base** | `prune_table_cross_C4_E0.bin` | 1 | XCross 基准 (C4+E0) |
+| **Huge Neighbor** | `prune_table_cross_C4_E0_C5_E1.bin` | 1 | 邻近 F2L (Edge6+Corn2) (~160MB) |
+| **Huge Diagonal** | `prune_table_cross_C4_E0_C6_E2.bin` | 1 | 对角 F2L (Edge6+Corn2) (~160MB) |
+| **总计** | | **4** | |
 
 ### 2. Pseudo Analyzer
-需要加载完整的 Pseudo Cross 表以及多种辅助剪枝表。
+加载大量辅助表以支持任意位置的 Pseudo search。
 
 | 表类型 | 文件名模式 | 数量 | 说明 |
 |---|---|---|---|
-| **Pseudo Cross** | (PruneTableManager) | 1 | 16 种状态合并表 |
-| **Pseudo Base** | `prune_table_pseudo_cross_C4_E{0-3}.bin` | 4 | 基准剪枝 (diff 选表) |
-| **Huge Neighbor** | `prune_table_huge_neighbor.bin` | 1 | 邻近 F2L 对表 |
-| **E0E1 (邻棱)** | `prune_table_pseudo_cross_E0_E1.bin` | 1 | 邻棱辅助剪枝 |
-| **E0E2 (对棱)** | `prune_table_pseudo_cross_E0_E2.bin` | 1 | 对棱辅助剪枝 |
-| **C4C5 (邻角)** | `prune_table_pseudo_cross_C4_C5.bin` | 1 | 邻角辅助剪枝 |
-| **C4C6 (对角)** | `prune_table_pseudo_cross_C4_C6.bin` | 1 | 对角辅助剪枝 |
-| **C4C5C6 (三角)** | `prune_table_pseudo_cross_C4_C5_C6.bin` | 1 | 三角块辅助剪枝 |
-
+| **Pseudo Cross** | `prune_table_pseudo_cross.bin` | 1 | Pseudo Cross 主表 |
+| **Pseudo Base** | `prune_table_pseudo_cross_C4_E{0-3}.bin` | 4 | 基准剪枝 (C4+Ex) |
+| **Aux Edge2** | `prune_table_pseudo_cross_E*_E*.bin` | 6 | 所有邻棱/对棱组合 |
+| **Aux Edge3** | `prune_table_pseudo_cross_E*_E*_E*.bin` | 4 | 三棱组合 |
+| **Aux Corn2** | `prune_table_pseudo_cross_C*_C*.bin` | 6 | 所有邻角/对角组合 |
+| **Aux Corn3** | `prune_table_pseudo_cross_C*_C*_C*.bin` | 4 | 三角组合 |
+| **Huge Neighbor** | `prune_table_cross_C4_E0_C5_E1.bin` | 1 | 邻近 F2L (复用) |
+| **总计** | | **26** | |
 
 ### 3. Pair Analyzer
-经过极致优化，主要依赖单个 Pair 基准表和 Huge Table。
+极致优化，复用 Std Analyzer 的 Huge Tables。
 
 | 表类型 | 文件名模式 | 数量 | 说明 |
 |---|---|---|---|
-| **Pair Base** | `prune_table_pair_C4_E0.bin` | 1 | 配对基准表，其他 Pair 通过 Conj 映射 |
-| **Huge Neighbor** | `prune_table_huge_neighbor_*.bin` | 1 | 邻近对表 (Edge6 + Corn2) |
-| **Huge Diagonal** | `prune_table_huge_diagonal_*.bin` | 1 | 对角对表 (Edge6 + Corn2) |
-| **XCross Base** | `prune_table_cross_C4_E0.bin` | 1 | 共享自 EO Cross |
+| **Cross C4** | `prune_table_cross_C4.bin` | 1 | Cross + C4 |
+| **Pair Base** | `prune_table_C4_E0.bin` | 1 | Pair C4+E0 |
+| **XCross Base** | `prune_table_cross_C4_E0.bin` | 1 | XCross C4+E0 |
+| **Huge Neighbor** | `prune_table_cross_C4_E0_C5_E1.bin` | 1 | 邻近 F2L |
+| **Huge Diagonal** | `prune_table_cross_C4_E0_C6_E2.bin` | 1 | 对角 F2L |
+| **总计** | | **5** | |
 
 ### 4. Pseudo Pair Analyzer (V9.0 Optimized)
-即使经过 Wave 3 优化，仍是目前资源占用最大的分析器。
-**优化成果：从 52 张表减少到 25 张表 (-52%)**
-
-| 表类型 | 文件名模式 | 数量 | 原始 vs 优化 | 索引逻辑 |
-|---|---|---|---|---|
-| **Base** | `prune_table_pseudo_cross_C4.bin` | 1 | 4 → 1 | 结合 Search 2-4 的多状态 Conj 追踪 |
-| **XC** | `prune_table_pseudo_cross_C4_into_slot{0-3}.bin` | 4 | 16 → 4 | 使用 `diff = (slot-pslot)%4` 选表 |
-| **EC** | `prune_table_pseudo_pair_C{4-7}_E{0-3}.bin` | 16 | 保持 | 物理索引 `edge*24+corner` (优化难度大) |
-| **Pseudo Base** | `prune_table_pseudo_cross_C4_E{0-3}.bin` | 4 | 16 → 4 | 用于 Search 1/2 的基准剪枝 |
-
-**总计**: 25 张表
-
-### 5. EO Cross Analyzer
-使用复杂的级联剪枝系统。
+即使经过 Wave 3 优化，仍加载主要表及部分关键辅助表。
 
 | 表类型 | 文件名模式 | 数量 | 说明 |
 |---|---|---|---|
-| **Base** | `prune_table_cross_C4.bin` | 1 | 基础 Cross |
-| **Dep EO** | `prune_table_ep_4_eo_12.bin` | 1 | 依赖性 EO 剪枝 |
+| **Base** | `prune_table_pseudo_cross_C4.bin` | 1 | 4 → 1 优化 |
+| **XC** | `prune_table_pseudo_cross_C4_into_slot{0-3}.bin` | 4 | 16 → 4 优化 |
+| **EC** | `prune_table_pseudo_pair_C{4-7}_E{0-3}.bin` | 16 | 核心 Pair 表 |
+| **Pseudo Base** | `prune_table_pseudo_cross_C4_E{0-3}.bin` | 4 | 16 → 4 优化 |
+| **Aux Edge** | `prune_table_pseudo_cross_E0_E*.bin` | 3 | E0E1, E0E2, E0E1E2 |
+| **Aux Corn** | `prune_table_pseudo_cross_C4_C*.bin` | 3 | C4C5, C4C6, C4C5C6 |
+| **总计** | | **31** | (原 52+ 张) |
+
+### 5. EO Cross Analyzer
+使用级联剪枝系统。
+
+| 表类型 | 文件名模式 | 数量 | 说明 |
+|---|---|---|---|
+| **Base** | `prune_table_cross_C4.bin` | 1 | Cross + C4 |
+| **Dep EO** | `prune_table_ep_4_eo_12.bin` | 1 | 依赖性 EO |
 | **XC Base** | `prune_table_cross_C4_E0.bin` | 1 | XCross 基准 |
-| **Plus Edge** | `prune_table_cross_C4_E0_E{1-3}.bin` | 3 | XCross 延伸棱 |
-| **Plus Corn** | `prune_table_cross_C4_E0_C{5-7}.bin` | 3 | XCross 延伸角 |
-| **3 Corner** | `prune_table_cross_C4_C5_C6.bin` | 1 | 三角块剪枝 |
-| **Huge** | `neighbor` / `diagonal` | 2 | 共享自 Pair Analyzer |
+| **Plus Edge** | `prune_table_cross_C4_E0_E{1-3}.bin` | 3 | XCross + Edge |
+| **Plus Corn** | `prune_table_cross_C4_E0_C{5-7}.bin` | 3 | XCross + Corn |
+| **3 Corner** | `prune_table_cross_C4_C5_C6.bin` | 1 | 三角辅助 |
+| **Huge** | `huge_neighbor` / `huge_diagonal` | 2 | 复用 Huge 表 |
+| **总计** | | **12** | |
+
