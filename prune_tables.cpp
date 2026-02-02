@@ -106,10 +106,25 @@ bool PruneTableManager::loadPseudoTables() {
               << std::endl;
   }
 
-  // Edge3 Tables Loading
+  // Edge3 Tables Loading (4 种组合)
   if (!loadTable(pseudo_cross_E0_E1_E2_prune,
                  "prune_table_pseudo_cross_E0_E1_E2.bin")) {
     std::cout << "Warning: prune_table_pseudo_cross_E0_E1_E2.bin not found."
+              << std::endl;
+  }
+  if (!loadTable(pseudo_cross_E0_E1_E3_prune,
+                 "prune_table_pseudo_cross_E0_E1_E3.bin")) {
+    std::cout << "Warning: prune_table_pseudo_cross_E0_E1_E3.bin not found."
+              << std::endl;
+  }
+  if (!loadTable(pseudo_cross_E0_E2_E3_prune,
+                 "prune_table_pseudo_cross_E0_E2_E3.bin")) {
+    std::cout << "Warning: prune_table_pseudo_cross_E0_E2_E3.bin not found."
+              << std::endl;
+  }
+  if (!loadTable(pseudo_cross_E1_E2_E3_prune,
+                 "prune_table_pseudo_cross_E1_E2_E3.bin")) {
+    std::cout << "Warning: prune_table_pseudo_cross_E1_E2_E3.bin not found."
               << std::endl;
   }
 
@@ -277,6 +292,39 @@ void PruneTableManager::generateAllSequentially() {
     mtm.releaseEdge3Table();
   }
   std::vector<unsigned char>().swap(pseudo_cross_E0_E1_E2_prune);
+
+  // 14.2 Pseudo Cross + E0,E1,E3 Prune (Edge3)
+  if (!loadTable(pseudo_cross_E0_E1_E3_prune,
+                 "prune_table_pseudo_cross_E0_E1_E3.bin")) {
+    mtm.loadCrossTable();
+    mtm.loadEdge3Table();
+    generatePseudoCrossE0E1E3Prune();
+    mtm.releaseCrossTable();
+    mtm.releaseEdge3Table();
+  }
+  std::vector<unsigned char>().swap(pseudo_cross_E0_E1_E3_prune);
+
+  // 14.3 Pseudo Cross + E0,E2,E3 Prune (Edge3)
+  if (!loadTable(pseudo_cross_E0_E2_E3_prune,
+                 "prune_table_pseudo_cross_E0_E2_E3.bin")) {
+    mtm.loadCrossTable();
+    mtm.loadEdge3Table();
+    generatePseudoCrossE0E2E3Prune();
+    mtm.releaseCrossTable();
+    mtm.releaseEdge3Table();
+  }
+  std::vector<unsigned char>().swap(pseudo_cross_E0_E2_E3_prune);
+
+  // 14.4 Pseudo Cross + E1,E2,E3 Prune (Edge3)
+  if (!loadTable(pseudo_cross_E1_E2_E3_prune,
+                 "prune_table_pseudo_cross_E1_E2_E3.bin")) {
+    mtm.loadCrossTable();
+    mtm.loadEdge3Table();
+    generatePseudoCrossE1E2E3Prune();
+    mtm.releaseCrossTable();
+    mtm.releaseEdge3Table();
+  }
+  std::vector<unsigned char>().swap(pseudo_cross_E1_E2_E3_prune);
 
   // 15. Pseudo Cross + C4,C6 Prune (Corner2)
   if (!loadTable(pseudo_cross_C4_C6_prune,
@@ -582,7 +630,7 @@ void PruneTableManager::generatePseudoCrossE0E1E2Prune() {
   std::cout << "[PruneTable] Generating pseudo cross + E0,E1,E2 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  std::vector<int> target = {0, 2, 4}; // E0, E1, E2 (0, 2, 4)
+  std::vector<int> target = {0, 2, 4}; // E0, E1, E2 (0*2, 1*2, 2*2)
   int idx_solved = array_to_index(target, 3, 2, 12);
   pseudo_cross_E0_E1_E2_prune.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
   create_prune_table_pseudo_cross_edges3(
@@ -590,6 +638,57 @@ void PruneTableManager::generatePseudoCrossE0E1E2Prune() {
       mtm.getEdge3Table(), pseudo_cross_E0_E1_E2_prune);
   saveTable(pseudo_cross_E0_E1_E2_prune,
             "prune_table_pseudo_cross_E0_E1_E2.bin");
+}
+
+void PruneTableManager::generatePseudoCrossE0E1E3Prune() {
+  if (loadTable(pseudo_cross_E0_E1_E3_prune,
+                "prune_table_pseudo_cross_E0_E1_E3.bin"))
+    return;
+  std::cout << "[PruneTable] Generating pseudo cross + E0,E1,E3 prune table..."
+            << std::endl;
+  auto &mtm = MoveTableManager::getInstance();
+  std::vector<int> target = {0, 2, 6}; // E0, E1, E3 (0*2, 1*2, 3*2)
+  int idx_solved = array_to_index(target, 3, 2, 12);
+  pseudo_cross_E0_E1_E3_prune.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
+  create_prune_table_pseudo_cross_edges3(
+      187520, idx_solved, 190080, 10560, 12, mtm.getCrossTable(),
+      mtm.getEdge3Table(), pseudo_cross_E0_E1_E3_prune);
+  saveTable(pseudo_cross_E0_E1_E3_prune,
+            "prune_table_pseudo_cross_E0_E1_E3.bin");
+}
+
+void PruneTableManager::generatePseudoCrossE0E2E3Prune() {
+  if (loadTable(pseudo_cross_E0_E2_E3_prune,
+                "prune_table_pseudo_cross_E0_E2_E3.bin"))
+    return;
+  std::cout << "[PruneTable] Generating pseudo cross + E0,E2,E3 prune table..."
+            << std::endl;
+  auto &mtm = MoveTableManager::getInstance();
+  std::vector<int> target = {0, 4, 6}; // E0, E2, E3 (0*2, 2*2, 3*2)
+  int idx_solved = array_to_index(target, 3, 2, 12);
+  pseudo_cross_E0_E2_E3_prune.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
+  create_prune_table_pseudo_cross_edges3(
+      187520, idx_solved, 190080, 10560, 12, mtm.getCrossTable(),
+      mtm.getEdge3Table(), pseudo_cross_E0_E2_E3_prune);
+  saveTable(pseudo_cross_E0_E2_E3_prune,
+            "prune_table_pseudo_cross_E0_E2_E3.bin");
+}
+
+void PruneTableManager::generatePseudoCrossE1E2E3Prune() {
+  if (loadTable(pseudo_cross_E1_E2_E3_prune,
+                "prune_table_pseudo_cross_E1_E2_E3.bin"))
+    return;
+  std::cout << "[PruneTable] Generating pseudo cross + E1,E2,E3 prune table..."
+            << std::endl;
+  auto &mtm = MoveTableManager::getInstance();
+  std::vector<int> target = {2, 4, 6}; // E1, E2, E3 (1*2, 2*2, 3*2)
+  int idx_solved = array_to_index(target, 3, 2, 12);
+  pseudo_cross_E1_E2_E3_prune.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
+  create_prune_table_pseudo_cross_edges3(
+      187520, idx_solved, 190080, 10560, 12, mtm.getCrossTable(),
+      mtm.getEdge3Table(), pseudo_cross_E1_E2_E3_prune);
+  saveTable(pseudo_cross_E1_E2_E3_prune,
+            "prune_table_pseudo_cross_E1_E2_E3.bin");
 }
 
 void PruneTableManager::generatePseudoCrossC4C6Prune() {
@@ -1547,13 +1646,25 @@ void create_prune_table_pseudo_xcross(int index3, int index2, int depth,
   std::vector<unsigned char> temp_table(size, 0xF);
   int next_i, index1_tmp, index2_tmp, next_d;
 
-  // NOTE: 统一使用 slot0 初始化序列，支持运行时 Conj 复用
-  // 原来的代码根据 index3 选择不同的 appl_moves，这导致表无法互换
-  // 现在所有表都使用相同的初始化，通过 Conj 变换在运行时适配不同 slot
-  std::vector<std::string> appl_moves = {"L U L'", "L U' L'", "B' U B",
-                                         "B' U' B"};
-  std::vector<int> tmp_moves = {0, 3, 4, 5};
-  (void)index3; // 参数保留但不再使用
+  // 根据边块位置选择初始化序列
+  std::vector<std::string> appl_moves;
+  std::vector<int> tmp_moves;
+  if (index3 == 0) {
+    appl_moves = {"L U L'", "L U' L'", "B' U B", "B' U' B"};
+    tmp_moves = {0, 3, 4, 5};
+  }
+  if (index3 == 2) {
+    appl_moves = {"R' U R", "R' U' R", "B U B'", "B U' B'"};
+    tmp_moves = {5, 0, 3, 4};
+  }
+  if (index3 == 4) {
+    appl_moves = {"R U R'", "R U' R'", "F' U F", "F' U' F"};
+    tmp_moves = {4, 5, 0, 3};
+  }
+  if (index3 == 6) {
+    appl_moves = {"L' U L", "L' U' L", "F U F'", "F U' F'"};
+    tmp_moves = {3, 4, 5, 0};
+  }
 
   std::vector<int> a = {16, 18, 20, 22};
   int index1 = array_to_index(a, 4, 2, 12);
