@@ -25,9 +25,12 @@ struct xcross_analyzer2 {
   static const int *p_corner_move_ptr;
   static const int *p_multi_move_ptr;
 
-  // Edge3 剪枝相关
+  // Edge3 剪枝相关 (4 种组合: E0E1E2, E0E1E3, E0E2E3, E1E2E3)
   static const int *p_edge3_move_ptr;
-  static const unsigned char *p_edge3_prune_ptr;
+  static const unsigned char *p_edge3_E012_prune_ptr; // slot {0,1,2}
+  static const unsigned char *p_edge3_E013_prune_ptr; // slot {0,1,3}
+  static const unsigned char *p_edge3_E023_prune_ptr; // slot {0,2,3}
+  static const unsigned char *p_edge3_E123_prune_ptr; // slot {1,2,3}
   static bool edge3_prune_available;
 
   // Corner3 剪枝相关
@@ -123,17 +126,30 @@ struct xcross_analyzer2 {
       }
     }
 
-    // 4. Load Edge3 Move Table and Prune Table (可选, 用于增强 search_3 启发值)
+    // 4. Load Edge3 Move Table and Prune Tables (4种组合, 用于 search_3 剪枝)
     auto &ptm = PruneTableManager::getInstance();
     // NOTE: Edge3 剪枝表通过 loadPseudoTables() 加载，此处仅加载移动表并检查
     if (mtm.loadEdge3Table()) {
       p_edge3_move_ptr = mtm.getEdge3TablePtr();
       // 尝试加载 Pseudo 表 (如果尚未加载)
       ptm.loadPseudoTables();
+      // 加载 4 种 Edge3 组合表
       if (ptm.hasPseudoCrossE0E1E2Prune()) {
-        p_edge3_prune_ptr = ptm.getPseudoCrossE0E1E2PrunePtr();
+        p_edge3_E012_prune_ptr = ptm.getPseudoCrossE0E1E2PrunePtr();
         edge3_prune_available = true;
-        std::cout << "[Init] Edge3 Prune Table loaded." << std::endl;
+      }
+      if (ptm.hasPseudoCrossE0E1E3Prune()) {
+        p_edge3_E013_prune_ptr = ptm.getPseudoCrossE0E1E3PrunePtr();
+      }
+      if (ptm.hasPseudoCrossE0E2E3Prune()) {
+        p_edge3_E023_prune_ptr = ptm.getPseudoCrossE0E2E3PrunePtr();
+      }
+      if (ptm.hasPseudoCrossE1E2E3Prune()) {
+        p_edge3_E123_prune_ptr = ptm.getPseudoCrossE1E2E3PrunePtr();
+      }
+      if (edge3_prune_available) {
+        std::cout << "[Init] Edge3 Prune Tables loaded (4 variants)."
+                  << std::endl;
       }
     }
 
@@ -699,16 +715,40 @@ struct xcross_analyzer2 {
       long long idx_xc3 = (long long)(idx1 + idx6) * 24 + idx9;
       int h5 = get_prune_ptr(p_prune_xc3, idx_xc3);
 
-      // Edge3 剪枝 (使用两层共轭机制复用单张表)
+      // Edge3 剪枝 (直接选择对应表，不使用共轭)
       int h_e3 = 0;
       if (edge3_prune_available) {
-        // 与 pseudo_analyzer.cpp 一致: slot_k = pslot1 (第一个角块槽位)
-        std::vector<int> alg = alg_rotation(base_alg, rotations[r]);
-        auto [e3_state, cross_state] =
-            get_edge3_conjugated_state(alg, slot1, slot2, slot3, pslot1);
-        if (e3_state >= 0) {
-          long long idx_e3 = (long long)cross_state * 10560 + e3_state;
-          h_e3 = get_prune_ptr(p_edge3_prune_ptr, idx_e3);
+        // 根据 slot1, slot2, slot3 的组合选择正确的 Edge3 表
+        // Slots: 0=BL(E0), 1=BR(E1), 2=FR(E2), 3=FL(E3)
+        const unsigned char *p_e3_prune = nullptr;
+        // 对 slot 排序后确定组合
+        std::vector<int> sorted_slots = {slot1, slot2, slot3};
+        std::sort(sorted_slots.begin(), sorted_slots.end());
+        if (sorted_slots == std::vector<int>{0, 1, 2}) {
+          p_e3_prune = p_edge3_E012_prune_ptr; // E0,E1,E2
+        } else if (sorted_slots == std::vector<int>{0, 1, 3}) {
+          p_e3_prune = p_edge3_E013_prune_ptr; // E0,E1,E3
+        } else if (sorted_slots == std::vector<int>{0, 2, 3}) {
+          p_e3_prune = p_edge3_E023_prune_ptr; // E0,E2,E3
+        } else if (sorted_slots == std::vector<int>{1, 2, 3}) {
+          p_e3_prune = p_edge3_E123_prune_ptr; // E1,E2,E3
+        }
+        if (p_e3_prune) {
+          // 直接使用旋转后的公式计算状态
+          std::vector<int> alg = alg_rotation(base_alg, rotations[r]);
+          // 计算 Edge3 和 Cross 初始状态
+          std::vector<int> target_arr = {
+              sorted_slots[0] * 2, sorted_slots[1] * 2, sorted_slots[2] * 2};
+          int init_e3 = array_to_index(target_arr, 3, 2, 12);
+          int init_cross = 187520 * 24;
+          // 应用公式
+          int cur_e3 = init_e3, cur_cross = init_cross;
+          for (int m : alg) {
+            cur_e3 = p_edge3_move_ptr[cur_e3 * 18 + m];
+            cur_cross = p_multi_move_ptr[cur_cross + m];
+          }
+          long long idx_e3 = (long long)(cur_cross / 24) * 10560 + cur_e3;
+          h_e3 = get_prune_ptr(p_e3_prune, idx_e3);
         }
       }
 
@@ -1086,9 +1126,12 @@ const int *xcross_analyzer2::p_edge_move_ptr = nullptr;
 const int *xcross_analyzer2::p_corner_move_ptr = nullptr;
 const int *xcross_analyzer2::p_multi_move_ptr = nullptr;
 
-// Edge3 静态成员初始化
+// Edge3 静态成员初始化 (4 种组合)
 const int *xcross_analyzer2::p_edge3_move_ptr = nullptr;
-const unsigned char *xcross_analyzer2::p_edge3_prune_ptr = nullptr;
+const unsigned char *xcross_analyzer2::p_edge3_E012_prune_ptr = nullptr;
+const unsigned char *xcross_analyzer2::p_edge3_E013_prune_ptr = nullptr;
+const unsigned char *xcross_analyzer2::p_edge3_E023_prune_ptr = nullptr;
+const unsigned char *xcross_analyzer2::p_edge3_E123_prune_ptr = nullptr;
 bool xcross_analyzer2::edge3_prune_available = false;
 
 // Corner3 静态成员初始化
