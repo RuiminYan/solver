@@ -471,10 +471,10 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 
 | 阶段 | 目标 (Target) | 主要剪枝表 (Primary) | 辅助/次要剪枝表 (Secondary) | 索引逻辑 (Indexing) |
 |---|---|---|---|---|
-| **S1** | Pseudo Cross + Pseudo Pair | `XC[diff1]` | `EC[s1*4+ps1]` | `XC(conj) + EC(flat)` |
-| **S2** | Pseudo XCross + Pseudo Pair | `PseudoBase[diff2]` | `XC[diff1]`, `EC`, `Base[C4]` | `Base(conj) + XC(conj)` |
-| **S3** | Pseudo XXCross + Pseudo Pair | `XC[diff3]` | `Aux C2/E2`, `Base`, `EC` | `Aux(conj+rot) + XC(conj)` |
-| **S4** | Pseudo XXXCross + Pseudo Pair | `XC[diff4]` | `Aux C3/E3`, `Base`, `EC` | `Aux(conj+rot) + XC(conj)` |
+| **depth_limited_search_1** | Pseudo Cross + Pseudo Pair | `XC[diff1]` | `EC[s1*4+ps1]` | `XC(conj) + EC(flat)` |
+| **depth_limited_search_2** | Pseudo XCross + Pseudo Pair | `PseudoBase[diff2]` | `XC[diff1]`, `EC`, `Base[C4]` | `Base(conj) + XC(conj)` |
+| **depth_limited_search_3** | Pseudo XXCross + Pseudo Pair | `XC[diff3]` | `Aux C2/E2`, `Base`, `EC` | `Aux(conj+rot) + XC(conj)` |
+| **depth_limited_search_4** | Pseudo XXXCross + Pseudo Pair | `XC[diff4]` | `Aux C3/E3`, `Base`, `EC` | `Aux(conj+rot) + XC(conj)` |
 
 > **注**: `PseudoBase` 和 `Base` 在代码中通过 Conj 状态追踪复用，实际物理表仅需 Base(1) + XC(4)。
 
@@ -483,10 +483,10 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 
 | 阶段 | 目标 | 核心剪枝表 | 备注 |
 |---|---|---|---|
-| **S1** | Cross | `Cross` | 基础剪枝 |
-| **S2** | XCross | `XCross Base` (C4+E0) | 加入第一个 F2L 组 |
-| **S3** | XXCross | `Huge Neighbor` / `Huge Diag` | 及其 Huge Table |
-| **S4** | XXXCross | `Huge Neighbor` / `Huge Diag` | 及其 Huge Table |
+| **search_1** | Cross | `Cross` | 基础剪枝 |
+| **search_2_optimized** | XCross | `XCross Base` (C4+E0) | 加入第一个 F2L 组 |
+| **search_3_optimized** | XXCross | `Huge Neighbor` / `Huge Diag` | 及其 Huge Table |
+| **search_4_optimized** | XXXCross | `Huge Neighbor` / `Huge Diag` | 及其 Huge Table |
 
 ### 3. Pseudo Analyzer
 策略：依赖 Aux 表辅助定位 Pseudo 块。
@@ -503,18 +503,17 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 
 | 阶段 | 目标 | 核心剪枝表 | 组合/辅助表 |
 |---|---|---|---|
-| **S1** | Cross + Pair | `Cross C4` | `Pair Base` (C4+E0) |
-| **S2** | XCross + Pair | `XCross Base` | `Pair Base` |
-| **S3** | XXCross + Pair | `Huge Neighbor` | `XCross`, `Pair Base` |
-| **S4** | XXXCross + Pair | `Huge Neighbor` | `XCross`, `Pair Base` |
+| **search_1** | Cross + Pair | `Cross C4` | `Pair Base` (C4+E0) |
+| **search_2** | XCross + Pair | `XCross Base` | `Pair Base` |
+| **search_3** | XXCross + Pair | `Huge Neighbor` | `XCross`, `Pair Base` |
+| **search_4** | XXXCross + Pair | `Huge Neighbor` | `XCross`, `Pair Base` |
 
 ### 5. EO Cross Analyzer
 策略：级联剪枝 (Cascaded Pruning)，每一层都检查多个表。
 
 | 阶段 | 目标 | 级联检查 1 | 级联检查 2 | 级联检查 3 |
 |---|---|---|---|---|
-| **S1** | XC + EO | `Dep EO` | `XC Base` | - |
-| **S2** | XXC + EO | `Dep EO` | `XC Base` | `Plus Edge`, `Plus Corn` |
-| **S3** | XXXC + EO | `Dep EO` | `XC Base` | `Plus Edge/Corn`, `3 Corner` |
-| **S4** | XXXXC + EO | `Huge` | - | - |
+| **search_1** | XC + EO | `Dep EO` | `XC Base` | - |
+| **search_2** | XXC + EO | `Dep EO` | `XC Base` | `Plus Edge`, `Plus Corn` |
+| **search_3** | XXXC + EO | `Dep EO` | `XC Base` | `Plus Edge/Corn`, `3 Corner` |
 
