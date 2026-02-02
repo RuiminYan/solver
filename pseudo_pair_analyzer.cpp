@@ -60,6 +60,14 @@ struct xcross_analyzer2 {
     int slot_k = 0;                   // 共轭参考槽位 (pslot1)
   };
 
+  // [Conj优化] XC 预计算状态 (用于 pseudo_base 表的 Conj 优化)
+  // 从 pslot 视角追踪 Cross + Corner + 4个Edge 状态
+  struct ConjStateXC {
+    int cross;   // Cross 索引 (已 ×24 缩放)
+    int corner;  // Corner 索引 (从 C4=12 开始)
+    int edge[4]; // 4 个 Edge 相对索引 (从 {0,2,4,6} 开始)
+  };
+
   static constexpr int MAX_AUX = 8;
   static std::map<std::vector<int>, AuxPrunerDef> aux_registry;
 
@@ -227,6 +235,29 @@ struct xcross_analyzer2 {
   xcross_analyzer2() {
     initialize_tables();
     stage_results = StageResults();
+  }
+
+  // [Conj优化] 预计算 XC Conj 状态
+  // 从 pslot 视角追踪 Cross + Corner + 4个Edge
+  // 用于将物理索引转换为 C4 基准的 Conj 索引
+  static void get_conj_state_xc(const std::vector<int> &alg, int pslot,
+                                ConjStateXC &out) {
+    int cur_mul = 187520 * 24;
+    int cur_cn = 12; // 永远从 C4 开始
+    int cur_e[] = {0, 2, 4, 6};
+
+    for (int m : alg) {
+      int mc = conj_moves_flat[m][pslot];
+      cur_mul = p_multi_move_ptr[cur_mul + mc];
+      cur_cn = p_corner_move_ptr[cur_cn * 18 + mc];
+      for (int k = 0; k < 4; ++k)
+        cur_e[k] = p_edge_move_ptr[cur_e[k] * 18 + mc];
+    }
+
+    out.cross = cur_mul;
+    out.corner = cur_cn;
+    for (int k = 0; k < 4; ++k)
+      out.edge[k] = cur_e[k];
   }
 
   // [重构] 为 Search 4 设置 AuxState
