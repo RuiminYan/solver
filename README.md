@@ -96,6 +96,21 @@ Slot 3: FL (C7 + E3)
 ## Std Analyzer
 计算三阶魔方cross, xcross, xxcross, xxxcross, xxxxcross的最少步
 
+### Cross
+底层 4 个十字棱块 (E8, E9, E10, E11) 还原.
+
+### XCross
+Cross + 1组F2L.
+
+### XXCross
+Cross + 2组F2L.
+
+### XXXCross
+Cross + 3组F2L.
+
+### XXXXCross
+Cross + 4组F2L.
+
 ## Pseudo Analyzer
 
 ### Pseudo Cross

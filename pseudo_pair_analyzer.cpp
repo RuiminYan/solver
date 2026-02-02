@@ -2,6 +2,7 @@
 #include "cube_common.h"
 #include "move_tables.h"
 #include "prune_tables.h"
+#include <map>
 
 // --- 全局统计变量重定向到 AnalyzerStats ---
 #define global_nodes AnalyzerStats::globalNodes
@@ -24,13 +25,35 @@ struct xcross_analyzer2 {
   static const int *p_edge_move_ptr;
   static const int *p_corner_move_ptr;
   static const int *p_multi_move_ptr;
-  static const int *p_edge3_move_ptr; // [新增] Edge3 移动表指针
+  static const int *p_edge3_move_ptr;   // Edge3 移动表指针
+  static const int *p_corner3_move_ptr; // [新增] Corner3 移动表指针
 
-  // [新增] Edge3 剪枝表 (用于 Search 4: 3 个归位槽位的棱块联合剪枝)
+  // Edge3 剪枝表 (用于 Search 4: 3 个归位槽位的棱块联合剪枝)
   static std::vector<unsigned char> prune_e0e1e2;
   static std::vector<unsigned char> prune_e1e2e3;
   static std::vector<unsigned char> prune_e0e2e3;
   static std::vector<unsigned char> prune_e0e1e3;
+
+  // [新增] Corner3 剪枝表 (用于 Search 4: 3 个归位槽位的角块联合剪枝)
+  static std::vector<unsigned char> prune_c4c5c6;
+  static std::vector<unsigned char> prune_c4c5c7;
+  static std::vector<unsigned char> prune_c4c6c7;
+  static std::vector<unsigned char> prune_c5c6c7;
+
+  // [新增] 辅助剪枝定义 (用于通用 AuxState 架构)
+  struct AuxPrunerDef {
+    const unsigned char *p_prune; // 剪枝表指针
+    const int *p_move;            // 移动表指针
+    int multiplier;               // 状态乘数 (Corner3=9072, Edge3=10560)
+  };
+
+  struct AuxState {
+    const AuxPrunerDef *def = nullptr;
+    int current_idx = 0;
+  };
+
+  static constexpr int MAX_AUX = 8;
+  static std::map<std::vector<int>, AuxPrunerDef> aux_registry;
 
   int slot1, slot2, slot3, slot4, pslot1, pslot2, pslot3, pslot4;
   int max_length;
@@ -146,6 +169,44 @@ struct xcross_analyzer2 {
     }
     std::cout << "[Init] Edge3 Prune Tables loaded." << std::endl;
 
+    // 5. [新增] Load Corner3 Prune Tables for Search 4
+    mtm.loadCorner3Table();
+    p_corner3_move_ptr = mtm.getCorner3TablePtr();
+
+    if (!load_vector(prune_c4c5c6, "prune_table_pseudo_cross_C4_C5_C6.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_C4_C5_C6.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_c4c5c7, "prune_table_pseudo_cross_C4_C5_C7.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_C4_C5_C7.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_c4c6c7, "prune_table_pseudo_cross_C4_C6_C7.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_C4_C6_C7.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_c5c6c7, "prune_table_pseudo_cross_C5_C6_C7.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_C5_C6_C7.bin"
+                << std::endl;
+      exit(1);
+    }
+    std::cout << "[Init] Corner3 Prune Tables loaded." << std::endl;
+
+    // 6. [新增] Register aux_registry
+    // Corner3 表 (multiplier = 9072)
+    aux_registry[{4, 5, 6}] = {prune_c4c5c6.data(), p_corner3_move_ptr, 9072};
+    aux_registry[{4, 5, 7}] = {prune_c4c5c7.data(), p_corner3_move_ptr, 9072};
+    aux_registry[{4, 6, 7}] = {prune_c4c6c7.data(), p_corner3_move_ptr, 9072};
+    aux_registry[{5, 6, 7}] = {prune_c5c6c7.data(), p_corner3_move_ptr, 9072};
+    // Edge3 表 (multiplier = 10560)
+    aux_registry[{0, 1, 2}] = {prune_e0e1e2.data(), p_edge3_move_ptr, 10560};
+    aux_registry[{0, 1, 3}] = {prune_e0e1e3.data(), p_edge3_move_ptr, 10560};
+    aux_registry[{0, 2, 3}] = {prune_e0e2e3.data(), p_edge3_move_ptr, 10560};
+    aux_registry[{1, 2, 3}] = {prune_e1e2e3.data(), p_edge3_move_ptr, 10560};
+
     std::cout << "All tables initialized." << std::endl;
     tables_initialized = true;
   }
@@ -153,6 +214,57 @@ struct xcross_analyzer2 {
   xcross_analyzer2() {
     initialize_tables();
     stage_results = StageResults();
+  }
+
+  // [新增] 为 Search 4 设置 AuxState
+  // 返回值: num_aux (已设置的辅助表数量)
+  int setup_aux_pruners_for_search4(int slot2_arg, int slot3_arg,
+                                    int slot4_arg, // Edge 槽位 (固定位)
+                                    int pslot2_arg, int pslot3_arg,
+                                    int pslot4_arg, // Corner 伪槽位
+                                    const std::vector<int> &alg,
+                                    AuxState *out_aux) {
+    int count = 0;
+
+    // 1. Corner3 表 (优先剪枝)
+    std::vector<int> corner_ids = {pslot2_arg + 4, pslot3_arg + 4,
+                                   pslot4_arg + 4};
+    std::sort(corner_ids.begin(), corner_ids.end());
+    auto it_c = aux_registry.find(corner_ids);
+    if (it_c != aux_registry.end()) {
+      // 计算初始索引: (id-4)*3+12
+      std::vector<int> target = {(corner_ids[0] - 4) * 3 + 12,
+                                 (corner_ids[1] - 4) * 3 + 12,
+                                 (corner_ids[2] - 4) * 3 + 12};
+      int idx = array_to_index(target, 3, 3, 8);
+      // 应用 scramble
+      for (int m : alg) {
+        idx = p_corner3_move_ptr[idx * 18 + m];
+      }
+      out_aux[count].def = &it_c->second;
+      out_aux[count].current_idx = idx;
+      count++;
+    }
+
+    // 2. Edge3 表
+    std::vector<int> edge_ids = {slot2_arg, slot3_arg, slot4_arg};
+    std::sort(edge_ids.begin(), edge_ids.end());
+    auto it_e = aux_registry.find(edge_ids);
+    if (it_e != aux_registry.end()) {
+      // 计算初始索引: id*2
+      std::vector<int> target = {edge_ids[0] * 2, edge_ids[1] * 2,
+                                 edge_ids[2] * 2};
+      int idx = array_to_index(target, 3, 2, 12);
+      // 应用 scramble
+      for (int m : alg) {
+        idx = p_edge3_move_ptr[idx * 18 + m];
+      }
+      out_aux[count].def = &it_e->second;
+      out_aux[count].current_idx = idx;
+      count++;
+    }
+
+    return count;
   }
 
   bool depth_limited_search_1(int arg_index1, int arg_index2, int arg_index3,
@@ -471,7 +583,6 @@ struct xcross_analyzer2 {
     }
   }
 
-  // Search 3: 移除 sol 记录
   bool depth_limited_search_3(int arg_index1, int arg_index2, int arg_index4,
                               int arg_index6, int arg_index7, int arg_index8,
                               int arg_index9, int depth, int prev,
@@ -695,16 +806,16 @@ struct xcross_analyzer2 {
   }
 
   // Search 4
-  bool depth_limited_search_4(
-      int arg_index1, int arg_index2, int arg_index4, int arg_index6,
-      int arg_index8, int arg_index9, int arg_index10, int arg_index11,
-      int arg_index12,
-      int arg_index_e3, // [新增] Edge3 状态索引
-      int depth, int prev, const unsigned char *prune1,
-      const unsigned char *prune2, const unsigned char *prune3,
-      const unsigned char *prune4, const unsigned char *edge_prune1,
-      const unsigned char *prune_xc4,
-      const unsigned char *prune_e3) { // [新增] Edge3 剪枝表指针
+  bool depth_limited_search_4(int arg_index1, int arg_index2, int arg_index4,
+                              int arg_index6, int arg_index8, int arg_index9,
+                              int arg_index10, int arg_index11, int arg_index12,
+                              int depth, int prev, const unsigned char *prune1,
+                              const unsigned char *prune2,
+                              const unsigned char *prune3,
+                              const unsigned char *prune4,
+                              const unsigned char *edge_prune1,
+                              const unsigned char *prune_xc4, int num_aux,
+                              AuxState *aux_states) { // [重构] 使用 AuxState
     const int *moves = valid_moves_flat[prev];
     const int count_moves = valid_moves_count[prev];
 
@@ -713,6 +824,27 @@ struct xcross_analyzer2 {
       int i = moves[k];
 
       int index1_tmp = p_multi_move_ptr[arg_index1 + i];
+      int cross_state_idx = index1_tmp / 24; // Cross State for AuxState pruning
+
+      // [重构] AuxState 剪枝 (Corner3 + Edge3, 优先于其他剪枝!)
+      bool aux_pruned = false;
+      AuxState next_aux[MAX_AUX];
+      for (int a = 0; a < num_aux; ++a) {
+        const auto &cur = aux_states[a];
+        if (!cur.def)
+          continue;
+        next_aux[a].def = cur.def;
+        next_aux[a].current_idx = cur.def->p_move[cur.current_idx * 18 + i];
+        long long idx_aux = (long long)cross_state_idx * cur.def->multiplier +
+                            next_aux[a].current_idx;
+        if (get_prune_ptr(cur.def->p_prune, idx_aux) >= depth) {
+          aux_pruned = true;
+          break;
+        }
+      }
+      if (aux_pruned)
+        continue;
+
       int index2_tmp = p_corner_move_ptr[arg_index2 + i];
       int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
       if (prune1_tmp >= depth)
@@ -747,23 +879,12 @@ struct xcross_analyzer2 {
       if (prune_xc4_tmp >= depth)
         continue;
 
-      // [新增] Edge3 状态更新与剪枝
-      int index_e3_tmp = p_edge3_move_ptr[arg_index_e3 + i];
-      // Cross State = index1_tmp / 24 (因为 index1 = cross_mul_state * 24 +
-      // corner)
-      long long idx_e3_prune =
-          (long long)(index1_tmp / 24) * 10560 + index_e3_tmp;
-      int prune_e3_tmp = get_prune_ptr(prune_e3, idx_e3_prune);
-      if (prune_e3_tmp >= depth)
-        continue;
-
       int index10_tmp = p_edge_move_ptr[arg_index10 + i];
       int index11_tmp = p_edge_move_ptr[arg_index11 + i];
 
       if (depth == 1) {
         if (prune1_tmp == 0 && prune2_tmp == 0 && prune3_tmp == 0 &&
             prune4_tmp == 0 && edge_prune1_tmp == 0 && prune_xc4_tmp == 0 &&
-            prune_e3_tmp == 0 && // [新增]
             index10_tmp == edge_solved2 && index11_tmp == edge_solved3 &&
             index12_tmp == edge_solved4) {
           return true;
@@ -772,9 +893,8 @@ struct xcross_analyzer2 {
                      index1_tmp, index2_tmp * 18, index4_tmp * 18,
                      index6_tmp * 18, index8_tmp * 18, index9_tmp * 18,
                      index10_tmp * 18, index11_tmp * 18, index12_tmp * 18,
-                     index_e3_tmp * 18, // [新增]
                      depth - 1, i, prune1, prune2, prune3, prune4, edge_prune1,
-                     prune_xc4, prune_e3)) // [新增]
+                     prune_xc4, num_aux, next_aux)) // [重构] 传递 next_aux
         return true;
     }
     return false;
@@ -809,24 +929,6 @@ struct xcross_analyzer2 {
     const unsigned char *p_prune4 = prune4.data();
     const unsigned char *p_edge_prune1 = edge_prune1.data();
     const unsigned char *p_prune_xc4 = prune_xc4.data();
-
-    // [新增] 根据 Solved Slots (slot2, slot3, slot4) 选择 Edge3 剪枝表
-    // slot1 是 Pair 槽位，slot2/3/4 是归位槽位
-    std::vector<int> solved_edge_ids = {
-        slot2 * 2, // Slot->Edge: 0->0, 1->2, 2->4, 3->6
-        slot3 * 2, slot4 * 2};
-    std::sort(solved_edge_ids.begin(), solved_edge_ids.end());
-
-    const unsigned char *p_prune_e3 = nullptr;
-    if (solved_edge_ids == std::vector<int>{0, 2, 4}) {
-      p_prune_e3 = prune_e0e1e2.data();
-    } else if (solved_edge_ids == std::vector<int>{2, 4, 6}) {
-      p_prune_e3 = prune_e1e2e3.data();
-    } else if (solved_edge_ids == std::vector<int>{0, 4, 6}) {
-      p_prune_e3 = prune_e0e2e3.data();
-    } else if (solved_edge_ids == std::vector<int>{0, 2, 6}) {
-      p_prune_e3 = prune_e0e1e3.data();
-    }
 
     struct RotTask {
       int rot_idx;
@@ -922,31 +1024,23 @@ struct xcross_analyzer2 {
         index11 *= 18;
         index12 *= 18;
 
-        // [新增] 计算 Edge3 初始状态
-        // Edge3 Target: solved_edge_ids (e.g. {0, 2, 4} for E0, E1, E2)
-        // Solved State Index: array_to_index for these edges at solved
-        // positions
-        std::vector<int> e3_target_arr = {
-            solved_edge_ids[0], solved_edge_ids[1], solved_edge_ids[2]};
-        int idx_e3 = array_to_index(e3_target_arr, 3, 2, 12);
-        // Apply scramble to Edge3 state
+        // [重构] 使用 AuxState 架构设置 Corner3 + Edge3 剪枝
         std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
-        for (int m : rotated_alg) {
-          idx_e3 = p_edge3_move_ptr[idx_e3 * 18 + m];
-        }
-        idx_e3 *= 18;
+        AuxState aux_init[MAX_AUX];
+        int num_aux = setup_aux_pruners_for_search4(
+            slot2, slot3, slot4,    // Edge 槽位 (固定位)
+            pslot2, pslot3, pslot4, // Corner 伪槽位
+            rotated_alg, aux_init);
 
         int found = 999;
         int start_depth =
             std::max({prune1_tmp, prune2_tmp, prune3_tmp, prune4_tmp,
                       edge_prune1_tmp, prune_xc4_tmp});
         for (int d = start_depth; d <= max_length; d++) {
-          if (depth_limited_search_4(index1, index2, index4, index6, index8,
-                                     index9, index10, index11, index12,
-                                     idx_e3, // [新增]
-                                     d, 18, p_prune1, p_prune2, p_prune3,
-                                     p_prune4, p_edge_prune1, p_prune_xc4,
-                                     p_prune_e3)) { // [新增]
+          if (depth_limited_search_4(
+                  index1, index2, index4, index6, index8, index9, index10,
+                  index11, index12, d, 18, p_prune1, p_prune2, p_prune3,
+                  p_prune4, p_edge_prune1, p_prune_xc4, num_aux, aux_init)) {
             found = d;
             break;
           }
@@ -995,13 +1089,24 @@ std::vector<std::vector<unsigned char>>
 const int *xcross_analyzer2::p_edge_move_ptr = nullptr;
 const int *xcross_analyzer2::p_corner_move_ptr = nullptr;
 const int *xcross_analyzer2::p_multi_move_ptr = nullptr;
-const int *xcross_analyzer2::p_edge3_move_ptr = nullptr; // [新增]
+const int *xcross_analyzer2::p_edge3_move_ptr = nullptr;
+const int *xcross_analyzer2::p_corner3_move_ptr = nullptr; // [新增]
 
-// [新增] Edge3 剪枝表定义
+// Edge3 剪枝表定义
 std::vector<unsigned char> xcross_analyzer2::prune_e0e1e2;
 std::vector<unsigned char> xcross_analyzer2::prune_e1e2e3;
 std::vector<unsigned char> xcross_analyzer2::prune_e0e2e3;
 std::vector<unsigned char> xcross_analyzer2::prune_e0e1e3;
+
+// [新增] Corner3 剪枝表定义
+std::vector<unsigned char> xcross_analyzer2::prune_c4c5c6;
+std::vector<unsigned char> xcross_analyzer2::prune_c4c5c7;
+std::vector<unsigned char> xcross_analyzer2::prune_c4c6c7;
+std::vector<unsigned char> xcross_analyzer2::prune_c5c6c7;
+
+// [新增] aux_registry 定义
+std::map<std::vector<int>, xcross_analyzer2::AuxPrunerDef>
+    xcross_analyzer2::aux_registry;
 
 std::string analyzer_compute(xcross_analyzer2 &xcs, std::string scramble,
                              std::string id) {
