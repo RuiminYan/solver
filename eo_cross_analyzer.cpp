@@ -516,7 +516,10 @@ struct xcross_analyzer {
                 int s1, int s2, int s3, int bound, int t_ab, int t_ba, int t_bc,
                 int t_cb, int t_ac, int t_ca, int ea_b, int ca_b, int ea_c,
                 int ca_c, int eb_a, int cb_a, int eb_c, int cb_c, int ec_a,
-                int cc_a, int ec_b, int cc_b) {
+                int cc_a, int ec_b, int cc_b,
+                // Huge 表参数 (仅追踪第一对 s1-s2)
+                int v_huge, const unsigned char *p_huge_active, int i_e6,
+                int i_c2) {
     if (depth > bound)
       return false;
 
@@ -530,6 +533,17 @@ struct xcross_analyzer {
     for (int k = 0; k < count; ++k) {
       COUNT_NODE
       int m = moves[k];
+
+      // 级联 Check 0: Huge 表 (最前置)
+      int n_ie6 = -1, n_ic2 = -1;
+      if (v_huge != -1 && p_huge_active) {
+        int mv = conj_moves_flat[m][v_huge];
+        n_ie6 = p_edge6[i_e6 * 18 + mv];
+        n_ic2 = p_corn2[i_c2 * 18 + mv];
+        if (get_prune_ptr(p_huge_active, (long long)n_ie6 * 504 + n_ic2) >=
+            depth)
+          continue;
+      }
 
       // 级联 Check 1: Dep + EO
       int nd = p_dep[i_dep + m], neo = p_eo[i_eo + m];
@@ -620,7 +634,9 @@ struct xcross_analyzer {
                         n2c * 18, n3c * 18, nd * 18, neo * 18, depth - 1, m, s1,
                         s2, s3, bound, t_ab, t_ba, t_bc, t_cb, t_ac, t_ca,
                         n_ea_b, n_ca_b, n_ea_c, n_ca_c, n_eb_a, n_cb_a, n_eb_c,
-                        n_cb_c, n_ec_a, n_cc_a, n_ec_b, n_cc_b))
+                        n_cb_c, n_ec_a, n_cc_a, n_ec_b, n_cc_b, v_huge,
+                        p_huge_active, (v_huge != -1) ? n_ie6 : -1,
+                        (v_huge != -1) ? n_ic2 : -1))
         return true;
     }
     return false;
@@ -864,6 +880,24 @@ struct xcross_analyzer {
                 t_ca = get_plus_table_idx(s3, s1);
 
             for (int d = t.first; d <= std::min(20, best_xxx - 1); ++d) {
+              // 确定 Huge 表视角和初始状态 (选择第一对 s1-s2)
+              int v_nb = get_neighbor_view(s1, s2);
+              int v_dg = get_diagonal_view(s1, s2);
+
+              int v_huge = (v_nb != -1) ? v_nb : v_dg;
+              const unsigned char *p_huge = nullptr;
+              int init_e6 = -1, init_c2 = -1;
+
+              if (v_nb != -1 && p_huge_neighbor) {
+                p_huge = p_huge_neighbor;
+                init_e6 = st[v_nb].i_e6_nb;
+                init_c2 = st[v_nb].i_c2_nb;
+              } else if (v_dg != -1 && p_huge_diagonal) {
+                p_huge = p_huge_diagonal;
+                init_e6 = st[v_dg].i_e6_dg;
+                init_c2 = st[v_dg].i_c2_dg;
+              }
+
               if (search_3(st[s1].i1, st[s1].i2 * 18, st[s1].i3 * 18, st[s2].i1,
                            st[s2].i2 * 18, st[s2].i3 * 18, st[s3].i1,
                            st[s3].i2 * 18, st[s3].i3 * 18, st[s1].idep * 18,
@@ -874,7 +908,8 @@ struct xcross_analyzer {
                            st[s2].e_trk[t_ba], st[s2].c_trk[t_ba],
                            st[s2].e_trk[t_bc], st[s2].c_trk[t_bc],
                            st[s3].e_trk[t_ca], st[s3].c_trk[t_ca],
-                           st[s3].e_trk[t_cb], st[s3].c_trk[t_cb])) {
+                           st[s3].e_trk[t_cb], st[s3].c_trk[t_cb], v_huge,
+                           p_huge, init_e6, init_c2)) {
                 best_xxx = d;
                 break;
               }
