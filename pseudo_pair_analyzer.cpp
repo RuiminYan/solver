@@ -30,6 +30,11 @@ struct xcross_analyzer2 {
   static const unsigned char *p_edge3_prune_ptr;
   static bool edge3_prune_available;
 
+  // Corner3 剪枝相关
+  static const int *p_corner3_move_ptr;
+  static const unsigned char *p_corner3_prune_ptr;
+  static bool corner3_prune_available;
+
   int slot1, slot2, slot3, slot4, pslot1, pslot2, pslot3, pslot4;
   int max_length;
   int edge_solved2, edge_solved3, edge_solved4;
@@ -129,6 +134,19 @@ struct xcross_analyzer2 {
         p_edge3_prune_ptr = ptm.getPseudoCrossE0E1E2PrunePtr();
         edge3_prune_available = true;
         std::cout << "[Init] Edge3 Prune Table loaded." << std::endl;
+      }
+    }
+
+    // 5. Load Corner3 Move Table and Prune Table (可选, 用于增强 search_3
+    // 启发值) NOTE: Corner3 剪枝表也通过 loadPseudoTables() 加载
+    if (mtm.loadCorner3Table()) {
+      p_corner3_move_ptr = mtm.getCorner3TablePtr();
+      // 确保 Pseudo 表已加载 (可能在 Edge3 加载时已完成)
+      ptm.loadPseudoTables();
+      if (ptm.hasPseudoCrossC4C5C6Prune()) {
+        p_corner3_prune_ptr = ptm.getPseudoCrossC4C5C6PrunePtr();
+        corner3_prune_available = true;
+        std::cout << "[Init] Corner3 Prune Table loaded." << std::endl;
       }
     }
 
@@ -247,6 +265,61 @@ struct xcross_analyzer2 {
     }
 
     return {cur_e3, cur_cross / 24};
+  }
+
+  // 计算 Corner3 状态的共轭索引 (用于 search_3 阶段)
+  // alg: 已转换的公式 (通过 alg_rotation 转换后)
+  // ps1, ps2, ps3: 三个角块槽位 (0-3)
+  // slot_k: Pseudo 参考槽位 (对应 pslot1)
+  // 返回: {corner3_state, cross_state} 或 {-1, -1} 如果表不可用
+  // 参照 pseudo_analyzer.cpp 第 437-481 行
+  std::pair<int, int> get_corner3_conjugated_state(const std::vector<int> &alg,
+                                                   int ps1, int ps2, int ps3,
+                                                   int slot_k) {
+    if (!corner3_prune_available)
+      return {-1, -1};
+
+    // 计算相对虚拟 ID (相对于 slot_k)
+    // 与 pseudo_analyzer.cpp 第 420-422 行一致 (角块需要 +4)
+    int r1 = ((ps1 - slot_k + 4) % 4) + 4;
+    int r2 = ((ps2 - slot_k + 4) % 4) + 4;
+    int r3 = ((ps3 - slot_k + 4) % 4) + 4;
+
+    // 排序得到规范 key
+    std::vector<int> keys = {r1, r2, r3};
+    std::sort(keys.begin(), keys.end());
+
+    // 确定 rot_map 索引 (与 pseudo_analyzer.cpp 第 455-462 行一致)
+    // {4,5,6} -> Id, {4,5,7} -> y, {4,6,7} -> y2, {5,6,7} -> y'
+    int rot_idx = 0;
+    if (keys[0] == 4 && keys[1] == 5 && keys[2] == 6)
+      rot_idx = 0; // {4,5,6} -> Id
+    else if (keys[0] == 4 && keys[1] == 5 && keys[2] == 7)
+      rot_idx = 1; // {4,5,7} -> y
+    else if (keys[0] == 4 && keys[1] == 6 && keys[2] == 7)
+      rot_idx = 2; // {4,6,7} -> y2
+    else if (keys[0] == 5 && keys[1] == 6 && keys[2] == 7)
+      rot_idx = 3; // {5,6,7} -> y'
+
+    const int *mapper = rot_map[rot_idx];
+
+    // 初始化 Corner3 索引 (基准: C4, C5, C6 -> Indices 12, 15, 18)
+    std::vector<int> target_arr = {12, 15, 18};
+    int cur_c3 = array_to_index(target_arr, 3, 3, 8);
+
+    // 初始化 Cross 索引 (基准: 已解状态, *24 版本)
+    int cur_cross = 187520 * 24;
+
+    // 应用两层共轭 (与 pseudo_analyzer.cpp 第 474-479 行一致):
+    // 物理移动 -> Pseudo 移动 (conj_moves_flat) -> 旋转后移动 (rot_map)
+    for (int m : alg) {
+      int m_pseudo = conj_moves_flat[m][slot_k]; // 第一层共轭
+      int m_rot = mapper[m_pseudo];              // 第二层共轭
+      cur_c3 = p_corner3_move_ptr[cur_c3 * 18 + m_rot];
+      cur_cross = p_multi_move_ptr[cur_cross + m_rot];
+    }
+
+    return {cur_c3, cur_cross / 24};
   }
 
   void start_search_1(int arg_slot1, int arg_pslot1,
@@ -639,7 +712,19 @@ struct xcross_analyzer2 {
         }
       }
 
-      tasks.push_back({(int)r, std::max({h1, h2, h3, h4, h5, h_e3})});
+      // Corner3 剪枝 (使用两层共轭机制复用单张表)
+      int h_c3 = 0;
+      if (corner3_prune_available) {
+        std::vector<int> alg = alg_rotation(base_alg, rotations[r]);
+        auto [c3_state, cross_state] =
+            get_corner3_conjugated_state(alg, pslot1, pslot2, pslot3, pslot1);
+        if (c3_state >= 0) {
+          long long idx_c3 = (long long)cross_state * 9072 + c3_state;
+          h_c3 = get_prune_ptr(p_corner3_prune_ptr, idx_c3);
+        }
+      }
+
+      tasks.push_back({(int)r, std::max({h1, h2, h3, h4, h5, h_e3, h_c3})});
     }
     std::sort(tasks.begin(), tasks.end(),
               [](const RotTask &a, const RotTask &b) {
@@ -1005,6 +1090,11 @@ const int *xcross_analyzer2::p_multi_move_ptr = nullptr;
 const int *xcross_analyzer2::p_edge3_move_ptr = nullptr;
 const unsigned char *xcross_analyzer2::p_edge3_prune_ptr = nullptr;
 bool xcross_analyzer2::edge3_prune_available = false;
+
+// Corner3 静态成员初始化
+const int *xcross_analyzer2::p_corner3_move_ptr = nullptr;
+const unsigned char *xcross_analyzer2::p_corner3_prune_ptr = nullptr;
+bool xcross_analyzer2::corner3_prune_available = false;
 
 std::string analyzer_compute(xcross_analyzer2 &xcs, std::string scramble,
                              std::string id) {
