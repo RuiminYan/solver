@@ -25,6 +25,11 @@ struct xcross_analyzer2 {
   static const int *p_corner_move_ptr;
   static const int *p_multi_move_ptr;
 
+  // Edge3 剪枝相关
+  static const int *p_edge3_move_ptr;
+  static const unsigned char *p_edge3_prune_ptr;
+  static bool edge3_prune_available;
+
   int slot1, slot2, slot3, slot4, pslot1, pslot2, pslot3, pslot4;
   int max_length;
   int edge_solved2, edge_solved3, edge_solved4;
@@ -74,23 +79,27 @@ struct xcross_analyzer2 {
     }
 
     // 2. Load XCross & Pair Prune Tables
-    // NOTE: 使用 Conj 复用 C4 表处理 C5/C6/C7，只需加载 4 张表
-    xc_prune_tables.resize(4);
-    ec_prune_tables.resize(4);
+    xc_prune_tables.resize(16);
+    ec_prune_tables.resize(16);
     for (int e = 0; e < 4; ++e) {
-      // 只加载 C4 的表，C5/C6/C7 通过 Conj 运算得到
-      std::string fn_xc =
-          "prune_table_pseudo_cross_C4_into_slot" + std::to_string(e) + ".bin";
-      if (!load_vector(xc_prune_tables[e], fn_xc)) {
-        std::cerr << "Error: Missing table " << fn_xc << std::endl;
-        exit(1);
-      }
+      for (int c = 0; c < 4; ++c) {
+        int idx = e * 4 + c;
 
-      std::string fn_ec =
-          "prune_table_pseudo_pair_C4_E" + std::to_string(e) + ".bin";
-      if (!load_vector(ec_prune_tables[e], fn_ec)) {
-        std::cerr << "Error: Missing table " << fn_ec << std::endl;
-        exit(1);
+        std::string fn_xc = "prune_table_pseudo_cross_C" +
+                            std::to_string(c + 4) + "_into_slot" +
+                            std::to_string(e) + ".bin";
+        if (!load_vector(xc_prune_tables[idx], fn_xc)) {
+          std::cerr << "Error: Missing table " << fn_xc << std::endl;
+          exit(1);
+        }
+
+        std::string fn_ec = "prune_table_pseudo_pair_C" +
+                            std::to_string(c + 4) + "_E" + std::to_string(e) +
+                            ".bin";
+        if (!load_vector(ec_prune_tables[idx], fn_ec)) {
+          std::cerr << "Error: Missing table " << fn_ec << std::endl;
+          exit(1);
+        }
       }
     }
 
@@ -106,6 +115,20 @@ struct xcross_analyzer2 {
           std::cerr << "Error: Missing table " << filename << std::endl;
           exit(1);
         }
+      }
+    }
+
+    // 4. Load Edge3 Move Table and Prune Table (可选, 用于增强 search_3 启发值)
+    auto &ptm = PruneTableManager::getInstance();
+    // NOTE: Edge3 剪枝表通过 loadPseudoTables() 加载，此处仅加载移动表并检查
+    if (mtm.loadEdge3Table()) {
+      p_edge3_move_ptr = mtm.getEdge3TablePtr();
+      // 尝试加载 Pseudo 表 (如果尚未加载)
+      ptm.loadPseudoTables();
+      if (ptm.hasPseudoCrossE0E1E2Prune()) {
+        p_edge3_prune_ptr = ptm.getPseudoCrossE0E1E2PrunePtr();
+        edge3_prune_available = true;
+        std::cout << "[Init] Edge3 Prune Table loaded." << std::endl;
       }
     }
 
@@ -171,6 +194,52 @@ struct xcross_analyzer2 {
       idx2 = p_corner_move_ptr[idx2 * 18 + m];
       idx3 = p_edge_move_ptr[idx3 * 18 + m];
     }
+  }
+
+  // 计算 Edge3 状态的共轭索引 (用于 search_3 阶段)
+  // slot1, slot2, slot3: 三个棱块槽位 (0-3)
+  // base_alg: 打乱公式
+  // rot: 当前旋转
+  // 返回: {edge3_state, cross_state} 或 {-1, -1} 如果表不可用
+  std::pair<int, int>
+  get_edge3_conjugated_state(const std::vector<int> &base_alg,
+                             const std::string &rot, int s1, int s2, int s3) {
+    if (!edge3_prune_available)
+      return {-1, -1};
+
+    std::vector<int> alg = alg_rotation(base_alg, rot);
+
+    // 排序槽位以规范化
+    std::vector<int> slots = {s1, s2, s3};
+    std::sort(slots.begin(), slots.end());
+
+    // 确定 rot_map 索引
+    // {0,1,2} -> Id, {0,1,3} -> y, {0,2,3} -> y2, {1,2,3} -> y'
+    int rot_idx = 0;
+    if (slots[0] == 0 && slots[1] == 1 && slots[2] == 2)
+      rot_idx = 0;
+    else if (slots[0] == 0 && slots[1] == 1 && slots[2] == 3)
+      rot_idx = 1;
+    else if (slots[0] == 0 && slots[1] == 2 && slots[2] == 3)
+      rot_idx = 2;
+    else if (slots[0] == 1 && slots[1] == 2 && slots[2] == 3)
+      rot_idx = 3;
+
+    // 初始化 Edge3 索引 (基准: E0, E1, E2 -> 位置 0, 2, 4)
+    std::vector<int> target_arr = {0, 2, 4};
+    int cur_e3 = array_to_index(target_arr, 3, 2, 12);
+
+    // 初始化 Cross 索引 (基准: 已解状态, *24 版本)
+    int cur_cross = 187520 * 24;
+
+    // 应用公式: 物理移动 -> rot_map 旋转
+    for (int m : alg) {
+      int m_rot = rot_map[rot_idx][m];
+      cur_e3 = p_edge3_move_ptr[cur_e3 * 18 + m_rot];
+      cur_cross = p_multi_move_ptr[cur_cross + m_rot];
+    }
+
+    return {cur_e3, cur_cross / 24};
   }
 
   void start_search_1(int arg_slot1, int arg_pslot1,
@@ -251,9 +320,9 @@ struct xcross_analyzer2 {
     std::vector<int> base_alg = string_to_alg(scramble);
     for (int slot1_tmp = 0; slot1_tmp < 4; slot1_tmp++) {
       for (int pslot1_tmp = 0; pslot1_tmp < 4; pslot1_tmp++) {
-        // NOTE: 使用 Conj 复用 C4 表，索引只用 slot
-        start_search_1(slot1_tmp, pslot1_tmp, xc_prune_tables[slot1_tmp],
-                       ec_prune_tables[slot1_tmp], rotations, base_alg);
+        int idx = slot1_tmp * 4 + pslot1_tmp;
+        start_search_1(slot1_tmp, pslot1_tmp, xc_prune_tables[idx],
+                       ec_prune_tables[idx], rotations, base_alg);
       }
     }
   }
@@ -424,9 +493,10 @@ struct xcross_analyzer2 {
             if (pslot1_tmp == pslot2_tmp)
               continue;
             start_search_2(slot1_tmp, slot2_tmp, pslot1_tmp, pslot2_tmp,
-                           xc_prune_tables[slot1_tmp],
+                           xc_prune_tables[slot1_tmp * 4 + pslot1_tmp],
                            base_prune_tables[pslot2_tmp],
-                           ec_prune_tables[slot1_tmp], rotations, base_alg);
+                           ec_prune_tables[slot1_tmp * 4 + pslot1_tmp],
+                           rotations, base_alg);
           }
         }
       }
@@ -548,7 +618,19 @@ struct xcross_analyzer2 {
       int h4 = get_prune_ptr(p_edge_prune1, idx7 * 24 + idx2);
       long long idx_xc3 = (long long)(idx1 + idx6) * 24 + idx9;
       int h5 = get_prune_ptr(p_prune_xc3, idx_xc3);
-      tasks.push_back({(int)r, std::max({h1, h2, h3, h4, h5})});
+
+      // Edge3 剪枝 (使用共轭机制复用单张表)
+      int h_e3 = 0;
+      if (edge3_prune_available) {
+        auto [e3_state, cross_state] = get_edge3_conjugated_state(
+            base_alg, rotations[r], slot1, slot2, slot3);
+        if (e3_state >= 0) {
+          long long idx_e3 = (long long)cross_state * 10560 + e3_state;
+          h_e3 = get_prune_ptr(p_edge3_prune_ptr, idx_e3);
+        }
+      }
+
+      tasks.push_back({(int)r, std::max({h1, h2, h3, h4, h5, h_e3})});
     }
     std::sort(tasks.begin(), tasks.end(),
               [](const RotTask &a, const RotTask &b) {
@@ -644,10 +726,12 @@ struct xcross_analyzer2 {
           for (int pslot1_tmp : a_pslot_tmps) {
             start_search_3(slot1_tmp, slot_tmps_set[i][0], slot_tmps_set[i][1],
                            pslot1_tmp, pslot_tmps_set[j][0],
-                           pslot_tmps_set[j][1], xc_prune_tables[slot1_tmp],
+                           pslot_tmps_set[j][1],
+                           xc_prune_tables[slot1_tmp * 4 + pslot1_tmp],
                            base_prune_tables[pslot_tmps_set[j][0]],
                            base_prune_tables[pslot_tmps_set[j][1]],
-                           ec_prune_tables[slot1_tmp], rotations, base_alg);
+                           ec_prune_tables[slot1_tmp * 4 + pslot1_tmp],
+                           rotations, base_alg);
           }
         }
       }
@@ -888,9 +972,9 @@ struct xcross_analyzer2 {
           if (k != j)
             p_rem.push_back(k);
         start_search_4(i, s_rem[0], s_rem[1], s_rem[2], j, p_rem[0], p_rem[1],
-                       p_rem[2], xc_prune_tables[i],
+                       p_rem[2], xc_prune_tables[i * 4 + j],
                        base_prune_tables[p_rem[0]], base_prune_tables[p_rem[1]],
-                       base_prune_tables[p_rem[2]], ec_prune_tables[i],
+                       base_prune_tables[p_rem[2]], ec_prune_tables[i * 4 + j],
                        rotations, base_alg);
       }
     }
@@ -907,6 +991,11 @@ std::vector<std::vector<unsigned char>>
 const int *xcross_analyzer2::p_edge_move_ptr = nullptr;
 const int *xcross_analyzer2::p_corner_move_ptr = nullptr;
 const int *xcross_analyzer2::p_multi_move_ptr = nullptr;
+
+// Edge3 静态成员初始化
+const int *xcross_analyzer2::p_edge3_move_ptr = nullptr;
+const unsigned char *xcross_analyzer2::p_edge3_prune_ptr = nullptr;
+bool xcross_analyzer2::edge3_prune_available = false;
 
 std::string analyzer_compute(xcross_analyzer2 &xcs, std::string scramble,
                              std::string id) {
