@@ -662,13 +662,73 @@ void PruneTableManager::generatePseudoCrossE0E1Prune() {
   std::cout << "[PruneTable] Generating pseudo cross + E0,E1 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  std::vector<int> target = {0, 2}; // E0(0), E1(1) -> 0*2, 1*2
+  std::vector<int> target = {0, 2}; // E0(0*2=0), E1(1*2=2) - 邻棱
   int idx_solved = array_to_index(target, 2, 2, 12);
   pseudo_cross_E0_E1_prune.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
   create_prune_table_pseudo_cross_edges2(
       187520, idx_solved, 190080, 528, 11, mtm.getCrossTable(),
       mtm.getEdges2Table(), pseudo_cross_E0_E1_prune);
   saveTable(pseudo_cross_E0_E1_prune, "prune_table_pseudo_cross_E0_E1.bin");
+}
+
+void PruneTableManager::generatePseudoCrossE1E3Prune() {
+  if (loadTable(pseudo_cross_E1_E3_prune, "prune_table_pseudo_cross_E1_E3.bin"))
+    return;
+  std::cout << "[PruneTable] Generating pseudo cross + E1,E3 prune table..."
+            << std::endl;
+  auto &mtm = MoveTableManager::getInstance();
+  std::vector<int> target = {2, 6}; // E1(1*2=2), E3(3*2=6) - 对棱
+  int idx_solved = array_to_index(target, 2, 2, 12);
+  pseudo_cross_E1_E3_prune.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
+  create_prune_table_pseudo_cross_edges2(
+      187520, idx_solved, 190080, 528, 11, mtm.getCrossTable(),
+      mtm.getEdges2Table(), pseudo_cross_E1_E3_prune);
+  saveTable(pseudo_cross_E1_E3_prune, "prune_table_pseudo_cross_E1_E3.bin");
+}
+
+void PruneTableManager::generatePseudoCrossE0E3Prune() {
+  if (loadTable(pseudo_cross_E0_E3_prune, "prune_table_pseudo_cross_E0_E3.bin"))
+    return;
+  std::cout << "[PruneTable] Generating pseudo cross + E0,E3 prune table..."
+            << std::endl;
+  auto &mtm = MoveTableManager::getInstance();
+  std::vector<int> target = {0, 6}; // E0(0*2=0), E3(3*2=6) - 邻棱
+  int idx_solved = array_to_index(target, 2, 2, 12);
+  pseudo_cross_E0_E3_prune.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
+  create_prune_table_pseudo_cross_edges2(
+      187520, idx_solved, 190080, 528, 11, mtm.getCrossTable(),
+      mtm.getEdges2Table(), pseudo_cross_E0_E3_prune);
+  saveTable(pseudo_cross_E0_E3_prune, "prune_table_pseudo_cross_E0_E3.bin");
+}
+
+void PruneTableManager::generatePseudoCrossE1E2Prune() {
+  if (loadTable(pseudo_cross_E1_E2_prune, "prune_table_pseudo_cross_E1_E2.bin"))
+    return;
+  std::cout << "[PruneTable] Generating pseudo cross + E1,E2 prune table..."
+            << std::endl;
+  auto &mtm = MoveTableManager::getInstance();
+  std::vector<int> target = {2, 4}; // E1(1*2=2), E2(2*2=4) - 邻棱
+  int idx_solved = array_to_index(target, 2, 2, 12);
+  pseudo_cross_E1_E2_prune.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
+  create_prune_table_pseudo_cross_edges2(
+      187520, idx_solved, 190080, 528, 11, mtm.getCrossTable(),
+      mtm.getEdges2Table(), pseudo_cross_E1_E2_prune);
+  saveTable(pseudo_cross_E1_E2_prune, "prune_table_pseudo_cross_E1_E2.bin");
+}
+
+void PruneTableManager::generatePseudoCrossE2E3Prune() {
+  if (loadTable(pseudo_cross_E2_E3_prune, "prune_table_pseudo_cross_E2_E3.bin"))
+    return;
+  std::cout << "[PruneTable] Generating pseudo cross + E2,E3 prune table..."
+            << std::endl;
+  auto &mtm = MoveTableManager::getInstance();
+  std::vector<int> target = {4, 6}; // E2(2*2=4), E3(3*2=6) - 邻棱
+  int idx_solved = array_to_index(target, 2, 2, 12);
+  pseudo_cross_E2_E3_prune.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
+  create_prune_table_pseudo_cross_edges2(
+      187520, idx_solved, 190080, 528, 11, mtm.getCrossTable(),
+      mtm.getEdges2Table(), pseudo_cross_E2_E3_prune);
+  saveTable(pseudo_cross_E2_E3_prune, "prune_table_pseudo_cross_E2_E3.bin");
 }
 
 void PruneTableManager::generatePseudoCrossE0E1E2Prune() {

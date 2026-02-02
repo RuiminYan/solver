@@ -45,9 +45,14 @@ private:
   std::vector<unsigned char>
       pseudo_cross_base_prune[4]; // Pseudo Cross 基础表 (Offset 0,1,2,3)
   std::vector<unsigned char>
-      pseudo_cross_E0_E2_prune; // Pseudo Cross + E0,E2 对棱表 (基准)
-  // 新增邻棱表
-  std::vector<unsigned char> pseudo_cross_E0_E1_prune; // 基准
+      pseudo_cross_E0_E2_prune; // Pseudo Cross + E0,E2 对棱表 (已有)
+  std::vector<unsigned char> pseudo_cross_E1_E3_prune; // 对棱表 (新增)
+
+  // 邻棱表
+  std::vector<unsigned char> pseudo_cross_E0_E1_prune; // 邻棱 (已有)
+  std::vector<unsigned char> pseudo_cross_E0_E3_prune; // 邻棱 (新增)
+  std::vector<unsigned char> pseudo_cross_E1_E2_prune; // 邻棱 (新增)
+  std::vector<unsigned char> pseudo_cross_E2_E3_prune; // 邻棱 (新增)
 
   // Edge3 Triples
   std::vector<unsigned char> pseudo_cross_E0_E1_E2_prune; // 基准
@@ -123,10 +128,22 @@ public:
   const unsigned char *getPseudoCrossE0E2PrunePtr() const {
     return pseudo_cross_E0_E2_prune.data();
   }
+  const unsigned char *getPseudoCrossE1E3PrunePtr() const {
+    return pseudo_cross_E1_E3_prune.data();
+  }
 
   // 邻棱表 Getters
   const unsigned char *getPseudoCrossE0E1PrunePtr() const {
     return pseudo_cross_E0_E1_prune.data();
+  }
+  const unsigned char *getPseudoCrossE0E3PrunePtr() const {
+    return pseudo_cross_E0_E3_prune.data();
+  }
+  const unsigned char *getPseudoCrossE1E2PrunePtr() const {
+    return pseudo_cross_E1_E2_prune.data();
+  }
+  const unsigned char *getPseudoCrossE2E3PrunePtr() const {
+    return pseudo_cross_E2_E3_prune.data();
   }
 
   // Edge3 Getters
@@ -181,9 +198,21 @@ public:
   bool hasPseudoCrossE0E2Prune() const {
     return !pseudo_cross_E0_E2_prune.empty();
   }
-  // 新增 HasChecks
+  bool hasPseudoCrossE1E3Prune() const {
+    return !pseudo_cross_E1_E3_prune.empty();
+  }
+  // 邻棱表 HasChecks
   bool hasPseudoCrossE0E1Prune() const {
     return !pseudo_cross_E0_E1_prune.empty();
+  }
+  bool hasPseudoCrossE0E3Prune() const {
+    return !pseudo_cross_E0_E3_prune.empty();
+  }
+  bool hasPseudoCrossE1E2Prune() const {
+    return !pseudo_cross_E1_E2_prune.empty();
+  }
+  bool hasPseudoCrossE2E3Prune() const {
+    return !pseudo_cross_E2_E3_prune.empty();
   }
   // Edge3 HasChecks
   bool hasPseudoCrossE0E1E2Prune() const {
@@ -261,9 +290,14 @@ public:
   // Pseudo 生成函数
   void generatePseudoCrossPrune();
   void generatePseudoCrossBasePrune(int offset_idx);
+  // 对棱表生成函数
   void generatePseudoCrossE0E2Prune();
-  // 新增生成函数
+  void generatePseudoCrossE1E3Prune(); // 新增
+  // 邻棱表生成函数
   void generatePseudoCrossE0E1Prune();
+  void generatePseudoCrossE0E3Prune(); // 新增
+  void generatePseudoCrossE1E2Prune(); // 新增
+  void generatePseudoCrossE2E3Prune(); // 新增
   // Edge3 Generators
   void generatePseudoCrossE0E1E2Prune();
   void generatePseudoCrossE1E2E3Prune(); // New
