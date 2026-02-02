@@ -109,14 +109,12 @@ struct xcross_analyzer2 {
     std::cout << "[Init] Loading Pseudo Pair Tables..." << std::endl;
 
     // 1. Load Base Prune Tables (Cross + 1 Corner)
-    base_prune_tables.resize(4);
-    for (int c = 0; c < 4; ++c) {
-      std::string filename =
-          "prune_table_pseudo_cross_C" + std::to_string(c + 4) + ".bin";
-      if (!load_vector(base_prune_tables[c], filename)) {
-        std::cerr << "Error: Missing table " << filename << std::endl;
-        exit(1);
-      }
+    // [Conj优化] 只加载 C4 基准表，其他通过 Conj 映射
+    base_prune_tables.resize(1);
+    if (!load_vector(base_prune_tables[0], "prune_table_pseudo_cross_C4.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_C4.bin"
+                << std::endl;
+      exit(1);
     }
 
     // 2. Load XCross & Pair Prune Tables
@@ -668,12 +666,7 @@ struct xcross_analyzer2 {
       if (edge_prune1_tmp >= depth)
         continue;
 
-      int index4_tmp = p_corner_move_ptr[arg_index4 + i];
-      int prune2_tmp = get_prune_ptr(prune2, index1_tmp + index4_tmp);
-      if (prune2_tmp >= depth)
-        continue;
-
-      // [Conj] 用 Conj 移动更新 XC2 状态
+      // [Conj] 用 Conj 移动更新 XC2 状态 (提前，供 prune2 使用)
       int mc = conj_moves_flat[i][pslot2];
       int xc2_cr_n = p_multi_move_ptr[xc2_cr + mc];
       int xc2_cn_n = p_corner_move_ptr[xc2_cn + mc];
@@ -681,6 +674,14 @@ struct xcross_analyzer2 {
       int xc2_e1_n = p_edge_move_ptr[xc2_e1 + mc];
       int xc2_e2_n = p_edge_move_ptr[xc2_e2 + mc];
       int xc2_e3_n = p_edge_move_ptr[xc2_e3 + mc];
+
+      // [Conj] prune2: 使用 Conj 索引 (xc2_cr + xc2_cn) - 复用 XC2 状态！
+      int prune2_tmp = get_prune_ptr(prune2, xc2_cr_n + xc2_cn_n);
+      if (prune2_tmp >= depth)
+        continue;
+
+      int index4_tmp = p_corner_move_ptr[arg_index4 + i];
+
       int xc2_e_sel = (diff2 == 0)   ? xc2_e0_n
                       : (diff2 == 1) ? xc2_e1_n
                       : (diff2 == 2) ? xc2_e2_n
@@ -744,25 +745,21 @@ struct xcross_analyzer2 {
       get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx5, slot1,
                           pslot1, edge_index, corner_index, single_edge_index);
 
-      int idx1_dummy, idx4, idx6;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy, idx4, idx6, slot2,
-                          pslot2, edge_index, corner_index, single_edge_index);
-
       int h1 = get_prune_ptr(p_prune1, idx1 + idx2);
-      int h2 = get_prune_ptr(p_prune2, idx1 + idx4);
       int h3 = get_prune_ptr(p_edge_prune1, idx5 * 24 + idx2);
 
-      // [Conj优化] 使用 Conj 索引计算 h4
+      // [Conj优化] 使用 Conj 状态计算 h2 和 h4
       std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
       ConjStateXC st;
       get_conj_state_xc(rotated_alg, pslot2, st);
+      int h2 = get_prune_ptr(p_prune2, st.cross + st.corner); // [Conj] base 表
       long long conj_idx_xc2 =
-
           (long long)(st.cross + st.corner) * 24 + st.edge[diff2];
       int h4 = get_prune_ptr(p_prune_xc2, conj_idx_xc2);
 
       tasks.push_back({(int)r, std::max({h1, h2, h3, h4})});
     }
+
     std::sort(tasks.begin(), tasks.end(),
               [](const RotTask &a, const RotTask &b) {
                 return a.heuristic < b.heuristic;
@@ -787,13 +784,13 @@ struct xcross_analyzer2 {
       edge_solved2 = single_edge_index[slot2];
 
       int prune1_tmp = get_prune_ptr(p_prune1, index1 + index2);
-      int prune2_tmp = get_prune_ptr(p_prune2, index1 + index4);
       int edge_prune1_tmp = get_prune_ptr(p_edge_prune1, index5 * 24 + index2);
 
-      // [Conj优化] 计算 XC2 Conj 状态
+      // [Conj优化] 计算 Conj 状态，用于 prune2 和 prune_xc2
       std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
       ConjStateXC st;
       get_conj_state_xc(rotated_alg, pslot2, st);
+      int prune2_tmp = get_prune_ptr(p_prune2, st.cross + st.corner); // [Conj]
       long long conj_idx_xc2 =
           (long long)(st.cross + st.corner) * 24 + st.edge[diff2];
       int prune_xc2_tmp = get_prune_ptr(p_prune_xc2, conj_idx_xc2);
@@ -843,7 +840,7 @@ struct xcross_analyzer2 {
               continue;
             start_search_2(slot1_tmp, slot2_tmp, pslot1_tmp, pslot2_tmp,
                            xc_prune_tables[slot1_tmp * 4 + pslot1_tmp],
-                           base_prune_tables[pslot2_tmp],
+                           base_prune_tables[0], // [Conj] 使用 C4 表
                            ec_prune_tables[slot1_tmp * 4 + pslot1_tmp],
                            rotations, base_alg);
           }
@@ -861,7 +858,10 @@ struct xcross_analyzer2 {
       const unsigned char *prune3, const unsigned char *edge_prune1,
       const unsigned char *prune_xc3, int num_aux, const AuxState *aux_states,
       int xc3_cr, int xc3_cn, int xc3_e0, int xc3_e1, int xc3_e2, int xc3_e3,
-      int diff3) {
+      int diff3,
+      // [Conj] base2 的 Conj 状态 (pslot2)
+      int base2_cr, int base2_cn) {
+
     const int *moves = valid_moves_flat[prev];
     const int count_moves = valid_moves_count[prev];
 
@@ -922,24 +922,33 @@ struct xcross_analyzer2 {
       if (edge_prune1_tmp >= depth)
         continue;
 
-      int index4_tmp = p_corner_move_ptr[arg_index4 + i];
-      int prune2_tmp = get_prune_ptr(prune2, index1_tmp + index4_tmp);
+      // [Conj] 用 Conj 移动更新 XC3 状态 (pslot3)
+      int mc3 = conj_moves_flat[i][pslot3];
+      int xc3_cr_n = p_multi_move_ptr[xc3_cr + mc3];
+      int xc3_cn_n = p_corner_move_ptr[xc3_cn + mc3];
+      int xc3_e0_n = p_edge_move_ptr[xc3_e0 + mc3];
+      int xc3_e1_n = p_edge_move_ptr[xc3_e1 + mc3];
+      int xc3_e2_n = p_edge_move_ptr[xc3_e2 + mc3];
+      int xc3_e3_n = p_edge_move_ptr[xc3_e3 + mc3];
+
+      // [Conj] 用 Conj 移动更新 base2 状态 (pslot2)
+      int mc2 = conj_moves_flat[i][pslot2];
+      int base2_cr_n = p_multi_move_ptr[base2_cr + mc2];
+      int base2_cn_n = p_corner_move_ptr[base2_cn + mc2];
+
+      // [Conj] prune2: 使用 base2 Conj 索引 (pslot2)
+      int prune2_tmp = get_prune_ptr(prune2, base2_cr_n + base2_cn_n);
       if (prune2_tmp >= depth)
         continue;
 
-      int index6_tmp = p_corner_move_ptr[arg_index6 + i];
-      int prune3_tmp = get_prune_ptr(prune3, index1_tmp + index6_tmp);
+      // [Conj] prune3: 使用 XC3 Conj 索引 (pslot3) - xc3_cr + xc3_cn 就是 base3
+      int prune3_tmp = get_prune_ptr(prune3, xc3_cr_n + xc3_cn_n);
       if (prune3_tmp >= depth)
         continue;
 
-      // [Conj] 用 Conj 移动更新 XC3 状态
-      int mc = conj_moves_flat[i][pslot3];
-      int xc3_cr_n = p_multi_move_ptr[xc3_cr + mc];
-      int xc3_cn_n = p_corner_move_ptr[xc3_cn + mc];
-      int xc3_e0_n = p_edge_move_ptr[xc3_e0 + mc];
-      int xc3_e1_n = p_edge_move_ptr[xc3_e1 + mc];
-      int xc3_e2_n = p_edge_move_ptr[xc3_e2 + mc];
-      int xc3_e3_n = p_edge_move_ptr[xc3_e3 + mc];
+      int index4_tmp = p_corner_move_ptr[arg_index4 + i];
+      int index6_tmp = p_corner_move_ptr[arg_index6 + i];
+
       int xc3_e_sel = (diff3 == 0)   ? xc3_e0_n
                       : (diff3 == 1) ? xc3_e1_n
                       : (diff3 == 2) ? xc3_e2_n
@@ -965,9 +974,11 @@ struct xcross_analyzer2 {
                      index9_tmp * 18, depth - 1, i, prune1, prune2, prune3,
                      edge_prune1, prune_xc3, num_aux, next_aux, xc3_cr_n,
                      xc3_cn_n * 18, xc3_e0_n * 18, xc3_e1_n * 18, xc3_e2_n * 18,
-                     xc3_e3_n * 18, diff3))
+                     xc3_e3_n * 18, diff3, base2_cr_n,
+                     base2_cn_n * 18)) // [Conj] base2 状态
         return true;
     }
+
     return false;
   }
 
@@ -1010,30 +1021,26 @@ struct xcross_analyzer2 {
       int idx1, idx2, idx7;
       get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx7, slot1,
                           pslot1, edge_index, corner_index, single_edge_index);
-      int idx1_dummy, idx4, idx8;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy, idx4, idx8, slot2,
-                          pslot2, edge_index, corner_index, single_edge_index);
-      int idx1_dummy2, idx6, idx9;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy2, idx6, idx9,
-                          slot3, pslot3, edge_index, corner_index,
-                          single_edge_index);
 
       int h1 = get_prune_ptr(p_prune1, idx1 + idx2);
-      int h2 = get_prune_ptr(p_prune2, idx1 + idx4);
-      int h3 = get_prune_ptr(p_prune3, idx1 + idx6);
       int h4 = get_prune_ptr(p_edge_prune1, idx7 * 24 + idx2);
 
-      // [Conj优化] 使用 Conj 索引计算 h5
+      // [Conj优化] 计算 pslot2 和 pslot3 的 Conj 状态
       std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
-      ConjStateXC st;
-      get_conj_state_xc(rotated_alg, pslot3, st);
+      ConjStateXC st2, st3;
+      get_conj_state_xc(rotated_alg, pslot2, st2);
+      get_conj_state_xc(rotated_alg, pslot3, st3);
+
+      int h2 = get_prune_ptr(p_prune2, st2.cross + st2.corner); // [Conj] pslot2
+      int h3 = get_prune_ptr(p_prune3, st3.cross + st3.corner); // [Conj] pslot3
 
       long long conj_idx_xc3 =
-          (long long)(st.cross + st.corner) * 24 + st.edge[diff3];
+          (long long)(st3.cross + st3.corner) * 24 + st3.edge[diff3];
       int h5 = get_prune_ptr(p_prune_xc3, conj_idx_xc3);
 
       tasks.push_back({(int)r, std::max({h1, h2, h3, h4, h5})});
     }
+
     std::sort(tasks.begin(), tasks.end(),
               [](const RotTask &a, const RotTask &b) {
                 return a.heuristic < b.heuristic;
@@ -1066,16 +1073,20 @@ struct xcross_analyzer2 {
       edge_solved3 = single_edge_index[slot3];
 
       int prune1_tmp = get_prune_ptr(p_prune1, index1 + index2);
-      int prune2_tmp = get_prune_ptr(p_prune2, index1 + index4);
-      int prune3_tmp = get_prune_ptr(p_prune3, index1 + index6);
       int edge_prune1_tmp = get_prune_ptr(p_edge_prune1, index7 * 24 + index2);
 
-      // [Conj优化] 计算 XC3 Conj 状态
+      // [Conj优化] 计算 pslot2 和 pslot3 的 Conj 状态
       std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
-      ConjStateXC st;
-      get_conj_state_xc(rotated_alg, pslot3, st);
+      ConjStateXC st2, st3;
+      get_conj_state_xc(rotated_alg, pslot2, st2);
+      get_conj_state_xc(rotated_alg, pslot3, st3);
+
+      int prune2_tmp =
+          get_prune_ptr(p_prune2, st2.cross + st2.corner); // [Conj] pslot2
+      int prune3_tmp =
+          get_prune_ptr(p_prune3, st3.cross + st3.corner); // [Conj] pslot3
       long long conj_idx_xc3 =
-          (long long)(st.cross + st.corner) * 24 + st.edge[diff3];
+          (long long)(st3.cross + st3.corner) * 24 + st3.edge[diff3];
       int prune_xc3_tmp = get_prune_ptr(p_prune_xc3, conj_idx_xc3);
 
       if (prune1_tmp == 0 && prune2_tmp == 0 && prune3_tmp == 0 &&
@@ -1101,12 +1112,15 @@ struct xcross_analyzer2 {
           if (depth_limited_search_3(
                   index1, index2, index4, index6, index7, index8, index9, d, 18,
                   p_prune1, p_prune2, p_prune3, p_edge_prune1, p_prune_xc3,
-                  num_aux, aux_init, st.cross, st.corner * 18, st.edge[0] * 18,
-                  st.edge[1] * 18, st.edge[2] * 18, st.edge[3] * 18, diff3)) {
+                  num_aux, aux_init, st3.cross, st3.corner * 18,
+                  st3.edge[0] * 18, st3.edge[1] * 18, st3.edge[2] * 18,
+                  st3.edge[3] * 18, diff3, st2.cross,
+                  st2.corner * 18)) { // [Conj] base2
             found = d;
             break;
           }
         }
+
         results[r] = found;
       }
     }
@@ -1144,8 +1158,8 @@ struct xcross_analyzer2 {
                            pslot1_tmp, pslot_tmps_set[j][0],
                            pslot_tmps_set[j][1],
                            xc_prune_tables[slot1_tmp * 4 + pslot1_tmp],
-                           base_prune_tables[pslot_tmps_set[j][0]],
-                           base_prune_tables[pslot_tmps_set[j][1]],
+                           base_prune_tables[0], // [Conj] C4 表
+                           base_prune_tables[0], // [Conj] C4 表
                            ec_prune_tables[slot1_tmp * 4 + pslot1_tmp],
                            rotations, base_alg);
           }
@@ -1156,6 +1170,7 @@ struct xcross_analyzer2 {
 
   // [Conj优化] XC4 使用 Conj 状态追踪
   // 新增参数: xc4_cr/cn/e0-e3 (Conj 状态), diff4 (边选择)
+  // base2, base3 各自使用独立 Conj 状态，base4 复用 xc4
   // Search 4
   bool depth_limited_search_4(
       int arg_index1, int arg_index2, int arg_index4, int arg_index6,
@@ -1165,7 +1180,10 @@ struct xcross_analyzer2 {
       const unsigned char *prune4, const unsigned char *edge_prune1,
       const unsigned char *prune_xc4, int num_aux, AuxState *aux_states,
       int xc4_cr, int xc4_cn, int xc4_e0, int xc4_e1, int xc4_e2, int xc4_e3,
-      int diff4) {
+      int diff4,
+      // [Conj] base2, base3 的独立 Conj 状态
+      int base2_cr, int base2_cn, int base3_cr, int base3_cn) {
+
     const int *moves = valid_moves_flat[prev];
     const int count_moves = valid_moves_count[prev];
 
@@ -1225,29 +1243,44 @@ struct xcross_analyzer2 {
       if (edge_prune1_tmp >= depth)
         continue;
 
-      int index4_tmp = p_corner_move_ptr[arg_index4 + i];
-      int prune2_tmp = get_prune_ptr(prune2, index1_tmp + index4_tmp);
+      // [Conj] 用 Conj 移动更新 XC4 状态 (pslot4)
+      int mc4 = conj_moves_flat[i][pslot4];
+      int xc4_cr_n = p_multi_move_ptr[xc4_cr + mc4];
+      int xc4_cn_n = p_corner_move_ptr[xc4_cn + mc4];
+      int xc4_e0_n = p_edge_move_ptr[xc4_e0 + mc4];
+      int xc4_e1_n = p_edge_move_ptr[xc4_e1 + mc4];
+      int xc4_e2_n = p_edge_move_ptr[xc4_e2 + mc4];
+      int xc4_e3_n = p_edge_move_ptr[xc4_e3 + mc4];
+
+      // [Conj] 用 Conj 移动更新 base2 状态 (pslot2)
+      int mc2 = conj_moves_flat[i][pslot2];
+      int base2_cr_n = p_multi_move_ptr[base2_cr + mc2];
+      int base2_cn_n = p_corner_move_ptr[base2_cn + mc2];
+
+      // [Conj] 用 Conj 移动更新 base3 状态 (pslot3)
+      int mc3 = conj_moves_flat[i][pslot3];
+      int base3_cr_n = p_multi_move_ptr[base3_cr + mc3];
+      int base3_cn_n = p_corner_move_ptr[base3_cn + mc3];
+
+      // [Conj] prune2: 使用 base2 Conj 索引 (pslot2)
+      int prune2_tmp = get_prune_ptr(prune2, base2_cr_n + base2_cn_n);
       if (prune2_tmp >= depth)
         continue;
 
-      int index6_tmp = p_corner_move_ptr[arg_index6 + i];
-      int prune3_tmp = get_prune_ptr(prune3, index1_tmp + index6_tmp);
+      // [Conj] prune3: 使用 base3 Conj 索引 (pslot3)
+      int prune3_tmp = get_prune_ptr(prune3, base3_cr_n + base3_cn_n);
       if (prune3_tmp >= depth)
         continue;
 
-      int index8_tmp = p_corner_move_ptr[arg_index8 + i];
-      int prune4_tmp = get_prune_ptr(prune4, index1_tmp + index8_tmp);
+      // [Conj] prune4: 使用 XC4 Conj 索引 (pslot4) - xc4_cr + xc4_cn 就是 base4
+      int prune4_tmp = get_prune_ptr(prune4, xc4_cr_n + xc4_cn_n);
       if (prune4_tmp >= depth)
         continue;
 
-      // [Conj] 用 Conj 移动更新 XC4 状态
-      int mc = conj_moves_flat[i][pslot4];
-      int xc4_cr_n = p_multi_move_ptr[xc4_cr + mc];
-      int xc4_cn_n = p_corner_move_ptr[xc4_cn + mc];
-      int xc4_e0_n = p_edge_move_ptr[xc4_e0 + mc];
-      int xc4_e1_n = p_edge_move_ptr[xc4_e1 + mc];
-      int xc4_e2_n = p_edge_move_ptr[xc4_e2 + mc];
-      int xc4_e3_n = p_edge_move_ptr[xc4_e3 + mc];
+      int index4_tmp = p_corner_move_ptr[arg_index4 + i];
+      int index6_tmp = p_corner_move_ptr[arg_index6 + i];
+      int index8_tmp = p_corner_move_ptr[arg_index8 + i];
+
       int xc4_e_sel = (diff4 == 0)   ? xc4_e0_n
                       : (diff4 == 1) ? xc4_e1_n
                       : (diff4 == 2) ? xc4_e2_n
@@ -1276,7 +1309,8 @@ struct xcross_analyzer2 {
                      depth - 1, i, prune1, prune2, prune3, prune4, edge_prune1,
                      prune_xc4, num_aux, next_aux, xc4_cr_n, xc4_cn_n * 18,
                      xc4_e0_n * 18, xc4_e1_n * 18, xc4_e2_n * 18, xc4_e3_n * 18,
-                     diff4))
+                     diff4, base2_cr_n, base2_cn_n * 18, base3_cr_n,
+                     base3_cn_n * 18)) // [Conj] base2, base3
         return true;
     }
     return false;
@@ -1323,35 +1357,28 @@ struct xcross_analyzer2 {
       int idx1, idx2, idx9;
       get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx9, slot1,
                           pslot1, edge_index, corner_index, single_edge_index);
-      int idx1_dummy, idx4, idx10;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy, idx4, idx10,
-                          slot2, pslot2, edge_index, corner_index,
-                          single_edge_index);
-      int idx1_dummy2, idx6, idx11;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy2, idx6, idx11,
-                          slot3, pslot3, edge_index, corner_index,
-                          single_edge_index);
-      int idx1_dummy3, idx8, idx12;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy3, idx8, idx12,
-                          slot4, pslot4, edge_index, corner_index,
-                          single_edge_index);
 
       int h1 = get_prune_ptr(p_prune1, idx1 + idx2);
-      int h2 = get_prune_ptr(p_prune2, idx1 + idx4);
-      int h3 = get_prune_ptr(p_prune3, idx1 + idx6);
-      int h4 = get_prune_ptr(p_prune4, idx1 + idx8);
       int h5 = get_prune_ptr(p_edge_prune1, idx9 * 24 + idx2);
 
-      // [Conj优化] 使用 Conj 索引计算 h6
+      // [Conj优化] 计算 pslot2, pslot3, pslot4 的 Conj 状态
       std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
-      ConjStateXC st;
-      get_conj_state_xc(rotated_alg, pslot4, st);
+      ConjStateXC st2, st3, st4;
+      get_conj_state_xc(rotated_alg, pslot2, st2);
+      get_conj_state_xc(rotated_alg, pslot3, st3);
+      get_conj_state_xc(rotated_alg, pslot4, st4);
+
+      int h2 = get_prune_ptr(p_prune2, st2.cross + st2.corner); // [Conj] pslot2
+      int h3 = get_prune_ptr(p_prune3, st3.cross + st3.corner); // [Conj] pslot3
+      int h4 = get_prune_ptr(p_prune4, st4.cross + st4.corner); // [Conj] pslot4
+
       long long conj_idx_xc4 =
-          (long long)(st.cross + st.corner) * 24 + st.edge[diff4];
+          (long long)(st4.cross + st4.corner) * 24 + st4.edge[diff4];
       int h6 = get_prune_ptr(p_prune_xc4, conj_idx_xc4);
 
       tasks.push_back({(int)r, std::max({h1, h2, h3, h4, h5, h6})});
     }
+
     std::sort(tasks.begin(), tasks.end(),
               [](const RotTask &a, const RotTask &b) {
                 return a.heuristic < b.heuristic;
@@ -1393,17 +1420,23 @@ struct xcross_analyzer2 {
       edge_solved4 = single_edge_index[slot4];
 
       int prune1_tmp = get_prune_ptr(p_prune1, index1 + index2);
-      int prune2_tmp = get_prune_ptr(p_prune2, index1 + index4);
-      int prune3_tmp = get_prune_ptr(p_prune3, index1 + index6);
-      int prune4_tmp = get_prune_ptr(p_prune4, index1 + index8);
       int edge_prune1_tmp = get_prune_ptr(p_edge_prune1, index9 * 24 + index2);
 
-      // [Conj优化] 计算 XC4 Conj 状态
+      // [Conj优化] 计算 pslot2, pslot3, pslot4 的 Conj 状态
       std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
-      ConjStateXC st;
-      get_conj_state_xc(rotated_alg, pslot4, st);
+      ConjStateXC st2, st3, st4;
+      get_conj_state_xc(rotated_alg, pslot2, st2);
+      get_conj_state_xc(rotated_alg, pslot3, st3);
+      get_conj_state_xc(rotated_alg, pslot4, st4);
+
+      int prune2_tmp =
+          get_prune_ptr(p_prune2, st2.cross + st2.corner); // [Conj]
+      int prune3_tmp =
+          get_prune_ptr(p_prune3, st3.cross + st3.corner); // [Conj]
+      int prune4_tmp =
+          get_prune_ptr(p_prune4, st4.cross + st4.corner); // [Conj]
       long long conj_idx_xc4 =
-          (long long)(st.cross + st.corner) * 24 + st.edge[diff4];
+          (long long)(st4.cross + st4.corner) * 24 + st4.edge[diff4];
       int prune_xc4_tmp = get_prune_ptr(p_prune_xc4, conj_idx_xc4);
 
       if (prune1_tmp == 0 && prune2_tmp == 0 && prune3_tmp == 0 &&
@@ -1438,12 +1471,15 @@ struct xcross_analyzer2 {
                   index1, index2, index4, index6, index8, index9, index10,
                   index11, index12, d, 18, p_prune1, p_prune2, p_prune3,
                   p_prune4, p_edge_prune1, p_prune_xc4, num_aux, aux_init,
-                  st.cross, st.corner * 18, st.edge[0] * 18, st.edge[1] * 18,
-                  st.edge[2] * 18, st.edge[3] * 18, diff4)) {
+                  st4.cross, st4.corner * 18, st4.edge[0] * 18,
+                  st4.edge[1] * 18, st4.edge[2] * 18, st4.edge[3] * 18, diff4,
+                  st2.cross, st2.corner * 18, st3.cross,
+                  st3.corner * 18)) { // [Conj] base2, base3
             found = d;
             break;
           }
         }
+
         results[r] = found;
       }
     }
@@ -1470,8 +1506,10 @@ struct xcross_analyzer2 {
             p_rem.push_back(k);
         start_search_4(i, s_rem[0], s_rem[1], s_rem[2], j, p_rem[0], p_rem[1],
                        p_rem[2], xc_prune_tables[i * 4 + j],
-                       base_prune_tables[p_rem[0]], base_prune_tables[p_rem[1]],
-                       base_prune_tables[p_rem[2]], ec_prune_tables[i * 4 + j],
+                       base_prune_tables[0],
+                       base_prune_tables[0], // [Conj] C4 表
+                       base_prune_tables[0], ec_prune_tables[i * 4 + j],
+
                        rotations, base_alg);
       }
     }
