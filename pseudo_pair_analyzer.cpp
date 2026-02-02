@@ -42,21 +42,13 @@ struct xcross_analyzer2 {
   static std::vector<unsigned char> prune_c4c6c7;
   static std::vector<unsigned char> prune_c5c6c7;
 
-  // [新增] Corner2 剪枝表 (用于 Search 3)
-  static std::vector<unsigned char> prune_c4c5;
-  static std::vector<unsigned char> prune_c4c6;
-  static std::vector<unsigned char> prune_c4c7;
-  static std::vector<unsigned char> prune_c5c6;
-  static std::vector<unsigned char> prune_c5c7;
-  static std::vector<unsigned char> prune_c6c7;
+  // [重构] Corner2 剪枝表 (只保留规范化表)
+  static std::vector<unsigned char> prune_c4c5; // 邻接
+  static std::vector<unsigned char> prune_c4c6; // 对角
 
-  // [新增] Edge2 剪枝表 (用于 Search 3)
-  static std::vector<unsigned char> prune_e0e1;
-  static std::vector<unsigned char> prune_e0e2;
-  static std::vector<unsigned char> prune_e0e3;
-  static std::vector<unsigned char> prune_e1e2;
-  static std::vector<unsigned char> prune_e1e3;
-  static std::vector<unsigned char> prune_e2e3;
+  // [重构] Edge2 剪枝表 (只保留规范化表)
+  static std::vector<unsigned char> prune_e0e1; // 邻接
+  static std::vector<unsigned char> prune_e0e2; // 对角
 
   // [新增] 辅助剪枝定义 (用于通用 AuxState 架构)
   struct AuxPrunerDef {
@@ -1345,21 +1337,13 @@ std::vector<unsigned char> xcross_analyzer2::prune_c5c6c7;
 const int *xcross_analyzer2::p_corner2_move_ptr = nullptr;
 const int *xcross_analyzer2::p_edge2_move_ptr = nullptr;
 
-// [新增] Corner2 剪枝表定义
+// [重构] Corner2 剪枝表定义 (只保留规范化表)
 std::vector<unsigned char> xcross_analyzer2::prune_c4c5;
 std::vector<unsigned char> xcross_analyzer2::prune_c4c6;
-std::vector<unsigned char> xcross_analyzer2::prune_c4c7;
-std::vector<unsigned char> xcross_analyzer2::prune_c5c6;
-std::vector<unsigned char> xcross_analyzer2::prune_c5c7;
-std::vector<unsigned char> xcross_analyzer2::prune_c6c7;
 
-// [新增] Edge2 剪枝表定义
+// [重构] Edge2 剪枝表定义 (只保留规范化表)
 std::vector<unsigned char> xcross_analyzer2::prune_e0e1;
 std::vector<unsigned char> xcross_analyzer2::prune_e0e2;
-std::vector<unsigned char> xcross_analyzer2::prune_e0e3;
-std::vector<unsigned char> xcross_analyzer2::prune_e1e2;
-std::vector<unsigned char> xcross_analyzer2::prune_e1e3;
-std::vector<unsigned char> xcross_analyzer2::prune_e2e3;
 
 // [新增] aux_registry 定义
 std::map<std::vector<int>, xcross_analyzer2::AuxPrunerDef>
