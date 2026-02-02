@@ -56,9 +56,14 @@ private:
   std::vector<unsigned char> pseudo_cross_E1_E2_E3_prune; // Newly Added
 
   // 新增对角表 (F2L Corner Pairs)
-  std::vector<unsigned char> pseudo_cross_C4_C6_prune; // 基准
+  std::vector<unsigned char> pseudo_cross_C4_C6_prune; // 对角 (已有)
+  std::vector<unsigned char> pseudo_cross_C5_C7_prune; // 对角 (新增)
+
   // 新增邻角表
-  std::vector<unsigned char> pseudo_cross_C4_C5_prune; // 基准
+  std::vector<unsigned char> pseudo_cross_C4_C5_prune; // 邻角 (已有)
+  std::vector<unsigned char> pseudo_cross_C4_C7_prune; // 邻角 (新增)
+  std::vector<unsigned char> pseudo_cross_C5_C6_prune; // 邻角 (新增)
+  std::vector<unsigned char> pseudo_cross_C6_C7_prune; // 邻角 (新增)
 
   // Corner3 Triples
   std::vector<unsigned char> pseudo_cross_C4_C5_C6_prune; // 基准
@@ -142,9 +147,21 @@ public:
   const unsigned char *getPseudoCrossC4C6PrunePtr() const {
     return pseudo_cross_C4_C6_prune.data();
   }
+  const unsigned char *getPseudoCrossC5C7PrunePtr() const {
+    return pseudo_cross_C5_C7_prune.data();
+  }
   // 邻角表 Getters
   const unsigned char *getPseudoCrossC4C5PrunePtr() const {
     return pseudo_cross_C4_C5_prune.data();
+  }
+  const unsigned char *getPseudoCrossC4C7PrunePtr() const {
+    return pseudo_cross_C4_C7_prune.data();
+  }
+  const unsigned char *getPseudoCrossC5C6PrunePtr() const {
+    return pseudo_cross_C5_C6_prune.data();
+  }
+  const unsigned char *getPseudoCrossC6C7PrunePtr() const {
+    return pseudo_cross_C6_C7_prune.data();
   }
 
   // Corner3 Getters
@@ -185,9 +202,21 @@ public:
   bool hasPseudoCrossC4C6Prune() const {
     return !pseudo_cross_C4_C6_prune.empty();
   }
+  bool hasPseudoCrossC5C7Prune() const {
+    return !pseudo_cross_C5_C7_prune.empty();
+  }
   // 邻角表 HasChecks
   bool hasPseudoCrossC4C5Prune() const {
     return !pseudo_cross_C4_C5_prune.empty();
+  }
+  bool hasPseudoCrossC4C7Prune() const {
+    return !pseudo_cross_C4_C7_prune.empty();
+  }
+  bool hasPseudoCrossC5C6Prune() const {
+    return !pseudo_cross_C5_C6_prune.empty();
+  }
+  bool hasPseudoCrossC6C7Prune() const {
+    return !pseudo_cross_C6_C7_prune.empty();
   }
   // Corner3 HasChecks
   bool hasPseudoCrossC4C5C6Prune() const {
@@ -242,8 +271,12 @@ public:
   void generatePseudoCrossE0E1E3Prune(); // New
   // 新增对角生成函数
   void generatePseudoCrossC4C6Prune();
+  void generatePseudoCrossC5C7Prune(); // 新增
   // 新增邻角生成函数
   void generatePseudoCrossC4C5Prune();
+  void generatePseudoCrossC4C7Prune(); // 新增
+  void generatePseudoCrossC5C6Prune(); // 新增
+  void generatePseudoCrossC6C7Prune(); // 新增
 
   // Corner3 Generators
   void generatePseudoCrossC4C5C6Prune();
