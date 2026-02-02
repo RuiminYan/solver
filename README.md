@@ -448,6 +448,20 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 | **总计** | | **12** | **~28 GB** | (含 Huge 表) |
 
 
+### 6. 移动表清单 (Move Tables Registry)
+除了剪枝表，Analyzer 还需要加载状态转移表 (Move Tables)。其中 `Edge6` 表体积巨大。
+
+| 表名 (Table Name) | 文件名 (Filename) | 大小 | 依赖 Analyzer | 说明 |
+|---|---|---|---|---|
+| **Edge6** | `move_table_edges_6.bin` | **2.85 GB** | Std, Pair, Pseudo, EO | 配合 Huge Table 使用 (6 Edge 状态) |
+| **Cross** | `move_table_cross.bin` | 17.4 MB | All | 核心 Cross 状态转移 |
+| **Edge3** | `move_table_edges_3.bin` | 742 KB | Pseudo, PseudoPair | 三棱辅助状态 |
+| **Corner3** | `move_table_corners_3.bin` | 637 KB | Pseudo, PseudoPair | 三角辅助状态 |
+| **EP4 (Dep)** | `move_table_ep_4.bin` | 835 KB | EO Cross | Dependency 状态 (Edge Perm) |
+| **EO12** | `move_table_eo_12(_alt).bin` | 144 KB | EO Cross | Dependency 状态 (Edge Ori) |
+| **Aux Tiny** | `edge/corner/e2/c2` | < 100 KB | All | 基础及辅助二元状态 |
+
+
 ## Search 阶段剪枝表使用详解 (Search Pipeline Tables)
 
 以下表格详细展示了各 Analyzer 在 4 个搜索阶段中如何组合使用剪枝表。
