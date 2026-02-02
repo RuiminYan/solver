@@ -197,33 +197,38 @@ struct xcross_analyzer2 {
   }
 
   // 计算 Edge3 状态的共轭索引 (用于 search_3 阶段)
-  // slot1, slot2, slot3: 三个棱块槽位 (0-3)
-  // base_alg: 打乱公式
-  // rot: 当前旋转
+  // alg: 已转换的公式 (通过 alg_rotation 转换后)
+  // s1, s2, s3: 三个棱块槽位 (0-3)
+  // slot_k: Pseudo 参考槽位 (对应第一个角块 pslot1)
   // 返回: {edge3_state, cross_state} 或 {-1, -1} 如果表不可用
-  std::pair<int, int>
-  get_edge3_conjugated_state(const std::vector<int> &base_alg,
-                             const std::string &rot, int s1, int s2, int s3) {
+  std::pair<int, int> get_edge3_conjugated_state(const std::vector<int> &alg,
+                                                 int s1, int s2, int s3,
+                                                 int slot_k) {
     if (!edge3_prune_available)
       return {-1, -1};
 
-    std::vector<int> alg = alg_rotation(base_alg, rot);
+    // 计算相对虚拟 ID (相对于 slot_k)
+    // 与 pseudo_analyzer.cpp 第 424-426 行一致
+    int r1 = (s1 - slot_k + 4) % 4;
+    int r2 = (s2 - slot_k + 4) % 4;
+    int r3 = (s3 - slot_k + 4) % 4;
 
-    // 排序槽位以规范化
-    std::vector<int> slots = {s1, s2, s3};
-    std::sort(slots.begin(), slots.end());
+    // 排序得到规范 key
+    std::vector<int> keys = {r1, r2, r3};
+    std::sort(keys.begin(), keys.end());
 
-    // 确定 rot_map 索引
-    // {0,1,2} -> Id, {0,1,3} -> y, {0,2,3} -> y2, {1,2,3} -> y'
+    // 确定 rot_map 索引 (与 pseudo_analyzer.cpp 第 487-494 行一致)
     int rot_idx = 0;
-    if (slots[0] == 0 && slots[1] == 1 && slots[2] == 2)
-      rot_idx = 0;
-    else if (slots[0] == 0 && slots[1] == 1 && slots[2] == 3)
-      rot_idx = 1;
-    else if (slots[0] == 0 && slots[1] == 2 && slots[2] == 3)
-      rot_idx = 2;
-    else if (slots[0] == 1 && slots[1] == 2 && slots[2] == 3)
-      rot_idx = 3;
+    if (keys[0] == 0 && keys[1] == 1 && keys[2] == 2)
+      rot_idx = 0; // {0,1,2} -> Id
+    else if (keys[0] == 0 && keys[1] == 1 && keys[2] == 3)
+      rot_idx = 1; // {0,1,3} -> y
+    else if (keys[0] == 0 && keys[1] == 2 && keys[2] == 3)
+      rot_idx = 2; // {0,2,3} -> y2
+    else if (keys[0] == 1 && keys[1] == 2 && keys[2] == 3)
+      rot_idx = 3; // {1,2,3} -> y'
+
+    const int *mapper = rot_map[rot_idx];
 
     // 初始化 Edge3 索引 (基准: E0, E1, E2 -> 位置 0, 2, 4)
     std::vector<int> target_arr = {0, 2, 4};
@@ -232,9 +237,11 @@ struct xcross_analyzer2 {
     // 初始化 Cross 索引 (基准: 已解状态, *24 版本)
     int cur_cross = 187520 * 24;
 
-    // 应用公式: 物理移动 -> rot_map 旋转
+    // 应用两层共轭 (与 pseudo_analyzer.cpp 第 507-511 行一致):
+    // 物理移动 -> Pseudo 移动 (conj_moves_flat) -> 旋转后移动 (rot_map)
     for (int m : alg) {
-      int m_rot = rot_map[rot_idx][m];
+      int m_pseudo = conj_moves_flat[m][slot_k]; // 第一层共轭
+      int m_rot = mapper[m_pseudo];              // 第二层共轭
       cur_e3 = p_edge3_move_ptr[cur_e3 * 18 + m_rot];
       cur_cross = p_multi_move_ptr[cur_cross + m_rot];
     }
@@ -619,11 +626,13 @@ struct xcross_analyzer2 {
       long long idx_xc3 = (long long)(idx1 + idx6) * 24 + idx9;
       int h5 = get_prune_ptr(p_prune_xc3, idx_xc3);
 
-      // Edge3 剪枝 (使用共轭机制复用单张表)
+      // Edge3 剪枝 (使用两层共轭机制复用单张表)
       int h_e3 = 0;
       if (edge3_prune_available) {
-        auto [e3_state, cross_state] = get_edge3_conjugated_state(
-            base_alg, rotations[r], slot1, slot2, slot3);
+        // 与 pseudo_analyzer.cpp 一致: slot_k = pslot1 (第一个角块槽位)
+        std::vector<int> alg = alg_rotation(base_alg, rotations[r]);
+        auto [e3_state, cross_state] =
+            get_edge3_conjugated_state(alg, slot1, slot2, slot3, pslot1);
         if (e3_state >= 0) {
           long long idx_e3 = (long long)cross_state * 10560 + e3_state;
           h_e3 = get_prune_ptr(p_edge3_prune_ptr, idx_e3);
