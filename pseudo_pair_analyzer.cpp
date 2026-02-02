@@ -27,6 +27,8 @@ struct xcross_analyzer2 {
   static const int *p_multi_move_ptr;
   static const int *p_edge3_move_ptr;   // Edge3 移动表指针
   static const int *p_corner3_move_ptr; // [新增] Corner3 移动表指针
+  static const int *p_corner2_move_ptr; // [新增] Corner2 移动表指针
+  static const int *p_edge2_move_ptr;   // [新增] Edge2 移动表指针
 
   // Edge3 剪枝表 (用于 Search 4: 3 个归位槽位的棱块联合剪枝)
   static std::vector<unsigned char> prune_e0e1e2;
@@ -39,6 +41,22 @@ struct xcross_analyzer2 {
   static std::vector<unsigned char> prune_c4c5c7;
   static std::vector<unsigned char> prune_c4c6c7;
   static std::vector<unsigned char> prune_c5c6c7;
+
+  // [新增] Corner2 剪枝表 (用于 Search 3)
+  static std::vector<unsigned char> prune_c4c5;
+  static std::vector<unsigned char> prune_c4c6;
+  static std::vector<unsigned char> prune_c4c7;
+  static std::vector<unsigned char> prune_c5c6;
+  static std::vector<unsigned char> prune_c5c7;
+  static std::vector<unsigned char> prune_c6c7;
+
+  // [新增] Edge2 剪枝表 (用于 Search 3)
+  static std::vector<unsigned char> prune_e0e1;
+  static std::vector<unsigned char> prune_e0e2;
+  static std::vector<unsigned char> prune_e0e3;
+  static std::vector<unsigned char> prune_e1e2;
+  static std::vector<unsigned char> prune_e1e3;
+  static std::vector<unsigned char> prune_e2e3;
 
   // [新增] 辅助剪枝定义 (用于通用 AuxState 架构)
   struct AuxPrunerDef {
@@ -195,7 +213,79 @@ struct xcross_analyzer2 {
     }
     std::cout << "[Init] Corner3 Prune Tables loaded." << std::endl;
 
-    // 6. [新增] Register aux_registry
+    // 6. [新增] Load Corner2 Prune Tables for Search 3
+    mtm.loadCorner2Table();
+    p_corner2_move_ptr = mtm.getCorner2TablePtr();
+
+    if (!load_vector(prune_c4c5, "prune_table_pseudo_cross_C4_C5.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_C4_C5.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_c4c6, "prune_table_pseudo_cross_C4_C6.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_C4_C6.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_c4c7, "prune_table_pseudo_cross_C4_C7.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_C4_C7.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_c5c6, "prune_table_pseudo_cross_C5_C6.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_C5_C6.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_c5c7, "prune_table_pseudo_cross_C5_C7.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_C5_C7.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_c6c7, "prune_table_pseudo_cross_C6_C7.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_C6_C7.bin"
+                << std::endl;
+      exit(1);
+    }
+    std::cout << "[Init] Corner2 Prune Tables loaded." << std::endl;
+
+    // 7. [新增] Load Edge2 Prune Tables for Search 3
+    mtm.loadEdges2Table();
+    p_edge2_move_ptr = mtm.getEdges2TablePtr();
+
+    if (!load_vector(prune_e0e1, "prune_table_pseudo_cross_E0_E1.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_E0_E1.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_e0e2, "prune_table_pseudo_cross_E0_E2.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_E0_E2.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_e0e3, "prune_table_pseudo_cross_E0_E3.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_E0_E3.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_e1e2, "prune_table_pseudo_cross_E1_E2.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_E1_E2.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_e1e3, "prune_table_pseudo_cross_E1_E3.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_E1_E3.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_e2e3, "prune_table_pseudo_cross_E2_E3.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_E2_E3.bin"
+                << std::endl;
+      exit(1);
+    }
+    std::cout << "[Init] Edge2 Prune Tables loaded." << std::endl;
+
+    // 8. [新增] Register aux_registry
     // Corner3 表 (multiplier = 9072)
     aux_registry[{4, 5, 6}] = {prune_c4c5c6.data(), p_corner3_move_ptr, 9072};
     aux_registry[{4, 5, 7}] = {prune_c4c5c7.data(), p_corner3_move_ptr, 9072};
@@ -206,6 +296,20 @@ struct xcross_analyzer2 {
     aux_registry[{0, 1, 3}] = {prune_e0e1e3.data(), p_edge3_move_ptr, 10560};
     aux_registry[{0, 2, 3}] = {prune_e0e2e3.data(), p_edge3_move_ptr, 10560};
     aux_registry[{1, 2, 3}] = {prune_e1e2e3.data(), p_edge3_move_ptr, 10560};
+    // Corner2 表 (multiplier = 504)
+    aux_registry[{4, 5}] = {prune_c4c5.data(), p_corner2_move_ptr, 504};
+    aux_registry[{4, 6}] = {prune_c4c6.data(), p_corner2_move_ptr, 504};
+    aux_registry[{4, 7}] = {prune_c4c7.data(), p_corner2_move_ptr, 504};
+    aux_registry[{5, 6}] = {prune_c5c6.data(), p_corner2_move_ptr, 504};
+    aux_registry[{5, 7}] = {prune_c5c7.data(), p_corner2_move_ptr, 504};
+    aux_registry[{6, 7}] = {prune_c6c7.data(), p_corner2_move_ptr, 504};
+    // Edge2 表 (multiplier = 528)
+    aux_registry[{0, 1}] = {prune_e0e1.data(), p_edge2_move_ptr, 528};
+    aux_registry[{0, 2}] = {prune_e0e2.data(), p_edge2_move_ptr, 528};
+    aux_registry[{0, 3}] = {prune_e0e3.data(), p_edge2_move_ptr, 528};
+    aux_registry[{1, 2}] = {prune_e1e2.data(), p_edge2_move_ptr, 528};
+    aux_registry[{1, 3}] = {prune_e1e3.data(), p_edge2_move_ptr, 528};
+    aux_registry[{2, 3}] = {prune_e2e3.data(), p_edge2_move_ptr, 528};
 
     std::cout << "All tables initialized." << std::endl;
     tables_initialized = true;
@@ -1103,6 +1207,26 @@ std::vector<unsigned char> xcross_analyzer2::prune_c4c5c6;
 std::vector<unsigned char> xcross_analyzer2::prune_c4c5c7;
 std::vector<unsigned char> xcross_analyzer2::prune_c4c6c7;
 std::vector<unsigned char> xcross_analyzer2::prune_c5c6c7;
+
+// [新增] Corner2/Edge2 移动表指针定义
+const int *xcross_analyzer2::p_corner2_move_ptr = nullptr;
+const int *xcross_analyzer2::p_edge2_move_ptr = nullptr;
+
+// [新增] Corner2 剪枝表定义
+std::vector<unsigned char> xcross_analyzer2::prune_c4c5;
+std::vector<unsigned char> xcross_analyzer2::prune_c4c6;
+std::vector<unsigned char> xcross_analyzer2::prune_c4c7;
+std::vector<unsigned char> xcross_analyzer2::prune_c5c6;
+std::vector<unsigned char> xcross_analyzer2::prune_c5c7;
+std::vector<unsigned char> xcross_analyzer2::prune_c6c7;
+
+// [新增] Edge2 剪枝表定义
+std::vector<unsigned char> xcross_analyzer2::prune_e0e1;
+std::vector<unsigned char> xcross_analyzer2::prune_e0e2;
+std::vector<unsigned char> xcross_analyzer2::prune_e0e3;
+std::vector<unsigned char> xcross_analyzer2::prune_e1e2;
+std::vector<unsigned char> xcross_analyzer2::prune_e1e3;
+std::vector<unsigned char> xcross_analyzer2::prune_e2e3;
 
 // [新增] aux_registry 定义
 std::map<std::vector<int>, xcross_analyzer2::AuxPrunerDef>
