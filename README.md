@@ -488,6 +488,10 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 | **search_3_optimized** | XXCross | `Huge Neighbor` / `Huge Diag` | 及其 Huge Table |
 | **search_4_optimized** | XXXCross | `Huge Neighbor` / `Huge Diag` | 及其 Huge Table |
 
+
+### 4. Pair Analyzer
+策略：在 Std 基础上增加 Pair 表约束。
+
 ### 3. Pseudo Analyzer
 策略：依赖 Aux 表辅助定位 Pseudo 块。
 
@@ -497,10 +501,6 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 | **search_2** | Pseudo XCross | `Pseudo Base` (C4+Ex) | `Aux Edge2` (E0E1/E0E2) |
 | **search_3** | Pseudo XXCross | `Pseudo Base` | `Aux Corn2` (C4C5), `Aux Edge2` |
 | **search_3** | Pseudo XXXCross | `Pseudo Base` | `Aux Corn3` (C4C5C6), `Aux Edge3` |
-
-### 4. Pair Analyzer
-策略：在 Std 基础上增加 Pair 表约束。
-
 | 阶段 | 目标 | 核心剪枝表 | 组合/辅助表 |
 |---|---|---|---|
 | **search_1** | Cross + Pair | `Cross C4` | `Pair Base` (C4+E0) |
@@ -513,7 +513,8 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 
 | 阶段 | 目标 | 级联检查 1 | 级联检查 2 | 级联检查 3 |
 |---|---|---|---|---|
-| **search_1** | XC + EO | `Dep EO` | `XC Base` | - |
-| **search_2** | XXC + EO | `Dep EO` | `XC Base` | `Plus Edge`, `Plus Corn` |
-| **search_3** | XXXC + EO | `Dep EO` | `XC Base` | `Plus Edge/Corn`, `3 Corner` |
+| **search (Cross)** | XC (Cross + EO) | `Dep EO` | `Base` (Cross+C4) | - |
+| **search_1** | XCross + EO | `Dep EO` | `XC Base` | - |
+| **search_2** | XXCross + EO | `Dep EO` | `XC Base` | `Plus Edge`, `Plus Corn` |
+| **search_3** | XXXCross + EO | `Dep EO` | `XC Base` | `Plus Edge/Corn`, `3 Corner` |
 
