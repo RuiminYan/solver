@@ -371,6 +371,57 @@ struct xcross_analyzer2 {
     return count;
   }
 
+  // [新增] 为 Search 3 设置 AuxState (Corner2 + Edge2)
+  // 返回值: num_aux (已设置的辅助表数量)
+  // 顺序: Corner2 优先 → Edge2 其次
+  int setup_aux_pruners_for_search3(int slot2_arg,
+                                    int slot3_arg, // Edge 槽位 (固定位)
+                                    int pslot2_arg,
+                                    int pslot3_arg, // Corner 伪槽位
+                                    const std::vector<int> &alg,
+                                    AuxState *out_aux) {
+    int count = 0;
+
+    // 1. Corner2 表 (优先剪枝 - 两角表在前)
+    // pslot 转换为逻辑角块 ID: pslot + 4 (0→C4, 1→C5, 2→C6, 3→C7)
+    std::vector<int> corner_ids = {pslot2_arg + 4, pslot3_arg + 4};
+    std::sort(corner_ids.begin(), corner_ids.end());
+    auto it_c = aux_registry.find(corner_ids);
+    if (it_c != aux_registry.end()) {
+      // 计算初始索引: (id-4)*3+12 用于物理位置编码
+      std::vector<int> target = {(corner_ids[0] - 4) * 3 + 12,
+                                 (corner_ids[1] - 4) * 3 + 12};
+      int idx = array_to_index(target, 2, 3, 8);
+      // 应用 scramble
+      for (int m : alg) {
+        idx = p_corner2_move_ptr[idx * 18 + m];
+      }
+      out_aux[count].def = &it_c->second;
+      out_aux[count].current_idx = idx;
+      count++;
+    }
+
+    // 2. Edge2 表
+    // slot 直接作为逻辑棱块 ID (0→E0, 1→E1, 2→E2, 3→E3)
+    std::vector<int> edge_ids = {slot2_arg, slot3_arg};
+    std::sort(edge_ids.begin(), edge_ids.end());
+    auto it_e = aux_registry.find(edge_ids);
+    if (it_e != aux_registry.end()) {
+      // 计算初始索引: id*2 用于物理位置编码
+      std::vector<int> target = {edge_ids[0] * 2, edge_ids[1] * 2};
+      int idx = array_to_index(target, 2, 2, 12);
+      // 应用 scramble
+      for (int m : alg) {
+        idx = p_edge2_move_ptr[idx * 18 + m];
+      }
+      out_aux[count].def = &it_e->second;
+      out_aux[count].current_idx = idx;
+      count++;
+    }
+
+    return count;
+  }
+
   bool depth_limited_search_1(int arg_index1, int arg_index2, int arg_index3,
                               int depth, int prev, const unsigned char *prune1,
                               const unsigned char *edge_prune) {
@@ -687,14 +738,12 @@ struct xcross_analyzer2 {
     }
   }
 
-  bool depth_limited_search_3(int arg_index1, int arg_index2, int arg_index4,
-                              int arg_index6, int arg_index7, int arg_index8,
-                              int arg_index9, int depth, int prev,
-                              const unsigned char *prune1,
-                              const unsigned char *prune2,
-                              const unsigned char *prune3,
-                              const unsigned char *edge_prune1,
-                              const unsigned char *prune_xc3) {
+  bool depth_limited_search_3(
+      int arg_index1, int arg_index2, int arg_index4, int arg_index6,
+      int arg_index7, int arg_index8, int arg_index9, int depth, int prev,
+      const unsigned char *prune1, const unsigned char *prune2,
+      const unsigned char *prune3, const unsigned char *edge_prune1,
+      const unsigned char *prune_xc3, int num_aux, const AuxState *aux_states) {
     const int *moves = valid_moves_flat[prev];
     const int count_moves = valid_moves_count[prev];
 
@@ -702,7 +751,31 @@ struct xcross_analyzer2 {
       COUNT_NODE
       int i = moves[k];
 
+      // 1. 首先计算 Cross 状态索引 (用于 Aux 剪枝)
       int index1_tmp = p_multi_move_ptr[arg_index1 + i];
+      int cross_state_idx = index1_tmp / 24;
+
+      // 2. Aux Pruning (最先! Corner2 → Edge2)
+      bool aux_pruned = false;
+      AuxState next_aux[MAX_AUX];
+      for (int a = 0; a < num_aux; ++a) {
+        const auto &cur = aux_states[a];
+        if (!cur.def)
+          continue;
+        next_aux[a].def = cur.def;
+        next_aux[a].current_idx = cur.def->p_move[cur.current_idx * 18 + i];
+
+        long long idx_aux = (long long)cross_state_idx * cur.def->multiplier +
+                            next_aux[a].current_idx;
+        if (get_prune_ptr(cur.def->p_prune, idx_aux) >= depth) {
+          aux_pruned = true;
+          break;
+        }
+      }
+      if (aux_pruned)
+        continue;
+
+      // 3. Base Pruning 继续原有逻辑
       int index2_tmp = p_corner_move_ptr[arg_index2 + i];
       int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
       if (prune1_tmp >= depth)
@@ -739,11 +812,11 @@ struct xcross_analyzer2 {
             index8_tmp == edge_solved2 && index9_tmp == edge_solved3) {
           return true;
         }
-      } else if (depth_limited_search_3(index1_tmp, index2_tmp * 18,
-                                        index4_tmp * 18, index6_tmp * 18,
-                                        index7_tmp * 18, index8_tmp * 18,
-                                        index9_tmp * 18, depth - 1, i, prune1,
-                                        prune2, prune3, edge_prune1, prune_xc3))
+      } else if (depth_limited_search_3(
+                     index1_tmp, index2_tmp * 18, index4_tmp * 18,
+                     index6_tmp * 18, index7_tmp * 18, index8_tmp * 18,
+                     index9_tmp * 18, depth - 1, i, prune1, prune2, prune3,
+                     edge_prune1, prune_xc3, num_aux, next_aux))
         return true;
     }
     return false;
@@ -845,6 +918,12 @@ struct xcross_analyzer2 {
           index8 == edge_solved2 && index9 == edge_solved3) {
         results[r] = 0;
       } else {
+        // [新增] 设置 AuxState (Corner2 + Edge2)
+        std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
+        AuxState aux_init[MAX_AUX];
+        int num_aux = setup_aux_pruners_for_search3(
+            slot2, slot3, pslot2, pslot3, rotated_alg, aux_init);
+
         index2 *= 18;
         index4 *= 18;
         index6 *= 18;
@@ -857,7 +936,8 @@ struct xcross_analyzer2 {
         for (int d = start_depth; d <= max_length; d++) {
           if (depth_limited_search_3(index1, index2, index4, index6, index7,
                                      index8, index9, d, 18, p_prune1, p_prune2,
-                                     p_prune3, p_edge_prune1, p_prune_xc3)) {
+                                     p_prune3, p_edge_prune1, p_prune_xc3,
+                                     num_aux, aux_init)) {
             found = d;
             break;
           }
