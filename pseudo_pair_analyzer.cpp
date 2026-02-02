@@ -736,6 +736,26 @@ struct xcross_analyzer2 {
       int h3 = get_prune_ptr(p_edge_prune1, idx5 * 24 + idx2);
       long long idx_xc2 = (long long)(idx1 + idx4) * 24 + idx6;
       int h4 = get_prune_ptr(p_prune_xc2, idx_xc2);
+
+      // [Conj验证] 验证物理索引和 Conj 索引是否得到相同剪枝值
+      {
+        std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
+        ConjStateXC st;
+        get_conj_state_xc(rotated_alg, pslot2, st);
+        int diff2 = (slot2 - pslot2 + 4) & 3;
+        long long conj_idx =
+            (long long)(st.cross + st.corner) * 24 + st.edge[diff2];
+        // Conj 应查 C4 基准表 (索引 0-3)，用 diff 作为表索引
+        int h4_conj =
+            get_prune_ptr(pseudo_base_prune_tables[diff2].data(), conj_idx);
+
+        if (h4 != h4_conj) {
+          std::cout << "[CONJ MISMATCH] r=" << r << " pslot2=" << pslot2
+                    << " slot2=" << slot2 << " diff=" << diff2
+                    << " h4_phy=" << h4 << " h4_conj=" << h4_conj << std::endl;
+        }
+      }
+
       tasks.push_back({(int)r, std::max({h1, h2, h3, h4})});
     }
     std::sort(tasks.begin(), tasks.end(),
