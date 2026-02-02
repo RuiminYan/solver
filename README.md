@@ -350,10 +350,10 @@ id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_p
 41001,4,5,5,4,4,5,5,5,6,6,5,5,8,7,8,8,6,6,11,10,11,10,9,9
 
 ### eo_cross_analyzer.cpp
-* 测试命令: `cmd /c "echo scramble_20.txt | eo_cross_analyzer.exe"`
+* 测试命令: `cmd /c "echo scramble_1000.txt | eo_cross_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
-* 执行时间: ~0.6s
-* 测试文件: scramble_20.txt
+* 执行时间: ~26s
+* 测试文件: scramble_1000.txt
 * 正确结果 (表头 + 前20行数据):
 id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xcross_z0,eo_xcross_z1,eo_xcross_z2,eo_xcross_z3,eo_xcross_x1,eo_xcross_x3,eo_xxcross_z0,eo_xxcross_z1,eo_xxcross_z2,eo_xxcross_z3,eo_xxcross_x1,eo_xxcross_x3,eo_xxxcross_z0,eo_xxxcross_z1,eo_xxxcross_z2,eo_xxxcross_z3,eo_xxxcross_x1,eo_xxxcross_x3
 22001,8,6,7,6,8,7,8,8,8,9,9,9,11,10,11,9,11,10,12,11,12,13,12,12

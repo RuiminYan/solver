@@ -129,8 +129,6 @@ struct xcross_analyzer {
   static inline std::vector<int> s_dep_mt, s_eo_mt;
   static inline std::vector<unsigned char> s_prune_t, s_prune_dep_eo;
   static inline std::vector<unsigned char> s_prune_xcross_base;
-  static inline std::vector<std::vector<unsigned char>> s_prune_plus_edge;
-  static inline std::vector<std::vector<unsigned char>> s_prune_plus_corn;
   static inline std::vector<unsigned char> s_prune_3c;
 
   static inline const int *s_p_multi = nullptr;
@@ -143,8 +141,6 @@ struct xcross_analyzer {
   static inline const unsigned char *s_p_prune = nullptr;
   static inline const unsigned char *s_p_prune_dep_eo = nullptr;
   static inline const unsigned char *s_p_prune_base = nullptr;
-  static inline std::vector<const unsigned char *> s_p_plus_edge;
-  static inline std::vector<const unsigned char *> s_p_plus_corn;
   static inline const unsigned char *s_p_prune_3c = nullptr;
   static inline const unsigned char *s_p_huge_neighbor =
       nullptr; // Huge Neighbor 表
@@ -156,8 +152,6 @@ struct xcross_analyzer {
   const int *p_edge6 = nullptr, *p_corn2 = nullptr; // Edge6/Corner2 Move Tables
   const unsigned char *p_prune, *p_prune_dep_eo;
   const unsigned char *p_prune_base = nullptr;
-  std::vector<const unsigned char *> p_plus_edge;
-  std::vector<const unsigned char *> p_plus_corn;
   const unsigned char *p_prune_3c = nullptr;
   const unsigned char *p_huge_neighbor = nullptr; // Huge Neighbor 表
   const unsigned char *p_huge_diagonal = nullptr; // Huge Diagonal 表
@@ -236,40 +230,8 @@ struct xcross_analyzer {
     }
     s_p_prune_base = s_prune_xcross_base.data();
 
-    // 2. Plus Tables (Relative: Right, Diag, Left)
-    std::vector<int> plus_edges = {2, 4, 6};
-    s_prune_plus_edge.resize(3);
-    s_p_plus_edge.resize(3);
-    for (int i = 0; i < 3; ++i) {
-      std::string fn = "prune_table_cross_C4_E0_E" +
-                       std::to_string(plus_edges[i] / 2) + ".bin";
-      if (!load_vector(s_prune_plus_edge[i], fn)) {
-        std::cout << "  Generating " << fn << " (Depth 14)..." << std::endl;
-        create_prune_table_xcross_plus(
-            187520, 12, 0, plus_edges[i], 24 * 22 * 20 * 18, 24, 24, 24, 14,
-            mm.getCrossTable(), mm.getCornerTable(), mm.getEdgeTable(),
-            mm.getEdgeTable(), s_prune_plus_edge[i]);
-        save_vector(s_prune_plus_edge[i], fn);
-      }
-      s_p_plus_edge[i] = s_prune_plus_edge[i].data();
-    }
-
-    std::vector<int> plus_corns = {15, 18, 21};
-    s_prune_plus_corn.resize(3);
-    s_p_plus_corn.resize(3);
-    for (int i = 0; i < 3; ++i) {
-      std::string fn = "prune_table_cross_C4_E0_C" +
-                       std::to_string(plus_corns[i] / 3) + ".bin";
-      if (!load_vector(s_prune_plus_corn[i], fn)) {
-        std::cout << "  Generating " << fn << " (Depth 14)..." << std::endl;
-        create_prune_table_xcross_plus(
-            187520, 12, 0, plus_corns[i], 24 * 22 * 20 * 18, 24, 24, 24, 14,
-            mm.getCrossTable(), mm.getCornerTable(), mm.getEdgeTable(),
-            mm.getCornerTable(), s_prune_plus_corn[i]);
-        save_vector(s_prune_plus_corn[i], fn);
-      }
-      s_p_plus_corn[i] = s_prune_plus_corn[i].data();
-    }
+    // NOTE: Plus Tables (E1/E2/E3/C5/C6/C7) 已移除，改用 Huge Neighbor/Diagonal
+    // 表
 
     // 3. 3-Corner Table (C4+C5+C6)
     std::cout << "[Init] Checking XCross+C4+C5+C6 Table..." << std::endl;
@@ -301,23 +263,12 @@ struct xcross_analyzer {
     p_prune = s_p_prune;
     p_prune_dep_eo = s_p_prune_dep_eo;
     p_prune_base = s_p_prune_base;
-    p_plus_edge = s_p_plus_edge;
-    p_plus_corn = s_p_plus_corn;
     p_prune_3c = s_p_prune_3c;
     p_huge_neighbor = s_p_huge_neighbor; // Huge Neighbor 表
     p_huge_diagonal = s_p_huge_diagonal; // Huge Diagonal 表
   }
 
-  inline int get_plus_table_idx(int s_base, int s_target) {
-    int diff = (s_target - s_base + 4) % 4;
-    if (diff == 1)
-      return 0; // Right
-    if (diff == 2)
-      return 1; // Diag
-    if (diff == 3)
-      return 2; // Left
-    return -1;
-  }
+  // NOTE: get_plus_table_idx 已移除，Plus Tables 不再使用
 
   // 判断两个 slot 是否为相邻关系，返回用于 Huge Neighbor 表的 Conj View
   // 返回值: 应作为 conj 基准的 slot，-1 表示非相邻
@@ -435,10 +386,9 @@ struct xcross_analyzer {
   }
 
   // --- Search 2: XXCross+EO (Optimized) ---
+  // NOTE: Plus Tables 已移除，仅使用 Huge 表 + Base 表剪枝
   bool search_2(int i1a, int i2a, int i3a, int i1b, int i2b, int i3b, int i_dep,
                 int i_eo, int depth, int prev, int s1, int s2, int bound,
-                int tab, int tba, int ea_rel, int ca_rel, int eb_rel,
-                int cb_rel,
                 // Huge 表参数
                 int v_huge, const unsigned char *p_huge_active, int i_e6,
                 int i_c2) {
@@ -468,7 +418,7 @@ struct xcross_analyzer {
       if (get_prune_ptr(p_prune_dep_eo, (long long)nd * 2048 + neo) >= depth)
         continue;
 
-      // 级联 Check 2: View A (Base + Plus)
+      // 级联 Check 2: View A (Base only)
       int m1 = conj_moves_flat[m][s1];
       int n1a = p_multi[i1a + m1], n2a = p_corner[i2a + m1],
           n3a = p_edge[i3a + m1];
@@ -476,14 +426,7 @@ struct xcross_analyzer {
       if (get_prune_ptr(p_prune_base, idx_a) >= depth)
         continue;
 
-      int n_ea_rel = p_edge[ea_rel * 18 + m1];
-      if (get_prune_ptr(p_plus_edge[tab], idx_a * 24 + n_ea_rel) >= depth)
-        continue;
-      int n_ca_rel = p_corner[ca_rel * 18 + m1];
-      if (get_prune_ptr(p_plus_corn[tab], idx_a * 24 + n_ca_rel) >= depth)
-        continue;
-
-      // 级联 Check 3: View B (Base + Plus)
+      // 级联 Check 3: View B (Base only)
       int m2 = conj_moves_flat[m][s2];
       int n1b = p_multi[i1b + m2], n2b = p_corner[i2b + m2],
           n3b = p_edge[i3b + m2];
@@ -491,18 +434,10 @@ struct xcross_analyzer {
       if (get_prune_ptr(p_prune_base, idx_b) >= depth)
         continue;
 
-      int n_eb_rel = p_edge[eb_rel * 18 + m2];
-      if (get_prune_ptr(p_plus_edge[tba], idx_b * 24 + n_eb_rel) >= depth)
-        continue;
-      int n_cb_rel = p_corner[cb_rel * 18 + m2];
-      if (get_prune_ptr(p_plus_corn[tba], idx_b * 24 + n_cb_rel) >= depth)
-        continue;
-
       if (depth == 1)
         return true;
       else if (search_2(n1a, n2a * 18, n3a * 18, n1b, n2b * 18, n3b * 18,
-                        nd * 18, neo * 18, depth - 1, m, s1, s2, bound, tab,
-                        tba, n_ea_rel, n_ca_rel, n_eb_rel, n_cb_rel, v_huge,
+                        nd * 18, neo * 18, depth - 1, m, s1, s2, bound, v_huge,
                         p_huge_active, (v_huge != -1) ? n_ie6 : -1,
                         (v_huge != -1) ? n_ic2 : -1))
         return true;
@@ -511,21 +446,15 @@ struct xcross_analyzer {
   }
 
   // --- Search 3: XXXCross+EO (Optimized) ---
+  // NOTE: Plus Tables 已移除，仅使用 Huge 表 + Base 表 + 3-Corner 表剪枝
   bool search_3(int i1a, int i2a, int i3a, int i1b, int i2b, int i3b, int i1c,
                 int i2c, int i3c, int i_dep, int i_eo, int depth, int prev,
-                int s1, int s2, int s3, int bound, int t_ab, int t_ba, int t_bc,
-                int t_cb, int t_ac, int t_ca, int ea_b, int ca_b, int ea_c,
-                int ca_c, int eb_a, int cb_a, int eb_c, int cb_c, int ec_a,
-                int cc_a, int ec_b, int cc_b,
-                // Huge 表参数 (仅追踪第一对 s1-s2)
+                int s1, int s2, int s3, int bound,
+                // Huge 表参数
                 int v_huge, const unsigned char *p_huge_active, int i_e6,
                 int i_c2) {
     if (depth > bound)
       return false;
-
-    bool check_3c_A = (t_ab == 0 && t_ac == 1);
-    bool check_3c_B = (t_ba == 0 && t_bc == 1);
-    bool check_3c_C = (t_ca == 0 && t_cb == 1);
 
     const int *moves = valid_moves_flat[prev];
     const int count = valid_moves_count[prev];
@@ -550,7 +479,7 @@ struct xcross_analyzer {
       if (get_prune_ptr(p_prune_dep_eo, (long long)nd * 2048 + neo) >= depth)
         continue;
 
-      // --- View A ---
+      // --- View A (Base only) ---
       int m1 = conj_moves_flat[m][s1];
       int n1a = p_multi[i1a + m1], n2a = p_corner[i2a + m1],
           n3a = p_edge[i3a + m1];
@@ -558,25 +487,7 @@ struct xcross_analyzer {
       if (get_prune_ptr(p_prune_base, idx_a) >= depth)
         continue;
 
-      int n_ea_b = p_edge[ea_b * 18 + m1], n_ca_b = p_corner[ca_b * 18 + m1];
-      if (get_prune_ptr(p_plus_edge[t_ab], idx_a * 24 + n_ea_b) >= depth)
-        continue;
-      if (get_prune_ptr(p_plus_corn[t_ab], idx_a * 24 + n_ca_b) >= depth)
-        continue;
-
-      int n_ea_c = p_edge[ea_c * 18 + m1], n_ca_c = p_corner[ca_c * 18 + m1];
-      if (get_prune_ptr(p_plus_edge[t_ac], idx_a * 24 + n_ea_c) >= depth)
-        continue;
-      if (get_prune_ptr(p_plus_corn[t_ac], idx_a * 24 + n_ca_c) >= depth)
-        continue;
-
-      if (check_3c_A) {
-        long long idx_3c = ((long long)(n1a + n2a) * 24 + n_ca_b) * 24 + n_ca_c;
-        if (get_prune_ptr(p_prune_3c, idx_3c) >= depth)
-          continue;
-      }
-
-      // --- View B ---
+      // --- View B (Base only) ---
       int m2 = conj_moves_flat[m][s2];
       int n1b = p_multi[i1b + m2], n2b = p_corner[i2b + m2],
           n3b = p_edge[i3b + m2];
@@ -584,25 +495,7 @@ struct xcross_analyzer {
       if (get_prune_ptr(p_prune_base, idx_b) >= depth)
         continue;
 
-      int n_eb_a = p_edge[eb_a * 18 + m2], n_cb_a = p_corner[cb_a * 18 + m2];
-      if (get_prune_ptr(p_plus_edge[t_ba], idx_b * 24 + n_eb_a) >= depth)
-        continue;
-      if (get_prune_ptr(p_plus_corn[t_ba], idx_b * 24 + n_cb_a) >= depth)
-        continue;
-
-      int n_eb_c = p_edge[eb_c * 18 + m2], n_cb_c = p_corner[cb_c * 18 + m2];
-      if (get_prune_ptr(p_plus_edge[t_bc], idx_b * 24 + n_eb_c) >= depth)
-        continue;
-      if (get_prune_ptr(p_plus_corn[t_bc], idx_b * 24 + n_cb_c) >= depth)
-        continue;
-
-      if (check_3c_B) {
-        long long idx_3c = ((long long)(n1b + n2b) * 24 + n_cb_a) * 24 + n_cb_c;
-        if (get_prune_ptr(p_prune_3c, idx_3c) >= depth)
-          continue;
-      }
-
-      // --- View C ---
+      // --- View C (Base only) ---
       int m3 = conj_moves_flat[m][s3];
       int n1c = p_multi[i1c + m3], n2c = p_corner[i2c + m3],
           n3c = p_edge[i3c + m3];
@@ -610,32 +503,12 @@ struct xcross_analyzer {
       if (get_prune_ptr(p_prune_base, idx_c) >= depth)
         continue;
 
-      int n_ec_a = p_edge[ec_a * 18 + m3], n_cc_a = p_corner[cc_a * 18 + m3];
-      if (get_prune_ptr(p_plus_edge[t_ca], idx_c * 24 + n_ec_a) >= depth)
-        continue;
-      if (get_prune_ptr(p_plus_corn[t_ca], idx_c * 24 + n_cc_a) >= depth)
-        continue;
-
-      int n_ec_b = p_edge[ec_b * 18 + m3], n_cc_b = p_corner[cc_b * 18 + m3];
-      if (get_prune_ptr(p_plus_edge[t_cb], idx_c * 24 + n_ec_b) >= depth)
-        continue;
-      if (get_prune_ptr(p_plus_corn[t_cb], idx_c * 24 + n_cc_b) >= depth)
-        continue;
-
-      if (check_3c_C) {
-        long long idx_3c = ((long long)(n1c + n2c) * 24 + n_cc_a) * 24 + n_cc_b;
-        if (get_prune_ptr(p_prune_3c, idx_3c) >= depth)
-          continue;
-      }
-
       if (depth == 1)
         return true;
       else if (search_3(n1a, n2a * 18, n3a * 18, n1b, n2b * 18, n3b * 18, n1c,
                         n2c * 18, n3c * 18, nd * 18, neo * 18, depth - 1, m, s1,
-                        s2, s3, bound, t_ab, t_ba, t_bc, t_cb, t_ac, t_ca,
-                        n_ea_b, n_ca_b, n_ea_c, n_ca_c, n_eb_a, n_cb_a, n_eb_c,
-                        n_cb_c, n_ec_a, n_cc_a, n_ec_b, n_cc_b, v_huge,
-                        p_huge_active, (v_huge != -1) ? n_ie6 : -1,
+                        s2, s3, bound, v_huge, p_huge_active,
+                        (v_huge != -1) ? n_ie6 : -1,
                         (v_huge != -1) ? n_ic2 : -1))
         return true;
     }
@@ -698,30 +571,19 @@ struct xcross_analyzer {
           std::vector<std::pair<int, int>> tasks_xx;
           for (int p = 0; p < 6; ++p) {
             int s1 = pairs[p][0], s2 = pairs[p][1];
-            int t_ab = get_plus_table_idx(s1, s2);
-            int t_ba = get_plus_table_idx(s2, s1);
 
-            // View A
+            // View A + B (仅 Base 表)
             long long idx1 =
                 (long long)(st[s1].i1 + st[s1].i2) * 24 + st[s1].i3;
             int h1 = get_prune_ptr(p_prune_base, idx1);
-            int h1_pe = get_prune_ptr(p_plus_edge[t_ab],
-                                      idx1 * 24 + st[s1].e_trk[t_ab]);
-            int h1_pc = get_prune_ptr(p_plus_corn[t_ab],
-                                      idx1 * 24 + st[s1].c_trk[t_ab]);
 
-            // View B
             long long idx2 =
                 (long long)(st[s2].i1 + st[s2].i2) * 24 + st[s2].i3;
             int h2 = get_prune_ptr(p_prune_base, idx2);
-            int h2_pe = get_prune_ptr(p_plus_edge[t_ba],
-                                      idx2 * 24 + st[s2].e_trk[t_ba]);
-            int h2_pc = get_prune_ptr(p_plus_corn[t_ba],
-                                      idx2 * 24 + st[s2].c_trk[t_ba]);
 
             int h_de = get_prune_ptr(
                 p_prune_dep_eo, (long long)st[s1].idep * 2048 + st[s1].ieo);
-            int h = std::max({h1, h1_pe, h1_pc, h2, h2_pe, h2_pc, h_de});
+            int h = std::max({h1, h2, h_de});
             tasks_xx.push_back({h, p});
           }
           std::sort(tasks_xx.begin(), tasks_xx.end());
@@ -735,8 +597,6 @@ struct xcross_analyzer {
               break;
             }
             int s1 = pairs[t.second][0], s2 = pairs[t.second][1];
-            int t_ab = get_plus_table_idx(s1, s2);
-            int t_ba = get_plus_table_idx(s2, s1);
 
             for (int d = t.first; d <= std::min(20, best_xx - 1); ++d) {
               // 确定 Huge 表视角和初始状态
@@ -760,9 +620,7 @@ struct xcross_analyzer {
 
               if (search_2(st[s1].i1, st[s1].i2 * 18, st[s1].i3 * 18, st[s2].i1,
                            st[s2].i2 * 18, st[s2].i3 * 18, st[s1].idep * 18,
-                           st[s1].ieo * 18, d, 18, s1, s2, best_xx - 1, t_ab,
-                           t_ba, st[s1].e_trk[t_ab], st[s1].c_trk[t_ab],
-                           st[s2].e_trk[t_ba], st[s2].c_trk[t_ba], v_huge,
+                           st[s1].ieo * 18, d, 18, s1, s2, best_xx - 1, v_huge,
                            p_huge, init_e6, init_c2)) {
                 best_xx = d;
                 break;
@@ -778,86 +636,23 @@ struct xcross_analyzer {
           std::vector<std::pair<int, int>> tasks_xxx;
           for (int tr = 0; tr < 4; ++tr) {
             int s1 = trips[tr][0], s2 = trips[tr][1], s3 = trips[tr][2];
-            int t_ab = get_plus_table_idx(s1, s2),
-                t_ba = get_plus_table_idx(s2, s1);
-            int t_bc = get_plus_table_idx(s2, s3),
-                t_cb = get_plus_table_idx(s3, s2);
-            int t_ac = get_plus_table_idx(s1, s3),
-                t_ca = get_plus_table_idx(s3, s1);
 
-            // Pruning check for all 3 views
+            // Pruning check for all 3 views (仅 Base 表)
             long long idx1 =
                 (long long)(st[s1].i1 + st[s1].i2) * 24 + st[s1].i3;
-            int h1 = std::max({get_prune_ptr(p_prune_base, idx1),
-                               get_prune_ptr(p_plus_edge[t_ab],
-                                             idx1 * 24 + st[s1].e_trk[t_ab]),
-                               get_prune_ptr(p_plus_corn[t_ab],
-                                             idx1 * 24 + st[s1].c_trk[t_ab]),
-                               get_prune_ptr(p_plus_edge[t_ac],
-                                             idx1 * 24 + st[s1].e_trk[t_ac]),
-                               get_prune_ptr(p_plus_corn[t_ac],
-                                             idx1 * 24 + st[s1].c_trk[t_ac])});
+            int h1 = get_prune_ptr(p_prune_base, idx1);
 
             long long idx2 =
                 (long long)(st[s2].i1 + st[s2].i2) * 24 + st[s2].i3;
-            int h2 = std::max({get_prune_ptr(p_prune_base, idx2),
-                               get_prune_ptr(p_plus_edge[t_ba],
-                                             idx2 * 24 + st[s2].e_trk[t_ba]),
-                               get_prune_ptr(p_plus_corn[t_ba],
-                                             idx2 * 24 + st[s2].c_trk[t_ba]),
-                               get_prune_ptr(p_plus_edge[t_bc],
-                                             idx2 * 24 + st[s2].e_trk[t_bc]),
-                               get_prune_ptr(p_plus_corn[t_bc],
-                                             idx2 * 24 + st[s2].c_trk[t_bc])});
+            int h2 = get_prune_ptr(p_prune_base, idx2);
 
             long long idx3 =
                 (long long)(st[s3].i1 + st[s3].i2) * 24 + st[s3].i3;
-            int h3 = std::max({get_prune_ptr(p_prune_base, idx3),
-                               get_prune_ptr(p_plus_edge[t_ca],
-                                             idx3 * 24 + st[s3].e_trk[t_ca]),
-                               get_prune_ptr(p_plus_corn[t_ca],
-                                             idx3 * 24 + st[s3].c_trk[t_ca]),
-                               get_prune_ptr(p_plus_edge[t_cb],
-                                             idx3 * 24 + st[s3].e_trk[t_cb]),
-                               get_prune_ptr(p_plus_corn[t_cb],
-                                             idx3 * 24 + st[s3].c_trk[t_cb])});
-
-            // 3-Corner Pruning
-            int d_3c = 0;
-            if ((t_ab == 0 && t_ac == 1) ||
-                (t_ac == 0 && t_ab == 1)) { // View A
-              int c_r = (t_ab == 0) ? st[s1].c_trk[t_ab] : st[s1].c_trk[t_ac];
-              int c_d = (t_ab == 0) ? st[s1].c_trk[t_ac] : st[s1].c_trk[t_ab];
-              d_3c = std::max(
-                  d_3c, get_prune_ptr(p_prune_3c,
-                                      ((long long)(st[s1].i1 + st[s1].i2) * 24 +
-                                       c_r) * 24 +
-                                          c_d));
-            }
-            if ((t_ba == 0 && t_bc == 1) ||
-                (t_bc == 0 && t_ba == 1)) { // View B
-              int c_r = (t_ba == 0) ? st[s2].c_trk[t_ba] : st[s2].c_trk[t_bc];
-              int c_d = (t_ba == 0) ? st[s2].c_trk[t_bc] : st[s2].c_trk[t_ba];
-              d_3c = std::max(
-                  d_3c, get_prune_ptr(p_prune_3c,
-                                      ((long long)(st[s2].i1 + st[s2].i2) * 24 +
-                                       c_r) * 24 +
-                                          c_d));
-            }
-            if ((t_ca == 0 && t_cb == 1) ||
-                (t_cb == 0 && t_ca == 1)) { // View C
-              int c_r = (t_ca == 0) ? st[s3].c_trk[t_ca] : st[s3].c_trk[t_cb];
-              int c_d = (t_ca == 0) ? st[s3].c_trk[t_cb] : st[s3].c_trk[t_ca];
-              d_3c = std::max(
-                  d_3c, get_prune_ptr(p_prune_3c,
-                                      ((long long)(st[s3].i1 + st[s3].i2) * 24 +
-                                       c_r) * 24 +
-                                          c_d));
-            }
+            int h3 = get_prune_ptr(p_prune_base, idx3);
 
             int pr_de = get_prune_ptr(
                 p_prune_dep_eo, (long long)st[s1].idep * 2048 + st[s1].ieo);
-            int h = std::max({h1, h2, h3, pr_de, d_3c});
+            int h = std::max({h1, h2, h3, pr_de});
             tasks_xxx.push_back({h, tr});
           }
           std::sort(tasks_xxx.begin(), tasks_xxx.end());
@@ -872,12 +667,6 @@ struct xcross_analyzer {
             }
             int s1 = trips[t.second][0], s2 = trips[t.second][1],
                 s3 = trips[t.second][2];
-            int t_ab = get_plus_table_idx(s1, s2),
-                t_ba = get_plus_table_idx(s2, s1);
-            int t_bc = get_plus_table_idx(s2, s3),
-                t_cb = get_plus_table_idx(s3, s2);
-            int t_ac = get_plus_table_idx(s1, s3),
-                t_ca = get_plus_table_idx(s3, s1);
 
             for (int d = t.first; d <= std::min(20, best_xxx - 1); ++d) {
               // 确定 Huge 表视角和初始状态 (选择第一对 s1-s2)
@@ -902,14 +691,7 @@ struct xcross_analyzer {
                            st[s2].i2 * 18, st[s2].i3 * 18, st[s3].i1,
                            st[s3].i2 * 18, st[s3].i3 * 18, st[s1].idep * 18,
                            st[s1].ieo * 18, d, 18, s1, s2, s3, best_xxx - 1,
-                           t_ab, t_ba, t_bc, t_cb, t_ac, t_ca,
-                           st[s1].e_trk[t_ab], st[s1].c_trk[t_ab],
-                           st[s1].e_trk[t_ac], st[s1].c_trk[t_ac],
-                           st[s2].e_trk[t_ba], st[s2].c_trk[t_ba],
-                           st[s2].e_trk[t_bc], st[s2].c_trk[t_bc],
-                           st[s3].e_trk[t_ca], st[s3].c_trk[t_ca],
-                           st[s3].e_trk[t_cb], st[s3].c_trk[t_cb], v_huge,
-                           p_huge, init_e6, init_c2)) {
+                           v_huge, p_huge, init_e6, init_c2)) {
                 best_xxx = d;
                 break;
               }
