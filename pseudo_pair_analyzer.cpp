@@ -118,20 +118,22 @@ struct xcross_analyzer2 {
     }
 
     // 2. Load XCross & Pair Prune Tables
-    xc_prune_tables.resize(16);
+    // [Conj优化] xc 只加载 4 张 C4 基准表 (diff=0,1,2,3)
+    xc_prune_tables.resize(4);
+    for (int diff = 0; diff < 4; ++diff) {
+      std::string fn_xc = "prune_table_pseudo_cross_C4_into_slot" +
+                          std::to_string(diff) + ".bin";
+      if (!load_vector(xc_prune_tables[diff], fn_xc)) {
+        std::cerr << "Error: Missing table " << fn_xc << std::endl;
+        exit(1);
+      }
+    }
+
+    // ec 仍加载 16 张 (后续优化)
     ec_prune_tables.resize(16);
     for (int e = 0; e < 4; ++e) {
       for (int c = 0; c < 4; ++c) {
         int idx = e * 4 + c;
-
-        std::string fn_xc = "prune_table_pseudo_cross_C" +
-                            std::to_string(c + 4) + "_into_slot" +
-                            std::to_string(e) + ".bin";
-        if (!load_vector(xc_prune_tables[idx], fn_xc)) {
-          std::cerr << "Error: Missing table " << fn_xc << std::endl;
-          exit(1);
-        }
-
         std::string fn_ec = "prune_table_pseudo_pair_C" +
                             std::to_string(c + 4) + "_E" + std::to_string(e) +
                             ".bin";
@@ -497,9 +499,12 @@ struct xcross_analyzer2 {
     return count;
   }
 
+  // [Conj优化] XC1 使用 Conj 状态追踪
   bool depth_limited_search_1(int arg_index1, int arg_index2, int arg_index3,
                               int depth, int prev, const unsigned char *prune1,
-                              const unsigned char *edge_prune) {
+                              const unsigned char *edge_prune,
+                              // [Conj] XC1 状态
+                              int xc1_cr, int xc1_cn) {
     const int *moves = valid_moves_flat[prev];
     const int count_moves = valid_moves_count[prev];
 
@@ -509,12 +514,18 @@ struct xcross_analyzer2 {
 
       int index1_tmp = p_multi_move_ptr[arg_index1 + i];
       int index2_tmp = p_corner_move_ptr[arg_index2 + i];
+      int index3_tmp = p_edge_move_ptr[arg_index3 + i];
 
-      int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
+      // [Conj] 用 Conj 移动更新 XC1 状态
+      int mc = conj_moves_flat[i][pslot1];
+      int xc1_cr_n = p_multi_move_ptr[xc1_cr + mc];
+      int xc1_cn_n = p_corner_move_ptr[xc1_cn + mc];
+
+      // [Conj] prune1: 使用 Conj 索引
+      int prune1_tmp = get_prune_ptr(prune1, xc1_cr_n + xc1_cn_n);
       if (prune1_tmp >= depth)
         continue;
 
-      int index3_tmp = p_edge_move_ptr[arg_index3 + i];
       int edge_prune1_tmp =
           get_prune_ptr(edge_prune, index3_tmp * 24 + index2_tmp);
       if (edge_prune1_tmp >= depth)
@@ -524,9 +535,9 @@ struct xcross_analyzer2 {
         if (prune1_tmp == 0 && edge_prune1_tmp == 0) {
           return true;
         }
-      } else if (depth_limited_search_1(index1_tmp, index2_tmp * 18,
-                                        index3_tmp * 18, depth - 1, i, prune1,
-                                        edge_prune))
+      } else if (depth_limited_search_1(
+                     index1_tmp, index2_tmp * 18, index3_tmp * 18, depth - 1, i,
+                     prune1, edge_prune, xc1_cr_n, xc1_cn_n * 18)) // [Conj]
         return true;
     }
     return false;
@@ -575,8 +586,11 @@ struct xcross_analyzer2 {
       int idx1, idx2, idx3;
       get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx3, slot1,
                           pslot1, edge_index, corner_index, single_edge_index);
-
-      int h1 = get_prune_ptr(p_prune1, idx1 + idx2);
+      // [Conj优化] 使用 Conj 状态计算 h1
+      std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
+      ConjStateXC st;
+      get_conj_state_xc(rotated_alg, pslot1, st);
+      int h1 = get_prune_ptr(p_prune1, st.cross + st.corner); // [Conj]
       int h2 = get_prune_ptr(p_edge_prune, idx3 * 24 + idx2);
       tasks.push_back({(int)r, std::max(h1, h2)});
     }
@@ -597,7 +611,11 @@ struct xcross_analyzer2 {
       index2 = idx2;
       index3 = idx3;
 
-      int prune1_tmp = get_prune_ptr(p_prune1, index1 + index2);
+      // [Conj优化] 计算 Conj 状态
+      std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
+      ConjStateXC st;
+      get_conj_state_xc(rotated_alg, pslot1, st);
+      int prune1_tmp = get_prune_ptr(p_prune1, st.cross + st.corner); // [Conj]
       int edge_prune1_tmp = get_prune_ptr(p_edge_prune, index3 * 24 + index2);
 
       if (prune1_tmp == 0 && edge_prune1_tmp == 0) {
@@ -609,11 +627,13 @@ struct xcross_analyzer2 {
         for (int d = std::max(prune1_tmp, edge_prune1_tmp); d <= max_length;
              d++) {
           if (depth_limited_search_1(index1, index2, index3, d, 18, p_prune1,
-                                     p_edge_prune)) {
+                                     p_edge_prune, st.cross,
+                                     st.corner * 18)) { // [Conj]
             found = d;
             break;
           }
         }
+
         results[r] = found;
       }
     }
@@ -630,9 +650,11 @@ struct xcross_analyzer2 {
     std::vector<int> base_alg = string_to_alg(scramble);
     for (int slot1_tmp = 0; slot1_tmp < 4; slot1_tmp++) {
       for (int pslot1_tmp = 0; pslot1_tmp < 4; pslot1_tmp++) {
-        int idx = slot1_tmp * 4 + pslot1_tmp;
-        start_search_1(slot1_tmp, pslot1_tmp, xc_prune_tables[idx],
-                       ec_prune_tables[idx], rotations, base_alg);
+        // [Conj优化] 使用 diff 选择 xc 表
+        int diff1 = (slot1_tmp - pslot1_tmp + 4) & 3;
+        start_search_1(slot1_tmp, pslot1_tmp, xc_prune_tables[diff1],
+                       ec_prune_tables[slot1_tmp * 4 + pslot1_tmp], rotations,
+                       base_alg);
       }
     }
   }
@@ -839,8 +861,9 @@ struct xcross_analyzer2 {
             if (pslot1_tmp == pslot2_tmp)
               continue;
             start_search_2(slot1_tmp, slot2_tmp, pslot1_tmp, pslot2_tmp,
-                           xc_prune_tables[slot1_tmp * 4 + pslot1_tmp],
-                           base_prune_tables[0], // [Conj] 使用 C4 表
+                           xc_prune_tables[(slot1_tmp - pslot1_tmp + 4) &
+                                           3],   // [Conj] diff1
+                           base_prune_tables[0], // [Conj] C4 表
                            ec_prune_tables[slot1_tmp * 4 + pslot1_tmp],
                            rotations, base_alg);
           }
@@ -1157,7 +1180,8 @@ struct xcross_analyzer2 {
             start_search_3(slot1_tmp, slot_tmps_set[i][0], slot_tmps_set[i][1],
                            pslot1_tmp, pslot_tmps_set[j][0],
                            pslot_tmps_set[j][1],
-                           xc_prune_tables[slot1_tmp * 4 + pslot1_tmp],
+                           xc_prune_tables[(slot1_tmp - pslot1_tmp + 4) &
+                                           3],   // [Conj] diff1
                            base_prune_tables[0], // [Conj] C4 表
                            base_prune_tables[0], // [Conj] C4 表
                            ec_prune_tables[slot1_tmp * 4 + pslot1_tmp],
@@ -1505,11 +1529,11 @@ struct xcross_analyzer2 {
           if (k != j)
             p_rem.push_back(k);
         start_search_4(i, s_rem[0], s_rem[1], s_rem[2], j, p_rem[0], p_rem[1],
-                       p_rem[2], xc_prune_tables[i * 4 + j],
+                       p_rem[2],
+                       xc_prune_tables[(i - j + 4) & 3], // [Conj] diff1
                        base_prune_tables[0],
                        base_prune_tables[0], // [Conj] C4 表
                        base_prune_tables[0], ec_prune_tables[i * 4 + j],
-
                        rotations, base_alg);
       }
     }
