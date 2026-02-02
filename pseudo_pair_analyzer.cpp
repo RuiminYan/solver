@@ -145,17 +145,14 @@ struct xcross_analyzer2 {
     }
 
     // 3. Load Pseudo Base Prune Tables (XCross Base)
-    pseudo_base_prune_tables.resize(16);
-    for (int c = 0; c < 4; ++c) {
-      for (int e = 0; e < 4; ++e) {
-        int idx = c * 4 + e;
-        std::string filename = "prune_table_pseudo_cross_C" +
-                               std::to_string(c + 4) + "_E" +
-                               std::to_string(e) + ".bin";
-        if (!load_vector(pseudo_base_prune_tables[idx], filename)) {
-          std::cerr << "Error: Missing table " << filename << std::endl;
-          exit(1);
-        }
+    // [Conj优化] 只加载 4 个 C4 基准表 (diff=0,1,2,3 对应 E0,E1,E2,E3)
+    pseudo_base_prune_tables.resize(4);
+    for (int e = 0; e < 4; ++e) {
+      std::string filename =
+          "prune_table_pseudo_cross_C4_E" + std::to_string(e) + ".bin";
+      if (!load_vector(pseudo_base_prune_tables[e], filename)) {
+        std::cerr << "Error: Missing table " << filename << std::endl;
+        exit(1);
       }
     }
 
