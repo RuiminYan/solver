@@ -68,6 +68,9 @@ struct xcross_analyzer2 {
   struct AuxState {
     const AuxPrunerDef *def = nullptr;
     int current_idx = 0;
+    int current_cross_scaled = 0;     // 虚拟 Cross 状态 * 24
+    const int *move_mapper = nullptr; // rot_map[rot_idx]
+    int slot_k = 0;                   // 共轭参考槽位 (pslot1)
   };
 
   static constexpr int MAX_AUX = 8;
@@ -371,52 +374,131 @@ struct xcross_analyzer2 {
     return count;
   }
 
-  // [新增] 为 Search 3 设置 AuxState (Corner2 + Edge2)
   // 返回值: num_aux (已设置的辅助表数量)
   // 顺序: Corner2 优先 → Edge2 其次
-  int setup_aux_pruners_for_search3(int slot2_arg,
+  // 使用两级映射：conj_moves_flat[m][slot_k] + rot_map[rot_idx]
+  int setup_aux_pruners_for_search3(int pslot1_arg, // 参考槽位 (slot_k)
+                                    int slot2_arg,
                                     int slot3_arg, // Edge 槽位 (固定位)
                                     int pslot2_arg,
                                     int pslot3_arg, // Corner 伪槽位
                                     const std::vector<int> &alg,
                                     AuxState *out_aux) {
     int count = 0;
+    int slot_k = pslot1_arg; // 参考槽位
 
-    // 1. Corner2 表 (优先剪枝 - 两角表在前)
-    // pslot 转换为逻辑角块 ID: pslot + 4 (0→C4, 1→C5, 2→C6, 3→C7)
-    std::vector<int> corner_ids = {pslot2_arg + 4, pslot3_arg + 4};
-    std::sort(corner_ids.begin(), corner_ids.end());
-    auto it_c = aux_registry.find(corner_ids);
-    if (it_c != aux_registry.end()) {
-      // 计算初始索引: (id-4)*3+12 用于物理位置编码
-      std::vector<int> target = {(corner_ids[0] - 4) * 3 + 12,
-                                 (corner_ids[1] - 4) * 3 + 12};
-      int idx = array_to_index(target, 2, 3, 8);
-      // 应用 scramble
-      for (int m : alg) {
-        idx = p_corner2_move_ptr[idx * 18 + m];
+    // 1. Corner2 表 (优先剪枝)
+    // 计算相对槽位 (相对于 slot_k)
+    {
+      int r1 = ((pslot2_arg)-slot_k + 4) % 4 + 4; // 映射到 4-7 范围
+      int r2 = ((pslot3_arg)-slot_k + 4) % 4 + 4;
+      int k1 = r1, k2 = r2;
+      if (k1 > k2)
+        std::swap(k1, k2);
+
+      bool is_diag = (k2 - k1) == 2;
+      std::vector<int> canon_key =
+          is_diag ? std::vector<int>{4, 6} : std::vector<int>{4, 5};
+
+      auto it = aux_registry.find(canon_key);
+      if (it != aux_registry.end()) {
+        int rot_idx = 0;
+        std::vector<int> target;
+
+        if (is_diag) {
+          // 对角: {4,6} -> Id, {5,7} -> y'
+          rot_idx = (k1 == 4) ? 0 : 3;
+          target = {12, 18}; // C4(12), C6(18)
+        } else {
+          // 邻接
+          if (k1 == 4 && k2 == 5)
+            rot_idx = 0;
+          else if (k1 == 4 && k2 == 7)
+            rot_idx = 1;
+          else if (k1 == 6 && k2 == 7)
+            rot_idx = 2;
+          else if (k1 == 5 && k2 == 6)
+            rot_idx = 3;
+          target = {12, 15}; // C4(12), C5(15)
+        }
+
+        const int *mapper = rot_map[rot_idx];
+        int init_idx = array_to_index(target, 2, 3, 8);
+        int cur_c2 = init_idx;
+        int cur_cr = 187520 * 24; // Solved Cross * 24
+
+        // 两级映射：先 conj_moves_flat，再 rot_map
+        for (int m : alg) {
+          int m_conj = conj_moves_flat[m][slot_k]; // 物理 → slot_k 视角
+          int m_rot = mapper[m_conj];              // slot_k → 规范化
+          cur_c2 = p_corner2_move_ptr[cur_c2 * 18 + m_rot];
+          cur_cr = p_multi_move_ptr[cur_cr + m_rot];
+        }
+
+        out_aux[count].def = &it->second;
+        out_aux[count].current_idx = cur_c2;
+        out_aux[count].current_cross_scaled = cur_cr;
+        out_aux[count].move_mapper = mapper;
+        out_aux[count].slot_k = slot_k;
+        count++;
       }
-      out_aux[count].def = &it_c->second;
-      out_aux[count].current_idx = idx;
-      count++;
     }
 
     // 2. Edge2 表
-    // slot 直接作为逻辑棱块 ID (0→E0, 1→E1, 2→E2, 3→E3)
-    std::vector<int> edge_ids = {slot2_arg, slot3_arg};
-    std::sort(edge_ids.begin(), edge_ids.end());
-    auto it_e = aux_registry.find(edge_ids);
-    if (it_e != aux_registry.end()) {
-      // 计算初始索引: id*2 用于物理位置编码
-      std::vector<int> target = {edge_ids[0] * 2, edge_ids[1] * 2};
-      int idx = array_to_index(target, 2, 2, 12);
-      // 应用 scramble
-      for (int m : alg) {
-        idx = p_edge2_move_ptr[idx * 18 + m];
+    // 计算相对槽位 (相对于 slot_k)
+    {
+      int r1 = (slot2_arg - slot_k + 4) % 4; // 映射到 0-3 范围
+      int r2 = (slot3_arg - slot_k + 4) % 4;
+      int k1 = r1, k2 = r2;
+      if (k1 > k2)
+        std::swap(k1, k2);
+
+      bool is_diag = (k2 - k1) == 2;
+      std::vector<int> canon_key =
+          is_diag ? std::vector<int>{0, 2} : std::vector<int>{0, 1};
+
+      auto it = aux_registry.find(canon_key);
+      if (it != aux_registry.end()) {
+        int rot_idx = 0;
+        std::vector<int> target;
+
+        if (is_diag) {
+          // 对角: {0,2} -> Id, {1,3} -> y
+          rot_idx = (k1 == 0) ? 0 : 1;
+          target = {0, 4}; // E0(0), E2(4)
+        } else {
+          // 邻接
+          if (k1 == 0 && k2 == 1)
+            rot_idx = 0;
+          else if (k1 == 0 && k2 == 3)
+            rot_idx = 1;
+          else if (k1 == 2 && k2 == 3)
+            rot_idx = 2;
+          else if (k1 == 1 && k2 == 2)
+            rot_idx = 3;
+          target = {0, 2}; // E0(0), E1(2)
+        }
+
+        const int *mapper = rot_map[rot_idx];
+        int init_idx = array_to_index(target, 2, 2, 12);
+        int cur_e2 = init_idx;
+        int cur_cr = 187520 * 24; // Solved Cross * 24
+
+        // 两级映射：先 conj_moves_flat，再 rot_map
+        for (int m : alg) {
+          int m_conj = conj_moves_flat[m][slot_k]; // 物理 → slot_k 视角
+          int m_rot = mapper[m_conj];              // slot_k → 规范化
+          cur_e2 = p_edge2_move_ptr[cur_e2 * 18 + m_rot];
+          cur_cr = p_multi_move_ptr[cur_cr + m_rot];
+        }
+
+        out_aux[count].def = &it->second;
+        out_aux[count].current_idx = cur_e2;
+        out_aux[count].current_cross_scaled = cur_cr;
+        out_aux[count].move_mapper = mapper;
+        out_aux[count].slot_k = slot_k;
+        count++;
       }
-      out_aux[count].def = &it_e->second;
-      out_aux[count].current_idx = idx;
-      count++;
     }
 
     return count;
@@ -763,9 +845,26 @@ struct xcross_analyzer2 {
         if (!cur.def)
           continue;
         next_aux[a].def = cur.def;
-        next_aux[a].current_idx = cur.def->p_move[cur.current_idx * 18 + i];
+        next_aux[a].move_mapper = cur.move_mapper;
+        next_aux[a].slot_k = cur.slot_k;
 
-        long long idx_aux = (long long)cross_state_idx * cur.def->multiplier +
+        int lookup_cross_idx;
+        if (cur.move_mapper) {
+          // 两级映射：先 conj_moves_flat，再 rot_map
+          int m_conj = conj_moves_flat[i][cur.slot_k]; // 物理 → slot_k 视角
+          int m_rot = cur.move_mapper[m_conj];         // slot_k → 规范化
+          next_aux[a].current_idx =
+              cur.def->p_move[cur.current_idx * 18 + m_rot];
+          next_aux[a].current_cross_scaled =
+              p_multi_move_ptr[cur.current_cross_scaled + m_rot];
+          lookup_cross_idx = next_aux[a].current_cross_scaled / 24;
+        } else {
+          // 标准逻辑 (无 mapper)
+          next_aux[a].current_idx = cur.def->p_move[cur.current_idx * 18 + i];
+          lookup_cross_idx = cross_state_idx;
+        }
+
+        long long idx_aux = (long long)lookup_cross_idx * cur.def->multiplier +
                             next_aux[a].current_idx;
         if (get_prune_ptr(cur.def->p_prune, idx_aux) >= depth) {
           aux_pruned = true;
@@ -922,7 +1021,7 @@ struct xcross_analyzer2 {
         std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
         AuxState aux_init[MAX_AUX];
         int num_aux = setup_aux_pruners_for_search3(
-            slot2, slot3, pslot2, pslot3, rotated_alg, aux_init);
+            pslot1, slot2, slot3, pslot2, pslot3, rotated_alg, aux_init);
 
         index2 *= 18;
         index4 *= 18;
