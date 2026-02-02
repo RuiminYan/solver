@@ -1157,17 +1157,18 @@ struct xcross_analyzer2 {
     }
   }
 
+  // [Conj优化] XC4 使用 Conj 状态追踪
+  // 新增参数: xc4_cr/cn/e0-e3 (Conj 状态), diff4 (边选择)
   // Search 4
-  bool depth_limited_search_4(int arg_index1, int arg_index2, int arg_index4,
-                              int arg_index6, int arg_index8, int arg_index9,
-                              int arg_index10, int arg_index11, int arg_index12,
-                              int depth, int prev, const unsigned char *prune1,
-                              const unsigned char *prune2,
-                              const unsigned char *prune3,
-                              const unsigned char *prune4,
-                              const unsigned char *edge_prune1,
-                              const unsigned char *prune_xc4, int num_aux,
-                              AuxState *aux_states) { // [重构] 使用 AuxState
+  bool depth_limited_search_4(
+      int arg_index1, int arg_index2, int arg_index4, int arg_index6,
+      int arg_index8, int arg_index9, int arg_index10, int arg_index11,
+      int arg_index12, int depth, int prev, const unsigned char *prune1,
+      const unsigned char *prune2, const unsigned char *prune3,
+      const unsigned char *prune4, const unsigned char *edge_prune1,
+      const unsigned char *prune_xc4, int num_aux, AuxState *aux_states,
+      int xc4_cr, int xc4_cn, int xc4_e0, int xc4_e1, int xc4_e2, int xc4_e3,
+      int diff4) {
     const int *moves = valid_moves_flat[prev];
     const int count_moves = valid_moves_count[prev];
 
@@ -1242,15 +1243,27 @@ struct xcross_analyzer2 {
       if (prune4_tmp >= depth)
         continue;
 
-      int index12_tmp = p_edge_move_ptr[arg_index12 + i];
-      long long idx_xc4 =
-          (long long)(index1_tmp + index8_tmp) * 24 + index12_tmp;
+      // [Conj] 用 Conj 移动更新 XC4 状态
+      int mc = conj_moves_flat[i][pslot4];
+      int xc4_cr_n = p_multi_move_ptr[xc4_cr + mc];
+      int xc4_cn_n = p_corner_move_ptr[xc4_cn + mc];
+      int xc4_e0_n = p_edge_move_ptr[xc4_e0 + mc];
+      int xc4_e1_n = p_edge_move_ptr[xc4_e1 + mc];
+      int xc4_e2_n = p_edge_move_ptr[xc4_e2 + mc];
+      int xc4_e3_n = p_edge_move_ptr[xc4_e3 + mc];
+      int xc4_e_sel = (diff4 == 0)   ? xc4_e0_n
+                      : (diff4 == 1) ? xc4_e1_n
+                      : (diff4 == 2) ? xc4_e2_n
+                                     : xc4_e3_n;
+
+      long long idx_xc4 = (long long)(xc4_cr_n + xc4_cn_n) * 24 + xc4_e_sel;
       int prune_xc4_tmp = get_prune_ptr(prune_xc4, idx_xc4);
       if (prune_xc4_tmp >= depth)
         continue;
 
       int index10_tmp = p_edge_move_ptr[arg_index10 + i];
       int index11_tmp = p_edge_move_ptr[arg_index11 + i];
+      int index12_tmp = p_edge_move_ptr[arg_index12 + i];
 
       if (depth == 1) {
         if (prune1_tmp == 0 && prune2_tmp == 0 && prune3_tmp == 0 &&
@@ -1264,7 +1277,9 @@ struct xcross_analyzer2 {
                      index6_tmp * 18, index8_tmp * 18, index9_tmp * 18,
                      index10_tmp * 18, index11_tmp * 18, index12_tmp * 18,
                      depth - 1, i, prune1, prune2, prune3, prune4, edge_prune1,
-                     prune_xc4, num_aux, next_aux)) // [重构] 传递 next_aux
+                     prune_xc4, num_aux, next_aux, xc4_cr_n, xc4_cn_n * 18,
+                     xc4_e0_n * 18, xc4_e1_n * 18, xc4_e2_n * 18, xc4_e3_n * 18,
+                     diff4))
         return true;
     }
     return false;
@@ -1289,9 +1304,10 @@ struct xcross_analyzer2 {
     std::vector<int> edge_index = {187520, 187520, 187520, 187520},
                      single_edge_index = {0, 2, 4, 6},
                      corner_index = {12, 15, 18, 21};
-    int xc4_table_idx = pslot4 * 4 + slot4;
-    std::vector<unsigned char> &prune_xc4 =
-        pseudo_base_prune_tables[xc4_table_idx];
+
+    // [Conj优化] 使用 diff 选择 C4 基准表
+    int diff4 = (slot4 - pslot4 + 4) & 3;
+    std::vector<unsigned char> &prune_xc4 = pseudo_base_prune_tables[diff4];
 
     const unsigned char *p_prune1 = prune1.data();
     const unsigned char *p_prune2 = prune2.data();
@@ -1328,8 +1344,15 @@ struct xcross_analyzer2 {
       int h3 = get_prune_ptr(p_prune3, idx1 + idx6);
       int h4 = get_prune_ptr(p_prune4, idx1 + idx8);
       int h5 = get_prune_ptr(p_edge_prune1, idx9 * 24 + idx2);
-      long long idx_xc4 = (long long)(idx1 + idx8) * 24 + idx12;
-      int h6 = get_prune_ptr(p_prune_xc4, idx_xc4);
+
+      // [Conj优化] 使用 Conj 索引计算 h6
+      std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
+      ConjStateXC st;
+      get_conj_state_xc(rotated_alg, pslot4, st);
+      long long conj_idx_xc4 =
+          (long long)(st.cross + st.corner) * 24 + st.edge[diff4];
+      int h6 = get_prune_ptr(p_prune_xc4, conj_idx_xc4);
+
       tasks.push_back({(int)r, std::max({h1, h2, h3, h4, h5, h6})});
     }
     std::sort(tasks.begin(), tasks.end(),
@@ -1377,8 +1400,15 @@ struct xcross_analyzer2 {
       int prune3_tmp = get_prune_ptr(p_prune3, index1 + index6);
       int prune4_tmp = get_prune_ptr(p_prune4, index1 + index8);
       int edge_prune1_tmp = get_prune_ptr(p_edge_prune1, index9 * 24 + index2);
-      int prune_xc4_tmp = get_prune_ptr(
-          p_prune_xc4, (long long)(index1 + index8) * 24 + index12);
+
+      // [Conj优化] 计算 XC4 Conj 状态
+      std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
+      ConjStateXC st;
+      get_conj_state_xc(rotated_alg, pslot4, st);
+      long long conj_idx_xc4 =
+          (long long)(st.cross + st.corner) * 24 + st.edge[diff4];
+      int prune_xc4_tmp = get_prune_ptr(p_prune_xc4, conj_idx_xc4);
+
       if (prune1_tmp == 0 && prune2_tmp == 0 && prune3_tmp == 0 &&
           prune4_tmp == 0 && edge_prune1_tmp == 0 && prune_xc4_tmp == 0 &&
           index10 == edge_solved2 && index11 == edge_solved3 &&
@@ -1395,7 +1425,6 @@ struct xcross_analyzer2 {
         index12 *= 18;
 
         // [重构] 使用 AuxState 架构设置 Corner3 + Edge3 剪枝
-        std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
         AuxState aux_init[MAX_AUX];
         int num_aux = setup_aux_pruners_for_search4(
             pslot1,                 // 参考槽位 (slot_k)
@@ -1411,7 +1440,9 @@ struct xcross_analyzer2 {
           if (depth_limited_search_4(
                   index1, index2, index4, index6, index8, index9, index10,
                   index11, index12, d, 18, p_prune1, p_prune2, p_prune3,
-                  p_prune4, p_edge_prune1, p_prune_xc4, num_aux, aux_init)) {
+                  p_prune4, p_edge_prune1, p_prune_xc4, num_aux, aux_init,
+                  st.cross, st.corner * 18, st.edge[0] * 18, st.edge[1] * 18,
+                  st.edge[2] * 18, st.edge[3] * 18, diff4)) {
             found = d;
             break;
           }
