@@ -22,7 +22,7 @@
 #include <vector>
 
 // --- 配置 ---
-#define ENABLE_DIAGONAL_TABLE 1
+#define ENABLE_DIAGONAL_TABLE 0 // 临时禁用，节省 ~10 GB 内存
 
 // --- 全局变量 ---
 extern int valid_moves_flat[20][18];

@@ -513,7 +513,7 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 
 | 阶段 | 目标 | 级联检查 1 | 级联检查 2 | 级联检查 3 |
 |---|---|---|---|---|
-| **search (Cross)** | XC (Cross + EO) | `Dep EO` | `Base` (Cross+C4) | - |
+| **search (Cross)** | Cross + EO | `Dep EO` | `Base` (Cross+C4) | - |
 | **search_1** | XCross + EO | `Dep EO` | `XC Base` | - |
 | **search_2** | XXCross + EO | `Dep EO` | `XC Base` | `Plus Edge`, `Plus Corn` |
 | **search_3** | XXXCross + EO | `Dep EO` | `XC Base` | `Plus Edge/Corn`, `3 Corner` |
