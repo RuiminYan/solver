@@ -1383,6 +1383,109 @@ std::vector<unsigned char> xcross_analyzer2::prune_e0e2;
 std::map<std::vector<int>, xcross_analyzer2::AuxPrunerDef>
     xcross_analyzer2::aux_registry;
 
+// ============================================================
+// [验证] Conj 映射可行性测试
+// 目的：验证 xc_prune_tables[slot*4+pslot] 能否通过 Conj 映射到
+// xc_prune_tables[diff*4+0]
+// ============================================================
+void verify_conj_mapping() {
+  std::cout << "\n=== Conj Mapping Verification ===" << std::endl;
+  std::cout
+      << "Testing if xc_prune_tables can be reduced from 16 to 4 tables\n";
+
+  xcross_analyzer2::initialize_tables();
+
+  const int *p_multi = xcross_analyzer2::p_multi_move_ptr;
+  const int *p_corner = xcross_analyzer2::p_corner_move_ptr;
+  auto &xc_tables = xcross_analyzer2::xc_prune_tables;
+
+  // 测试几个不同的 scramble
+  std::vector<std::string> test_scrambles = {
+      "R U R' U'",         "L U L' U' F' U F",      "R U R' U R U2 R'",
+      "L' U' L U L' U' L", "R2 U R' U' R U R U R2", "F R U R' U' F'",
+  };
+
+  std::cout << "\nComparing [slot,pslot] table vs [diff,0] table with Conj:\n";
+  std::cout << "--------------------------------------------\n";
+
+  int total_tests = 0;
+  int passed_tests = 0;
+
+  for (const auto &scramble_str : test_scrambles) {
+    std::vector<int> alg = string_to_alg(scramble_str);
+    std::cout << "Scramble: " << scramble_str << std::endl;
+
+    for (int slot = 0; slot < 4; ++slot) {
+      for (int pslot = 0; pslot < 4; ++pslot) {
+        total_tests++;
+        int diff = (slot - pslot + 4) & 3;
+
+        // --- 物理方法 (使用表 [slot*4+pslot]) ---
+        int phy_cross = 187520 * 24;
+        int phy_corner = (pslot + 4) * 3; // C4=12, C5=15, C6=18, C7=21
+
+        for (int m : alg) {
+          phy_cross = p_multi[phy_cross + m];
+          phy_corner = p_corner[phy_corner * 18 + m];
+        }
+
+        int phy_table_idx = slot * 4 + pslot;
+        int phy_prune_idx = phy_cross / 24 + phy_corner;
+        int phy_prune_val =
+            get_prune_ptr(xc_tables[phy_table_idx].data(), phy_prune_idx);
+
+        // --- Conj 方法 (使用表 [diff*4+0]) ---
+        // 从 C4 (12) 开始，用映射移动
+        int conj_cross = 187520 * 24;
+        int conj_corner = 12; // 永远从 C4 开始
+
+        for (int m : alg) {
+          int mc = conj_moves_flat[m][pslot]; // 映射到 pslot 视角
+          conj_cross = p_multi[conj_cross + mc];
+          conj_corner = p_corner[conj_corner * 18 + mc];
+        }
+
+        int conj_table_idx = diff * 4 + 0; // 使用 [diff,0] 表
+        int conj_prune_idx = conj_cross / 24 + conj_corner;
+        int conj_prune_val =
+            get_prune_ptr(xc_tables[conj_table_idx].data(), conj_prune_idx);
+
+        // 比较
+        bool match = (phy_prune_val == conj_prune_val);
+        if (match)
+          passed_tests++;
+
+        // 显示不匹配的情况
+        if (!match) {
+          std::cout << "  [" << slot << "," << pslot << "] diff=" << diff
+                    << " Phy(t" << phy_table_idx << ",idx" << phy_prune_idx
+                    << ")=" << phy_prune_val << " vs Conj(t" << conj_table_idx
+                    << ",idx" << conj_prune_idx << ")=" << conj_prune_val
+                    << " MISMATCH!" << std::endl;
+        }
+      }
+    }
+  }
+
+  std::cout << "--------------------------------------------\n";
+  std::cout << "Results: " << passed_tests << "/" << total_tests
+            << " tests passed\n";
+
+  if (passed_tests == total_tests) {
+    std::cout << "====> SUCCESS: 16 tables CAN be reduced to 4! <====\n";
+  } else {
+    double rate = (double)passed_tests / total_tests * 100;
+    std::cout << "Pass rate: " << rate << "%\n";
+    if (passed_tests * 4 == total_tests) {
+      std::cout << "NOTE: Only slot==pslot (diff=0) cases pass. Tables are NOT "
+                   "equivalent.\n";
+    }
+    std::cout << "CONCLUSION: Table reduction via Conj is NOT feasible for "
+                 "xc_prune_tables.\n";
+  }
+  std::cout << "=== End Verification ===\n\n";
+}
+
 std::string analyzer_compute(xcross_analyzer2 &xcs, std::string scramble,
                              std::string id) {
   xcs.stage_results = xcross_analyzer2::StageResults();
@@ -1490,6 +1593,10 @@ struct PseudoPairSolverWrapper {
 };
 
 int main() {
+  // NOTE: verify_conj_mapping() 验证显示 xc_prune_tables 无法通过 Conj 减少
+  // (62.5% 通过率) 原因：表索引 cross_idx * 24 + corner_idx 包含绝对 Corner
+  // 位置 (12/15/18/21) verify_conj_mapping();
+
   run_analyzer_app<PseudoPairSolverWrapper>("_pseudo_pair");
   return 0;
 }
