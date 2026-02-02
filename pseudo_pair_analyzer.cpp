@@ -855,12 +855,16 @@ struct xcross_analyzer2 {
     }
   }
 
+  // [Conj优化] XC3 使用 Conj 状态追踪
+  // 新增参数: xc3_cr/cn/e0-e3 (Conj 状态), diff3 (边选择)
   bool depth_limited_search_3(
       int arg_index1, int arg_index2, int arg_index4, int arg_index6,
       int arg_index7, int arg_index8, int arg_index9, int depth, int prev,
       const unsigned char *prune1, const unsigned char *prune2,
       const unsigned char *prune3, const unsigned char *edge_prune1,
-      const unsigned char *prune_xc3, int num_aux, const AuxState *aux_states) {
+      const unsigned char *prune_xc3, int num_aux, const AuxState *aux_states,
+      int xc3_cr, int xc3_cn, int xc3_e0, int xc3_e1, int xc3_e2, int xc3_e3,
+      int diff3) {
     const int *moves = valid_moves_flat[prev];
     const int count_moves = valid_moves_count[prev];
 
@@ -931,14 +935,26 @@ struct xcross_analyzer2 {
       if (prune3_tmp >= depth)
         continue;
 
-      int index9_tmp = p_edge_move_ptr[arg_index9 + i];
-      long long idx_xc3 =
-          (long long)(index1_tmp + index6_tmp) * 24 + index9_tmp;
+      // [Conj] 用 Conj 移动更新 XC3 状态
+      int mc = conj_moves_flat[i][pslot3];
+      int xc3_cr_n = p_multi_move_ptr[xc3_cr + mc];
+      int xc3_cn_n = p_corner_move_ptr[xc3_cn + mc];
+      int xc3_e0_n = p_edge_move_ptr[xc3_e0 + mc];
+      int xc3_e1_n = p_edge_move_ptr[xc3_e1 + mc];
+      int xc3_e2_n = p_edge_move_ptr[xc3_e2 + mc];
+      int xc3_e3_n = p_edge_move_ptr[xc3_e3 + mc];
+      int xc3_e_sel = (diff3 == 0)   ? xc3_e0_n
+                      : (diff3 == 1) ? xc3_e1_n
+                      : (diff3 == 2) ? xc3_e2_n
+                                     : xc3_e3_n;
+
+      long long idx_xc3 = (long long)(xc3_cr_n + xc3_cn_n) * 24 + xc3_e_sel;
       int prune_xc3_tmp = get_prune_ptr(prune_xc3, idx_xc3);
       if (prune_xc3_tmp >= depth)
         continue;
 
       int index8_tmp = p_edge_move_ptr[arg_index8 + i];
+      int index9_tmp = p_edge_move_ptr[arg_index9 + i];
 
       if (depth == 1) {
         if (prune1_tmp == 0 && prune2_tmp == 0 && prune3_tmp == 0 &&
@@ -950,7 +966,9 @@ struct xcross_analyzer2 {
                      index1_tmp, index2_tmp * 18, index4_tmp * 18,
                      index6_tmp * 18, index7_tmp * 18, index8_tmp * 18,
                      index9_tmp * 18, depth - 1, i, prune1, prune2, prune3,
-                     edge_prune1, prune_xc3, num_aux, next_aux))
+                     edge_prune1, prune_xc3, num_aux, next_aux, xc3_cr_n,
+                     xc3_cn_n * 18, xc3_e0_n * 18, xc3_e1_n * 18, xc3_e2_n * 18,
+                     xc3_e3_n * 18, diff3))
         return true;
     }
     return false;
@@ -974,9 +992,10 @@ struct xcross_analyzer2 {
     std::vector<int> edge_index = {187520, 187520, 187520, 187520},
                      single_edge_index = {0, 2, 4, 6},
                      corner_index = {12, 15, 18, 21};
-    int xc3_table_idx = pslot3 * 4 + slot3;
-    std::vector<unsigned char> &prune_xc3 =
-        pseudo_base_prune_tables[xc3_table_idx];
+
+    // [Conj优化] 使用 diff 选择 C4 基准表
+    int diff3 = (slot3 - pslot3 + 4) & 3;
+    std::vector<unsigned char> &prune_xc3 = pseudo_base_prune_tables[diff3];
 
     const unsigned char *p_prune1 = prune1.data();
     const unsigned char *p_prune2 = prune2.data();
@@ -1006,8 +1025,16 @@ struct xcross_analyzer2 {
       int h2 = get_prune_ptr(p_prune2, idx1 + idx4);
       int h3 = get_prune_ptr(p_prune3, idx1 + idx6);
       int h4 = get_prune_ptr(p_edge_prune1, idx7 * 24 + idx2);
-      long long idx_xc3 = (long long)(idx1 + idx6) * 24 + idx9;
-      int h5 = get_prune_ptr(p_prune_xc3, idx_xc3);
+
+      // [Conj优化] 使用 Conj 索引计算 h5
+      std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
+      ConjStateXC st;
+      get_conj_state_xc(rotated_alg, pslot3, st);
+
+      long long conj_idx_xc3 =
+          (long long)(st.cross + st.corner) * 24 + st.edge[diff3];
+      int h5 = get_prune_ptr(p_prune_xc3, conj_idx_xc3);
+
       tasks.push_back({(int)r, std::max({h1, h2, h3, h4, h5})});
     }
     std::sort(tasks.begin(), tasks.end(),
@@ -1045,15 +1072,21 @@ struct xcross_analyzer2 {
       int prune2_tmp = get_prune_ptr(p_prune2, index1 + index4);
       int prune3_tmp = get_prune_ptr(p_prune3, index1 + index6);
       int edge_prune1_tmp = get_prune_ptr(p_edge_prune1, index7 * 24 + index2);
-      int prune_xc3_tmp = get_prune_ptr(
-          p_prune_xc3, (long long)(index1 + index6) * 24 + index9);
+
+      // [Conj优化] 计算 XC3 Conj 状态
+      std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
+      ConjStateXC st;
+      get_conj_state_xc(rotated_alg, pslot3, st);
+      long long conj_idx_xc3 =
+          (long long)(st.cross + st.corner) * 24 + st.edge[diff3];
+      int prune_xc3_tmp = get_prune_ptr(p_prune_xc3, conj_idx_xc3);
+
       if (prune1_tmp == 0 && prune2_tmp == 0 && prune3_tmp == 0 &&
           edge_prune1_tmp == 0 && prune_xc3_tmp == 0 &&
           index8 == edge_solved2 && index9 == edge_solved3) {
         results[r] = 0;
       } else {
         // [新增] 设置 AuxState (Corner2 + Edge2)
-        std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
         AuxState aux_init[MAX_AUX];
         int num_aux = setup_aux_pruners_for_search3(
             pslot1, slot2, slot3, pslot2, pslot3, rotated_alg, aux_init);
@@ -1068,10 +1101,11 @@ struct xcross_analyzer2 {
         int start_depth = std::max({prune1_tmp, prune2_tmp, prune3_tmp,
                                     edge_prune1_tmp, prune_xc3_tmp});
         for (int d = start_depth; d <= max_length; d++) {
-          if (depth_limited_search_3(index1, index2, index4, index6, index7,
-                                     index8, index9, d, 18, p_prune1, p_prune2,
-                                     p_prune3, p_edge_prune1, p_prune_xc3,
-                                     num_aux, aux_init)) {
+          if (depth_limited_search_3(
+                  index1, index2, index4, index6, index7, index8, index9, d, 18,
+                  p_prune1, p_prune2, p_prune3, p_edge_prune1, p_prune_xc3,
+                  num_aux, aux_init, st.cross, st.corner * 18, st.edge[0] * 18,
+                  st.edge[1] * 18, st.edge[2] * 18, st.edge[3] * 18, diff3)) {
             found = d;
             break;
           }
