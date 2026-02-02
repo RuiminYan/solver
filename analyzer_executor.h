@@ -90,6 +90,15 @@ inline std::string formatDuration(double seconds) {
 // NOTE: 使用 GlobalMemoryStatusEx 替代 psapi，兼容性更好
 #include <windows.h>
 
+// 辅助函数：设置光标可见性
+inline void setCursorVisibility(bool visible) {
+  HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+  CONSOLE_CURSOR_INFO cursorInfo;
+  GetConsoleCursorInfo(hConsole, &cursorInfo);
+  cursorInfo.bVisible = visible;
+  SetConsoleCursorInfo(hConsole, &cursorInfo);
+}
+
 inline size_t getCurrentRSS() {
   // 使用已提交的内存作为近似值
   MEMORYSTATUSEX memInfo;
@@ -101,6 +110,7 @@ inline size_t getCurrentRSS() {
   return 0;
 }
 #else
+inline void setCursorVisibility(bool visible) { (void)visible; }
 inline size_t getCurrentRSS() { return 0; }
 #endif
 
@@ -270,6 +280,9 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
     AnalyzerStats::completedTasks = 0;
     AnalyzerStats::isSolving = true;
 
+    // 隐藏光标以获得更好的视觉体验
+    setCursorVisibility(false);
+
     // 启动监视线程（进度条 + 性能）
     std::thread monitorThread([&]() {
       auto t0 = std::chrono::high_resolution_clock::now();
@@ -331,6 +344,9 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
     // 停止监视线程
     AnalyzerStats::isSolving = false;
     monitorThread.join();
+
+    // 恢复光标
+    setCursorVisibility(true);
 
     // 清除进度条残留
     printf("\033[2K\033[A\033[2K");

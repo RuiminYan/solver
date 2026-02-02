@@ -49,11 +49,11 @@ private:
   // 新增邻棱表
   std::vector<unsigned char> pseudo_cross_E0_E1_prune; // 基准
 
-  // Edge3 Triples (4 种组合)
-  std::vector<unsigned char> pseudo_cross_E0_E1_E2_prune;
-  std::vector<unsigned char> pseudo_cross_E0_E1_E3_prune;
-  std::vector<unsigned char> pseudo_cross_E0_E2_E3_prune;
-  std::vector<unsigned char> pseudo_cross_E1_E2_E3_prune;
+  // Edge3 Triples
+  std::vector<unsigned char> pseudo_cross_E0_E1_E2_prune; // 基准
+  std::vector<unsigned char> pseudo_cross_E0_E1_E3_prune; // Newly Added
+  std::vector<unsigned char> pseudo_cross_E0_E2_E3_prune; // Newly Added
+  std::vector<unsigned char> pseudo_cross_E1_E2_E3_prune; // Newly Added
 
   // 新增对角表 (F2L Corner Pairs)
   std::vector<unsigned char> pseudo_cross_C4_C6_prune; // 基准
@@ -62,6 +62,9 @@ private:
 
   // Corner3 Triples
   std::vector<unsigned char> pseudo_cross_C4_C5_C6_prune; // 基准
+  std::vector<unsigned char> pseudo_cross_C4_C5_C7_prune; // Newly Added
+  std::vector<unsigned char> pseudo_cross_C4_C6_C7_prune; // Newly Added
+  std::vector<unsigned char> pseudo_cross_C5_C6_C7_prune; // Newly Added
 
   // 单例模式
   static PruneTableManager *instance;
@@ -121,6 +124,20 @@ public:
     return pseudo_cross_E0_E1_prune.data();
   }
 
+  // Edge3 Getters
+  const unsigned char *getPseudoCrossE0E1E2PrunePtr() const {
+    return pseudo_cross_E0_E1_E2_prune.data();
+  }
+  const unsigned char *getPseudoCrossE1E2E3PrunePtr() const {
+    return pseudo_cross_E1_E2_E3_prune.data();
+  }
+  const unsigned char *getPseudoCrossE0E2E3PrunePtr() const {
+    return pseudo_cross_E0_E2_E3_prune.data();
+  }
+  const unsigned char *getPseudoCrossE0E1E3PrunePtr() const {
+    return pseudo_cross_E0_E1_E3_prune.data();
+  }
+
   // 对角表 Getters
   const unsigned char *getPseudoCrossC4C6PrunePtr() const {
     return pseudo_cross_C4_C6_prune.data();
@@ -134,19 +151,14 @@ public:
   const unsigned char *getPseudoCrossC4C5C6PrunePtr() const {
     return pseudo_cross_C4_C5_C6_prune.data();
   }
-
-  // Edge3 Triples Getters
-  const unsigned char *getPseudoCrossE0E1E2PrunePtr() const {
-    return pseudo_cross_E0_E1_E2_prune.data();
+  const unsigned char *getPseudoCrossC4C5C7PrunePtr() const {
+    return pseudo_cross_C4_C5_C7_prune.data();
   }
-  const unsigned char *getPseudoCrossE0E1E3PrunePtr() const {
-    return pseudo_cross_E0_E1_E3_prune.data();
+  const unsigned char *getPseudoCrossC4C6C7PrunePtr() const {
+    return pseudo_cross_C4_C6_C7_prune.data();
   }
-  const unsigned char *getPseudoCrossE0E2E3PrunePtr() const {
-    return pseudo_cross_E0_E2_E3_prune.data();
-  }
-  const unsigned char *getPseudoCrossE1E2E3PrunePtr() const {
-    return pseudo_cross_E1_E2_E3_prune.data();
+  const unsigned char *getPseudoCrossC5C6C7PrunePtr() const {
+    return pseudo_cross_C5_C6_C7_prune.data();
   }
 
   bool hasPseudoCrossE0E2Prune() const {
@@ -160,6 +172,15 @@ public:
   bool hasPseudoCrossE0E1E2Prune() const {
     return !pseudo_cross_E0_E1_E2_prune.empty();
   }
+  bool hasPseudoCrossE1E2E3Prune() const {
+    return !pseudo_cross_E1_E2_E3_prune.empty();
+  }
+  bool hasPseudoCrossE0E2E3Prune() const {
+    return !pseudo_cross_E0_E2_E3_prune.empty();
+  }
+  bool hasPseudoCrossE0E1E3Prune() const {
+    return !pseudo_cross_E0_E1_E3_prune.empty();
+  }
   // 对角表 HasChecks
   bool hasPseudoCrossC4C6Prune() const {
     return !pseudo_cross_C4_C6_prune.empty();
@@ -172,15 +193,14 @@ public:
   bool hasPseudoCrossC4C5C6Prune() const {
     return !pseudo_cross_C4_C5_C6_prune.empty();
   }
-  // Edge3 Triples HasChecks
-  bool hasPseudoCrossE0E1E3Prune() const {
-    return !pseudo_cross_E0_E1_E3_prune.empty();
+  bool hasPseudoCrossC4C5C7Prune() const {
+    return !pseudo_cross_C4_C5_C7_prune.empty();
   }
-  bool hasPseudoCrossE0E2E3Prune() const {
-    return !pseudo_cross_E0_E2_E3_prune.empty();
+  bool hasPseudoCrossC4C6C7Prune() const {
+    return !pseudo_cross_C4_C6_C7_prune.empty();
   }
-  bool hasPseudoCrossE1E2E3Prune() const {
-    return !pseudo_cross_E1_E2_E3_prune.empty();
+  bool hasPseudoCrossC5C6C7Prune() const {
+    return !pseudo_cross_C5_C6_C7_prune.empty();
   }
 
   // 获取指针
@@ -217,9 +237,9 @@ public:
   void generatePseudoCrossE0E1Prune();
   // Edge3 Generators
   void generatePseudoCrossE0E1E2Prune();
-  void generatePseudoCrossE0E1E3Prune();
-  void generatePseudoCrossE0E2E3Prune();
-  void generatePseudoCrossE1E2E3Prune();
+  void generatePseudoCrossE1E2E3Prune(); // New
+  void generatePseudoCrossE0E2E3Prune(); // New
+  void generatePseudoCrossE0E1E3Prune(); // New
   // 新增对角生成函数
   void generatePseudoCrossC4C6Prune();
   // 新增邻角生成函数
@@ -227,6 +247,9 @@ public:
 
   // Corner3 Generators
   void generatePseudoCrossC4C5C6Prune();
+  void generatePseudoCrossC4C5C7Prune(); // New
+  void generatePseudoCrossC4C6C7Prune(); // New
+  void generatePseudoCrossC5C6C7Prune(); // New
 
 private:
   // 文件操作

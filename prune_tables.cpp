@@ -106,15 +106,15 @@ bool PruneTableManager::loadPseudoTables() {
               << std::endl;
   }
 
-  // Edge3 Tables Loading (4 种组合)
+  // Edge3 Tables Loading
   if (!loadTable(pseudo_cross_E0_E1_E2_prune,
                  "prune_table_pseudo_cross_E0_E1_E2.bin")) {
     std::cout << "Warning: prune_table_pseudo_cross_E0_E1_E2.bin not found."
               << std::endl;
   }
-  if (!loadTable(pseudo_cross_E0_E1_E3_prune,
-                 "prune_table_pseudo_cross_E0_E1_E3.bin")) {
-    std::cout << "Warning: prune_table_pseudo_cross_E0_E1_E3.bin not found."
+  if (!loadTable(pseudo_cross_E1_E2_E3_prune,
+                 "prune_table_pseudo_cross_E1_E2_E3.bin")) {
+    std::cout << "Warning: prune_table_pseudo_cross_E1_E2_E3.bin not found."
               << std::endl;
   }
   if (!loadTable(pseudo_cross_E0_E2_E3_prune,
@@ -122,9 +122,9 @@ bool PruneTableManager::loadPseudoTables() {
     std::cout << "Warning: prune_table_pseudo_cross_E0_E2_E3.bin not found."
               << std::endl;
   }
-  if (!loadTable(pseudo_cross_E1_E2_E3_prune,
-                 "prune_table_pseudo_cross_E1_E2_E3.bin")) {
-    std::cout << "Warning: prune_table_pseudo_cross_E1_E2_E3.bin not found."
+  if (!loadTable(pseudo_cross_E0_E1_E3_prune,
+                 "prune_table_pseudo_cross_E0_E1_E3.bin")) {
+    std::cout << "Warning: prune_table_pseudo_cross_E0_E1_E3.bin not found."
               << std::endl;
   }
 
@@ -145,6 +145,21 @@ bool PruneTableManager::loadPseudoTables() {
   if (!loadTable(pseudo_cross_C4_C5_C6_prune,
                  "prune_table_pseudo_cross_C4_C5_C6.bin")) {
     std::cout << "Warning: prune_table_pseudo_cross_C4_C5_C6.bin not found."
+              << std::endl;
+  }
+  if (!loadTable(pseudo_cross_C4_C5_C7_prune,
+                 "prune_table_pseudo_cross_C4_C5_C7.bin")) {
+    std::cout << "Warning: prune_table_pseudo_cross_C4_C5_C7.bin not found."
+              << std::endl;
+  }
+  if (!loadTable(pseudo_cross_C4_C6_C7_prune,
+                 "prune_table_pseudo_cross_C4_C6_C7.bin")) {
+    std::cout << "Warning: prune_table_pseudo_cross_C4_C6_C7.bin not found."
+              << std::endl;
+  }
+  if (!loadTable(pseudo_cross_C5_C6_C7_prune,
+                 "prune_table_pseudo_cross_C5_C6_C7.bin")) {
+    std::cout << "Warning: prune_table_pseudo_cross_C5_C6_C7.bin not found."
               << std::endl;
   }
 
@@ -293,16 +308,16 @@ void PruneTableManager::generateAllSequentially() {
   }
   std::vector<unsigned char>().swap(pseudo_cross_E0_E1_E2_prune);
 
-  // 14.2 Pseudo Cross + E0,E1,E3 Prune (Edge3)
-  if (!loadTable(pseudo_cross_E0_E1_E3_prune,
-                 "prune_table_pseudo_cross_E0_E1_E3.bin")) {
+  // 14.2 Pseudo Cross + E1,E2,E3 Prune (Edge3)
+  if (!loadTable(pseudo_cross_E1_E2_E3_prune,
+                 "prune_table_pseudo_cross_E1_E2_E3.bin")) {
     mtm.loadCrossTable();
     mtm.loadEdge3Table();
-    generatePseudoCrossE0E1E3Prune();
+    generatePseudoCrossE1E2E3Prune();
     mtm.releaseCrossTable();
     mtm.releaseEdge3Table();
   }
-  std::vector<unsigned char>().swap(pseudo_cross_E0_E1_E3_prune);
+  std::vector<unsigned char>().swap(pseudo_cross_E1_E2_E3_prune);
 
   // 14.3 Pseudo Cross + E0,E2,E3 Prune (Edge3)
   if (!loadTable(pseudo_cross_E0_E2_E3_prune,
@@ -315,16 +330,16 @@ void PruneTableManager::generateAllSequentially() {
   }
   std::vector<unsigned char>().swap(pseudo_cross_E0_E2_E3_prune);
 
-  // 14.4 Pseudo Cross + E1,E2,E3 Prune (Edge3)
-  if (!loadTable(pseudo_cross_E1_E2_E3_prune,
-                 "prune_table_pseudo_cross_E1_E2_E3.bin")) {
+  // 14.4 Pseudo Cross + E0,E1,E3 Prune (Edge3)
+  if (!loadTable(pseudo_cross_E0_E1_E3_prune,
+                 "prune_table_pseudo_cross_E0_E1_E3.bin")) {
     mtm.loadCrossTable();
     mtm.loadEdge3Table();
-    generatePseudoCrossE1E2E3Prune();
+    generatePseudoCrossE0E1E3Prune();
     mtm.releaseCrossTable();
     mtm.releaseEdge3Table();
   }
-  std::vector<unsigned char>().swap(pseudo_cross_E1_E2_E3_prune);
+  std::vector<unsigned char>().swap(pseudo_cross_E0_E1_E3_prune);
 
   // 15. Pseudo Cross + C4,C6 Prune (Corner2)
   if (!loadTable(pseudo_cross_C4_C6_prune,
@@ -358,6 +373,39 @@ void PruneTableManager::generateAllSequentially() {
     mtm.releaseCorner3Table();
   }
   std::vector<unsigned char>().swap(pseudo_cross_C4_C5_C6_prune);
+
+  // 21.2 Pseudo Cross + C4,C5,C7 Prune (Corner3)
+  if (!loadTable(pseudo_cross_C4_C5_C7_prune,
+                 "prune_table_pseudo_cross_C4_C5_C7.bin")) {
+    mtm.loadCrossTable();
+    mtm.loadCorner3Table();
+    generatePseudoCrossC4C5C7Prune();
+    mtm.releaseCrossTable();
+    mtm.releaseCorner3Table();
+  }
+  std::vector<unsigned char>().swap(pseudo_cross_C4_C5_C7_prune);
+
+  // 21.3 Pseudo Cross + C4,C6,C7 Prune (Corner3)
+  if (!loadTable(pseudo_cross_C4_C6_C7_prune,
+                 "prune_table_pseudo_cross_C4_C6_C7.bin")) {
+    mtm.loadCrossTable();
+    mtm.loadCorner3Table();
+    generatePseudoCrossC4C6C7Prune();
+    mtm.releaseCrossTable();
+    mtm.releaseCorner3Table();
+  }
+  std::vector<unsigned char>().swap(pseudo_cross_C4_C6_C7_prune);
+
+  // 21.4 Pseudo Cross + C5,C6,C7 Prune (Corner3)
+  if (!loadTable(pseudo_cross_C5_C6_C7_prune,
+                 "prune_table_pseudo_cross_C5_C6_C7.bin")) {
+    mtm.loadCrossTable();
+    mtm.loadCorner3Table();
+    generatePseudoCrossC5C6C7Prune();
+    mtm.releaseCrossTable();
+    mtm.releaseCorner3Table();
+  }
+  std::vector<unsigned char>().swap(pseudo_cross_C5_C6_C7_prune);
 
   // --- Pseudo Cross/XCross/Pair 变体表 (共 36 个) ---
   std::vector<int> corner_indices = {12, 15, 18, 21}; // C4, C5, C6, C7
@@ -630,7 +678,7 @@ void PruneTableManager::generatePseudoCrossE0E1E2Prune() {
   std::cout << "[PruneTable] Generating pseudo cross + E0,E1,E2 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  std::vector<int> target = {0, 2, 4}; // E0, E1, E2 (0*2, 1*2, 2*2)
+  std::vector<int> target = {0, 2, 4}; // E0, E1, E2 (0, 2, 4)
   int idx_solved = array_to_index(target, 3, 2, 12);
   pseudo_cross_E0_E1_E2_prune.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
   create_prune_table_pseudo_cross_edges3(
@@ -640,21 +688,21 @@ void PruneTableManager::generatePseudoCrossE0E1E2Prune() {
             "prune_table_pseudo_cross_E0_E1_E2.bin");
 }
 
-void PruneTableManager::generatePseudoCrossE0E1E3Prune() {
-  if (loadTable(pseudo_cross_E0_E1_E3_prune,
-                "prune_table_pseudo_cross_E0_E1_E3.bin"))
+void PruneTableManager::generatePseudoCrossE1E2E3Prune() {
+  if (loadTable(pseudo_cross_E1_E2_E3_prune,
+                "prune_table_pseudo_cross_E1_E2_E3.bin"))
     return;
-  std::cout << "[PruneTable] Generating pseudo cross + E0,E1,E3 prune table..."
+  std::cout << "[PruneTable] Generating pseudo cross + E1,E2,E3 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  std::vector<int> target = {0, 2, 6}; // E0, E1, E3 (0*2, 1*2, 3*2)
+  std::vector<int> target = {2, 4, 6}; // E1, E2, E3
   int idx_solved = array_to_index(target, 3, 2, 12);
-  pseudo_cross_E0_E1_E3_prune.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
+  pseudo_cross_E1_E2_E3_prune.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
   create_prune_table_pseudo_cross_edges3(
       187520, idx_solved, 190080, 10560, 12, mtm.getCrossTable(),
-      mtm.getEdge3Table(), pseudo_cross_E0_E1_E3_prune);
-  saveTable(pseudo_cross_E0_E1_E3_prune,
-            "prune_table_pseudo_cross_E0_E1_E3.bin");
+      mtm.getEdge3Table(), pseudo_cross_E1_E2_E3_prune);
+  saveTable(pseudo_cross_E1_E2_E3_prune,
+            "prune_table_pseudo_cross_E1_E2_E3.bin");
 }
 
 void PruneTableManager::generatePseudoCrossE0E2E3Prune() {
@@ -664,7 +712,7 @@ void PruneTableManager::generatePseudoCrossE0E2E3Prune() {
   std::cout << "[PruneTable] Generating pseudo cross + E0,E2,E3 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  std::vector<int> target = {0, 4, 6}; // E0, E2, E3 (0*2, 2*2, 3*2)
+  std::vector<int> target = {0, 4, 6}; // E0, E2, E3
   int idx_solved = array_to_index(target, 3, 2, 12);
   pseudo_cross_E0_E2_E3_prune.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
   create_prune_table_pseudo_cross_edges3(
@@ -674,21 +722,21 @@ void PruneTableManager::generatePseudoCrossE0E2E3Prune() {
             "prune_table_pseudo_cross_E0_E2_E3.bin");
 }
 
-void PruneTableManager::generatePseudoCrossE1E2E3Prune() {
-  if (loadTable(pseudo_cross_E1_E2_E3_prune,
-                "prune_table_pseudo_cross_E1_E2_E3.bin"))
+void PruneTableManager::generatePseudoCrossE0E1E3Prune() {
+  if (loadTable(pseudo_cross_E0_E1_E3_prune,
+                "prune_table_pseudo_cross_E0_E1_E3.bin"))
     return;
-  std::cout << "[PruneTable] Generating pseudo cross + E1,E2,E3 prune table..."
+  std::cout << "[PruneTable] Generating pseudo cross + E0,E1,E3 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  std::vector<int> target = {2, 4, 6}; // E1, E2, E3 (1*2, 2*2, 3*2)
+  std::vector<int> target = {0, 2, 6}; // E0, E1, E3
   int idx_solved = array_to_index(target, 3, 2, 12);
-  pseudo_cross_E1_E2_E3_prune.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
+  pseudo_cross_E0_E1_E3_prune.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
   create_prune_table_pseudo_cross_edges3(
       187520, idx_solved, 190080, 10560, 12, mtm.getCrossTable(),
-      mtm.getEdge3Table(), pseudo_cross_E1_E2_E3_prune);
-  saveTable(pseudo_cross_E1_E2_E3_prune,
-            "prune_table_pseudo_cross_E1_E2_E3.bin");
+      mtm.getEdge3Table(), pseudo_cross_E0_E1_E3_prune);
+  saveTable(pseudo_cross_E0_E1_E3_prune,
+            "prune_table_pseudo_cross_E0_E1_E3.bin");
 }
 
 void PruneTableManager::generatePseudoCrossC4C6Prune() {
@@ -736,6 +784,57 @@ void PruneTableManager::generatePseudoCrossC4C5C6Prune() {
       mtm.getCorner3Table(), pseudo_cross_C4_C5_C6_prune);
   saveTable(pseudo_cross_C4_C5_C6_prune,
             "prune_table_pseudo_cross_C4_C5_C6.bin");
+}
+
+void PruneTableManager::generatePseudoCrossC4C5C7Prune() {
+  if (loadTable(pseudo_cross_C4_C5_C7_prune,
+                "prune_table_pseudo_cross_C4_C5_C7.bin"))
+    return;
+  std::cout << "[PruneTable] Generating pseudo cross + C4,C5,C7 prune table..."
+            << std::endl;
+  auto &mtm = MoveTableManager::getInstance();
+  std::vector<int> target = {12, 15, 21}; // C4, C5, C7
+  int idx_solved = array_to_index(target, 3, 3, 8);
+  pseudo_cross_C4_C5_C7_prune.resize(((long long)190080 * 9072 + 1) / 2, 0xFF);
+  create_prune_table_pseudo_cross_corners3(
+      187520, idx_solved, 190080, 9072, 13, mtm.getCrossTable(),
+      mtm.getCorner3Table(), pseudo_cross_C4_C5_C7_prune);
+  saveTable(pseudo_cross_C4_C5_C7_prune,
+            "prune_table_pseudo_cross_C4_C5_C7.bin");
+}
+
+void PruneTableManager::generatePseudoCrossC4C6C7Prune() {
+  if (loadTable(pseudo_cross_C4_C6_C7_prune,
+                "prune_table_pseudo_cross_C4_C6_C7.bin"))
+    return;
+  std::cout << "[PruneTable] Generating pseudo cross + C4,C6,C7 prune table..."
+            << std::endl;
+  auto &mtm = MoveTableManager::getInstance();
+  std::vector<int> target = {12, 18, 21}; // C4, C6, C7
+  int idx_solved = array_to_index(target, 3, 3, 8);
+  pseudo_cross_C4_C6_C7_prune.resize(((long long)190080 * 9072 + 1) / 2, 0xFF);
+  create_prune_table_pseudo_cross_corners3(
+      187520, idx_solved, 190080, 9072, 13, mtm.getCrossTable(),
+      mtm.getCorner3Table(), pseudo_cross_C4_C6_C7_prune);
+  saveTable(pseudo_cross_C4_C6_C7_prune,
+            "prune_table_pseudo_cross_C4_C6_C7.bin");
+}
+
+void PruneTableManager::generatePseudoCrossC5C6C7Prune() {
+  if (loadTable(pseudo_cross_C5_C6_C7_prune,
+                "prune_table_pseudo_cross_C5_C6_C7.bin"))
+    return;
+  std::cout << "[PruneTable] Generating pseudo cross + C5,C6,C7 prune table..."
+            << std::endl;
+  auto &mtm = MoveTableManager::getInstance();
+  std::vector<int> target = {15, 18, 21}; // C5, C6, C7
+  int idx_solved = array_to_index(target, 3, 3, 8);
+  pseudo_cross_C5_C6_C7_prune.resize(((long long)190080 * 9072 + 1) / 2, 0xFF);
+  create_prune_table_pseudo_cross_corners3(
+      187520, idx_solved, 190080, 9072, 13, mtm.getCrossTable(),
+      mtm.getCorner3Table(), pseudo_cross_C5_C6_C7_prune);
+  saveTable(pseudo_cross_C5_C6_C7_prune,
+            "prune_table_pseudo_cross_C5_C6_C7.bin");
 }
 
 // ... existing helper functions ...

@@ -61,6 +61,38 @@ Slot 1: BR (C5 + E1)
 Slot 2: FR (C6 + E2)
 Slot 3: FL (C7 + E3)
 
+### 角块位置图
+
+              +-------+
+              | 0   1 |
+              |   U   |
+              | 3   2 |
+      +-------+-------+-------+-------+
+      | 0   3 | 3   2 | 2   1 | 1   0 |
+      |   L   |   F   |   R   |   B   |
+      | 4   7 | 7   6 | 6   5 | 5   4 |
+      +-------+-------+-------+-------+
+              | 7   6 |
+              |   D   |
+              | 4   5 |
+              +-------+
+
+### 棱块位置图
+
+              +-------+
+              |   4   |
+              | 7 U 5 |
+              |   6   |
+      +-------+-------+-------+-------+
+      |   7   |   6   |   5   |   4   |
+      | 0 L 3 | 3 F 2 | 2 R 1 | 1 B 0 |
+      |   11  |   10  |   9   |   8   |
+      +-------+-------+-------+-------+
+              |   10  |
+              | 11 D 9|
+              |   8   |
+              +-------+
+
 ## Std Analyzer
 计算三阶魔方cross, xcross, xxcross, xxxcross, xxxxcross的最少步
 
@@ -135,51 +167,68 @@ Pseudo Cross + 3 个底层角块 + 3 个中层棱块。
 
 ## Pseudo Pair Analyzer
 
+### Pseudo Pair
+称由任意两个非绑定的F2L棱块和F2L角块组成的的棱角对为 Pseudo Pair , 如果：
+该棱角对可通过 Setup (调整 U 层) + Insert (插入) 的转动组合，棱块进入 **固定位** 并还原, 角块进入 **伪位** 并还原.
+
 **1. 空间定义 (继承 Pseudo Analyzer)**
 * **坐标系**：允许 Cross 处于 D/D'/D2 偏移状态。
 * **配对规则**：完全解耦。指定的棱块 $E$ 和角块 $C$ 不需要来自同一个物理槽位（例如：可以用 FR 的棱配 BL 的角）。
 * **归位标准**：棱块对齐绝对中心，角块对齐偏移后的 Cross。
 
 **2. 目标状态 (继承 Pair Analyzer)**
-不要寻找“已归位”的状态。寻找 **Pair 就绪** 状态。即：当前状态 $\xrightarrow{Setup (U) + Insert}$ 能够立刻满足上述的 **Pseudo 归位标准**。
+不要寻找“已归位”的状态。寻找 **Pseudo Pair 就绪** 状态。即：当前状态 $\xrightarrow{Setup (U) + Insert}$ 能够立刻满足上述的 **Pseudo 归位标准**。
 
-**总结**：
-Pseudo Pair Analyzer 寻找的是在 **Pseudo 坐标系** 下，将任意指定的两个非绑定棱角凑成 **Pair** 并悬停在目标槽位上方（等待插入）的最短路径。
+* Setup: NULL (不转), U, U2, U'
+* Insert: (以 BL 槽为例): NULL, L U L', L U' L', B' U B, B' U' B
+    注：对于其他槽位（BR, FR, FL）类似，使用相应的对称/镜像公式.
+
+### Pseudo Cross + Pseudo Pair
+
+### Pseudo XCross + Pseudo Pair
+
+### Pseudo XXCross + Pseudo Pair
+
+### Pseudo XXXCross + Pseudo Pair
+
 
 ## EO Cross Analyzer
 
 程序计算以下四个阶段的最少步
 
 ### EO + Cross
-* 状态描述: Cross 已还原，且剩余8个棱块色向正确。
+Cross 已还原，且剩余8个棱块色向正确。
 
 ### EO + XCross
-* 状态描述: XCross 已还原，且剩余7个棱块色向正确。
+XCross 已还原，且剩余7个棱块色向正确。
 
 ### EO + XXCross
-* 状态描述: XXCross 已还原，且剩余6个棱块色向正确。
+XXCross 已还原，且剩余6个棱块色向正确。
 
 ### EO + XXXCross
-* 状态描述: XXXCross 已还原，且剩余5个棱块色向正确。
+XXXCross 已还原，且剩余5个棱块色向正确。
 
-### EO + XXXXCross
-* 状态描述: XXXXCross 已还原，且剩余4个棱块色向正确。
+### EO + XXXXCross (尚未加入此功能)
+XXXXCross 已还原，且剩余4个棱块色向正确。
 
 程序通过处理 **12 个对称状态** 来模拟颜色中性（Color Neutrality）并压缩计算量：
 - **轴向覆盖**: 选取 6 个面作为底面的轴向（U, D, L, R, F, B）。
 - **状态归约**: 每个轴向测试 2 个特定的姿态（原始位置及 $y$ 轴旋转）.
 - **输出处理**: 最终结果会对每对状态（同一个底面的 2 个视角）取 `std::min`，输出该底面轴向下的最优步数。
 
+## 编译
+`.\build.bat`
 
 ## 测试
 执行后会生成对应的csv, 检查csv与正确结果是否一致。
 
 ### std_analyzer.cpp
-* 测试命令: cmd /c "echo scramble_1000.txt | std_analyzer.exe"
+* 测试命令: `cmd /c "echo scramble_1000.txt | std_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
 * 计算时间: ~6s
 * 测试文件: scramble_1000.txt
-* 正确结果 (前20行,不含表头): 
+* 正确结果 (表头 + 前20行数据): 
+id,cross_z0,cross_z1,cross_z2,cross_z3,cross_x1,cross_x3,xcross_z0,xcross_z1,xcross_z2,xcross_z3,xcross_x1,xcross_x3,xxcross_z0,xxcross_z1,xxcross_z2,xxcross_z3,xxcross_x1,xxcross_x3,xxxcross_z0,xxxcross_z1,xxxcross_z2,xxxcross_z3,xxxcross_x1,xxxcross_x3,xxxxcross_z0,xxxxcross_z1,xxxxcross_z2,xxxxcross_z3,xxxxcross_x1,xxxxcross_x3
 22001,6,6,6,5,7,5,7,7,8,7,9,7,9,10,10,9,10,9,11,11,11,12,12,10,14,14,14,13,14,14
 23001,6,6,6,6,5,5,7,7,6,8,7,5,10,9,8,9,9,8,12,11,11,11,12,11,13,13,12,13,14,12
 24001,6,6,7,7,6,6,8,7,8,8,8,7,10,9,10,9,10,9,12,11,11,11,12,11,14,14,14,13,13,14
@@ -202,11 +251,12 @@ Pseudo Pair Analyzer 寻找的是在 **Pseudo 坐标系** 下，将任意指定�
 41001,5,5,6,4,5,5,7,6,7,6,7,6,9,8,9,7,7,8,10,10,11,9,10,10,13,11,13,12,12,13
 
 ### pseudo_analyzer.cpp
-* 测试命令: cmd /c "echo scramble_1000.txt | pseudo_analyzer.exe"
+* 测试命令: `cmd /c "echo scramble_1000.txt | pseudo_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
 * 执行时间: ~3s
 * 测试文件: scramble_1000.txt
-* 正确结果 (前20行,不含表头):
+* 正确结果 (表头 + 前20行数据):
+id,pseudo_cross_z0,pseudo_cross_z1,pseudo_cross_z2,pseudo_cross_z3,pseudo_cross_x1,pseudo_cross_x3,pseudo_xcross_z0,pseudo_xcross_z1,pseudo_xcross_z2,pseudo_xcross_z3,pseudo_xcross_x1,pseudo_xcross_x3,pseudo_xxcross_z0,pseudo_xxcross_z1,pseudo_xxcross_z2,pseudo_xxcross_z3,pseudo_xxcross_x1,pseudo_xxcross_x3,pseudo_xxxcross_z0,pseudo_xxxcross_z1,pseudo_xxxcross_z2,pseudo_xxxcross_z3,pseudo_xxxcross_x1,pseudo_xxxcross_x3
 22001,5,6,6,4,7,5,6,7,7,5,8,6,8,8,8,8,9,8,10,11,11,10,11,10
 23001,6,6,5,5,5,5,6,6,5,7,6,5,8,7,6,9,9,7,10,9,7,11,10,10
 24001,5,6,6,6,6,5,7,6,8,6,7,6,9,8,10,8,8,8,11,10,11,10,10,10
@@ -229,11 +279,12 @@ Pseudo Pair Analyzer 寻找的是在 **Pseudo 坐标系** 下，将任意指定�
 41001,4,5,5,4,4,4,5,5,6,6,5,5,7,7,8,7,6,6,10,9,10,9,9,9
 
 ### pair_analyzer.cpp
-* 测试命令: cmd /c "echo scramble_1000.txt | pair_analyzer.exe"
+* 测试命令: `cmd /c "echo scramble_1000.txt | pair_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
-* 执行时间: ~1s
+* 执行时间: ~1.3s
 * 测试文件: scramble_1000.txt
-* 正确结果 (前20行,不含表头):
+* 正确结果 (表头 + 前20行数据):
+id,cross_pair_z0,cross_pair_z1,cross_pair_z2,cross_pair_z3,cross_pair_x1,cross_pair_x3,xcross_pair_z0,xcross_pair_z1,xcross_pair_z2,xcross_pair_z3,xcross_pair_x1,xcross_pair_x3,xxcross_pair_z0,xxcross_pair_z1,xxcross_pair_z2,xxcross_pair_z3,xxcross_pair_x1,xxcross_pair_x3,xxxcross_pair_z0,xxxcross_pair_z1,xxxcross_pair_z2,xxxcross_pair_z3,xxxcross_pair_x1,xxxcross_pair_x3
 22001,7,7,7,5,8,5,9,7,8,8,9,8,10,11,10,10,11,10,11,13,13,13,13,12
 23001,6,6,6,6,5,5,7,8,6,8,8,6,10,9,8,10,10,9,12,12,12,13,12,12
 24001,7,7,7,7,7,6,9,8,8,9,8,8,10,9,10,10,11,9,13,12,12,11,13,12
@@ -256,23 +307,40 @@ Pseudo Pair Analyzer 寻找的是在 **Pseudo 坐标系** 下，将任意指定�
 41001,6,5,7,5,6,6,8,6,8,7,7,7,10,8,10,9,7,8,12,10,12,11,10,11
 
 ### pseudo_pair_analyzer.cpp
-* 测试命令: cmd /c "echo scramble_5.txt | pseudo_pair_analyzer.exe"
+* 测试命令: `cmd /c "echo scramble_20.txt | pseudo_pair_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
-* 执行时间: ~45s
-* 测试文件: scramble_5.txt
-* 正确结果 (不含表头):
+* 执行时间: ~1m 12s
+* 测试文件: scramble_20.txt
+* 正确结果 (表头 + 前20行数据):
+id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_pair_z2,pseudo_cross_pseudo_pair_z3,pseudo_cross_pseudo_pair_x1,pseudo_cross_pseudo_pair_x3,pseudo_xcross_pseudo_pair_z0,pseudo_xcross_pseudo_pair_z1,pseudo_xcross_pseudo_pair_z2,pseudo_xcross_pseudo_pair_z3,pseudo_xcross_pseudo_pair_x1,pseudo_xcross_pseudo_pair_x3,pseudo_xxcross_pseudo_pair_z0,pseudo_xxcross_pseudo_pair_z1,pseudo_xxcross_pseudo_pair_z2,pseudo_xxcross_pseudo_pair_z3,pseudo_xxcross_pseudo_pair_x1,pseudo_xxcross_pseudo_pair_x3,pseudo_xxxcross_pseudo_pair_z0,pseudo_xxxcross_pseudo_pair_z1,pseudo_xxxcross_pseudo_pair_z2,pseudo_xxxcross_pseudo_pair_z3,pseudo_xxxcross_pseudo_pair_x1,pseudo_xxxcross_pseudo_pair_x3
 22001,6,6,6,4,7,5,7,7,7,6,8,6,9,9,9,8,9,9,10,11,11,11,11,11
 23001,6,6,5,5,5,5,6,7,5,7,7,5,8,7,7,9,9,8,10,10,10,11,12,11
 24001,6,6,6,6,6,5,7,7,8,6,7,7,9,8,10,8,8,8,12,11,11,11,12,12
 25001,6,5,4,6,5,6,7,7,6,7,6,7,9,8,8,9,9,9,11,11,11,11,11,12
 26001,3,6,6,4,6,5,3,6,7,4,6,6,7,9,9,5,8,7,9,11,11,7,10,10
+27001,6,6,6,6,6,6,7,7,8,8,7,8,8,9,8,10,9,9,12,12,12,11,11,12
+28001,6,6,4,6,6,4,7,8,6,7,7,6,8,9,9,9,10,8,11,11,11,11,12,11
+29001,5,4,6,4,5,7,6,6,6,7,6,7,9,8,9,8,8,9,12,11,11,10,11,12
+30001,6,5,5,6,6,6,7,6,6,7,7,7,8,8,9,9,9,8,11,11,10,11,12,10
+31001,6,4,6,6,5,6,8,5,6,6,6,8,9,8,8,9,8,9,11,10,12,11,9,11
+32001,5,6,4,5,5,5,7,7,7,6,7,7,8,9,9,8,9,9,11,12,11,10,11,11
+33001,5,5,5,5,6,4,6,7,7,7,6,7,8,8,9,9,9,9,11,11,12,11,11,12
+34001,6,6,6,6,5,6,7,7,7,6,6,8,8,9,9,8,8,9,11,12,12,11,11,12
+35001,6,5,5,7,6,6,7,7,7,7,6,6,9,8,8,9,9,9,11,11,11,11,11,10
+36001,5,5,6,5,5,6,7,7,6,7,7,7,9,9,9,9,9,9,12,12,12,11,12,11
+37001,5,6,6,5,5,6,7,7,7,5,7,8,9,8,10,8,9,9,11,11,11,10,12,12
+38001,5,6,6,4,6,6,6,7,7,6,7,7,8,9,9,8,9,9,10,11,12,9,11,12
+39001,6,5,5,5,5,6,7,6,6,6,6,7,9,8,8,9,8,8,11,11,11,11,10,11
+40001,5,5,5,6,7,7,6,7,7,8,7,7,8,8,8,9,9,9,11,10,11,12,11,12
+41001,4,5,5,4,4,5,5,5,6,6,5,5,8,7,8,8,6,6,11,10,11,10,9,9
 
 ### eo_cross_analyzer.cpp
-* 测试命令: cmd /c "echo scramble_20.txt | eo_cross_analyzer.exe"
+* 测试命令: `cmd /c "echo scramble_20.txt | eo_cross_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
 * 执行时间: ~0.6s
 * 测试文件: scramble_20.txt
-* 正确结果(不含表头):
+* 正确结果 (表头 + 前20行数据):
+id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xcross_z0,eo_xcross_z1,eo_xcross_z2,eo_xcross_z3,eo_xcross_x1,eo_xcross_x3,eo_xxcross_z0,eo_xxcross_z1,eo_xxcross_z2,eo_xxcross_z3,eo_xxcross_x1,eo_xxcross_x3,eo_xxxcross_z0,eo_xxxcross_z1,eo_xxxcross_z2,eo_xxxcross_z3,eo_xxxcross_x1,eo_xxxcross_x3
 22001,8,6,7,6,8,7,8,8,8,9,9,9,11,10,11,9,11,10,12,11,12,13,12,12
 23001,7,6,7,7,7,7,8,7,7,9,8,7,10,9,9,11,9,10,12,12,11,12,12,12
 24001,8,7,7,8,7,8,9,9,9,8,9,8,11,10,11,9,11,10,12,12,12,13,12,13

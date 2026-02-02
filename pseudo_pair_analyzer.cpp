@@ -24,19 +24,13 @@ struct xcross_analyzer2 {
   static const int *p_edge_move_ptr;
   static const int *p_corner_move_ptr;
   static const int *p_multi_move_ptr;
+  static const int *p_edge3_move_ptr; // [新增] Edge3 移动表指针
 
-  // Edge3 剪枝相关 (4 种组合: E0E1E2, E0E1E3, E0E2E3, E1E2E3)
-  static const int *p_edge3_move_ptr;
-  static const unsigned char *p_edge3_E012_prune_ptr; // slot {0,1,2}
-  static const unsigned char *p_edge3_E013_prune_ptr; // slot {0,1,3}
-  static const unsigned char *p_edge3_E023_prune_ptr; // slot {0,2,3}
-  static const unsigned char *p_edge3_E123_prune_ptr; // slot {1,2,3}
-  static bool edge3_prune_available;
-
-  // Corner3 剪枝相关
-  static const int *p_corner3_move_ptr;
-  static const unsigned char *p_corner3_prune_ptr;
-  static bool corner3_prune_available;
+  // [新增] Edge3 剪枝表 (用于 Search 4: 3 个归位槽位的棱块联合剪枝)
+  static std::vector<unsigned char> prune_e0e1e2;
+  static std::vector<unsigned char> prune_e1e2e3;
+  static std::vector<unsigned char> prune_e0e2e3;
+  static std::vector<unsigned char> prune_e0e1e3;
 
   int slot1, slot2, slot3, slot4, pslot1, pslot2, pslot3, pslot4;
   int max_length;
@@ -126,45 +120,31 @@ struct xcross_analyzer2 {
       }
     }
 
-    // 4. Load Edge3 Move Table and Prune Tables (4种组合, 用于 search_3 剪枝)
-    auto &ptm = PruneTableManager::getInstance();
-    // NOTE: Edge3 剪枝表通过 loadPseudoTables() 加载，此处仅加载移动表并检查
-    if (mtm.loadEdge3Table()) {
-      p_edge3_move_ptr = mtm.getEdge3TablePtr();
-      // 尝试加载 Pseudo 表 (如果尚未加载)
-      ptm.loadPseudoTables();
-      // 加载 4 种 Edge3 组合表
-      if (ptm.hasPseudoCrossE0E1E2Prune()) {
-        p_edge3_E012_prune_ptr = ptm.getPseudoCrossE0E1E2PrunePtr();
-        edge3_prune_available = true;
-      }
-      if (ptm.hasPseudoCrossE0E1E3Prune()) {
-        p_edge3_E013_prune_ptr = ptm.getPseudoCrossE0E1E3PrunePtr();
-      }
-      if (ptm.hasPseudoCrossE0E2E3Prune()) {
-        p_edge3_E023_prune_ptr = ptm.getPseudoCrossE0E2E3PrunePtr();
-      }
-      if (ptm.hasPseudoCrossE1E2E3Prune()) {
-        p_edge3_E123_prune_ptr = ptm.getPseudoCrossE1E2E3PrunePtr();
-      }
-      if (edge3_prune_available) {
-        std::cout << "[Init] Edge3 Prune Tables loaded (4 variants)."
-                  << std::endl;
-      }
-    }
+    // 4. [新增] Load Edge3 Prune Tables for Search 4
+    mtm.loadEdge3Table();
+    p_edge3_move_ptr = mtm.getEdge3TablePtr();
 
-    // 5. Load Corner3 Move Table and Prune Table (可选, 用于增强 search_3
-    // 启发值) NOTE: Corner3 剪枝表也通过 loadPseudoTables() 加载
-    if (mtm.loadCorner3Table()) {
-      p_corner3_move_ptr = mtm.getCorner3TablePtr();
-      // 确保 Pseudo 表已加载 (可能在 Edge3 加载时已完成)
-      ptm.loadPseudoTables();
-      if (ptm.hasPseudoCrossC4C5C6Prune()) {
-        p_corner3_prune_ptr = ptm.getPseudoCrossC4C5C6PrunePtr();
-        corner3_prune_available = true;
-        std::cout << "[Init] Corner3 Prune Table loaded." << std::endl;
-      }
+    if (!load_vector(prune_e0e1e2, "prune_table_pseudo_cross_E0_E1_E2.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_E0_E1_E2.bin"
+                << std::endl;
+      exit(1);
     }
+    if (!load_vector(prune_e1e2e3, "prune_table_pseudo_cross_E1_E2_E3.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_E1_E2_E3.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_e0e2e3, "prune_table_pseudo_cross_E0_E2_E3.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_E0_E2_E3.bin"
+                << std::endl;
+      exit(1);
+    }
+    if (!load_vector(prune_e0e1e3, "prune_table_pseudo_cross_E0_E1_E3.bin")) {
+      std::cerr << "Error: Missing prune_table_pseudo_cross_E0_E1_E3.bin"
+                << std::endl;
+      exit(1);
+    }
+    std::cout << "[Init] Edge3 Prune Tables loaded." << std::endl;
 
     std::cout << "All tables initialized." << std::endl;
     tables_initialized = true;
@@ -228,114 +208,6 @@ struct xcross_analyzer2 {
       idx2 = p_corner_move_ptr[idx2 * 18 + m];
       idx3 = p_edge_move_ptr[idx3 * 18 + m];
     }
-  }
-
-  // 计算 Edge3 状态的共轭索引 (用于 search_3 阶段)
-  // alg: 已转换的公式 (通过 alg_rotation 转换后)
-  // s1, s2, s3: 三个棱块槽位 (0-3)
-  // slot_k: Pseudo 参考槽位 (对应第一个角块 pslot1)
-  // 返回: {edge3_state, cross_state} 或 {-1, -1} 如果表不可用
-  std::pair<int, int> get_edge3_conjugated_state(const std::vector<int> &alg,
-                                                 int s1, int s2, int s3,
-                                                 int slot_k) {
-    if (!edge3_prune_available)
-      return {-1, -1};
-
-    // 计算相对虚拟 ID (相对于 slot_k)
-    // 与 pseudo_analyzer.cpp 第 424-426 行一致
-    int r1 = (s1 - slot_k + 4) % 4;
-    int r2 = (s2 - slot_k + 4) % 4;
-    int r3 = (s3 - slot_k + 4) % 4;
-
-    // 排序得到规范 key
-    std::vector<int> keys = {r1, r2, r3};
-    std::sort(keys.begin(), keys.end());
-
-    // 确定 rot_map 索引 (与 pseudo_analyzer.cpp 第 487-494 行一致)
-    int rot_idx = 0;
-    if (keys[0] == 0 && keys[1] == 1 && keys[2] == 2)
-      rot_idx = 0; // {0,1,2} -> Id
-    else if (keys[0] == 0 && keys[1] == 1 && keys[2] == 3)
-      rot_idx = 1; // {0,1,3} -> y
-    else if (keys[0] == 0 && keys[1] == 2 && keys[2] == 3)
-      rot_idx = 2; // {0,2,3} -> y2
-    else if (keys[0] == 1 && keys[1] == 2 && keys[2] == 3)
-      rot_idx = 3; // {1,2,3} -> y'
-
-    const int *mapper = rot_map[rot_idx];
-
-    // 初始化 Edge3 索引 (基准: E0, E1, E2 -> 位置 0, 2, 4)
-    std::vector<int> target_arr = {0, 2, 4};
-    int cur_e3 = array_to_index(target_arr, 3, 2, 12);
-
-    // 初始化 Cross 索引 (基准: 已解状态, *24 版本)
-    int cur_cross = 187520 * 24;
-
-    // 应用两层共轭 (与 pseudo_analyzer.cpp 第 507-511 行一致):
-    // 物理移动 -> Pseudo 移动 (conj_moves_flat) -> 旋转后移动 (rot_map)
-    for (int m : alg) {
-      int m_pseudo = conj_moves_flat[m][slot_k]; // 第一层共轭
-      int m_rot = mapper[m_pseudo];              // 第二层共轭
-      cur_e3 = p_edge3_move_ptr[cur_e3 * 18 + m_rot];
-      cur_cross = p_multi_move_ptr[cur_cross + m_rot];
-    }
-
-    return {cur_e3, cur_cross / 24};
-  }
-
-  // 计算 Corner3 状态的共轭索引 (用于 search_3 阶段)
-  // alg: 已转换的公式 (通过 alg_rotation 转换后)
-  // ps1, ps2, ps3: 三个角块槽位 (0-3)
-  // slot_k: Pseudo 参考槽位 (对应 pslot1)
-  // 返回: {corner3_state, cross_state} 或 {-1, -1} 如果表不可用
-  // 参照 pseudo_analyzer.cpp 第 437-481 行
-  std::pair<int, int> get_corner3_conjugated_state(const std::vector<int> &alg,
-                                                   int ps1, int ps2, int ps3,
-                                                   int slot_k) {
-    if (!corner3_prune_available)
-      return {-1, -1};
-
-    // 计算相对虚拟 ID (相对于 slot_k)
-    // 与 pseudo_analyzer.cpp 第 420-422 行一致 (角块需要 +4)
-    int r1 = ((ps1 - slot_k + 4) % 4) + 4;
-    int r2 = ((ps2 - slot_k + 4) % 4) + 4;
-    int r3 = ((ps3 - slot_k + 4) % 4) + 4;
-
-    // 排序得到规范 key
-    std::vector<int> keys = {r1, r2, r3};
-    std::sort(keys.begin(), keys.end());
-
-    // 确定 rot_map 索引 (与 pseudo_analyzer.cpp 第 455-462 行一致)
-    // {4,5,6} -> Id, {4,5,7} -> y, {4,6,7} -> y2, {5,6,7} -> y'
-    int rot_idx = 0;
-    if (keys[0] == 4 && keys[1] == 5 && keys[2] == 6)
-      rot_idx = 0; // {4,5,6} -> Id
-    else if (keys[0] == 4 && keys[1] == 5 && keys[2] == 7)
-      rot_idx = 1; // {4,5,7} -> y
-    else if (keys[0] == 4 && keys[1] == 6 && keys[2] == 7)
-      rot_idx = 2; // {4,6,7} -> y2
-    else if (keys[0] == 5 && keys[1] == 6 && keys[2] == 7)
-      rot_idx = 3; // {5,6,7} -> y'
-
-    const int *mapper = rot_map[rot_idx];
-
-    // 初始化 Corner3 索引 (基准: C4, C5, C6 -> Indices 12, 15, 18)
-    std::vector<int> target_arr = {12, 15, 18};
-    int cur_c3 = array_to_index(target_arr, 3, 3, 8);
-
-    // 初始化 Cross 索引 (基准: 已解状态, *24 版本)
-    int cur_cross = 187520 * 24;
-
-    // 应用两层共轭 (与 pseudo_analyzer.cpp 第 474-479 行一致):
-    // 物理移动 -> Pseudo 移动 (conj_moves_flat) -> 旋转后移动 (rot_map)
-    for (int m : alg) {
-      int m_pseudo = conj_moves_flat[m][slot_k]; // 第一层共轭
-      int m_rot = mapper[m_pseudo];              // 第二层共轭
-      cur_c3 = p_corner3_move_ptr[cur_c3 * 18 + m_rot];
-      cur_cross = p_multi_move_ptr[cur_cross + m_rot];
-    }
-
-    return {cur_c3, cur_cross / 24};
   }
 
   void start_search_1(int arg_slot1, int arg_pslot1,
@@ -714,57 +586,7 @@ struct xcross_analyzer2 {
       int h4 = get_prune_ptr(p_edge_prune1, idx7 * 24 + idx2);
       long long idx_xc3 = (long long)(idx1 + idx6) * 24 + idx9;
       int h5 = get_prune_ptr(p_prune_xc3, idx_xc3);
-
-      // Edge3 剪枝 (直接选择对应表，不使用共轭)
-      int h_e3 = 0;
-      if (edge3_prune_available) {
-        // 根据 slot1, slot2, slot3 的组合选择正确的 Edge3 表
-        // Slots: 0=BL(E0), 1=BR(E1), 2=FR(E2), 3=FL(E3)
-        const unsigned char *p_e3_prune = nullptr;
-        // 对 slot 排序后确定组合
-        std::vector<int> sorted_slots = {slot1, slot2, slot3};
-        std::sort(sorted_slots.begin(), sorted_slots.end());
-        if (sorted_slots == std::vector<int>{0, 1, 2}) {
-          p_e3_prune = p_edge3_E012_prune_ptr; // E0,E1,E2
-        } else if (sorted_slots == std::vector<int>{0, 1, 3}) {
-          p_e3_prune = p_edge3_E013_prune_ptr; // E0,E1,E3
-        } else if (sorted_slots == std::vector<int>{0, 2, 3}) {
-          p_e3_prune = p_edge3_E023_prune_ptr; // E0,E2,E3
-        } else if (sorted_slots == std::vector<int>{1, 2, 3}) {
-          p_e3_prune = p_edge3_E123_prune_ptr; // E1,E2,E3
-        }
-        if (p_e3_prune) {
-          // 直接使用旋转后的公式计算状态
-          std::vector<int> alg = alg_rotation(base_alg, rotations[r]);
-          // 计算 Edge3 和 Cross 初始状态
-          std::vector<int> target_arr = {
-              sorted_slots[0] * 2, sorted_slots[1] * 2, sorted_slots[2] * 2};
-          int init_e3 = array_to_index(target_arr, 3, 2, 12);
-          int init_cross = 187520 * 24;
-          // 应用公式
-          int cur_e3 = init_e3, cur_cross = init_cross;
-          for (int m : alg) {
-            cur_e3 = p_edge3_move_ptr[cur_e3 * 18 + m];
-            cur_cross = p_multi_move_ptr[cur_cross + m];
-          }
-          long long idx_e3 = (long long)(cur_cross / 24) * 10560 + cur_e3;
-          h_e3 = get_prune_ptr(p_e3_prune, idx_e3);
-        }
-      }
-
-      // Corner3 剪枝 (使用两层共轭机制复用单张表)
-      int h_c3 = 0;
-      if (corner3_prune_available) {
-        std::vector<int> alg = alg_rotation(base_alg, rotations[r]);
-        auto [c3_state, cross_state] =
-            get_corner3_conjugated_state(alg, pslot1, pslot2, pslot3, pslot1);
-        if (c3_state >= 0) {
-          long long idx_c3 = (long long)cross_state * 9072 + c3_state;
-          h_c3 = get_prune_ptr(p_corner3_prune_ptr, idx_c3);
-        }
-      }
-
-      tasks.push_back({(int)r, std::max({h1, h2, h3, h4, h5, h_e3, h_c3})});
+      tasks.push_back({(int)r, std::max({h1, h2, h3, h4, h5})});
     }
     std::sort(tasks.begin(), tasks.end(),
               [](const RotTask &a, const RotTask &b) {
@@ -873,15 +695,16 @@ struct xcross_analyzer2 {
   }
 
   // Search 4
-  bool depth_limited_search_4(int arg_index1, int arg_index2, int arg_index4,
-                              int arg_index6, int arg_index8, int arg_index9,
-                              int arg_index10, int arg_index11, int arg_index12,
-                              int depth, int prev, const unsigned char *prune1,
-                              const unsigned char *prune2,
-                              const unsigned char *prune3,
-                              const unsigned char *prune4,
-                              const unsigned char *edge_prune1,
-                              const unsigned char *prune_xc4) {
+  bool depth_limited_search_4(
+      int arg_index1, int arg_index2, int arg_index4, int arg_index6,
+      int arg_index8, int arg_index9, int arg_index10, int arg_index11,
+      int arg_index12,
+      int arg_index_e3, // [新增] Edge3 状态索引
+      int depth, int prev, const unsigned char *prune1,
+      const unsigned char *prune2, const unsigned char *prune3,
+      const unsigned char *prune4, const unsigned char *edge_prune1,
+      const unsigned char *prune_xc4,
+      const unsigned char *prune_e3) { // [新增] Edge3 剪枝表指针
     const int *moves = valid_moves_flat[prev];
     const int count_moves = valid_moves_count[prev];
 
@@ -924,12 +747,23 @@ struct xcross_analyzer2 {
       if (prune_xc4_tmp >= depth)
         continue;
 
+      // [新增] Edge3 状态更新与剪枝
+      int index_e3_tmp = p_edge3_move_ptr[arg_index_e3 + i];
+      // Cross State = index1_tmp / 24 (因为 index1 = cross_mul_state * 24 +
+      // corner)
+      long long idx_e3_prune =
+          (long long)(index1_tmp / 24) * 10560 + index_e3_tmp;
+      int prune_e3_tmp = get_prune_ptr(prune_e3, idx_e3_prune);
+      if (prune_e3_tmp >= depth)
+        continue;
+
       int index10_tmp = p_edge_move_ptr[arg_index10 + i];
       int index11_tmp = p_edge_move_ptr[arg_index11 + i];
 
       if (depth == 1) {
         if (prune1_tmp == 0 && prune2_tmp == 0 && prune3_tmp == 0 &&
             prune4_tmp == 0 && edge_prune1_tmp == 0 && prune_xc4_tmp == 0 &&
+            prune_e3_tmp == 0 && // [新增]
             index10_tmp == edge_solved2 && index11_tmp == edge_solved3 &&
             index12_tmp == edge_solved4) {
           return true;
@@ -938,8 +772,9 @@ struct xcross_analyzer2 {
                      index1_tmp, index2_tmp * 18, index4_tmp * 18,
                      index6_tmp * 18, index8_tmp * 18, index9_tmp * 18,
                      index10_tmp * 18, index11_tmp * 18, index12_tmp * 18,
+                     index_e3_tmp * 18, // [新增]
                      depth - 1, i, prune1, prune2, prune3, prune4, edge_prune1,
-                     prune_xc4))
+                     prune_xc4, prune_e3)) // [新增]
         return true;
     }
     return false;
@@ -974,6 +809,24 @@ struct xcross_analyzer2 {
     const unsigned char *p_prune4 = prune4.data();
     const unsigned char *p_edge_prune1 = edge_prune1.data();
     const unsigned char *p_prune_xc4 = prune_xc4.data();
+
+    // [新增] 根据 Solved Slots (slot2, slot3, slot4) 选择 Edge3 剪枝表
+    // slot1 是 Pair 槽位，slot2/3/4 是归位槽位
+    std::vector<int> solved_edge_ids = {
+        slot2 * 2, // Slot->Edge: 0->0, 1->2, 2->4, 3->6
+        slot3 * 2, slot4 * 2};
+    std::sort(solved_edge_ids.begin(), solved_edge_ids.end());
+
+    const unsigned char *p_prune_e3 = nullptr;
+    if (solved_edge_ids == std::vector<int>{0, 2, 4}) {
+      p_prune_e3 = prune_e0e1e2.data();
+    } else if (solved_edge_ids == std::vector<int>{2, 4, 6}) {
+      p_prune_e3 = prune_e1e2e3.data();
+    } else if (solved_edge_ids == std::vector<int>{0, 4, 6}) {
+      p_prune_e3 = prune_e0e2e3.data();
+    } else if (solved_edge_ids == std::vector<int>{0, 2, 6}) {
+      p_prune_e3 = prune_e0e1e3.data();
+    }
 
     struct RotTask {
       int rot_idx;
@@ -1068,15 +921,32 @@ struct xcross_analyzer2 {
         index10 *= 18;
         index11 *= 18;
         index12 *= 18;
+
+        // [新增] 计算 Edge3 初始状态
+        // Edge3 Target: solved_edge_ids (e.g. {0, 2, 4} for E0, E1, E2)
+        // Solved State Index: array_to_index for these edges at solved
+        // positions
+        std::vector<int> e3_target_arr = {
+            solved_edge_ids[0], solved_edge_ids[1], solved_edge_ids[2]};
+        int idx_e3 = array_to_index(e3_target_arr, 3, 2, 12);
+        // Apply scramble to Edge3 state
+        std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
+        for (int m : rotated_alg) {
+          idx_e3 = p_edge3_move_ptr[idx_e3 * 18 + m];
+        }
+        idx_e3 *= 18;
+
         int found = 999;
         int start_depth =
             std::max({prune1_tmp, prune2_tmp, prune3_tmp, prune4_tmp,
                       edge_prune1_tmp, prune_xc4_tmp});
         for (int d = start_depth; d <= max_length; d++) {
           if (depth_limited_search_4(index1, index2, index4, index6, index8,
-                                     index9, index10, index11, index12, d, 18,
-                                     p_prune1, p_prune2, p_prune3, p_prune4,
-                                     p_edge_prune1, p_prune_xc4)) {
+                                     index9, index10, index11, index12,
+                                     idx_e3, // [新增]
+                                     d, 18, p_prune1, p_prune2, p_prune3,
+                                     p_prune4, p_edge_prune1, p_prune_xc4,
+                                     p_prune_e3)) { // [新增]
             found = d;
             break;
           }
@@ -1125,19 +995,13 @@ std::vector<std::vector<unsigned char>>
 const int *xcross_analyzer2::p_edge_move_ptr = nullptr;
 const int *xcross_analyzer2::p_corner_move_ptr = nullptr;
 const int *xcross_analyzer2::p_multi_move_ptr = nullptr;
+const int *xcross_analyzer2::p_edge3_move_ptr = nullptr; // [新增]
 
-// Edge3 静态成员初始化 (4 种组合)
-const int *xcross_analyzer2::p_edge3_move_ptr = nullptr;
-const unsigned char *xcross_analyzer2::p_edge3_E012_prune_ptr = nullptr;
-const unsigned char *xcross_analyzer2::p_edge3_E013_prune_ptr = nullptr;
-const unsigned char *xcross_analyzer2::p_edge3_E023_prune_ptr = nullptr;
-const unsigned char *xcross_analyzer2::p_edge3_E123_prune_ptr = nullptr;
-bool xcross_analyzer2::edge3_prune_available = false;
-
-// Corner3 静态成员初始化
-const int *xcross_analyzer2::p_corner3_move_ptr = nullptr;
-const unsigned char *xcross_analyzer2::p_corner3_prune_ptr = nullptr;
-bool xcross_analyzer2::corner3_prune_available = false;
+// [新增] Edge3 剪枝表定义
+std::vector<unsigned char> xcross_analyzer2::prune_e0e1e2;
+std::vector<unsigned char> xcross_analyzer2::prune_e1e2e3;
+std::vector<unsigned char> xcross_analyzer2::prune_e0e2e3;
+std::vector<unsigned char> xcross_analyzer2::prune_e0e1e3;
 
 std::string analyzer_compute(xcross_analyzer2 &xcs, std::string scramble,
                              std::string id) {
@@ -1214,13 +1078,13 @@ struct PseudoPairSolverWrapper {
     std::ostringstream oss;
     oss << "id";
     for (const auto &s : suffixes)
-      oss << ",pseudo_xcross_pair" << s;
+      oss << ",pseudo_cross_pseudo_pair" << s;
     for (const auto &s : suffixes)
-      oss << ",pseudo_xxcross_pair" << s;
+      oss << ",pseudo_xcross_pseudo_pair" << s;
     for (const auto &s : suffixes)
-      oss << ",pseudo_xxxcross_pair" << s;
+      oss << ",pseudo_xxcross_pseudo_pair" << s;
     for (const auto &s : suffixes)
-      oss << ",pseudo_f2l_pair" << s;
+      oss << ",pseudo_xxxcross_pseudo_pair" << s;
     return oss.str();
   }
 

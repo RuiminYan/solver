@@ -76,21 +76,21 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo Compiling eo_cross_analyzer...
+echo Compiling eo cross analyzer...
 g++ -std=c++17 -O3 -fopenmp -Wall -Wextra eo_cross_analyzer.cpp cube_common.o move_tables.o prune_tables.o -o eo_cross_analyzer.exe -lpsapi
 if %errorlevel% neq 0 (
     echo Error compiling eo_cross_analyzer
     exit /b 1
 )
 
-echo Compiling pseudo_pair_analyzer...
+echo Compiling pseudo pair analyzer...
 g++ -std=c++17 -O3 -fopenmp -Wall -Wextra -c pseudo_pair_analyzer.cpp -o pseudo_pair_analyzer.o
 if %errorlevel% neq 0 (
     echo Error compiling pseudo_pair_analyzer.cpp
     exit /b 1
 )
 
-echo Linking pseudo_pair_analyzer...
+echo Linking pseudo pair analyzer...
 g++ -fopenmp -o pseudo_pair_analyzer.exe cube_common.o move_tables.o prune_tables.o pseudo_pair_analyzer.o -lpsapi
 if %errorlevel% neq 0 (
     echo Error linking pseudo_pair_analyzer
