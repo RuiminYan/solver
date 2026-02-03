@@ -306,15 +306,17 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
           snprintf(etaBuf, sizeof(etaBuf), "...");
         }
 
-        // ANSI 清除行 + 输出
-        // NOTE: \033[2K 清除整行，避免旧内容残留
-        std::cout << "\033[2K" << ANSI_YELLOW << "[PROG] [" << bar << "] "
-                  << std::fixed << std::setprecision(1) << progress << "% ("
-                  << completed << "/" << total << ")" << ANSI_RESET << "\n";
-        std::cout << "\033[2K" << ANSI_MAGENTA
-                  << "       Performance: " << std::fixed
-                  << std::setprecision(2) << nps << " M/s | ETA: " << etaBuf
-                  << ANSI_RESET << "\r\033[A" << std::flush;
+        // 使用固定宽度输出，用空格填充确保覆盖旧内容，无需抽象的 ANSI 序列
+        char line1[100], line2[100];
+        snprintf(line1, sizeof(line1), "%s[PROG] [%s] %.1f%% (%d/%d)%s",
+                 ANSI_YELLOW, bar.c_str(), progress, completed, total,
+                 ANSI_RESET);
+        snprintf(line2, sizeof(line2),
+                 "%s       Performance: %.2f M/s | ETA: %-12s%s", ANSI_MAGENTA,
+                 nps, etaBuf, ANSI_RESET);
+        //                                    ^^^^^ ETA
+        //                                    固定12字符宽度，不足用空格填充
+        std::cout << line1 << "\n" << line2 << "\r\033[A" << std::flush;
       }
     });
 
