@@ -133,7 +133,14 @@ void MoveTableManager::generateAllSequentially() {
 bool MoveTableManager::loadTable(std::vector<int> &table,
                                  const std::string &filename) {
   // NOTE: 移动表不显示进度条（第三个参数false）
-  return load_vector_chunked(table, filename, false);
+  if (load_vector_chunked(table, filename, false)) {
+    // 计算并打印表大小
+    size_t size_bytes = table.size() * sizeof(int);
+    std::cout << TAG_COLOR << "[LOAD]" << ANSI_RESET << " " << filename << " ("
+              << formatFileSize(size_bytes) << ")" << std::endl;
+    return true;
+  }
+  return false;
 }
 
 void MoveTableManager::saveTable(const std::vector<int> &table,
