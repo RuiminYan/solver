@@ -114,7 +114,9 @@ struct XCrossSolver {
 
     p_prune_base = ptm.getXCrossC4E0PrunePtr();
     p_prune_neighbor = ptm.getHugeNeighborPrunePtr();
+#if ENABLE_DIAGONAL_STD
     p_prune_diagonal = ptm.getHugeDiagonalPrunePtr();
+#endif
   }
 
   inline int get_plus_table_idx(int s_base, int s_target) {
@@ -911,6 +913,7 @@ struct StdSolver {
 
   // 全局初始化：加载移动表和剪枝表
   static void global_init() {
+    printCuberootLogo();
     init_matrix();
 
     auto &mtm = MoveTableManager::getInstance();

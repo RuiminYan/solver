@@ -8,8 +8,8 @@
 #include <iostream>
 
 int main() {
-  // 设置控制台颜色（Windows）
-  system("color 0A");
+  // 打印 CUBEROOT Logo
+  printCuberootLogo();
 
   // 初始化基础查找表（如组合数计算等，如果在 cube_common 中有的话）
   init_matrix();
@@ -17,7 +17,8 @@ int main() {
   auto &mtm = MoveTableManager::getInstance();
   auto &ptm = PruneTableManager::getInstance();
 
-  std::cout << "=== Table Generator ===" << std::endl;
+  std::cout << ANSI_CYAN << "=== Table Generator ===" << ANSI_RESET
+            << std::endl;
   std::cout << "Checking and generating tables if necessary..." << std::endl;
 
   // 初始化管理器

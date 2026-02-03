@@ -22,7 +22,27 @@
 #include <vector>
 
 // --- 配置 ---
-#define ENABLE_DIAGONAL_TABLE 0 // 临时禁用，节省 ~10 GB 内存
+// Diagonal 表配置（每个 analyzer 独立控制，节省 ~10 GB 内存）
+#define ENABLE_DIAGONAL_STD 1      // Std Analyzer 的 Diagonal 表
+#define ENABLE_DIAGONAL_PAIR 1     // Pair Analyzer 的 Diagonal 表
+#define ENABLE_DIAGONAL_EO_CROSS 0 // EO Cross Analyzer 的 Diagonal 表
+#define ENABLE_EO_SEARCH_4 1 // 启用 EO Cross Analyzer 的 XXXXCross+EO 计算
+
+// --- ANSI 颜色定义 ---
+#define ANSI_RESET "\033[0m"
+#define ANSI_CYAN "\033[36m"
+#define ANSI_GREEN "\033[32m"
+#define ANSI_YELLOW "\033[33m"
+#define ANSI_MAGENTA "\033[35m"
+#define ANSI_RED "\033[31m"
+#define ANSI_BLUE "\033[34m"
+
+// --- Logo 和打印函数 ---
+void printCuberootLogo();
+void printTableInfo(const std::string &category, const std::string &filename,
+                    size_t sizeBytes);
+bool fileExists(const std::string &filename);
+std::string formatFileSize(size_t bytes);
 
 // --- 全局变量 ---
 extern int valid_moves_flat[20][18];

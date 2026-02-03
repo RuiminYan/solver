@@ -4,6 +4,67 @@
 
 #include "cube_common.h"
 
+// --- Logo 和打印函数实现 ---
+
+// 检查文件是否存在
+bool fileExists(const std::string &filename) {
+  std::ifstream f(filename);
+  return f.good();
+}
+
+// 格式化文件大小
+std::string formatFileSize(size_t bytes) {
+  std::ostringstream oss;
+  if (bytes >= 1024 * 1024 * 1024) {
+    oss << std::fixed << std::setprecision(2)
+        << (bytes / (1024.0 * 1024.0 * 1024.0)) << " GB";
+  } else if (bytes >= 1024 * 1024) {
+    oss << std::fixed << std::setprecision(2) << (bytes / (1024.0 * 1024.0))
+        << " MB";
+  } else if (bytes >= 1024) {
+    oss << std::fixed << std::setprecision(2) << (bytes / 1024.0) << " KB";
+  } else {
+    oss << bytes << " B";
+  }
+  return oss.str();
+}
+
+// 打印表信息（统一格式）
+void printTableInfo(const std::string &category, const std::string &filename,
+                    size_t sizeBytes) {
+  std::cout << ANSI_BLUE << "[" << category << "]" << ANSI_RESET
+            << " Loaded: " << filename << " (" << formatFileSize(sizeBytes)
+            << ")" << std::endl;
+}
+
+// 打印CUBEROOT Logo（像素艺术+渐变色）
+void printCuberootLogo() {
+  // 渐变色：从蓝紫到粉红（类似GEMINI风格）
+  const char *gradients[] = {
+      "\033[38;5;105m", // 淡紫色
+      "\033[38;5;141m", // 紫色
+      "\033[38;5;177m", // 粉紫色
+      "\033[38;5;213m", // 粉色
+      "\033[38;5;219m", // 淡粉色
+      "\033[38;5;225m"  // 浅粉色
+  };
+
+  // 像素艺术字体
+  const char *lines[] = {
+      " @@@@@@  @    @ @@@@@  @@@@@ @@@@@   @@@@   @@@@  @@@@@@",
+      "@@       @    @ @    @ @     @    @ @    @ @    @   @@  ",
+      "@        @    @ @@@@@  @@@@  @@@@@  @    @ @    @   @@  ",
+      "@        @    @ @    @ @     @  @   @    @ @    @   @@  ",
+      "@@       @    @ @    @ @     @   @  @    @ @    @   @@  ",
+      " @@@@@@   @@@@  @@@@@  @@@@@ @    @  @@@@   @@@@    @@  "};
+
+  std::cout << std::endl;
+  for (int i = 0; i < 6; ++i) {
+    std::cout << gradients[i] << lines[i] << ANSI_RESET << std::endl;
+  }
+  std::cout << std::endl;
+}
+
 // --- 全局变量定义 ---
 int valid_moves_flat[20][18];
 int valid_moves_count[20];

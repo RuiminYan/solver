@@ -1838,6 +1838,7 @@ struct PseudoPairSolverWrapper {
   xcross_analyzer2 analyzer;
 
   static void global_init() {
+    printCuberootLogo();
     init_matrix();
 
     std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET << "Loading Tables..."

@@ -1197,6 +1197,7 @@ struct PseudoSolverWrapper {
   XCrossSolver xcrossSolver;
 
   static void global_init() {
+    printCuberootLogo();
     init_matrix();
     init_pseudo_matrix();
     initMirrorTables();

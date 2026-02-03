@@ -86,7 +86,9 @@ struct PairSolver {
     s_p_pair = ptm.getPairC4E0PrunePtr();
     s_p_xcross = ptm.getXCrossC4E0PrunePtr();
     s_p_prune_neighbor = ptm.getHugeNeighborPrunePtr();
+#if ENABLE_DIAGONAL_PAIR
     s_p_prune_diagonal = ptm.getHugeDiagonalPrunePtr();
+#endif
 
     // 计算解决状态索引
     s_IDX_SOLVED_E6_NB = array_to_index({0, 2, 16, 18, 20, 22}, 6, 2, 12);
@@ -605,6 +607,7 @@ struct PairSolverWrapper {
 
   // 全局初始化：加载移动表和剪枝表
   static void global_init() {
+    printCuberootLogo();
     init_matrix();
 
     auto &mtm = MoveTableManager::getInstance();
