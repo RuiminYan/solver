@@ -22,24 +22,27 @@ for filename in files:
     
     original = content
     
-    # 将所有 ANSI_CYAN << "[xxx] " 改为 TAG_COLOR << "[xxx]" << ANSI_RESET << " "
-    # 注意: [INIT] 后面有空格
+    # 1. 替换无颜色的 "[Init]" 为带颜色版本
+    # 匹配: std::cout << "[Init] ...
     content = re.sub(
-        r'ANSI_CYAN\s*<<\s*"\[([A-Z]+)\]\s*"',
+        r'std::cout\s*<<\s*"\[Init\]\s*',
+        r'std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " ',
+        content
+    )
+    
+    # 2. 替换 ANSI_CYAN 为 TAG_COLOR (已有 << ANSI_RESET 的情况)
+    content = re.sub(
+        r'ANSI_CYAN\s*<<\s*"\[([A-Z]+)\]"\s*<<\s*ANSI_RESET\s*<<\s*" "',
         r'TAG_COLOR << "[\1]" << ANSI_RESET << " "',
         content
     )
     
-    # 将所有 ANSI_BLUE << "[xxx]" 改为 TAG_COLOR << "[xxx]" << ANSI_RESET
+    # 3. 替换 ANSI_GREEN << "[SUCCESS] 为 TAG_COLOR
     content = re.sub(
-        r'ANSI_BLUE\s*<<\s*"\[([A-Z]+)\]"',
-        r'TAG_COLOR << "[\1]" << ANSI_RESET',
+        r'ANSI_GREEN\s*<<\s*"\[SUCCESS\]',
+        r'TAG_COLOR << "[SUCCESS]" << ANSI_RESET << "',
         content
     )
-    
-    # 移除可能的双重 ANSI_RESET
-    content = content.replace('<< ANSI_RESET << " " << ANSI_RESET', '<< ANSI_RESET << " "')
-    content = content.replace('ANSI_RESET << ANSI_RESET', 'ANSI_RESET')
     
     if content != original:
         with open(filename, 'w', encoding='utf-8') as f:

@@ -360,7 +360,7 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
     size_t ramUsage = getCurrentRSS();
 
     // 输出完成信息
-    std::cout << ANSI_GREEN << "[SUCCESS] Processing complete!" << ANSI_RESET
+    std::cout << TAG_COLOR << "[SUCCESS]" << ANSI_RESET << " Processing complete!" << ANSI_RESET
               << std::endl;
 
     outfile.close();

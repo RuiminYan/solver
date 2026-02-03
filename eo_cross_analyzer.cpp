@@ -225,7 +225,7 @@ struct xcross_analyzer {
     }
 
     // 1. 基准 XCross Table (C4 + E0)
-    std::cout << "[Init] Checking Base XCross Table (C4 + E0)..." << std::endl;
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Checking Base XCross Table (C4 + E0)..." << std::endl;
     std::string fn_base = "prune_table_cross_C4_E0.bin";
     if (!load_vector(s_prune_xcross_base, fn_base)) {
       std::cout << "  Generating " << fn_base << " ..." << std::endl;
@@ -272,7 +272,7 @@ struct xcross_analyzer {
     }
 
     // 3. 3-Corner Table (C4+C5+C6)
-    std::cout << "[Init] Checking XCross+C4+C5+C6 Table..." << std::endl;
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Checking XCross+C4+C5+C6 Table..." << std::endl;
     std::string fn_3c = "prune_table_cross_C4_C5_C6.bin";
     if (!load_vector(s_prune_3c, fn_3c)) {
       std::cout << "  Generating " << fn_3c << " (Depth 14) ..." << std::endl;

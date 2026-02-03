@@ -43,7 +43,7 @@ const int mirror_edge_map[12] = {1, 0, 3, 2, 4, 7, 6, 5, 8, 11, 10, 9};
 const int mirror_corn_map[8] = {1, 0, 3, 2, 5, 4, 7, 6};
 
 void initMirrorTables() {
-  std::cout << "[Init] Generating Mirror Tables..." << std::endl;
+  std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Generating Mirror Tables..." << std::endl;
 
   // 1. Corner2 Mirror Table
   // Swap C4 <-> C5 roles

@@ -106,7 +106,7 @@ struct xcross_analyzer2 {
 
     init_matrix();
 
-    std::cout << "[Init] Loading Pseudo Pair Tables..." << std::endl;
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Loading Pseudo Pair Tables..." << std::endl;
 
     // 1. Load Base Prune Tables (Cross + 1 Corner)
     // [Conj优化] 只加载 C4 基准表，其他通过 Conj 映射
@@ -165,7 +165,7 @@ struct xcross_analyzer2 {
                 << std::endl;
       exit(1);
     }
-    std::cout << "[Init] Edge3 Prune Tables loaded (E0E1E2 only)." << std::endl;
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Edge3 Prune Tables loaded (E0E1E2 only)." << std::endl;
 
     // 5. [重构] Load Corner3 Prune Tables (只加载规范化表)
     mtm.loadCorner3Table();
@@ -176,7 +176,7 @@ struct xcross_analyzer2 {
                 << std::endl;
       exit(1);
     }
-    std::cout << "[Init] Corner3 Prune Tables loaded (C4C5C6 only)."
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Corner3 Prune Tables loaded (C4C5C6 only)."
               << std::endl;
 
     // 6. [重构] Load Corner2 Prune Tables (只加载规范化表)
@@ -193,7 +193,7 @@ struct xcross_analyzer2 {
                 << std::endl;
       exit(1);
     }
-    std::cout << "[Init] Corner2 Prune Tables loaded (C4C5, C4C6 only)."
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Corner2 Prune Tables loaded (C4C5, C4C6 only)."
               << std::endl;
 
     // 7. [重构] Load Edge2 Prune Tables (只加载规范化表)
@@ -210,7 +210,7 @@ struct xcross_analyzer2 {
                 << std::endl;
       exit(1);
     }
-    std::cout << "[Init] Edge2 Prune Tables loaded (E0E1, E0E2 only)."
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Edge2 Prune Tables loaded (E0E1, E0E2 only)."
               << std::endl;
 
     // 8. [重构] Register aux_registry (只注册规范化表)
