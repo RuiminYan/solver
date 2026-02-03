@@ -14,7 +14,7 @@ MoveTableManager &MoveTableManager::getInstance() {
 }
 
 void MoveTableManager::initialize() {
-  std::cout << ANSI_BLUE << "[MOVE]" << ANSI_RESET
+  std::cout << TAG_COLOR << "[MOVE]" << ANSI_RESET
             << " Initializing move tables..." << std::endl;
 
   generateEdgeTable();
@@ -26,12 +26,12 @@ void MoveTableManager::initialize() {
   generateCorner2Table();
   generateCorner3Table();
 
-  std::cout << ANSI_BLUE << "[MOVE]" << ANSI_RESET
+  std::cout << TAG_COLOR << "[MOVE]" << ANSI_RESET
             << " All move tables initialized." << std::endl;
 }
 
 bool MoveTableManager::loadAll() {
-  std::cout << ANSI_BLUE << "[MOVE]" << ANSI_RESET << " Loading move tables..."
+  std::cout << TAG_COLOR << "[MOVE]" << ANSI_RESET << " Loading move tables..."
             << std::endl;
   if (!loadTable(edge_table, "move_table_edge.bin"))
     return false;
@@ -53,12 +53,12 @@ bool MoveTableManager::loadAll() {
 }
 
 void MoveTableManager::generateAllSequentially() {
-  std::cout << ANSI_BLUE << "[MOVE]" << ANSI_RESET
+  std::cout << TAG_COLOR << "[MOVE]" << ANSI_RESET
             << " Generating tables sequentially to save memory..." << std::endl;
 
   // 1. Edge Table (Base for others)
   if (!loadTable(edge_table, "move_table_edge.bin")) {
-    std::cout << ANSI_BLUE << "[MOVE]" << ANSI_RESET
+    std::cout << TAG_COLOR << "[MOVE]" << ANSI_RESET
               << " Generating edge table..." << std::endl;
     edge_table = create_edge_move_table();
     saveTable(edge_table, "move_table_edge.bin");
@@ -132,7 +132,8 @@ void MoveTableManager::generateAllSequentially() {
 
 bool MoveTableManager::loadTable(std::vector<int> &table,
                                  const std::string &filename) {
-  return load_vector_chunked(table, filename);
+  // NOTE: 移动表不显示进度条（第三个参数false）
+  return load_vector_chunked(table, filename, false);
 }
 
 void MoveTableManager::saveTable(const std::vector<int> &table,

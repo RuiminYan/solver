@@ -133,7 +133,7 @@ inline void printDataPreview(const std::string &filename, int lines = 6) {
   if (!file)
     return;
 
-  std::cout << ANSI_CYAN << "[DATA] Preview:" << ANSI_RESET << std::endl;
+  std::cout << ANSI_BLUE << "[DATA] Preview:" << ANSI_RESET << std::endl;
   std::string line;
   int count = 0;
   while (count < lines && std::getline(file, line)) {
@@ -199,7 +199,7 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
 #endif
 
   // 1. 全局初始化
-  std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET
+  std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
             << "Starting global initialization..." << std::endl;
   SolverT::global_init();
 

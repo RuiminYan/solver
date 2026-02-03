@@ -1191,12 +1191,12 @@ struct EOCrossSolverWrapper {
     printCuberootLogo();
     init_matrix();
 
-    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
               << "Loading EO Cross analyzers..." << std::endl;
     // 调用静态初始化方法，加载所有表（只执行一次）
     cross_analyzer::static_init();
     xcross_analyzer::static_init();
-    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET << "System Ready."
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " " << "System Ready."
               << std::endl;
   }
 

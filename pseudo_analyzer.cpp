@@ -1205,7 +1205,7 @@ struct PseudoSolverWrapper {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
 
-    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
               << "Loading Move Tables..." << std::endl;
     bool ok = true;
     if (!mtm.loadCrossTable())
@@ -1227,10 +1227,10 @@ struct PseudoSolverWrapper {
                 << ANSI_RESET << std::endl;
       exit(1);
     }
-    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
               << "Loading Move Tables... Done." << std::endl;
 
-    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
               << "Loading Prune Tables..." << std::endl;
     if (!ptm.loadPseudoTables()) {
       std::cerr
@@ -1239,7 +1239,7 @@ struct PseudoSolverWrapper {
           << ANSI_RESET << std::endl;
       exit(1);
     }
-    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
               << "Loading Prune Tables... Done." << std::endl;
   }
 

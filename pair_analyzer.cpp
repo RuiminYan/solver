@@ -613,7 +613,7 @@ struct PairSolverWrapper {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
 
-    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
               << "Loading Move Tables..." << std::endl;
     if (!mtm.loadAll()) {
       std::cerr << ANSI_RED
@@ -622,10 +622,10 @@ struct PairSolverWrapper {
                 << ANSI_RESET << std::endl;
       exit(1);
     }
-    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
               << "Loading Move Tables... Done." << std::endl;
 
-    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
               << "Loading Prune Tables..." << std::endl;
     if (!ptm.loadAll()) {
       std::cerr << ANSI_RED
@@ -634,7 +634,7 @@ struct PairSolverWrapper {
                 << ANSI_RESET << std::endl;
       exit(1);
     }
-    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
               << "Loading Prune Tables... Done." << std::endl;
 
     // 初始化静态指针

@@ -19,7 +19,7 @@ PruneTableManager &PruneTableManager::getInstance() {
 }
 
 void PruneTableManager::initialize() {
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Initializing prune tables..." << std::endl;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Initializing prune tables..." << std::endl;
 
   generateCrossPrune();
   generateCrossC4Prune();
@@ -28,12 +28,12 @@ void PruneTableManager::initialize() {
   generateHugeNeighborPrune();
   generateHugeDiagonalPrune();
 
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " All prune tables initialized." << std::endl;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " All prune tables initialized." << std::endl;
 }
 
 unsigned char *PruneTableManager::loadTableMMap(const std::string &filename) {
 #ifdef _WIN32
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " MMap loading " << filename << "..." << std::endl;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " MMap loading " << filename << "..." << std::endl;
   HANDLE hFile = CreateFile(filename.c_str(), GENERIC_READ, FILE_SHARE_READ,
                             NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (hFile == INVALID_HANDLE_VALUE) {
@@ -66,7 +66,7 @@ unsigned char *PruneTableManager::loadTableMMap(const std::string &filename) {
 }
 
 bool PruneTableManager::loadAll() {
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Loading prune tables..." << std::endl;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Loading prune tables..." << std::endl;
   if (!loadTable(cross_prune, "prune_table_cross.bin"))
     return false;
   if (!loadTable(cross_c4_prune, "prune_table_cross_C4.bin"))
@@ -86,7 +86,7 @@ bool PruneTableManager::loadAll() {
 }
 
 bool PruneTableManager::loadPseudoTables() {
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Loading pseudo tables only..." << std::endl;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Loading pseudo tables only..." << std::endl;
   if (!loadTable(pseudo_cross_prune, "prune_table_pseudo_cross.bin"))
     return false;
   for (int i = 0; i < 4; ++i) {
@@ -185,13 +185,13 @@ void create_prune_table_pseudo_pair(int index1, int index2, int size1,
                                     const std::string &log_prefix);
 
 void PruneTableManager::generateAllSequentially() {
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating tables sequentially to save memory..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating tables sequentially to save memory..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
 
   // 1. Cross Prune (Needs Edges2)
   if (!loadTable(cross_prune, "prune_table_cross.bin")) {
-    std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating cross prune table..." << std::endl;
+    std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating cross prune table..." << std::endl;
     mtm.loadEdges2Table();
     generateCrossPrune();
     mtm.releaseEdges2Table();
@@ -503,7 +503,7 @@ void PruneTableManager::generateAllSequentially() {
   std::vector<unsigned char> temp_table;
 
   // 22. Pseudo Cross + Corner 变体表 (4 个: C4, C5, C6, C7)
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating Pseudo Cross + Corner variants..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating Pseudo Cross + Corner variants..."
             << std::endl;
   mtm.loadCrossTable();
   mtm.loadCornerTable();
@@ -521,7 +521,7 @@ void PruneTableManager::generateAllSequentially() {
   }
 
   // 23. Pseudo XCross 变体表 (16 个: C{4-7}_into_slot{0-3})
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating Pseudo XCross variants..." << std::endl;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating Pseudo XCross variants..." << std::endl;
   for (int c = 0; c < 4; ++c) {
     for (int e = 0; e < 4; ++e) {
       std::string fn = "prune_table_pseudo_cross_C" + std::to_string(c + 4) +
@@ -542,7 +542,7 @@ void PruneTableManager::generateAllSequentially() {
   mtm.releaseCornerTable();
 
   // 24. Pseudo Pair 变体表 (16 个: C{4-7}_E{0-3})
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating Pseudo Pair variants..." << std::endl;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating Pseudo Pair variants..." << std::endl;
   mtm.loadEdgeTable();
   mtm.loadCornerTable();
   for (int c = 0; c < 4; ++c) {
@@ -564,7 +564,7 @@ void PruneTableManager::generateAllSequentially() {
   mtm.releaseEdgeTable();
   mtm.releaseCornerTable();
 
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Sequential generation complete." << std::endl;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Sequential generation complete." << std::endl;
 }
 
 bool PruneTableManager::loadTable(std::vector<unsigned char> &table,
@@ -580,7 +580,7 @@ void PruneTableManager::saveTable(const std::vector<unsigned char> &table,
 void PruneTableManager::generateCrossPrune() {
   if (loadTable(cross_prune, "prune_table_cross.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating cross prune table..." << std::endl;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating cross prune table..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   const auto &edges_2_table = mtm.getEdges2Table();
   long long sz = 24LL * 22 * 24 * 22;
@@ -613,7 +613,7 @@ void PruneTableManager::generateCrossPrune() {
 void PruneTableManager::generateCrossC4Prune() {
   if (loadTable(cross_c4_prune, "prune_table_cross_C4.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating cross+c4 prune table..." << std::endl;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating cross+c4 prune table..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   cross_c4_prune.resize((long long)24 * 22 * 20 * 18 * 24, 255);
   create_prune_table_cross_c4(187520, 12, 24 * 22 * 20 * 18, 24, 10,
@@ -625,7 +625,7 @@ void PruneTableManager::generateCrossC4Prune() {
 void PruneTableManager::generatePairC4E0Prune() {
   if (loadTable(pair_c4_e0_prune, "prune_table_C4_E0.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pair c4+e0 prune table..." << std::endl;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pair c4+e0 prune table..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   pair_c4_e0_prune.resize(24 * 24, 255);
   create_prune_table_pair_base(0, 12, 24, 24, 8, mtm.getEdgeTable(),
@@ -636,7 +636,7 @@ void PruneTableManager::generatePairC4E0Prune() {
 void PruneTableManager::generateXCrossC4E0Prune() {
   if (loadTable(xcross_c4_e0_prune, "prune_table_cross_C4_E0.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating xcross c4+e0 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating xcross c4+e0 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   long long c_sz = ((long long)24 * 22 * 20 * 18 * 24 * 24 + 1) / 2;
@@ -650,7 +650,7 @@ void PruneTableManager::generateXCrossC4E0Prune() {
 void PruneTableManager::generateHugeNeighborPrune() {
   if (loadTable(huge_neighbor_prune, "prune_table_cross_C4_E0_C5_E1.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating huge neighbor prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating huge neighbor prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   create_prune_table_huge(42577920, 504, 15, {0, 2, 16, 18, 20, 22}, {12, 15},
@@ -665,7 +665,7 @@ void PruneTableManager::generateHugeDiagonalPrune() {
     return;
   if (loadTable(huge_diagonal_prune, "prune_table_cross_C4_E0_C6_E2.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating huge diagonal prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating huge diagonal prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   create_prune_table_huge(42577920, 504, 15, {0, 4, 16, 18, 20, 22}, {12, 18},
@@ -677,7 +677,7 @@ void PruneTableManager::generateHugeDiagonalPrune() {
 void PruneTableManager::generatePseudoCrossPrune() {
   if (loadTable(pseudo_cross_prune, "prune_table_pseudo_cross.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   const auto &edges_2_table = mtm.getEdges2Table();
@@ -719,7 +719,7 @@ void PruneTableManager::generatePseudoCrossBasePrune(int i) {
   std::string fn = "prune_table_pseudo_cross_C4_E" + std::to_string(i) + ".bin";
   if (loadTable(pseudo_cross_base_prune[i], fn))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo xcross prune table (offset " << i
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo xcross prune table (offset " << i
             << ")..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   int e_diffs[] = {0, 2, 4, 6};
@@ -735,7 +735,7 @@ void PruneTableManager::generatePseudoCrossBasePrune(int i) {
 void PruneTableManager::generatePseudoCrossE0E2Prune() {
   if (loadTable(pseudo_cross_E0_E2_prune, "prune_table_pseudo_cross_E0_E2.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E0,E2 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E0,E2 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {0, 4};
@@ -750,7 +750,7 @@ void PruneTableManager::generatePseudoCrossE0E2Prune() {
 void PruneTableManager::generatePseudoCrossE0E1Prune() {
   if (loadTable(pseudo_cross_E0_E1_prune, "prune_table_pseudo_cross_E0_E1.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E0,E1 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E0,E1 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {0, 2}; // E0(0*2=0), E1(1*2=2) - 邻棱
@@ -765,7 +765,7 @@ void PruneTableManager::generatePseudoCrossE0E1Prune() {
 void PruneTableManager::generatePseudoCrossE1E3Prune() {
   if (loadTable(pseudo_cross_E1_E3_prune, "prune_table_pseudo_cross_E1_E3.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E1,E3 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E1,E3 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {2, 6}; // E1(1*2=2), E3(3*2=6) - 对棱
@@ -780,7 +780,7 @@ void PruneTableManager::generatePseudoCrossE1E3Prune() {
 void PruneTableManager::generatePseudoCrossE0E3Prune() {
   if (loadTable(pseudo_cross_E0_E3_prune, "prune_table_pseudo_cross_E0_E3.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E0,E3 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E0,E3 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {0, 6}; // E0(0*2=0), E3(3*2=6) - 邻棱
@@ -795,7 +795,7 @@ void PruneTableManager::generatePseudoCrossE0E3Prune() {
 void PruneTableManager::generatePseudoCrossE1E2Prune() {
   if (loadTable(pseudo_cross_E1_E2_prune, "prune_table_pseudo_cross_E1_E2.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E1,E2 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E1,E2 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {2, 4}; // E1(1*2=2), E2(2*2=4) - 邻棱
@@ -810,7 +810,7 @@ void PruneTableManager::generatePseudoCrossE1E2Prune() {
 void PruneTableManager::generatePseudoCrossE2E3Prune() {
   if (loadTable(pseudo_cross_E2_E3_prune, "prune_table_pseudo_cross_E2_E3.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E2,E3 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E2,E3 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {4, 6}; // E2(2*2=4), E3(3*2=6) - 邻棱
@@ -826,7 +826,7 @@ void PruneTableManager::generatePseudoCrossE0E1E2Prune() {
   if (loadTable(pseudo_cross_E0_E1_E2_prune,
                 "prune_table_pseudo_cross_E0_E1_E2.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E0,E1,E2 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E0,E1,E2 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {0, 2, 4}; // E0, E1, E2 (0, 2, 4)
@@ -843,7 +843,7 @@ void PruneTableManager::generatePseudoCrossE1E2E3Prune() {
   if (loadTable(pseudo_cross_E1_E2_E3_prune,
                 "prune_table_pseudo_cross_E1_E2_E3.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E1,E2,E3 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E1,E2,E3 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {2, 4, 6}; // E1, E2, E3
@@ -860,7 +860,7 @@ void PruneTableManager::generatePseudoCrossE0E2E3Prune() {
   if (loadTable(pseudo_cross_E0_E2_E3_prune,
                 "prune_table_pseudo_cross_E0_E2_E3.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E0,E2,E3 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E0,E2,E3 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {0, 4, 6}; // E0, E2, E3
@@ -877,7 +877,7 @@ void PruneTableManager::generatePseudoCrossE0E1E3Prune() {
   if (loadTable(pseudo_cross_E0_E1_E3_prune,
                 "prune_table_pseudo_cross_E0_E1_E3.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E0,E1,E3 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + E0,E1,E3 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {0, 2, 6}; // E0, E1, E3
@@ -893,7 +893,7 @@ void PruneTableManager::generatePseudoCrossE0E1E3Prune() {
 void PruneTableManager::generatePseudoCrossC4C6Prune() {
   if (loadTable(pseudo_cross_C4_C6_prune, "prune_table_pseudo_cross_C4_C6.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C4,C6 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C4,C6 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {12, 18}; // C4(4*3=12), C6(6*3=18) - 对角
@@ -908,7 +908,7 @@ void PruneTableManager::generatePseudoCrossC4C6Prune() {
 void PruneTableManager::generatePseudoCrossC5C7Prune() {
   if (loadTable(pseudo_cross_C5_C7_prune, "prune_table_pseudo_cross_C5_C7.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C5,C7 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C5,C7 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {15, 21}; // C5(5*3=15), C7(7*3=21) - 对角
@@ -923,7 +923,7 @@ void PruneTableManager::generatePseudoCrossC5C7Prune() {
 void PruneTableManager::generatePseudoCrossC4C5Prune() {
   if (loadTable(pseudo_cross_C4_C5_prune, "prune_table_pseudo_cross_C4_C5.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C4,C5 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C4,C5 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {12, 15}; // C4(4*3=12), C5(5*3=15)
@@ -938,7 +938,7 @@ void PruneTableManager::generatePseudoCrossC4C5Prune() {
 void PruneTableManager::generatePseudoCrossC4C7Prune() {
   if (loadTable(pseudo_cross_C4_C7_prune, "prune_table_pseudo_cross_C4_C7.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C4,C7 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C4,C7 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {12, 21}; // C4(4*3=12), C7(7*3=21)
@@ -953,7 +953,7 @@ void PruneTableManager::generatePseudoCrossC4C7Prune() {
 void PruneTableManager::generatePseudoCrossC5C6Prune() {
   if (loadTable(pseudo_cross_C5_C6_prune, "prune_table_pseudo_cross_C5_C6.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C5,C6 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C5,C6 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {15, 18}; // C5(5*3=15), C6(6*3=18)
@@ -968,7 +968,7 @@ void PruneTableManager::generatePseudoCrossC5C6Prune() {
 void PruneTableManager::generatePseudoCrossC6C7Prune() {
   if (loadTable(pseudo_cross_C6_C7_prune, "prune_table_pseudo_cross_C6_C7.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C6,C7 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C6,C7 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {18, 21}; // C6(6*3=18), C7(7*3=21)
@@ -984,7 +984,7 @@ void PruneTableManager::generatePseudoCrossC4C5C6Prune() {
   if (loadTable(pseudo_cross_C4_C5_C6_prune,
                 "prune_table_pseudo_cross_C4_C5_C6.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C4,C5,C6 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C4,C5,C6 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {12, 15, 18}; // C4, C5, C6
@@ -1001,7 +1001,7 @@ void PruneTableManager::generatePseudoCrossC4C5C7Prune() {
   if (loadTable(pseudo_cross_C4_C5_C7_prune,
                 "prune_table_pseudo_cross_C4_C5_C7.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C4,C5,C7 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C4,C5,C7 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {12, 15, 21}; // C4, C5, C7
@@ -1018,7 +1018,7 @@ void PruneTableManager::generatePseudoCrossC4C6C7Prune() {
   if (loadTable(pseudo_cross_C4_C6_C7_prune,
                 "prune_table_pseudo_cross_C4_C6_C7.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C4,C6,C7 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C4,C6,C7 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {12, 18, 21}; // C4, C6, C7
@@ -1035,7 +1035,7 @@ void PruneTableManager::generatePseudoCrossC5C6C7Prune() {
   if (loadTable(pseudo_cross_C5_C6_C7_prune,
                 "prune_table_pseudo_cross_C5_C6_C7.bin"))
     return;
-  std::cout << ANSI_BLUE << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C5,C6,C7 prune table..."
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating pseudo cross + C5,C6,C7 prune table..."
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {15, 18, 21}; // C5, C6, C7

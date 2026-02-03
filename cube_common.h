@@ -37,6 +37,10 @@
 #define ANSI_RED "\033[31m"
 #define ANSI_BLUE "\033[34m"
 
+// --- 日志标签统一颜色（蓝色）---
+// NOTE: 所有 [INIT], [MOVE], [PRUNE], [LOAD] 等标签统一使用此颜色
+#define TAG_COLOR "\033[34m"
+
 // --- Logo 和打印函数 ---
 void printCuberootLogo();
 void printTableInfo(const std::string &category, const std::string &filename,
@@ -100,7 +104,8 @@ std::vector<int> create_multi_move_table2(int n, int c, int pn, int size,
 constexpr size_t LARGE_FILE_THRESHOLD = 1ULL * 1024 * 1024 * 1024;
 
 template <typename T>
-bool load_vector_chunked(std::vector<T> &vec, const std::string &filename) {
+bool load_vector_chunked(std::vector<T> &vec, const std::string &filename,
+                         bool enable_progress = true) {
   std::ifstream in(filename, std::ios::binary);
   if (!in)
     return false;
@@ -127,8 +132,8 @@ bool load_vector_chunked(std::vector<T> &vec, const std::string &filename) {
   size_t remain = expected;
   size_t total_bytes = expected;
 
-  // NOTE: 仅对超过 1GB 的文件显示进度条，避免小文件加载时的输出干扰
-  bool show_progress = (file_size > LARGE_FILE_THRESHOLD);
+  // NOTE: 仅当enable_progress为true且文件超过1GB时才显示进度条
+  bool show_progress = enable_progress && (file_size > LARGE_FILE_THRESHOLD);
 
   // 提取文件名（不含路径）用于显示
   std::string display_name = filename;
@@ -155,8 +160,8 @@ bool load_vector_chunked(std::vector<T> &vec, const std::string &filename) {
       std::string bar(filled, '#');
       bar += std::string(bar_width - filled, '-');
 
-      // ANSI 黄色输出: \033[33m ... \033[0m
-      printf("\033[33m[LOAD] %s: [%s] %.1f%% (%.2fGB)\033[0m\r",
+      // ANSI 蓝色输出: \033[34m ... \033[0m
+      printf("\033[34m[LOAD]\033[0m %s: [%s] %.1f%% (%.2fGB)\r",
              display_name.c_str(), bar.c_str(), progress,
              (double)file_size / (1024.0 * 1024.0 * 1024.0));
       fflush(stdout);

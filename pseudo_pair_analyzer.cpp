@@ -1841,10 +1841,10 @@ struct PseudoPairSolverWrapper {
     printCuberootLogo();
     init_matrix();
 
-    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET << "Loading Tables..."
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " " << "Loading Tables..."
               << std::endl;
     xcross_analyzer2::initialize_tables();
-    std::cout << ANSI_CYAN << "[INIT] " << ANSI_RESET
+    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
               << "Loading Tables... Done." << std::endl;
   }
 
