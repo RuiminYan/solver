@@ -11,22 +11,22 @@
 
 // NOTE: COUNT_NODE 宏已移至 analyzer_executor.h
 
-// --- Search 4 剪枝统计 ---
-std::atomic<long long> s4_total_calls{0};    // search_4 总调用次数
-std::atomic<long long> s4_aux_checked{0};    // AuxState 检查次数
-std::atomic<long long> s4_aux_pruned{0};     // AuxState 剪枝成功
-std::atomic<long long> s4_prune1_checked{0}; // prune1 检查次数
-std::atomic<long long> s4_prune1_pruned{0};  // prune1 剪枝成功
-std::atomic<long long> s4_edge_checked{0};   // edge_prune1 检查次数
-std::atomic<long long> s4_edge_pruned{0};    // edge_prune1 剪枝成功
-std::atomic<long long> s4_prune2_checked{0}; // prune2 检查次数
-std::atomic<long long> s4_prune2_pruned{0};  // prune2 剪枝成功
-std::atomic<long long> s4_prune3_checked{0}; // prune3 检查次数
-std::atomic<long long> s4_prune3_pruned{0};  // prune3 剪枝成功
-std::atomic<long long> s4_prune4_checked{0}; // prune4 检查次数
-std::atomic<long long> s4_prune4_pruned{0};  // prune4 剪枝成功
-std::atomic<long long> s4_xc4_checked{0};    // prune_xc4 检查次数
-std::atomic<long long> s4_xc4_pruned{0};     // prune_xc4 剪枝成功
+// --- Search 4 剪枝统计 (已禁用以测试纯净版性能) ---
+// std::atomic<long long> s4_total_calls{0};
+// std::atomic<long long> s4_aux_checked{0};
+// std::atomic<long long> s4_aux_pruned{0};
+// std::atomic<long long> s4_prune1_checked{0};
+// std::atomic<long long> s4_prune1_pruned{0};
+// std::atomic<long long> s4_edge_checked{0};
+// std::atomic<long long> s4_edge_pruned{0};
+// std::atomic<long long> s4_prune2_checked{0};
+// std::atomic<long long> s4_prune2_pruned{0};
+// std::atomic<long long> s4_prune3_checked{0};
+// std::atomic<long long> s4_prune3_pruned{0};
+// std::atomic<long long> s4_prune4_checked{0};
+// std::atomic<long long> s4_prune4_pruned{0};
+// std::atomic<long long> s4_xc4_checked{0};
+// std::atomic<long long> s4_xc4_pruned{0};
 
 struct xcross_analyzer2;
 
@@ -1189,7 +1189,7 @@ struct xcross_analyzer2 {
       int cross_state_idx = index1_tmp / 24; // Cross State for AuxState pruning
 
       // [重构] AuxState 剪枝 (Corner3 + Edge3, 优先于其他剪枝!)
-      ++s4_aux_checked;
+      // ++s4_aux_checked; // 统计已禁用
       bool aux_pruned = false;
       AuxState next_aux[MAX_AUX];
       for (int a = 0; a < num_aux; ++a) {
@@ -1224,7 +1224,7 @@ struct xcross_analyzer2 {
         }
       }
       if (aux_pruned) {
-        ++s4_aux_pruned;
+        // ++s4_aux_pruned; // 统计已禁用
         continue;
       }
 
@@ -1244,10 +1244,10 @@ struct xcross_analyzer2 {
                                      : xc4_e3_n;
 
       long long idx_xc4 = (long long)(xc4_cr_n + xc4_cn_n) * 24 + xc4_e_sel;
-      ++s4_xc4_checked;
+      // ++s4_xc4_checked; // 统计已禁用
       int prune_xc4_tmp = get_prune_ptr(prune_xc4, idx_xc4);
       if (prune_xc4_tmp >= depth) {
-        ++s4_xc4_pruned;
+        // ++s4_xc4_pruned; // 统计已禁用
         continue;
       }
 
@@ -1820,21 +1820,9 @@ struct PseudoPairSolverWrapper {
   }
 
   static void print_stats() {
-    std::cerr << "\n=== Search 4 Pruning Statistics ===\n";
-    std::cerr << std::fixed << std::setprecision(2);
-
-    auto print_row = [](const char *name, long long checked, long long pruned) {
-      double rate = checked > 0 ? (100.0 * pruned / checked) : 0.0;
-      std::cerr << std::setw(20) << name << ": " << std::setw(12) << checked
-                << " checked, " << std::setw(12) << pruned << " pruned ("
-                << std::setw(6) << rate << "%)\n";
-    };
-
-    print_row("AuxState(C3+E3)", s4_aux_checked.load(), s4_aux_pruned.load());
-    print_row("prune_xc4 (Conj)", s4_xc4_checked.load(), s4_xc4_pruned.load());
-    // NOTE: edge_prune1, prune1, prune2/3/4 已从 Search 4 移除
-
-    std::cerr << "===================================\n";
+    // --- 统计已禁用以测试纯净版性能 ---
+    // std::cerr << "\n=== Search 4 Pruning Statistics ===\n";
+    // ...
   }
 };
 
