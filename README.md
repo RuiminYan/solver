@@ -322,10 +322,10 @@ id,cross_pair_z0,cross_pair_z1,cross_pair_z2,cross_pair_z3,cross_pair_x1,cross_p
 41001,6,5,7,5,6,6,8,6,8,7,7,7,10,8,10,9,7,8,12,10,12,11,10,11
 
 ### pseudo_pair_analyzer.cpp
-* 测试命令: `cmd /c "echo scramble_20.txt | pseudo_pair_analyzer.exe"`
+* 测试命令: `cmd /c "echo scramble_100.txt | pseudo_pair_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
-* 执行时间: ~9.6s
-* 测试文件: scramble_20.txt
+* 执行时间: ~39s
+* 测试文件: scramble_100.txt
 * 正确结果 (表头 + 前20行数据):
 id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_pair_z2,pseudo_cross_pseudo_pair_z3,pseudo_cross_pseudo_pair_x1,pseudo_cross_pseudo_pair_x3,pseudo_xcross_pseudo_pair_z0,pseudo_xcross_pseudo_pair_z1,pseudo_xcross_pseudo_pair_z2,pseudo_xcross_pseudo_pair_z3,pseudo_xcross_pseudo_pair_x1,pseudo_xcross_pseudo_pair_x3,pseudo_xxcross_pseudo_pair_z0,pseudo_xxcross_pseudo_pair_z1,pseudo_xxcross_pseudo_pair_z2,pseudo_xxcross_pseudo_pair_z3,pseudo_xxcross_pseudo_pair_x1,pseudo_xxcross_pseudo_pair_x3,pseudo_xxxcross_pseudo_pair_z0,pseudo_xxxcross_pseudo_pair_z1,pseudo_xxxcross_pseudo_pair_z2,pseudo_xxxcross_pseudo_pair_z3,pseudo_xxxcross_pseudo_pair_x1,pseudo_xxxcross_pseudo_pair_x3
 22001,6,6,6,4,7,5,7,7,7,6,8,6,9,9,9,8,9,9,10,11,11,11,11,11

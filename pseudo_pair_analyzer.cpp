@@ -11,6 +11,23 @@
 
 // NOTE: COUNT_NODE 宏已移至 analyzer_executor.h
 
+// --- Search 4 剪枝统计 ---
+std::atomic<long long> s4_total_calls{0};    // search_4 总调用次数
+std::atomic<long long> s4_aux_checked{0};    // AuxState 检查次数
+std::atomic<long long> s4_aux_pruned{0};     // AuxState 剪枝成功
+std::atomic<long long> s4_prune1_checked{0}; // prune1 检查次数
+std::atomic<long long> s4_prune1_pruned{0};  // prune1 剪枝成功
+std::atomic<long long> s4_edge_checked{0};   // edge_prune1 检查次数
+std::atomic<long long> s4_edge_pruned{0};    // edge_prune1 剪枝成功
+std::atomic<long long> s4_prune2_checked{0}; // prune2 检查次数
+std::atomic<long long> s4_prune2_pruned{0};  // prune2 剪枝成功
+std::atomic<long long> s4_prune3_checked{0}; // prune3 检查次数
+std::atomic<long long> s4_prune3_pruned{0};  // prune3 剪枝成功
+std::atomic<long long> s4_prune4_checked{0}; // prune4 检查次数
+std::atomic<long long> s4_prune4_pruned{0};  // prune4 剪枝成功
+std::atomic<long long> s4_xc4_checked{0};    // prune_xc4 检查次数
+std::atomic<long long> s4_xc4_pruned{0};     // prune_xc4 剪枝成功
+
 struct xcross_analyzer2;
 
 // 定义静态指针，供类内初始化
@@ -1172,6 +1189,7 @@ struct xcross_analyzer2 {
       int cross_state_idx = index1_tmp / 24; // Cross State for AuxState pruning
 
       // [重构] AuxState 剪枝 (Corner3 + Edge3, 优先于其他剪枝!)
+      ++s4_aux_checked;
       bool aux_pruned = false;
       AuxState next_aux[MAX_AUX];
       for (int a = 0; a < num_aux; ++a) {
@@ -1205,37 +1223,14 @@ struct xcross_analyzer2 {
           break;
         }
       }
-      if (aux_pruned)
+      if (aux_pruned) {
+        ++s4_aux_pruned;
         continue;
+      }
 
       int index2_tmp = p_corner_move_ptr[arg_index2 + i];
-      int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
-      if (prune1_tmp >= depth)
-        continue;
 
-      // [优化] 提前检查 Edge Pruning，通常比多表联合检查更快且过滤率高
-      int index9_tmp = p_edge_move_ptr[arg_index9 + i];
-      int edge_prune1_tmp =
-          get_prune_ptr(edge_prune1, index9_tmp * 24 + index2_tmp);
-      if (edge_prune1_tmp >= depth)
-        continue;
-
-      int index4_tmp = p_corner_move_ptr[arg_index4 + i];
-      int prune2_tmp = get_prune_ptr(prune2, index1_tmp + index4_tmp);
-      if (prune2_tmp >= depth)
-        continue;
-
-      int index6_tmp = p_corner_move_ptr[arg_index6 + i];
-      int prune3_tmp = get_prune_ptr(prune3, index1_tmp + index6_tmp);
-      if (prune3_tmp >= depth)
-        continue;
-
-      int index8_tmp = p_corner_move_ptr[arg_index8 + i];
-      int prune4_tmp = get_prune_ptr(prune4, index1_tmp + index8_tmp);
-      if (prune4_tmp >= depth)
-        continue;
-
-      // [Conj] 用 Conj 移动更新 XC4 状态
+      // [优化顺序] 先检查 prune_xc4 (Conj) - 6.10% 剪枝率
       int mc = conj_moves_flat[i][pslot4];
       int xc4_cr_n = p_multi_move_ptr[xc4_cr + mc];
       int xc4_cn_n = p_corner_move_ptr[xc4_cn + mc];
@@ -1249,17 +1244,43 @@ struct xcross_analyzer2 {
                                      : xc4_e3_n;
 
       long long idx_xc4 = (long long)(xc4_cr_n + xc4_cn_n) * 24 + xc4_e_sel;
+      ++s4_xc4_checked;
       int prune_xc4_tmp = get_prune_ptr(prune_xc4, idx_xc4);
-      if (prune_xc4_tmp >= depth)
+      if (prune_xc4_tmp >= depth) {
+        ++s4_xc4_pruned;
         continue;
+      }
+
+      // 再检查 edge_prune1 (EC) - 0.05%
+      int index9_tmp = p_edge_move_ptr[arg_index9 + i];
+      ++s4_edge_checked;
+      int edge_prune1_tmp =
+          get_prune_ptr(edge_prune1, index9_tmp * 24 + index2_tmp);
+      if (edge_prune1_tmp >= depth) {
+        ++s4_edge_pruned;
+        continue;
+      }
+
+      // 再检查 prune1 (XC slot1)
+      ++s4_prune1_checked;
+      int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
+      if (prune1_tmp >= depth) {
+        ++s4_prune1_pruned;
+        continue;
+      }
+
+      // NOTE: prune2/3/4 (Base 表) 已移除，因为被 AuxState (Corner3) 完全覆盖
+      // (0% 剪枝率) - 但递归调用仍需要这些索引
+      int index4_tmp = p_corner_move_ptr[arg_index4 + i];
+      int index6_tmp = p_corner_move_ptr[arg_index6 + i];
+      int index8_tmp = p_corner_move_ptr[arg_index8 + i];
 
       int index10_tmp = p_edge_move_ptr[arg_index10 + i];
       int index11_tmp = p_edge_move_ptr[arg_index11 + i];
       int index12_tmp = p_edge_move_ptr[arg_index12 + i];
 
       if (depth == 1) {
-        if (prune1_tmp == 0 && prune2_tmp == 0 && prune3_tmp == 0 &&
-            prune4_tmp == 0 && edge_prune1_tmp == 0 && prune_xc4_tmp == 0 &&
+        if (prune1_tmp == 0 && edge_prune1_tmp == 0 && prune_xc4_tmp == 0 &&
             index10_tmp == edge_solved2 && index11_tmp == edge_solved3 &&
             index12_tmp == edge_solved4) {
           return true;
@@ -1809,7 +1830,27 @@ struct PseudoPairSolverWrapper {
     return result;
   }
 
-  static void print_stats() {}
+  static void print_stats() {
+    std::cerr << "\n=== Search 4 Pruning Statistics ===\n";
+    std::cerr << std::fixed << std::setprecision(2);
+
+    auto print_row = [](const char *name, long long checked, long long pruned) {
+      double rate = checked > 0 ? (100.0 * pruned / checked) : 0.0;
+      std::cerr << std::setw(20) << name << ": " << std::setw(12) << checked
+                << " checked, " << std::setw(12) << pruned << " pruned ("
+                << std::setw(6) << rate << "%)\n";
+    };
+
+    print_row("AuxState(C3+E3)", s4_aux_checked.load(), s4_aux_pruned.load());
+    print_row("prune_xc4 (Conj)", s4_xc4_checked.load(), s4_xc4_pruned.load());
+    print_row("edge_prune1 (EC)", s4_edge_checked.load(),
+              s4_edge_pruned.load());
+    print_row("prune1 (XC slot1)", s4_prune1_checked.load(),
+              s4_prune1_pruned.load());
+    // NOTE: prune2/3/4 已移除（被 AuxState 完全覆盖）
+
+    std::cerr << "===================================\n";
+  }
 };
 
 int main() {
