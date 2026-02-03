@@ -134,9 +134,9 @@ inline void printDataPreview(const std::string &filename, int lines = 6) {
 }
 
 // --- 辅助函数：打印汇总表格 ---
-inline void printSummaryTable(int totalTasks, const std::string &outputFile,
-                              long long totalNodes, size_t ramUsage,
-                              double avgNps, double totalDuration) {
+inline void printSummaryTable(int totalTasks, long long totalNodes,
+                              size_t ramUsage, double avgNps,
+                              double totalDuration) {
   std::cout << std::endl;
   std::cout << "+----------------------------------------------------------+"
             << std::endl;
@@ -146,8 +146,6 @@ inline void printSummaryTable(int totalTasks, const std::string &outputFile,
             << std::endl;
   std::cout << "| Total Tasks      : " << std::left << std::setw(37)
             << totalTasks << "|" << std::endl;
-  std::cout << "| Output File      : " << std::left << std::setw(37)
-            << outputFile << "|" << std::endl;
   std::cout << "| Total Nodes      : " << std::left << std::setw(37)
             << formatWithCommas(totalNodes) << "|" << std::endl;
   std::cout << "| Ram Usage        : " << std::left << std::setw(37)
@@ -372,8 +370,7 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
     printDataPreview(outputFilename, 6);
 
     // 汇总表格
-    printSummaryTable(total, outputFilename, totalNodes, ramUsage, avgNps,
-                      totalDuration);
+    printSummaryTable(total, totalNodes, ramUsage, avgNps, totalDuration);
   }
 
   // 4. 最终统计（可选）
