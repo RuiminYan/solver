@@ -178,7 +178,14 @@ bool load_vector_chunked(std::vector<T> &vec, const std::string &filename,
 
 template <typename T>
 bool load_vector(std::vector<T> &vec, const std::string &filename) {
-  return load_vector_chunked(vec, filename);
+  if (load_vector_chunked(vec, filename)) {
+    // 计算并打印表大小
+    size_t size_bytes = vec.size() * sizeof(T);
+    std::cout << TAG_COLOR << "[LOAD]" << ANSI_RESET << " " << filename << " ("
+              << formatFileSize(size_bytes) << ")" << std::endl;
+    return true;
+  }
+  return false;
 }
 
 template <typename T>
