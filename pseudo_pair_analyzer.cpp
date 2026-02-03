@@ -117,13 +117,11 @@ struct xcross_analyzer2 {
       }
     }
 
-    // 2. Load XCross & Pair Prune Tables
+    // 2. Load XCross Prune Tables
     xc_prune_tables.resize(16);
-    ec_prune_tables.resize(16);
     for (int e = 0; e < 4; ++e) {
       for (int c = 0; c < 4; ++c) {
         int idx = e * 4 + c;
-
         std::string fn_xc = "prune_table_pseudo_cross_C" +
                             std::to_string(c + 4) + "_into_slot" +
                             std::to_string(e) + ".bin";
@@ -131,7 +129,14 @@ struct xcross_analyzer2 {
           std::cerr << "Error: Missing table " << fn_xc << std::endl;
           exit(1);
         }
+      }
+    }
 
+    // 3. Load Pair Prune Tables
+    ec_prune_tables.resize(16);
+    for (int e = 0; e < 4; ++e) {
+      for (int c = 0; c < 4; ++c) {
+        int idx = e * 4 + c;
         std::string fn_ec = "prune_table_pseudo_pair_C" +
                             std::to_string(c + 4) + "_E" + std::to_string(e) +
                             ".bin";
@@ -142,7 +147,7 @@ struct xcross_analyzer2 {
       }
     }
 
-    // 3. Load Pseudo Base Prune Tables (XCross Base)
+    // 4. Load Pseudo Base Prune Tables (XCross Base)
     // [Conj优化] 只加载 4 个 C4 基准表 (diff=0,1,2,3 对应 E0,E1,E2,E3)
     pseudo_base_prune_tables.resize(4);
     for (int e = 0; e < 4; ++e) {
@@ -154,7 +159,7 @@ struct xcross_analyzer2 {
       }
     }
 
-    // 4. [重构] Load Edge3 Prune Tables (只加载规范化表)
+    // 5. [重构] Load Edge3 Prune Tables (只加载规范化表)
     mtm.loadEdge3Table();
     p_edge3_move_ptr = mtm.getEdge3TablePtr();
 
@@ -164,7 +169,7 @@ struct xcross_analyzer2 {
       exit(1);
     }
 
-    // 5. [重构] Load Corner3 Prune Tables (只加载规范化表)
+    // 6. [重构] Load Corner3 Prune Tables (只加载规范化表)
     mtm.loadCorner3Table();
     p_corner3_move_ptr = mtm.getCorner3TablePtr();
 
@@ -174,7 +179,7 @@ struct xcross_analyzer2 {
       exit(1);
     }
 
-    // 6. [重构] Load Corner2 Prune Tables (只加载规范化表)
+    // 7. [重构] Load Corner2 Prune Tables (只加载规范化表)
     mtm.loadCorner2Table();
     p_corner2_move_ptr = mtm.getCorner2TablePtr();
 
@@ -189,7 +194,7 @@ struct xcross_analyzer2 {
       exit(1);
     }
 
-    // 7. [重构] Load Edge2 Prune Tables (只加载规范化表)
+    // 8. [重构] Load Edge2 Prune Tables (只加载规范化表)
     mtm.loadEdges2Table();
     p_edge2_move_ptr = mtm.getEdges2TablePtr();
 
@@ -204,7 +209,7 @@ struct xcross_analyzer2 {
       exit(1);
     }
 
-    // 8. [重构] Register aux_registry (只注册规范化表)
+    // 9. [重构] Register aux_registry (只注册规范化表)
     // Corner3 表 (multiplier = 9072) - 只注册规范化表
     aux_registry[{4, 5, 6}] = {prune_c4c5c6.data(), p_corner3_move_ptr, 9072};
     // Edge3 表 (multiplier = 10560) - 只注册规范化表

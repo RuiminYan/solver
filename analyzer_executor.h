@@ -153,9 +153,9 @@ inline void printSummaryTable(int totalTasks, long long totalNodes,
 
   std::ostringstream npsStr;
   npsStr << std::fixed << std::setprecision(2) << avgNps << " M/s";
-  std::cout << "| " << ANSI_MAGENTA << "Avg Performance  : " << std::left
+  std::cout << "|" << ANSI_MAGENTA << " Avg Performance  : " << std::left
             << std::setw(37) << npsStr.str() << ANSI_RESET << "|" << std::endl;
-  std::cout << "| " << ANSI_GREEN << "Total Duration   : " << std::left
+  std::cout << "|" << ANSI_GREEN << " Total Duration   : " << std::left
             << std::setw(37) << formatDuration(totalDuration) << ANSI_RESET
             << "|" << std::endl;
   std::cout << "+----------------------------------------------------------+"
