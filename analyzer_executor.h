@@ -137,6 +137,9 @@ inline void printDataPreview(const std::string &filename, int lines = 6) {
 inline void printSummaryTable(int totalTasks, long long totalNodes,
                               size_t ramUsage, double avgNps,
                               double totalDuration) {
+  // 表格宽度: | + 空格 + 标签(17) + ": " + 值(37) + |
+  // 总宽度 = 1 + 1 + 17 + 2 + 37 + 1 = 59 (但边框是58个-)
+  // 实际: | + 内容(57) + | = 59, 边框 +----...----+ = 60
   std::cout << std::endl;
   std::cout << "+----------------------------------------------------------+"
             << std::endl;
@@ -144,20 +147,33 @@ inline void printSummaryTable(int totalTasks, long long totalNodes,
             << std::endl;
   std::cout << "+----------------------------------------------------------+"
             << std::endl;
-  std::cout << "| Total Tasks      : " << std::left << std::setw(37)
-            << totalTasks << "|" << std::endl;
-  std::cout << "| Total Nodes      : " << std::left << std::setw(37)
-            << formatWithCommas(totalNodes) << "|" << std::endl;
-  std::cout << "| Ram Usage        : " << std::left << std::setw(37)
-            << formatMemory(ramUsage) << "|" << std::endl;
+
+  // 辅助 lambda: 格式化一行 (不带颜色)
+  auto printRow = [](const char *label, const std::string &value) {
+    char buf[80];
+    snprintf(buf, sizeof(buf), "| %-17s: %-38s|", label, value.c_str());
+    std::cout << buf << std::endl;
+  };
+
+  // 辅助 lambda: 格式化一行 (带颜色)
+  auto printColorRow = [](const char *label, const std::string &value,
+                          const char *color) {
+    char content[80];
+    // 格式化内容部分 (不含首尾的 |)
+    snprintf(content, sizeof(content), " %-17s: %-38s", label, value.c_str());
+    // 输出: | + 颜色 + 内容 + 重置 + |
+    std::cout << "|" << color << content << ANSI_RESET << "|" << std::endl;
+  };
+
+  printRow("Total Tasks", std::to_string(totalTasks));
+  printRow("Total Nodes", formatWithCommas(totalNodes));
+  printRow("Ram Usage", formatMemory(ramUsage));
 
   std::ostringstream npsStr;
   npsStr << std::fixed << std::setprecision(2) << avgNps << " M/s";
-  std::cout << "|" << ANSI_MAGENTA << " Avg Performance  : " << std::left
-            << std::setw(37) << npsStr.str() << ANSI_RESET << "|" << std::endl;
-  std::cout << "|" << ANSI_GREEN << " Total Duration   : " << std::left
-            << std::setw(37) << formatDuration(totalDuration) << ANSI_RESET
-            << "|" << std::endl;
+  printColorRow("Avg Performance", npsStr.str(), ANSI_MAGENTA);
+  printColorRow("Total Duration", formatDuration(totalDuration), ANSI_GREEN);
+
   std::cout << "+----------------------------------------------------------+"
             << std::endl;
 }
