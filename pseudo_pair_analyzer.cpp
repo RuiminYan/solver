@@ -92,21 +92,30 @@ struct xcross_analyzer2 {
       return;
 
     auto &mtm = MoveTableManager::getInstance();
-    // Load all standard tables first
+    // NOTE: 必须先加载完所有移动表，再加载剪枝表
+    // 1. 加载所有标准移动表
     if (!mtm.loadAll()) {
       std::cerr << "Error: Move tables missing. Please run table_generator.exe."
                 << std::endl;
       exit(1);
     }
 
-    // Assign pointers
+    // 2. 加载额外移动表 (Edge3, Corner3, Corner2, Edge2)
+    mtm.loadEdge3Table();
+    mtm.loadCorner3Table();
+    mtm.loadCorner2Table();
+    mtm.loadEdges2Table();
+
+    // 3. 获取所有移动表指针
     p_edge_move_ptr = mtm.getEdgeTablePtr();
     p_corner_move_ptr = mtm.getCornerTablePtr();
     p_multi_move_ptr = mtm.getCrossTablePtr();
+    p_edge3_move_ptr = mtm.getEdge3TablePtr();
+    p_corner3_move_ptr = mtm.getCorner3TablePtr();
+    p_corner2_move_ptr = mtm.getCorner2TablePtr();
+    p_edge2_move_ptr = mtm.getEdges2TablePtr();
 
     init_matrix();
-
-    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Loading Pseudo Pair Tables..." << std::endl;
 
     // 1. Load Base Prune Tables (Cross + 1 Corner)
     // [Conj优化] 只加载 C4 基准表，其他通过 Conj 映射
@@ -157,32 +166,21 @@ struct xcross_analyzer2 {
     }
 
     // 4. [重构] Load Edge3 Prune Tables (只加载规范化表)
-    mtm.loadEdge3Table();
-    p_edge3_move_ptr = mtm.getEdge3TablePtr();
-
+    // NOTE: 移动表已在上面统一加载
     if (!load_vector(prune_e0e1e2, "prune_table_pseudo_cross_E0_E1_E2.bin")) {
       std::cerr << "Error: Missing prune_table_pseudo_cross_E0_E1_E2.bin"
                 << std::endl;
       exit(1);
     }
-    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Edge3 Prune Tables loaded (E0E1E2 only)." << std::endl;
 
     // 5. [重构] Load Corner3 Prune Tables (只加载规范化表)
-    mtm.loadCorner3Table();
-    p_corner3_move_ptr = mtm.getCorner3TablePtr();
-
     if (!load_vector(prune_c4c5c6, "prune_table_pseudo_cross_C4_C5_C6.bin")) {
       std::cerr << "Error: Missing prune_table_pseudo_cross_C4_C5_C6.bin"
                 << std::endl;
       exit(1);
     }
-    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Corner3 Prune Tables loaded (C4C5C6 only)."
-              << std::endl;
 
     // 6. [重构] Load Corner2 Prune Tables (只加载规范化表)
-    mtm.loadCorner2Table();
-    p_corner2_move_ptr = mtm.getCorner2TablePtr();
-
     if (!load_vector(prune_c4c5, "prune_table_pseudo_cross_C4_C5.bin")) {
       std::cerr << "Error: Missing prune_table_pseudo_cross_C4_C5.bin"
                 << std::endl;
@@ -193,13 +191,8 @@ struct xcross_analyzer2 {
                 << std::endl;
       exit(1);
     }
-    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Corner2 Prune Tables loaded (C4C5, C4C6 only)."
-              << std::endl;
 
     // 7. [重构] Load Edge2 Prune Tables (只加载规范化表)
-    mtm.loadEdges2Table();
-    p_edge2_move_ptr = mtm.getEdges2TablePtr();
-
     if (!load_vector(prune_e0e1, "prune_table_pseudo_cross_E0_E1.bin")) {
       std::cerr << "Error: Missing prune_table_pseudo_cross_E0_E1.bin"
                 << std::endl;
@@ -210,8 +203,6 @@ struct xcross_analyzer2 {
                 << std::endl;
       exit(1);
     }
-    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Edge2 Prune Tables loaded (E0E1, E0E2 only)."
-              << std::endl;
 
     // 8. [重构] Register aux_registry (只注册规范化表)
     // Corner3 表 (multiplier = 9072) - 只注册规范化表
@@ -225,7 +216,6 @@ struct xcross_analyzer2 {
     aux_registry[{0, 1}] = {prune_e0e1.data(), p_edge2_move_ptr, 528}; // 邻接
     aux_registry[{0, 2}] = {prune_e0e2.data(), p_edge2_move_ptr, 528}; // 对角
 
-    std::cout << "All tables initialized." << std::endl;
     tables_initialized = true;
   }
 
@@ -1841,11 +1831,7 @@ struct PseudoPairSolverWrapper {
     printCuberootLogo();
     init_matrix();
 
-    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " " << "Loading Tables..."
-              << std::endl;
     xcross_analyzer2::initialize_tables();
-    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
-              << "Loading Tables... Done." << std::endl;
   }
 
   static std::string get_csv_header() {

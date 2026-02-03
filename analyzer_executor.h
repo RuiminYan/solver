@@ -85,9 +85,8 @@ inline std::string formatDuration(double seconds) {
   return oss.str();
 }
 
-// --- 辅助函数：获取内存使用量 ---
+// --- 辅助函数：光标控制 ---
 #ifdef _WIN32
-// NOTE: 使用 GlobalMemoryStatusEx 替代 psapi，兼容性更好
 #include <windows.h>
 
 // 辅助函数：设置光标可见性
@@ -98,20 +97,8 @@ inline void setCursorVisibility(bool visible) {
   cursorInfo.bVisible = visible;
   SetConsoleCursorInfo(hConsole, &cursorInfo);
 }
-
-inline size_t getCurrentRSS() {
-  // 使用已提交的内存作为近似值
-  MEMORYSTATUSEX memInfo;
-  memInfo.dwLength = sizeof(MEMORYSTATUSEX);
-  if (GlobalMemoryStatusEx(&memInfo)) {
-    // 返回已使用的物理内存（总量 - 可用量）
-    return memInfo.ullTotalPhys - memInfo.ullAvailPhys;
-  }
-  return 0;
-}
 #else
 inline void setCursorVisibility(bool visible) { (void)visible; }
-inline size_t getCurrentRSS() { return 0; }
 #endif
 
 // --- 辅助函数：格式化内存大小 ---
@@ -193,14 +180,7 @@ inline void printSummaryTable(int totalTasks, const std::string &outputFile,
  *   suffix - 输出文件后缀，如 "_std", "_pair"
  */
 template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
-// NOTE: Windows 10+ 需要启用 ANSI 支持
-#ifdef _WIN32
-  system("color 0A");
-#endif
-
   // 1. 全局初始化
-  std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
-            << "Starting global initialization..." << std::endl;
   SolverT::global_init();
 
   int numThreads = 1;
@@ -209,9 +189,9 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
 #pragma omp single
     numThreads = omp_get_num_threads();
   }
-  std::cout << "       RAM: " << formatMemory(getCurrentRSS())
+  // NOTE: 显示已加载表的总大小，而不是系统内存
+  std::cout << "       RAM: " << formatMemory(g_loadedTableBytes.load())
             << " | Threads: " << numThreads << " | Done." << std::endl;
-  std::cout << "System Ready." << std::endl;
 
   // 2. 主循环
   while (true) {
@@ -357,11 +337,12 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
     long long totalNodes = AnalyzerStats::globalNodes.load();
     double avgNps =
         (totalDuration > 0.001) ? totalNodes / totalDuration / 1000000.0 : 0;
-    size_t ramUsage = getCurrentRSS();
+    // NOTE: 显示已加载表的总大小
+    size_t ramUsage = g_loadedTableBytes.load();
 
     // 输出完成信息
-    std::cout << TAG_COLOR << "[SUCCESS]" << ANSI_RESET << " Processing complete!" << ANSI_RESET
-              << std::endl;
+    std::cout << TAG_COLOR << "[SUCCESS]" << ANSI_RESET
+              << " Processing complete!" << ANSI_RESET << std::endl;
 
     outfile.close();
 

@@ -25,14 +25,9 @@ void MoveTableManager::initialize() {
   generateEdge6Table();
   generateCorner2Table();
   generateCorner3Table();
-
-  std::cout << TAG_COLOR << "[MOVE]" << ANSI_RESET
-            << " All move tables initialized." << std::endl;
 }
 
 bool MoveTableManager::loadAll() {
-  std::cout << TAG_COLOR << "[MOVE]" << ANSI_RESET << " Loading move tables..."
-            << std::endl;
   if (!loadTable(edge_table, "move_table_edge.bin"))
     return false;
   if (!loadTable(corner_table, "move_table_corner.bin"))
@@ -136,8 +131,8 @@ bool MoveTableManager::loadTable(std::vector<int> &table,
   if (load_vector_chunked(table, filename, false)) {
     // 计算并打印表大小
     size_t size_bytes = table.size() * sizeof(int);
-    std::cout << TAG_COLOR << "[LOAD]" << ANSI_RESET << " " << filename << " ("
-              << formatFileSize(size_bytes) << ")" << std::endl;
+    std::cout << TAG_COLOR << "[LOAD]" << ANSI_RESET << " ("
+              << formatFileSize(size_bytes) << ") " << filename << std::endl;
     return true;
   }
   return false;

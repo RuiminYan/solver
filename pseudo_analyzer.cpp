@@ -1,5 +1,5 @@
 /*
- * pseudo_analyzer.cpp - Pseudo X..Cross 分析器 (重构版 - 支持通用辅助剪枝)
+ * pseudo_analyzer.cpp
  */
 
 #include "analyzer_executor.h"
@@ -22,8 +22,6 @@ std::atomic<long long> cnt_aux_pruned{0};
 std::atomic<long long> cnt_huge_pruned{0};
 std::atomic<long long> cnt_base_pruned{0};
 
-// NOTE: COUNT_NODE 宏已移至 analyzer_executor.h
-
 struct SearchContext {
   int current_max_depth = 0;
 };
@@ -43,7 +41,6 @@ const int mirror_edge_map[12] = {1, 0, 3, 2, 4, 7, 6, 5, 8, 11, 10, 9};
 const int mirror_corn_map[8] = {1, 0, 3, 2, 5, 4, 7, 6};
 
 void initMirrorTables() {
-  std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " Generating Mirror Tables..." << std::endl;
 
   // 1. Corner2 Mirror Table
   // Swap C4 <-> C5 roles
@@ -1205,8 +1202,6 @@ struct PseudoSolverWrapper {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
 
-    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
-              << "Loading Move Tables..." << std::endl;
     bool ok = true;
     if (!mtm.loadCrossTable())
       ok = false;
@@ -1227,11 +1222,7 @@ struct PseudoSolverWrapper {
                 << ANSI_RESET << std::endl;
       exit(1);
     }
-    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
-              << "Loading Move Tables... Done." << std::endl;
 
-    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
-              << "Loading Prune Tables..." << std::endl;
     if (!ptm.loadPseudoTables()) {
       std::cerr
           << ANSI_RED
@@ -1239,8 +1230,6 @@ struct PseudoSolverWrapper {
           << ANSI_RESET << std::endl;
       exit(1);
     }
-    std::cout << TAG_COLOR << "[INIT]" << ANSI_RESET << " "
-              << "Loading Prune Tables... Done." << std::endl;
   }
 
   static std::string get_csv_header() {

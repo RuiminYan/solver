@@ -28,9 +28,6 @@ void PruneTableManager::initialize() {
   generateXCrossC4E0Prune();
   generateHugeNeighborPrune();
   generateHugeDiagonalPrune();
-
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " All prune tables initialized." << std::endl;
 }
 
 unsigned char *PruneTableManager::loadTableMMap(const std::string &filename) {
@@ -69,8 +66,6 @@ unsigned char *PruneTableManager::loadTableMMap(const std::string &filename) {
 }
 
 bool PruneTableManager::loadAll() {
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Loading prune tables..." << std::endl;
   if (!loadTable(cross_prune, "prune_table_cross.bin"))
     return false;
   if (!loadTable(cross_c4_prune, "prune_table_cross_C4.bin"))
@@ -90,8 +85,6 @@ bool PruneTableManager::loadAll() {
 }
 
 bool PruneTableManager::loadPseudoTables() {
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Loading pseudo tables only..." << std::endl;
   if (!loadTable(pseudo_cross_prune, "prune_table_pseudo_cross.bin"))
     return false;
   for (int i = 0; i < 4; ++i) {
@@ -581,8 +574,8 @@ bool PruneTableManager::loadTable(std::vector<unsigned char> &table,
   if (load_vector_chunked(table, filename)) {
     // 计算并打印表大小
     size_t size_bytes = table.size() * sizeof(unsigned char);
-    std::cout << TAG_COLOR << "[LOAD]" << ANSI_RESET << " " << filename << " ("
-              << formatFileSize(size_bytes) << ")" << std::endl;
+    std::cout << TAG_COLOR << "[LOAD]" << ANSI_RESET << " ("
+              << formatFileSize(size_bytes) << ") " << filename << std::endl;
     return true;
   }
   return false;

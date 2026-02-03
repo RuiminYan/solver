@@ -63,6 +63,10 @@ extern std::vector<std::vector<int>> base_array;
 extern std::vector<std::vector<int>> base_array2;
 extern thread_local std::vector<int> sorted_buffer;
 
+// 已加载表的总大小（字节）
+// NOTE: 用于显示实际加载的移动表和剪枝表的内存占用
+inline std::atomic<size_t> g_loadedTableBytes{0};
+
 // --- 魔方状态定义 ---
 struct State {
   std::vector<int> cp, co, ep, eo;
@@ -161,17 +165,21 @@ bool load_vector_chunked(std::vector<T> &vec, const std::string &filename,
       bar += std::string(bar_width - filled, '-');
 
       // ANSI 蓝色输出: \033[34m ... \033[0m
-      printf("\033[34m[LOAD]\033[0m %s: [%s] %.1f%% (%.2fGB)\r",
-             display_name.c_str(), bar.c_str(), progress,
-             (double)file_size / (1024.0 * 1024.0 * 1024.0));
+      printf("\033[34m[LOAD]\033[0m (%.2fGB) %s: [%s] %.1f%%\r",
+             (double)file_size / (1024.0 * 1024.0 * 1024.0),
+             display_name.c_str(), bar.c_str(), progress);
       fflush(stdout);
     }
   }
 
-  // 加载完成后换行，避免后续输出覆盖进度条
+  // 加载完成后清除进度条行，由 load_vector 打印最终信息
   if (show_progress) {
-    printf("\n");
+    printf("\r\033[K"); // 回到行首并清除整行
+    fflush(stdout);
   }
+
+  // 累加已加载表的大小
+  g_loadedTableBytes.fetch_add(expected, std::memory_order_relaxed);
 
   return true;
 }
@@ -181,8 +189,15 @@ bool load_vector(std::vector<T> &vec, const std::string &filename) {
   if (load_vector_chunked(vec, filename)) {
     // 计算并打印表大小
     size_t size_bytes = vec.size() * sizeof(T);
-    std::cout << TAG_COLOR << "[LOAD]" << ANSI_RESET << " " << filename << " ("
-              << formatFileSize(size_bytes) << ")" << std::endl;
+    // 提取文件名（不含路径）用于显示
+    std::string display_name = filename;
+    size_t last_slash = filename.find_last_of("/\\");
+    if (last_slash != std::string::npos) {
+      display_name = filename.substr(last_slash + 1);
+    }
+    std::cout << TAG_COLOR << "[LOAD]" << ANSI_RESET << " ("
+              << formatFileSize(size_bytes) << ") " << display_name
+              << std::endl;
     return true;
   }
   return false;
