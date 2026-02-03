@@ -285,16 +285,36 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
         bar += std::string(barWidth - filled, '-');
 
         // ANSI 输出
-        printf("%s[PROG] [%s] %.1f%% (%d/%d)%s\n", ANSI_YELLOW, bar.c_str(),
-               progress, completed, total, ANSI_RESET);
-        printf(
-            "%s       Performance: %.2f M/s | ETA: %s%s\r\033[A", ANSI_MAGENTA,
-            nps,
-            (nps > 0 && completed > 0 && completed < total)
-                ? formatDuration(dt * (total - completed) / completed).c_str()
-                : "...",
-            ANSI_RESET);
-        fflush(stdout);
+        // NOTE: 完全使用 C 风格字符数组，避免任何 std::string 内存分配问题
+        char etaBuf[64];
+        if (nps > 0 && completed > 0 && completed < total) {
+          double etaSec = dt * (total - completed) / completed;
+          if (etaSec < 60) {
+            snprintf(etaBuf, sizeof(etaBuf), "%.1fs", etaSec);
+          } else {
+            int totalSec = static_cast<int>(etaSec);
+            int h = totalSec / 3600;
+            int m = (totalSec % 3600) / 60;
+            int s = totalSec % 60;
+            if (h > 0) {
+              snprintf(etaBuf, sizeof(etaBuf), "%dh %dm %ds", h, m, s);
+            } else {
+              snprintf(etaBuf, sizeof(etaBuf), "%dm %ds", m, s);
+            }
+          }
+        } else {
+          snprintf(etaBuf, sizeof(etaBuf), "...");
+        }
+
+        // ANSI 清除行 + 输出
+        // NOTE: \033[2K 清除整行，避免旧内容残留
+        std::cout << "\033[2K" << ANSI_YELLOW << "[PROG] [" << bar << "] "
+                  << std::fixed << std::setprecision(1) << progress << "% ("
+                  << completed << "/" << total << ")" << ANSI_RESET << "\n";
+        std::cout << "\033[2K" << ANSI_MAGENTA
+                  << "       Performance: " << std::fixed
+                  << std::setprecision(2) << nps << " M/s | ETA: " << etaBuf
+                  << ANSI_RESET << "\r\033[A" << std::flush;
       }
     });
 

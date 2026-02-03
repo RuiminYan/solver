@@ -17,8 +17,6 @@ int main() {
   auto &mtm = MoveTableManager::getInstance();
   auto &ptm = PruneTableManager::getInstance();
 
-  std::cout << ANSI_CYAN << "=== Table Generator ===" << ANSI_RESET
-            << std::endl;
   std::cout << "Checking and generating tables if necessary..." << std::endl;
 
   // 初始化管理器
@@ -28,7 +26,6 @@ int main() {
   ptm.generateAllSequentially();
 
   std::cout << "\nAll tables are ready." << std::endl;
-  std::cout << "You can now run std_analyzer.exe" << std::endl;
 
   return 0;
 }

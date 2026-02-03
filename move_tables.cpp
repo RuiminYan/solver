@@ -48,9 +48,6 @@ bool MoveTableManager::loadAll() {
 }
 
 void MoveTableManager::generateAllSequentially() {
-  std::cout << TAG_COLOR << "[MOVE]" << ANSI_RESET
-            << " Generating tables sequentially to save memory..." << std::endl;
-
   // 1. Edge Table (Base for others)
   if (!loadTable(edge_table, "move_table_edge.bin")) {
     std::cout << TAG_COLOR << "[MOVE]" << ANSI_RESET
@@ -58,7 +55,6 @@ void MoveTableManager::generateAllSequentially() {
     edge_table = create_edge_move_table();
     saveTable(edge_table, "move_table_edge.bin");
   }
-  // Edge table is needed for Cross, Edges2, Edge6. Keep it in memory.
 
   // 2. Corner Table (Base for others)
   if (!loadTable(corner_table, "move_table_corner.bin")) {
@@ -66,7 +62,6 @@ void MoveTableManager::generateAllSequentially() {
     corner_table = create_corner_move_table();
     saveTable(corner_table, "move_table_corner.bin");
   }
-  // Corner table is needed for Corner2. Keep it in memory.
 
   // 3. Cross Table
   if (!loadTable(cross_table, "move_table_cross.bin")) {
@@ -75,7 +70,6 @@ void MoveTableManager::generateAllSequentially() {
         create_multi_move_table2(4, 2, 12, 24 * 22 * 20 * 18, edge_table);
     saveTable(cross_table, "move_table_cross.bin");
   }
-  std::vector<int>().swap(cross_table); // Release
 
   // 4. Edges2 Table
   if (!loadTable(edges_2_table, "move_table_edges_2.bin")) {
@@ -83,7 +77,6 @@ void MoveTableManager::generateAllSequentially() {
     edges_2_table = create_multi_move_table(2, 2, 12, 24 * 22, edge_table);
     saveTable(edges_2_table, "move_table_edges_2.bin");
   }
-  std::vector<int>().swap(edges_2_table); // Release
 
   // 5. Edge3 Table
   if (!loadTable(edge3_table, "move_table_edges_3.bin")) {
@@ -91,7 +84,6 @@ void MoveTableManager::generateAllSequentially() {
     edge3_table = create_multi_move_table(3, 2, 12, 10560, edge_table);
     saveTable(edge3_table, "move_table_edges_3.bin");
   }
-  std::vector<int>().swap(edge3_table); // Release
 
   // 6. Edge6 Table
   if (!loadTable(edge6_table, "move_table_edges_6.bin")) {
@@ -99,7 +91,6 @@ void MoveTableManager::generateAllSequentially() {
     edge6_table = create_multi_move_table(6, 2, 12, 42577920, edge_table);
     saveTable(edge6_table, "move_table_edges_6.bin");
   }
-  std::vector<int>().swap(edge6_table); // Release
 
   // 7. Corner2 Table
   if (!loadTable(corner2_table, "move_table_corners_2.bin")) {
@@ -107,7 +98,6 @@ void MoveTableManager::generateAllSequentially() {
     corner2_table = create_multi_move_table(2, 3, 8, 504, corner_table);
     saveTable(corner2_table, "move_table_corners_2.bin");
   }
-  std::vector<int>().swap(corner2_table); // Release
 
   // 8. Corner3 Table
   if (!loadTable(corner3_table, "move_table_corners_3.bin")) {
@@ -116,13 +106,8 @@ void MoveTableManager::generateAllSequentially() {
     corner3_table = create_multi_move_table(3, 3, 8, 9072, corner_table);
     saveTable(corner3_table, "move_table_corners_3.bin");
   }
-  std::vector<int>().swap(corner3_table); // Release
 
-  // Finally release base tables
-  std::vector<int>().swap(edge_table);
-  std::vector<int>().swap(corner_table);
-
-  std::cout << "[MoveTable] Sequential generation complete." << std::endl;
+  // NOTE: 不释放任何表，保持在内存中供后续 PruneTableManager 使用
 }
 
 bool MoveTableManager::loadTable(std::vector<int> &table,

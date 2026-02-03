@@ -1,0 +1,22 @@
+CompileFlags:
+  # 使用 g++ 的标准库路径,而不是 clang 的
+  Add: 
+    - -std=c++17
+    - -fopenmp
+    # 告诉 clangd 使用 g++ 的系统头文件
+    - --gcc-toolchain=C:/msys64/mingw64
+  # 移除 clang 不兼容的标志
+  Remove:
+    - -W*
+
+Diagnostics:
+  # 禁用与 OpenMP 和标准库相关的警告
+  Suppress:
+    - pp_file_not_found
+    - err_expected_semi_declaration
+    - err_undeclared_var_use
+  ClangTidy:
+    # 禁用可能与 g++ 不兼容的检查
+    Remove:
+      - modernize-*
+      - readability-*

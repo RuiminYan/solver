@@ -324,7 +324,7 @@ id,cross_pair_z0,cross_pair_z1,cross_pair_z2,cross_pair_z3,cross_pair_x1,cross_p
 ### pseudo_pair_analyzer.cpp
 * 测试命令: `cmd /c "echo scramble_20.txt | pseudo_pair_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
-* 执行时间: ~1m 12s
+* 执行时间: ~9.6s
 * 测试文件: scramble_20.txt
 * 正确结果 (表头 + 前20行数据):
 id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_pair_z2,pseudo_cross_pseudo_pair_z3,pseudo_cross_pseudo_pair_x1,pseudo_cross_pseudo_pair_x3,pseudo_xcross_pseudo_pair_z0,pseudo_xcross_pseudo_pair_z1,pseudo_xcross_pseudo_pair_z2,pseudo_xcross_pseudo_pair_z3,pseudo_xcross_pseudo_pair_x1,pseudo_xcross_pseudo_pair_x3,pseudo_xxcross_pseudo_pair_z0,pseudo_xxcross_pseudo_pair_z1,pseudo_xxcross_pseudo_pair_z2,pseudo_xxcross_pseudo_pair_z3,pseudo_xxcross_pseudo_pair_x1,pseudo_xxcross_pseudo_pair_x3,pseudo_xxxcross_pseudo_pair_z0,pseudo_xxxcross_pseudo_pair_z1,pseudo_xxxcross_pseudo_pair_z2,pseudo_xxxcross_pseudo_pair_z3,pseudo_xxxcross_pseudo_pair_x1,pseudo_xxxcross_pseudo_pair_x3
@@ -412,7 +412,7 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 | 表类型 | 文件名模式 | 数量 | 大小 (单文件) | 说明 |
 |---|---|---|---|---|
 | **Cross C4** | `prune_table_cross_C4.bin` | 1 | 4.35 MB | Cross + C4 |
-| **Pair Base** | `prune_table_C4_E0.bin` | 1 | 584 B | Pair C4+E0 |
+| **Pair Base** | `prune_table_pair_C4_E0.bin` | 1 | 584 B | Pair C4+E0 |
 | **XCross Base** | `prune_table_cross_C4_E0.bin` | 1 | 52.2 MB | XCross C4+E0 |
 | **Huge Neighbor** | `prune_table_cross_C4_E0_C5_E1.bin` | 1 | 9.99 GB | 邻近 F2L |
 | **Huge Diagonal** | `prune_table_cross_C4_E0_C6_E2.bin` | 1 | 9.99 GB | 对角 F2L |
@@ -517,3 +517,41 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 | **search_1** | XCross + EO | `Dep EO` | `XC Base` | - |
 | **search_2** | XXCross + EO | `Dep EO` | `XC Base` | `Plus Edge`, `Plus Corn` |
 | **search_3** | XXXCross + EO | `Dep EO` | `XC Base` | `Plus Edge/Corn`, `3 Corner` |
+
+
+## 僵尸表
+这些表会被生成, 但是不会被加载. 仅用于调试.
+
+prune_table_pseudo_cross_C4_C7.bin
+prune_table_pseudo_cross_C5_C6.bin
+prune_table_pseudo_cross_C5_C7.bin
+prune_table_pseudo_cross_C6_C7.bin
+prune_table_pseudo_cross_E0_E3.bin
+prune_table_pseudo_cross_E1_E2.bin
+prune_table_pseudo_cross_E1_E3.bin
+prune_table_pseudo_cross_E2_E3.bin
+
+prune_table_pseudo_cross_C4_C5_C7.bin
+prune_table_pseudo_cross_C4_C6_C7.bin
+prune_table_pseudo_cross_C5_C6_C7.bin
+prune_table_pseudo_cross_E0_E1_E3.bin
+prune_table_pseudo_cross_E0_E2_E3.bin
+prune_table_pseudo_cross_E1_E2_E3.bin
+
+prune_table_pseudo_cross_C5_E0.bin
+prune_table_pseudo_cross_C5_E1.bin
+prune_table_pseudo_cross_C5_E2.bin
+prune_table_pseudo_cross_C5_E3.bin
+prune_table_pseudo_cross_C6_E0.bin
+prune_table_pseudo_cross_C6_E1.bin
+prune_table_pseudo_cross_C6_E2.bin
+prune_table_pseudo_cross_C6_E3.bin
+prune_table_pseudo_cross_C7_E0.bin
+prune_table_pseudo_cross_C7_E1.bin
+prune_table_pseudo_cross_C7_E2.bin
+prune_table_pseudo_cross_C7_E3.bin
+
+prune_table_pseudo_cross_C4_E0.bin
+prune_table_pseudo_cross_C4_E1.bin
+prune_table_pseudo_cross_C4_E2.bin
+prune_table_pseudo_cross_C4_E3.bin

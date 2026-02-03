@@ -70,7 +70,7 @@ bool PruneTableManager::loadAll() {
     return false;
   if (!loadTable(cross_c4_prune, "prune_table_cross_C4.bin"))
     return false;
-  if (!loadTable(pair_c4_e0_prune, "prune_table_C4_E0.bin"))
+  if (!loadTable(pair_c4_e0_prune, "prune_table_pair_C4_E0.bin"))
     return false;
   if (!loadTable(xcross_c4_e0_prune, "prune_table_cross_C4_E0.bin"))
     return false;
@@ -183,8 +183,6 @@ void create_prune_table_pseudo_pair(int index1, int index2, int size1,
                                     const std::string &log_prefix);
 
 void PruneTableManager::generateAllSequentially() {
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating tables sequentially to save memory..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
 
   // 1. Cross Prune (Needs Edges2)
@@ -208,7 +206,7 @@ void PruneTableManager::generateAllSequentially() {
   std::vector<unsigned char>().swap(cross_c4_prune);
 
   // 3. Pair C4 E0 Prune (Needs Edge, Corner)
-  if (!loadTable(pair_c4_e0_prune, "prune_table_C4_E0.bin")) {
+  if (!loadTable(pair_c4_e0_prune, "prune_table_pair_C4_E0.bin")) {
     mtm.loadEdgeTable();
     mtm.loadCornerTable();
     generatePairC4E0Prune();
@@ -501,11 +499,12 @@ void PruneTableManager::generateAllSequentially() {
   std::vector<int> edge_indices = {0, 2, 4, 6};       // E0, E1, E2, E3
   std::vector<unsigned char> temp_table;
 
-  // 22. Pseudo Cross + Corner 变体表 (4 个: C4, C5, C6, C7)
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating Pseudo Cross + Corner variants..." << std::endl;
-  mtm.loadCrossTable();
+  // NOTE: 一次性加载变体表需要的所有小表，避免重复加载
+  mtm.loadEdgeTable();
   mtm.loadCornerTable();
+  mtm.loadCrossTable();
+
+  // 22. Pseudo Cross + Corner 变体表 (4 个: C4, C5, C6, C7)
   for (int c = 0; c < 4; ++c) {
     std::string fn =
         "prune_table_pseudo_cross_C" + std::to_string(c + 4) + ".bin";
@@ -520,8 +519,6 @@ void PruneTableManager::generateAllSequentially() {
   }
 
   // 23. Pseudo XCross 变体表 (16 个: C{4-7}_into_slot{0-3})
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating Pseudo XCross variants..." << std::endl;
   for (int c = 0; c < 4; ++c) {
     for (int e = 0; e < 4; ++e) {
       std::string fn = "prune_table_pseudo_cross_C" + std::to_string(c + 4) +
@@ -538,14 +535,8 @@ void PruneTableManager::generateAllSequentially() {
       std::vector<unsigned char>().swap(temp_table);
     }
   }
-  mtm.releaseCrossTable();
-  mtm.releaseCornerTable();
 
   // 24. Pseudo Pair 变体表 (16 个: C{4-7}_E{0-3})
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating Pseudo Pair variants..." << std::endl;
-  mtm.loadEdgeTable();
-  mtm.loadCornerTable();
   for (int c = 0; c < 4; ++c) {
     for (int e = 0; e < 4; ++e) {
       std::string fn = "prune_table_pseudo_pair_C" + std::to_string(c + 4) +
@@ -562,11 +553,11 @@ void PruneTableManager::generateAllSequentially() {
       std::vector<unsigned char>().swap(temp_table);
     }
   }
+
+  // NOTE: 变体表生成完成后统一释放
   mtm.releaseEdgeTable();
   mtm.releaseCornerTable();
-
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Sequential generation complete." << std::endl;
+  mtm.releaseCrossTable();
 }
 
 bool PruneTableManager::loadTable(std::vector<unsigned char> &table,
@@ -634,7 +625,7 @@ void PruneTableManager::generateCrossC4Prune() {
 }
 
 void PruneTableManager::generatePairC4E0Prune() {
-  if (loadTable(pair_c4_e0_prune, "prune_table_C4_E0.bin"))
+  if (loadTable(pair_c4_e0_prune, "prune_table_pair_C4_E0.bin"))
     return;
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pair c4+e0 prune table..." << std::endl;
@@ -642,7 +633,7 @@ void PruneTableManager::generatePairC4E0Prune() {
   pair_c4_e0_prune.resize(24 * 24, 255);
   create_prune_table_pair_base(0, 12, 24, 24, 8, mtm.getEdgeTable(),
                                mtm.getCornerTable(), pair_c4_e0_prune);
-  saveTable(pair_c4_e0_prune, "prune_table_C4_E0.bin");
+  saveTable(pair_c4_e0_prune, "prune_table_pair_C4_E0.bin");
 }
 
 void PruneTableManager::generateXCrossC4E0Prune() {

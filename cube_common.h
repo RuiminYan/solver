@@ -165,7 +165,7 @@ bool load_vector_chunked(std::vector<T> &vec, const std::string &filename,
       bar += std::string(bar_width - filled, '-');
 
       // ANSI 蓝色输出: \033[34m ... \033[0m
-      printf("\033[34m[LOAD]\033[0m (%.2fGB) %s: [%s] %.1f%%\r",
+      printf("\033[34m[LOAD]\033[0m (%.2f GB) %s: [%s] %.1f%%\r",
              (double)file_size / (1024.0 * 1024.0 * 1024.0),
              display_name.c_str(), bar.c_str(), progress);
       fflush(stdout);
