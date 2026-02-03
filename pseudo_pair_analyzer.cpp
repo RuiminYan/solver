@@ -1251,26 +1251,14 @@ struct xcross_analyzer2 {
         continue;
       }
 
-      // 再检查 edge_prune1 (EC) - 0.05%
+      // NOTE: Search 4 不再使用 edge_prune1 (EC) 和 prune1 (XC slot1) 做剪枝
+      // 但仍需计算它们用于 depth==1 时验证解决状态
       int index9_tmp = p_edge_move_ptr[arg_index9 + i];
-      ++s4_edge_checked;
       int edge_prune1_tmp =
           get_prune_ptr(edge_prune1, index9_tmp * 24 + index2_tmp);
-      if (edge_prune1_tmp >= depth) {
-        ++s4_edge_pruned;
-        continue;
-      }
-
-      // 再检查 prune1 (XC slot1)
-      ++s4_prune1_checked;
       int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
-      if (prune1_tmp >= depth) {
-        ++s4_prune1_pruned;
-        continue;
-      }
 
       // NOTE: prune2/3/4 (Base 表) 已移除，因为被 AuxState (Corner3) 完全覆盖
-      // (0% 剪枝率) - 但递归调用仍需要这些索引
       int index4_tmp = p_corner_move_ptr[arg_index4 + i];
       int index6_tmp = p_corner_move_ptr[arg_index6 + i];
       int index8_tmp = p_corner_move_ptr[arg_index8 + i];
@@ -1280,6 +1268,7 @@ struct xcross_analyzer2 {
       int index12_tmp = p_edge_move_ptr[arg_index12 + i];
 
       if (depth == 1) {
+        // 验证解决状态：所有剪枝值必须为 0，且边块在正确位置
         if (prune1_tmp == 0 && edge_prune1_tmp == 0 && prune_xc4_tmp == 0 &&
             index10_tmp == edge_solved2 && index11_tmp == edge_solved3 &&
             index12_tmp == edge_solved4) {
@@ -1843,11 +1832,7 @@ struct PseudoPairSolverWrapper {
 
     print_row("AuxState(C3+E3)", s4_aux_checked.load(), s4_aux_pruned.load());
     print_row("prune_xc4 (Conj)", s4_xc4_checked.load(), s4_xc4_pruned.load());
-    print_row("edge_prune1 (EC)", s4_edge_checked.load(),
-              s4_edge_pruned.load());
-    print_row("prune1 (XC slot1)", s4_prune1_checked.load(),
-              s4_prune1_pruned.load());
-    // NOTE: prune2/3/4 已移除（被 AuxState 完全覆盖）
+    // NOTE: edge_prune1, prune1, prune2/3/4 已从 Search 4 移除
 
     std::cerr << "===================================\n";
   }
