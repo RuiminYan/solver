@@ -522,6 +522,13 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 ## 僵尸表
 这些表会被生成, 但是不会被加载. 仅用于调试.
 
+prune_table_pseudo_cross_C4_C5_C7.bin
+prune_table_pseudo_cross_C4_C6_C7.bin
+prune_table_pseudo_cross_C5_C6_C7.bin
+prune_table_pseudo_cross_E0_E1_E3.bin
+prune_table_pseudo_cross_E0_E2_E3.bin
+prune_table_pseudo_cross_E1_E2_E3.bin
+
 prune_table_pseudo_cross_C4_C7.bin
 prune_table_pseudo_cross_C5_C6.bin
 prune_table_pseudo_cross_C5_C7.bin
@@ -530,28 +537,3 @@ prune_table_pseudo_cross_E0_E3.bin
 prune_table_pseudo_cross_E1_E2.bin
 prune_table_pseudo_cross_E1_E3.bin
 prune_table_pseudo_cross_E2_E3.bin
-
-prune_table_pseudo_cross_C4_C5_C7.bin
-prune_table_pseudo_cross_C4_C6_C7.bin
-prune_table_pseudo_cross_C5_C6_C7.bin
-prune_table_pseudo_cross_E0_E1_E3.bin
-prune_table_pseudo_cross_E0_E2_E3.bin
-prune_table_pseudo_cross_E1_E2_E3.bin
-
-prune_table_pseudo_cross_C5_E0.bin
-prune_table_pseudo_cross_C5_E1.bin
-prune_table_pseudo_cross_C5_E2.bin
-prune_table_pseudo_cross_C5_E3.bin
-prune_table_pseudo_cross_C6_E0.bin
-prune_table_pseudo_cross_C6_E1.bin
-prune_table_pseudo_cross_C6_E2.bin
-prune_table_pseudo_cross_C6_E3.bin
-prune_table_pseudo_cross_C7_E0.bin
-prune_table_pseudo_cross_C7_E1.bin
-prune_table_pseudo_cross_C7_E2.bin
-prune_table_pseudo_cross_C7_E3.bin
-
-prune_table_pseudo_cross_C4_E0.bin
-prune_table_pseudo_cross_C4_E1.bin
-prune_table_pseudo_cross_C4_E2.bin
-prune_table_pseudo_cross_C4_E3.bin

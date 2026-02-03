@@ -111,21 +111,7 @@ bool PruneTableManager::loadPseudoTables() {
     std::cout << "Warning: prune_table_pseudo_cross_E0_E1_E2.bin not found."
               << std::endl;
   }
-  if (!loadTable(pseudo_cross_E1_E2_E3_prune,
-                 "prune_table_pseudo_cross_E1_E2_E3.bin")) {
-    std::cout << "Warning: prune_table_pseudo_cross_E1_E2_E3.bin not found."
-              << std::endl;
-  }
-  if (!loadTable(pseudo_cross_E0_E2_E3_prune,
-                 "prune_table_pseudo_cross_E0_E2_E3.bin")) {
-    std::cout << "Warning: prune_table_pseudo_cross_E0_E2_E3.bin not found."
-              << std::endl;
-  }
-  if (!loadTable(pseudo_cross_E0_E1_E3_prune,
-                 "prune_table_pseudo_cross_E0_E1_E3.bin")) {
-    std::cout << "Warning: prune_table_pseudo_cross_E0_E1_E3.bin not found."
-              << std::endl;
-  }
+  // NOTE: E1_E2_E3, E0_E2_E3, E0_E1_E3 通过 conj 复用 E0_E1_E2，不再加载
 
   // 对角表加载
   if (!loadTable(pseudo_cross_C4_C6_prune,
@@ -146,21 +132,7 @@ bool PruneTableManager::loadPseudoTables() {
     std::cout << "Warning: prune_table_pseudo_cross_C4_C5_C6.bin not found."
               << std::endl;
   }
-  if (!loadTable(pseudo_cross_C4_C5_C7_prune,
-                 "prune_table_pseudo_cross_C4_C5_C7.bin")) {
-    std::cout << "Warning: prune_table_pseudo_cross_C4_C5_C7.bin not found."
-              << std::endl;
-  }
-  if (!loadTable(pseudo_cross_C4_C6_C7_prune,
-                 "prune_table_pseudo_cross_C4_C6_C7.bin")) {
-    std::cout << "Warning: prune_table_pseudo_cross_C4_C6_C7.bin not found."
-              << std::endl;
-  }
-  if (!loadTable(pseudo_cross_C5_C6_C7_prune,
-                 "prune_table_pseudo_cross_C5_C6_C7.bin")) {
-    std::cout << "Warning: prune_table_pseudo_cross_C5_C6_C7.bin not found."
-              << std::endl;
-  }
+  // NOTE: C4_C5_C7, C4_C6_C7, C5_C6_C7 通过 conj 复用 C4_C5_C6，不再加载
 
   return true;
 }
