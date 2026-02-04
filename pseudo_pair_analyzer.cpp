@@ -1856,25 +1856,28 @@ struct PseudoPairSolverWrapper {
     auto print_line = [](const char *name, long long checked,
                          long long pruned) {
       double pct = (checked > 0) ? (100.0 * pruned / checked) : 0.0;
-      std::cerr << std::setw(15) << std::right << name << ": " << std::setw(15)
+      std::cerr << std::setw(22) << std::right << name << ": " << std::setw(15)
                 << std::right << checked << " checked, " << std::setw(15)
                 << std::right << pruned << " pruned (" << std::fixed
                 << std::setprecision(2) << std::setw(6) << pct << "%)\n";
     };
-    std::cerr << "\n=== Search 1 ===\n";
-    print_line("psc_C_slot", s1_prune1_checked.load(), s1_prune1_pruned.load());
-    print_line("psc_E_E", s1_edge_checked.load(), s1_edge_pruned.load());
+    std::cerr << "\n=== Search 1 Pruning Statistics ===\n";
+    print_line("prune1 (XC)", s1_prune1_checked.load(),
+    s1_prune1_pruned.load()); print_line("edge_prune1 (EC)",
+    s1_edge_checked.load(), s1_edge_pruned.load());
 
-    std::cerr << "\n=== Search 2 ===\n";
-    print_line("psc_C_E", s2_xc2_checked.load(), s2_xc2_pruned.load());
-    print_line("psc_C_slot", s2_prune1_checked.load(), s2_prune1_pruned.load());
-    print_line("psc_E_E", s2_edge_checked.load(), s2_edge_pruned.load());
+    std::cerr << "\n=== Search 2 Pruning Statistics ===\n";
+    print_line("prune_xc2 (Conj)", s2_xc2_checked.load(), s2_xc2_pruned.load());
+    print_line("prune1 (XC slot1)", s2_prune1_checked.load(),
+    s2_prune1_pruned.load()); print_line("edge_prune1 (EC)",
+    s2_edge_checked.load(), s2_edge_pruned.load());
 
-    std::cerr << "\n=== Search 3 ===\n";
-    print_line("psp_C_E", s3_aux_checked.load(), s3_aux_pruned.load());
-    print_line("psc_C_E", s3_xc3_checked.load(), s3_xc3_pruned.load());
-    print_line("psc_C_slot", s3_prune1_checked.load(), s3_prune1_pruned.load());
-    print_line("psc_E_E", s3_edge_checked.load(), s3_edge_pruned.load());
+    std::cerr << "\n=== Search 3 Pruning Statistics ===\n";
+    print_line("AuxState(C2+E2)", s3_aux_checked.load(), s3_aux_pruned.load());
+    print_line("prune_xc3 (Conj)", s3_xc3_checked.load(), s3_xc3_pruned.load());
+    print_line("prune1 (XC slot1)", s3_prune1_checked.load(),
+    s3_prune1_pruned.load()); print_line("edge_prune1 (EC)",
+    s3_edge_checked.load(), s3_edge_pruned.load());
     */
   }
 };
