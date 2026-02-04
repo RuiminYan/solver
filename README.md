@@ -471,11 +471,11 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 
 | 阶段 | 目标 | 剪枝表 | 剪枝率 |
 |---|---|---|---|
-| **(无函数)** | Cross | 无 (Cross 直接查表) | - |
-| **search_1** | XCross | `XCross Base` (C4+E0) | 86.6% |
-| **search_2** | XXCross | `Huge` (Neighbor/Diag) | 单点剪枝 |
-| **search_3** | XXXCross | `Huge×2` | 级联剪枝 |
-| **search_4** | XXXXCross | `Huge×3` | 级联剪枝 |
+| **(无函数)** | Cross | `Cross` (prune_table_cross.bin) | - |
+| **search_1** | XCross | `XCross Base` (prune_table_cross_C4_E0.bin) | 86.6% |
+| **search_2** | XXCross | `Huge Neighbor/Diagonal` | 单点剪枝 |
+| **search_3** | XXXCross | `Huge Neighbor/Diagonal ×2` | 级联剪枝 |
+| **search_4** | XXXXCross | `Huge Neighbor/Diagonal ×3` | 级联剪枝 |
 
 > **优化结论**: 结构已最优，无需调整剪枝顺序。
 
