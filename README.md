@@ -471,6 +471,7 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 
 | 阶段 | 目标 | 剪枝表 | 剪枝率 |
 |---|---|---|---|
+| **(无函数)** | Cross | 无 (Cross 直接查表) | - |
 | **search_1** | XCross | `XCross Base` (C4+E0) | 86.6% |
 | **search_2** | XXCross | `Huge` (Neighbor/Diag) | 单点剪枝 |
 | **search_3** | XXXCross | `Huge×2` | 级联剪枝 |
@@ -479,12 +480,13 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 > **优化结论**: 结构已最优，无需调整剪枝顺序。
 
 ### 2. Pseudo Analyzer
-策略：依赖 Aux 表辅助定位 Pseudo 块。
+策略：依赖 Aux 表辅助定位 Pseudo 块。`search_3` 复用于 XXCross 和 XXXCross。
 
 | 阶段 | 目标 | 核心剪枝表 | 组合/辅助表 |
 |---|---|---|---|
-| **search_1** | Pseudo Cross | `Pseudo Cross` | - |
-| **search_2** | Pseudo XCross | `Pseudo Base` (C4+Ex) | `Aux Edge2` |
+| **search** | Pseudo Cross | `Pseudo Cross` | - |
+| **search_1** | Pseudo XCross | `Pseudo Base` (C4+Ex) | - |
+| **search_2** | Pseudo XXCross | `Pseudo Base` | `Aux Edge2` |
 | **search_3** | Pseudo XXCross / XXXCross | `Pseudo Base` | `Aux Corn2/3`, `Aux Edge2/3` |
 
 ### 3. Pair Analyzer
@@ -518,6 +520,7 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 | **search_1** | XCross + EO | `Dep EO` → `XCross` | 77.0% → 67.1% |
 | **search_2** | XXCross + EO | `Huge` → `Dep EO` → `XCross×2` | 级联剪枝 |
 | **search_3** | XXXCross + EO | `Huge×2` → `Dep EO` → `XCross×3` | 级联剪枝 |
+| **search_4** | XXXXCross + EO | `Huge×3` → `Dep EO` → `XCross×4` | 级联剪枝 |
 
 > **优化结论**: S1 顺序 dep_eo→xcross 已最优。
 
