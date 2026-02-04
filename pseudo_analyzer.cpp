@@ -14,13 +14,32 @@
 #define completed_tasks AnalyzerStats::completedTasks
 #define is_solving AnalyzerStats::isSolving
 
-// --- Profiling Counters ---
-std::atomic<long long> cnt_search2_total{0};
-std::atomic<long long> cnt_search3_total{0};
-std::atomic<long long> cnt_huge_active{0};
-std::atomic<long long> cnt_aux_pruned{0};
-std::atomic<long long> cnt_huge_pruned{0};
-std::atomic<long long> cnt_base_pruned{0};
+// --- 剪枝统计已禁用 (优化完成，顺序已最优) ---
+// Search 1: base 87%
+// Search 2: Aux 88% → Huge 0% → baseA 30% → baseB 27%
+// Search 3: Aux 91% → baseA 6% → baseB 5% → baseC 4%
+/*
+std::atomic<long long> s1_base_checked{0};
+std::atomic<long long> s1_base_pruned{0};
+
+std::atomic<long long> s2_aux_checked{0};
+std::atomic<long long> s2_aux_pruned{0};
+std::atomic<long long> s2_huge_checked{0};
+std::atomic<long long> s2_huge_pruned{0};
+std::atomic<long long> s2_baseA_checked{0};
+std::atomic<long long> s2_baseA_pruned{0};
+std::atomic<long long> s2_baseB_checked{0};
+std::atomic<long long> s2_baseB_pruned{0};
+
+std::atomic<long long> s3_aux_checked{0};
+std::atomic<long long> s3_aux_pruned{0};
+std::atomic<long long> s3_baseA_checked{0};
+std::atomic<long long> s3_baseA_pruned{0};
+std::atomic<long long> s3_baseB_checked{0};
+std::atomic<long long> s3_baseB_pruned{0};
+std::atomic<long long> s3_baseC_checked{0};
+std::atomic<long long> s3_baseC_pruned{0};
+*/
 
 struct SearchContext {
   int current_max_depth = 0;
@@ -670,8 +689,11 @@ struct XCrossSolver {
       int n_i1 = p_multi[i1 + m];
       int n_i2 = p_corn[i2 + m];
       long long idx = (long long)(n_i1 + n_i2) * 24 + p_edge[i3 + m];
-      if (get_prune_ptr(p_prune, idx) >= depth)
+      // ++s1_base_checked;  // NOTE: 统计已禁用
+      if (get_prune_ptr(p_prune, idx) >= depth) {
+        // ++s1_base_pruned;
         continue;
+      }
       if (depth == 1) {
         return true;
       }
@@ -688,10 +710,6 @@ struct XCrossSolver {
                 const unsigned char *p_huge_table,
                 bool mirror_huge, // Added mirror_huge
                 int depth, int prev, int num_aux, const AuxState *aux_states) {
-
-    cnt_search2_total.fetch_add(1, std::memory_order_relaxed);
-    if (p_huge_table)
-      cnt_huge_active.fetch_add(1, std::memory_order_relaxed);
 
     const int *moves = valid_moves_flat[prev];
     const int count = valid_moves_count[prev];
@@ -734,8 +752,9 @@ struct XCrossSolver {
           break;
         }
       }
+      // ++s2_aux_checked;  // NOTE: 统计已禁用
       if (aux_pruned) {
-        cnt_aux_pruned.fetch_add(1, std::memory_order_relaxed);
+        // ++s2_aux_pruned;
         continue;
       }
 
@@ -762,8 +781,9 @@ struct XCrossSolver {
         }
       }
 
+      // ++s2_huge_checked;  // NOTE: 统计已禁用
       if (huge_pruned) {
-        cnt_huge_pruned.fetch_add(1, std::memory_order_relaxed);
+        // ++s2_huge_pruned;
         continue;
       }
 
@@ -775,8 +795,9 @@ struct XCrossSolver {
 
       if (!p_huge_table) {
         long long idx1 = (long long)(n_i1a + n_i2a) * 24 + n_i3a;
+        // ++s2_baseA_checked;  // NOTE: 统计已禁用
         if (get_prune_ptr(p1, idx1) >= depth) {
-          cnt_base_pruned.fetch_add(1, std::memory_order_relaxed);
+          // ++s2_baseA_pruned;
           continue;
         }
       }
@@ -787,8 +808,11 @@ struct XCrossSolver {
       int n_i1b = p_multi[i1b + m_b];
       int n_i2b = p_corn[i2b + m_b];
       long long idx2 = (long long)(n_i1b + n_i2b) * 24 + p_edge[i3b + m_b];
-      if (get_prune_ptr(p2, idx2) >= depth)
+      // ++s2_baseB_checked;  // NOTE: 统计已禁用
+      if (get_prune_ptr(p2, idx2) >= depth) {
+        // ++s2_baseB_pruned;
         continue;
+      }
 
       if (depth == 1) {
         return true;
@@ -806,8 +830,6 @@ struct XCrossSolver {
                 const int *tr_b, const unsigned char *p2, int i1c, int i2c,
                 int i3c, const int *tr_c, const unsigned char *p3, int depth,
                 int prev, int num_aux, const AuxState *aux_states) {
-
-    cnt_search3_total.fetch_add(1, std::memory_order_relaxed);
 
     const int *moves = valid_moves_flat[prev];
     const int count = valid_moves_count[prev];
@@ -850,28 +872,39 @@ struct XCrossSolver {
           break;
         }
       }
-      if (aux_pruned)
+      // ++s3_aux_checked;  // NOTE: 统计已禁用
+      if (aux_pruned) {
+        // ++s3_aux_pruned;
         continue;
+      }
 
-      // 2. Base Pruning
       int n_i2a = p_corn[i2a + m];
       long long idx1 = (long long)(n_i1a + n_i2a) * 24 + p_edge[i3a + m];
-      if (get_prune_ptr(p1, idx1) >= depth)
+      // ++s3_baseA_checked;  // NOTE: 统计已禁用
+      if (get_prune_ptr(p1, idx1) >= depth) {
+        // ++s3_baseA_pruned;
         continue;
+      }
 
       int m_b = tr_b[m];
       int n_i1b = p_multi[i1b + m_b];
       int n_i2b = p_corn[i2b + m_b];
       long long idx2 = (long long)(n_i1b + n_i2b) * 24 + p_edge[i3b + m_b];
-      if (get_prune_ptr(p2, idx2) >= depth)
+      // ++s3_baseB_checked;  // NOTE: 统计已禁用
+      if (get_prune_ptr(p2, idx2) >= depth) {
+        // ++s3_baseB_pruned;
         continue;
+      }
 
       int m_c = tr_c[m];
       int n_i1c = p_multi[i1c + m_c];
       int n_i2c = p_corn[i2c + m_c];
       long long idx3 = (long long)(n_i1c + n_i2c) * 24 + p_edge[i3c + m_c];
-      if (get_prune_ptr(p3, idx3) >= depth)
+      // ++s3_baseC_checked;  // NOTE: 统计已禁用
+      if (get_prune_ptr(p3, idx3) >= depth) {
+        // ++s3_baseC_pruned;
         continue;
+      }
 
       if (depth == 1) {
         return true;
@@ -1258,23 +1291,10 @@ struct PseudoSolverWrapper {
   }
 
   static void print_stats() {
-    // Profiling stats (optional, can be removed)
-    long long s2_tot = cnt_search2_total.load();
-    long long s3_tot = cnt_search3_total.load();
-    long long h_act = cnt_huge_active.load();
-    long long aux_p = cnt_aux_pruned.load();
-    long long huge_p = cnt_huge_pruned.load();
-    long long base_p = cnt_base_pruned.load();
-
-    printf("--- Profiling Stats ---\n");
-    printf("Search2 Calls: %lld\n", s2_tot);
-    printf("Search3 Calls: %lld\n", s3_tot);
-    printf("Huge Active:   %lld (%.1f%%)\n", h_act,
-           s2_tot > 0 ? (100.0 * h_act / s2_tot) : 0);
-    printf("Aux Pruned:    %lld\n", aux_p);
-    printf("Huge Pruned:   %lld\n", huge_p);
-    printf("Base Pruned:   %lld\n", base_p);
-    printf("-----------------------\n");
+    // NOTE: 剪枝统计已禁用 (优化完成，顺序已最优)
+    // Search 1: base 87%
+    // Search 2: Aux 88% → Huge 0% → baseA 30% → baseB 27%
+    // Search 3: Aux 91% → baseA 6% → baseB 5% → baseC 4%
   }
 };
 
