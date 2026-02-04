@@ -11,49 +11,34 @@
 
 // NOTE: COUNT_NODE 宏已移至 analyzer_executor.h
 
-// --- Search 1 剪枝统计 (已优化完成，注释以提升性能) ---
-// std::atomic<long long> s1_prune1_checked{0};
-// std::atomic<long long> s1_prune1_pruned{0};
-// std::atomic<long long> s1_edge_checked{0};
-// std::atomic<long long> s1_edge_pruned{0};
+// --- 剪枝统计 (通过 prune_stats.h 统一开关控制) ---
+// 优化完成后的结果保留在注释中供参考
+#include "prune_stats.h"
 
-// --- Search 2 剪枝统计 (已优化完成，注释以提升性能) ---
-// std::atomic<long long> s2_prune1_checked{0};
-// std::atomic<long long> s2_prune1_pruned{0};
-// std::atomic<long long> s2_edge_checked{0};
-// std::atomic<long long> s2_edge_pruned{0};
+// Search 1: XC 表 + EC 表
+STAT_DECL(s1_prune1); // S1: XC 剪枝表
+STAT_DECL(s1_edge);   // S1: EC 边剪枝表
+
+// Search 2: Base + XC
+STAT_DECL(s2_prune1); // S2: Base 剪枝表
+STAT_DECL(s2_edge);   // S2: Edge 剪枝表
 // NOTE: s2_prune2 已移除 (剪枝率 0%)
-// std::atomic<long long> s2_prune2_checked{0};
-// std::atomic<long long> s2_prune2_pruned{0};
-// std::atomic<long long> s2_xc2_checked{0};
-// std::atomic<long long> s2_xc2_pruned{0};
+STAT_DECL(s2_xc2); // S2: XC2 剪枝表
 
-// --- Search 3 剪枝统计 (已优化完成，注释以提升性能) ---
-// std::atomic<long long> s3_aux_checked{0};
-// std::atomic<long long> s3_aux_pruned{0};
-// std::atomic<long long> s3_prune1_checked{0};
-// std::atomic<long long> s3_prune1_pruned{0};
-// std::atomic<long long> s3_edge_checked{0};
-// std::atomic<long long> s3_edge_pruned{0};
-// std::atomic<long long> s3_xc3_checked{0};
-// std::atomic<long long> s3_xc3_pruned{0};
+// Search 3: Aux + XC
+STAT_DECL(s3_aux);    // S3: 辅助表 (Corner2/Edge2)
+STAT_DECL(s3_prune1); // S3: 基础剪枝表
+STAT_DECL(s3_edge);   // S3: Edge 剪枝表
+STAT_DECL(s3_xc3);    // S3: XC3 剪枝表
 
-// --- Search 4 剪枝统计 (已禁用以测试纯净版性能) ---
-// std::atomic<long long> s4_total_calls{0};
-// std::atomic<long long> s4_aux_checked{0};
-// std::atomic<long long> s4_aux_pruned{0};
-// std::atomic<long long> s4_prune1_checked{0};
-// std::atomic<long long> s4_prune1_pruned{0};
-// std::atomic<long long> s4_edge_checked{0};
-// std::atomic<long long> s4_edge_pruned{0};
-// std::atomic<long long> s4_prune2_checked{0};
-// std::atomic<long long> s4_prune2_pruned{0};
-// std::atomic<long long> s4_prune3_checked{0};
-// std::atomic<long long> s4_prune3_pruned{0};
-// std::atomic<long long> s4_prune4_checked{0};
-// std::atomic<long long> s4_prune4_pruned{0};
-// std::atomic<long long> s4_xc4_checked{0};
-// std::atomic<long long> s4_xc4_pruned{0};
+// Search 4: Aux + Multi
+STAT_DECL(s4_aux);    // S4: 辅助表 (Corner3/Edge3)
+STAT_DECL(s4_prune1); // S4: 基础剪枝表 1
+STAT_DECL(s4_edge);   // S4: Edge 剪枝表
+STAT_DECL(s4_prune2); // S4: 基础剪枝表 2
+STAT_DECL(s4_prune3); // S4: 基础剪枝表 3
+STAT_DECL(s4_prune4); // S4: 基础剪枝表 4
+STAT_DECL(s4_xc4);    // S4: XC4 剪枝表
 
 struct xcross_analyzer2;
 

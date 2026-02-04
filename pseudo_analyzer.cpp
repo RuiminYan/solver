@@ -14,32 +14,24 @@
 #define completed_tasks AnalyzerStats::completedTasks
 #define is_solving AnalyzerStats::isSolving
 
-// --- 剪枝统计已禁用 (优化完成，顺序已最优) ---
+// --- 剪枝统计 (通过 prune_stats.h 统一开关控制) ---
+// 优化完成后的最优顺序:
 // Search 1: base 87%
 // Search 2: Aux 88% → Huge 0% → baseA 30% → baseB 27%
 // Search 3: Aux 91% → baseA 6% → baseB 5% → baseC 4%
-/*
-std::atomic<long long> s1_base_checked{0};
-std::atomic<long long> s1_base_pruned{0};
+#include "prune_stats.h"
 
-std::atomic<long long> s2_aux_checked{0};
-std::atomic<long long> s2_aux_pruned{0};
-std::atomic<long long> s2_huge_checked{0};
-std::atomic<long long> s2_huge_pruned{0};
-std::atomic<long long> s2_baseA_checked{0};
-std::atomic<long long> s2_baseA_pruned{0};
-std::atomic<long long> s2_baseB_checked{0};
-std::atomic<long long> s2_baseB_pruned{0};
+STAT_DECL(s1_base); // Search 1: 基础剪枝表
 
-std::atomic<long long> s3_aux_checked{0};
-std::atomic<long long> s3_aux_pruned{0};
-std::atomic<long long> s3_baseA_checked{0};
-std::atomic<long long> s3_baseA_pruned{0};
-std::atomic<long long> s3_baseB_checked{0};
-std::atomic<long long> s3_baseB_pruned{0};
-std::atomic<long long> s3_baseC_checked{0};
-std::atomic<long long> s3_baseC_pruned{0};
-*/
+STAT_DECL(s2_aux);   // Search 2: 辅助表 (Corner2/Edge2)
+STAT_DECL(s2_huge);  // Search 2: Huge 表
+STAT_DECL(s2_baseA); // Search 2: 视角 A 基础表
+STAT_DECL(s2_baseB); // Search 2: 视角 B 基础表
+
+STAT_DECL(s3_aux);   // Search 3: 辅助表 (Corner3/Edge3)
+STAT_DECL(s3_baseA); // Search 3: 视角 A 基础表
+STAT_DECL(s3_baseB); // Search 3: 视角 B 基础表
+STAT_DECL(s3_baseC); // Search 3: 视角 C 基础表
 
 struct SearchContext {
   int current_max_depth = 0;
