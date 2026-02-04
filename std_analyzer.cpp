@@ -15,6 +15,34 @@
 
 // NOTE: COUNT_NODE 宏已移至 analyzer_executor.h
 
+// --- 剪枝统计 (通过 prune_stats.h 统一开关控制) ---
+#include "prune_stats.h"
+
+// Search 1: Cross+XCross
+STAT_DECL(s1_cross);  // S1: Cross C4 剪枝表
+STAT_DECL(s1_xcross); // S1: XCross 剪枝表
+
+// Search 2: XCross×2 + Huge
+STAT_DECL(s2_xcross1); // S2: XCross 1 剪枝表
+STAT_DECL(s2_xcross2); // S2: XCross 2 剪枝表
+STAT_DECL(s2_huge);    // S2: Huge 表
+
+// Search 3: Huge×2 + XCross×3
+STAT_DECL(s3_huge1);   // S3: Huge 表 1
+STAT_DECL(s3_huge2);   // S3: Huge 表 2
+STAT_DECL(s3_xcross1); // S3: XCross 1 剪枝表
+STAT_DECL(s3_xcross2); // S3: XCross 2 剪枝表
+STAT_DECL(s3_xcross3); // S3: XCross 3 剪枝表
+
+// Search 4: Huge×3 + XCross×4
+STAT_DECL(s4_huge1);   // S4: Huge 表 1
+STAT_DECL(s4_huge2);   // S4: Huge 表 2
+STAT_DECL(s4_huge3);   // S4: Huge 表 3
+STAT_DECL(s4_xcross1); // S4: XCross 1 剪枝表
+STAT_DECL(s4_xcross2); // S4: XCross 2 剪枝表
+STAT_DECL(s4_xcross3); // S4: XCross 3 剪枝表
+STAT_DECL(s4_xcross4); // S4: XCross 4 剪枝表
+
 // --- 通用结构 ---
 struct SearchContext {
   std::vector<int> sol_len;
@@ -234,8 +262,11 @@ struct XCrossSolver {
       int n_i2 = p_corn[i2 + m1];
       int n_i3 = p_edge[i3 + m1];
       long long idx = (long long)(n_i1 + n_i2) * 24 + n_i3;
-      if (get_prune_ptr(p_prune_base, idx) >= depth)
+      S1_CHECK(s1_xcross);
+      if (get_prune_ptr(p_prune_base, idx) >= depth) {
+        S1_HIT(s1_xcross);
         continue;
+      }
       if (depth == 1) {
         ctx.sol_len.push_back(ctx.current_max_depth);
         return true;
@@ -972,7 +1003,35 @@ struct StdSolver {
   }
 
   // 可选：最终统计
-  static void print_stats() {}
+  static void print_stats() {
+#if ENABLE_PRUNE_STATS
+    printf("\n=== Std Analyzer Pruning Stats ===\n");
+#if ENABLE_STATS_S1
+    PRINT_STAT(s1_xcross);
+#endif
+#if ENABLE_STATS_S2
+    PRINT_STAT(s2_xcross1);
+    PRINT_STAT(s2_xcross2);
+    PRINT_STAT(s2_huge);
+#endif
+#if ENABLE_STATS_S3
+    PRINT_STAT(s3_huge1);
+    PRINT_STAT(s3_huge2);
+    PRINT_STAT(s3_xcross1);
+    PRINT_STAT(s3_xcross2);
+    PRINT_STAT(s3_xcross3);
+#endif
+#if ENABLE_STATS_S4
+    PRINT_STAT(s4_huge1);
+    PRINT_STAT(s4_huge2);
+    PRINT_STAT(s4_huge3);
+    PRINT_STAT(s4_xcross1);
+    PRINT_STAT(s4_xcross2);
+    PRINT_STAT(s4_xcross3);
+    PRINT_STAT(s4_xcross4);
+#endif
+#endif
+  }
 };
 
 int main() {
