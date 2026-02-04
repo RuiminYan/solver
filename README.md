@@ -494,12 +494,12 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 
 | 阶段 | 目标 | 剪枝顺序 (按效率) | 剪枝率 |
 |---|---|---|---|
-| **search_1** | Cross + Pair | `Cross C4` → `Pair` | 89.9% → 24.2% |
-| **search_2** | XCross + Pair | `XCross` → `Cross C4` → `Pair` | 89.9% → 15.9% → 11.5% |
-| **search_3** | XXCross + Pair | `Huge` → `Cross` → `Pair` | 91.0% → 9.3% → 7.6% |
-| **search_4** | XXXCross + Pair | `Huge×3` → `Pair` → `Cross` | 75%→53%→35%→1%→0.9% |
+| **search_1** | Cross + Pair | `Cross C4` → `Pair Base` | 89.9% → 24.2% |
+| **search_2** | XCross + Pair | `XCross Base` → `Cross C4` → `Pair Base` | 89.9% → 15.9% → 11.5% |
+| **search_3** | XXCross + Pair | `Huge Neighbor/Diagonal` → `Cross C4` → `Pair Base` | 91.0% → 9.3% → 7.6% |
+| **search_4** | XXXCross + Pair | `Huge Neighbor/Diagonal ×3` → `Pair Base` → `Cross C4` | 75%→53%→35%→1%→0.9% |
 
-> **优化**: S2 重排 xcross→cross→pair；S3/S4 移除 0% 的 xcross 检查。
+> **优化**: S2 重排 XCross→Cross→Pair；S3/S4 移除 0% 的 XCross 检查。
 
 ### 4. Pseudo Pair Analyzer
 核心策略：**Base/XC 表负责整体进度，EC 表负责 Pair 配对，Aux 表辅助归位。**
