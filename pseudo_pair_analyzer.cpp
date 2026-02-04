@@ -1850,35 +1850,11 @@ struct PseudoPairSolverWrapper {
   }
 
   static void print_stats() {
-    // NOTE: 剪枝统计已禁用 (优化完成后注释以提升性能)
-    // 如需重新启用，取消注释以下代码和对应的统计变量
-    /*
-    auto print_line = [](const char *name, long long checked,
-                         long long pruned) {
-      double pct = (checked > 0) ? (100.0 * pruned / checked) : 0.0;
-      std::cerr << std::setw(22) << std::right << name << ": " << std::setw(15)
-                << std::right << checked << " checked, " << std::setw(15)
-                << std::right << pruned << " pruned (" << std::fixed
-                << std::setprecision(2) << std::setw(6) << pct << "%)\n";
-    };
-    std::cerr << "\n=== Search 1 Pruning Statistics ===\n";
-    print_line("prune1 (XC)", s1_prune1_checked.load(),
-    s1_prune1_pruned.load()); print_line("edge_prune1 (EC)",
-    s1_edge_checked.load(), s1_edge_pruned.load());
-
-    std::cerr << "\n=== Search 2 Pruning Statistics ===\n";
-    print_line("prune_xc2 (Conj)", s2_xc2_checked.load(), s2_xc2_pruned.load());
-    print_line("prune1 (XC slot1)", s2_prune1_checked.load(),
-    s2_prune1_pruned.load()); print_line("edge_prune1 (EC)",
-    s2_edge_checked.load(), s2_edge_pruned.load());
-
-    std::cerr << "\n=== Search 3 Pruning Statistics ===\n";
-    print_line("AuxState(C2+E2)", s3_aux_checked.load(), s3_aux_pruned.load());
-    print_line("prune_xc3 (Conj)", s3_xc3_checked.load(), s3_xc3_pruned.load());
-    print_line("prune1 (XC slot1)", s3_prune1_checked.load(),
-    s3_prune1_pruned.load()); print_line("edge_prune1 (EC)",
-    s3_edge_checked.load(), s3_edge_pruned.load());
-    */
+    // NOTE: 所有剪枝统计已禁用 (优化完成)
+    // 如需重新启用统计，请取消注释对应的统计变量、计数代码和 print_line 调用
+    // Search 1: s1_prune1, s1_edge
+    // Search 2: s2_xc2, s2_prune1, s2_edge (prune2 已移除，剪枝率 0%)
+    // Search 3: s3_aux, s3_xc3, s3_prune1, s3_edge
   }
 };
 
