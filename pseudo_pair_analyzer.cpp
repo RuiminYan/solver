@@ -935,27 +935,7 @@ struct xcross_analyzer2 {
         continue;
       }
 
-      // 3. Base Pruning 继续原有逻辑
-      int index2_tmp = p_corner_move_ptr[arg_index2 + i];
-      int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
-      ++s3_prune1_checked;
-      if (prune1_tmp >= depth) {
-        ++s3_prune1_pruned;
-        continue;
-      }
-
-      int index7_tmp = p_edge_move_ptr[arg_index7 + i];
-      int edge_prune1_tmp =
-          get_prune_ptr(edge_prune1, index7_tmp * 24 + index2_tmp);
-      ++s3_edge_checked;
-      if (edge_prune1_tmp >= depth) {
-        ++s3_edge_pruned;
-        continue;
-      }
-
-      // NOTE: prune2/prune3 已移除 (剪枝率 0%)
-
-      // [Conj] 用 Conj 移动更新 XC3 状态
+      // 2. [Conj] prune_xc3 剪枝 (26.16% 剪枝率，优先级高于 prune1)
       int mc = conj_moves_flat[i][pslot3];
       int xc3_cr_n = p_multi_move_ptr[xc3_cr + mc];
       int xc3_cn_n = p_corner_move_ptr[xc3_cn + mc];
@@ -973,6 +953,25 @@ struct xcross_analyzer2 {
       ++s3_xc3_checked;
       if (prune_xc3_tmp >= depth) {
         ++s3_xc3_pruned;
+        continue;
+      }
+
+      // 3. prune1 剪枝 (1.12% 剪枝率)
+      int index2_tmp = p_corner_move_ptr[arg_index2 + i];
+      int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
+      ++s3_prune1_checked;
+      if (prune1_tmp >= depth) {
+        ++s3_prune1_pruned;
+        continue;
+      }
+
+      // 4. edge_prune1 剪枝 (0.43% 剪枝率)
+      int index7_tmp = p_edge_move_ptr[arg_index7 + i];
+      int edge_prune1_tmp =
+          get_prune_ptr(edge_prune1, index7_tmp * 24 + index2_tmp);
+      ++s3_edge_checked;
+      if (edge_prune1_tmp >= depth) {
+        ++s3_edge_pruned;
         continue;
       }
 
@@ -1829,11 +1828,11 @@ struct PseudoPairSolverWrapper {
                 << std::setprecision(2) << std::setw(6) << pct << "%)\n";
     };
     print_line("AuxState(C2+E2)", s3_aux_checked.load(), s3_aux_pruned.load());
+    print_line("prune_xc3 (Conj)", s3_xc3_checked.load(), s3_xc3_pruned.load());
     print_line("prune1 (XC slot1)", s3_prune1_checked.load(),
                s3_prune1_pruned.load());
     print_line("edge_prune1 (EC)", s3_edge_checked.load(),
                s3_edge_pruned.load());
-    print_line("prune_xc3 (Conj)", s3_xc3_checked.load(), s3_xc3_pruned.load());
   }
 };
 
