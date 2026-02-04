@@ -472,9 +472,9 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 | 阶段 | 目标 | 剪枝表 | 剪枝率 |
 |---|---|---|---|
 | **search_1** | XCross | `XCross Base` (C4+E0) | 86.6% |
-| **search_2_optimized** | XXCross | `Huge` (Neighbor/Diag) | 单点剪枝 |
-| **search_3_optimized** | XXXCross | `Huge×2` | 级联剪枝 |
-| **search_4_optimized** | XXXXCross | `Huge×3` | 级联剪枝 |
+| **search_2** | XXCross | `Huge` (Neighbor/Diag) | 单点剪枝 |
+| **search_3** | XXXCross | `Huge×2` | 级联剪枝 |
+| **search_4** | XXXXCross | `Huge×3` | 级联剪枝 |
 
 > **优化结论**: 结构已最优，无需调整剪枝顺序。
 
@@ -504,10 +504,10 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 
 | 阶段 | 目标 | 主要剪枝表 | 辅助表 |
 |---|---|---|---|
-| **depth_limited_search_1** | Pseudo Cross + Pair | `XC[slot]` | `EC[pair]` |
-| **depth_limited_search_2** | Pseudo XCross + Pair | `PseudoBase`+`XC` | `EC`, `Base[C4]` |
-| **depth_limited_search_3** | Pseudo XXCross + Pair | `XC` | `Aux C2/E2`, `Base`, `EC` |
-| **depth_limited_search_4** | Pseudo XXXCross + Pair | `XC` | `Aux C3/E3`, `Base`, `EC` |
+| **search_1** | Pseudo Cross + Pair | `XC[slot]` | `EC[pair]` |
+| **search_2** | Pseudo XCross + Pair | `PseudoBase`+`XC` | `EC`, `Base[C4]` |
+| **search_3** | Pseudo XXCross + Pair | `XC` | `Aux C2/E2`, `Base`, `EC` |
+| **search_4** | Pseudo XXXCross + Pair | `XC` | `Aux C3/E3`, `Base`, `EC` |
 
 ### 5. EO Cross Analyzer
 策略：级联剪枝 (Cascaded Pruning)，先检查 Dep+EO，再检查 XCross。

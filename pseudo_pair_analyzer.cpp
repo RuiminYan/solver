@@ -523,7 +523,7 @@ struct xcross_analyzer2 {
     return count;
   }
 
-  bool depth_limited_search_1(int arg_index1, int arg_index2, int arg_index3,
+  bool search_1(int arg_index1, int arg_index2, int arg_index3,
                               int depth, int prev, const unsigned char *prune1,
                               const unsigned char *edge_prune) {
     const int *moves = valid_moves_flat[prev];
@@ -556,7 +556,7 @@ struct xcross_analyzer2 {
         if (prune1_tmp == 0 && edge_prune1_tmp == 0) {
           return true;
         }
-      } else if (depth_limited_search_1(index1_tmp, index2_tmp * 18,
+      } else if (search_1(index1_tmp, index2_tmp * 18,
                                         index3_tmp * 18, depth - 1, i, prune1,
                                         edge_prune))
         return true;
@@ -640,7 +640,7 @@ struct xcross_analyzer2 {
         int found = 999;
         for (int d = std::max(prune1_tmp, edge_prune1_tmp); d <= max_length;
              d++) {
-          if (depth_limited_search_1(index1, index2, index3, d, 18, p_prune1,
+          if (search_1(index1, index2, index3, d, 18, p_prune1,
                                      p_edge_prune)) {
             found = d;
             break;
@@ -671,7 +671,7 @@ struct xcross_analyzer2 {
 
   // [Conj优化] XC2 使用 Conj 状态追踪
   // 新增参数: xc2_cross, xc2_corner, xc2_e0-e3 (Conj 状态), diff2 (边选择)
-  bool depth_limited_search_2(int arg_index1, int arg_index2, int arg_index4,
+  bool search_2(int arg_index1, int arg_index2, int arg_index4,
                               int arg_index5, int arg_index6, int depth,
                               int prev, const unsigned char *prune1,
                               const unsigned char *prune2,
@@ -737,7 +737,7 @@ struct xcross_analyzer2 {
             index6_tmp == edge_solved2) {
           return true;
         }
-      } else if (depth_limited_search_2(
+      } else if (search_2(
                      index1_tmp, index2_tmp * 18, index4_tmp * 18,
                      index5_tmp * 18, index6_tmp * 18, depth - 1, i, prune1,
                      prune2, edge_prune1, prune_xc2, xc2_cr_n, xc2_cn_n * 18,
@@ -849,7 +849,7 @@ struct xcross_analyzer2 {
         int start_depth =
             std::max({prune1_tmp, prune2_tmp, edge_prune1_tmp, prune_xc2_tmp});
         for (int d = start_depth; d <= max_length; d++) {
-          if (depth_limited_search_2(index1, index2, index4, index5, index6, d,
+          if (search_2(index1, index2, index4, index5, index6, d,
                                      18, p_prune1, p_prune2, p_edge_prune1,
                                      p_prune_xc2, st.cross, st.corner * 18,
                                      st.edge[0] * 18, st.edge[1] * 18,
@@ -893,7 +893,7 @@ struct xcross_analyzer2 {
 
   // [Conj优化] XC3 使用 Conj 状态追踪
   // NOTE: prune2/prune3 已移除 (剪枝率 0%, 被 AuxState 完全覆盖)
-  bool depth_limited_search_3(int arg_index1, int arg_index2, int arg_index7,
+  bool search_3(int arg_index1, int arg_index2, int arg_index7,
                               int arg_index8, int arg_index9, int depth,
                               int prev, const unsigned char *prune1,
                               const unsigned char *edge_prune1,
@@ -1000,7 +1000,7 @@ struct xcross_analyzer2 {
             index8_tmp == edge_solved2 && index9_tmp == edge_solved3) {
           return true;
         }
-      } else if (depth_limited_search_3(
+      } else if (search_3(
                      index1_tmp, index2_tmp * 18, index7_tmp * 18,
                      index8_tmp * 18, index9_tmp * 18, depth - 1, i, prune1,
                      edge_prune1, prune_xc3, num_aux, next_aux, xc3_cr_n,
@@ -1127,7 +1127,7 @@ struct xcross_analyzer2 {
         int start_depth =
             std::max({prune1_tmp, edge_prune1_tmp, prune_xc3_tmp});
         for (int d = start_depth; d <= max_length; d++) {
-          if (depth_limited_search_3(
+          if (search_3(
                   index1, index2, index7, index8, index9, d, 18, p_prune1,
                   p_edge_prune1, p_prune_xc3, num_aux, aux_init, st.cross,
                   st.corner * 18, st.edge[0] * 18, st.edge[1] * 18,
@@ -1184,7 +1184,7 @@ struct xcross_analyzer2 {
   // [Conj优化] XC4 使用 Conj 状态追踪
   // 新增参数: xc4_cr/cn/e0-e3 (Conj 状态), diff4 (边选择)
   // Search 4
-  bool depth_limited_search_4(
+  bool search_4(
       int arg_index1, int arg_index2, int arg_index4, int arg_index6,
       int arg_index8, int arg_index9, int arg_index10, int arg_index11,
       int arg_index12, int depth, int prev, const unsigned char *prune1,
@@ -1289,7 +1289,7 @@ struct xcross_analyzer2 {
             index12_tmp == edge_solved4) {
           return true;
         }
-      } else if (depth_limited_search_4(
+      } else if (search_4(
                      index1_tmp, index2_tmp * 18, index4_tmp * 18,
                      index6_tmp * 18, index8_tmp * 18, index9_tmp * 18,
                      index10_tmp * 18, index11_tmp * 18, index12_tmp * 18,
@@ -1454,7 +1454,7 @@ struct xcross_analyzer2 {
             std::max({prune1_tmp, prune2_tmp, prune3_tmp, prune4_tmp,
                       edge_prune1_tmp, prune_xc4_tmp});
         for (int d = start_depth; d <= max_length; d++) {
-          if (depth_limited_search_4(
+          if (search_4(
                   index1, index2, index4, index6, index8, index9, index10,
                   index11, index12, d, 18, p_prune1, p_prune2, p_prune3,
                   p_prune4, p_edge_prune1, p_prune_xc4, num_aux, aux_init,

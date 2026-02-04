@@ -277,7 +277,7 @@ struct XCrossSolver {
     return false;
   }
 
-  bool search_2_optimized(SearchContext &ctx, int i1a, int i2a, int i3a,
+  bool search_2(SearchContext &ctx, int i1a, int i2a, int i3a,
                           int i4a, int i5a, int s1, int i1b, int i2b, int i3b,
                           int i4b, int i5b, int s2, int t_idx1, int t_idx2,
                           int i_e6, int i_c2, int v_adj,
@@ -312,7 +312,7 @@ struct XCrossSolver {
         ctx.sol_len.push_back(ctx.current_max_depth);
         return true;
       }
-      if (search_2_optimized(
+      if (search_2(
               ctx, n_i1a, n_i2a * 18, n_i3a * 18, n_i4a * 18, n_i5a * 18, s1,
               n_i1b, n_i2b * 18, n_i3b * 18, n_i4b * 18, n_i5b * 18, s2, t_idx1,
               t_idx2,
@@ -326,7 +326,7 @@ struct XCrossSolver {
     return false;
   }
 
-  bool search_3_optimized(
+  bool search_3(
       SearchContext &ctx, int i1a, int i2a, int i3a, int i4a_1, int i5a_1,
       int i6a, int i4a_2, int i5a_2, int s1, int i1b, int i2b, int i3b,
       int i4b_1, int i5b_1, int i6b, int i4b_2, int i5b_2, int s2, int i1c,
@@ -394,7 +394,7 @@ struct XCrossSolver {
         ctx.sol_len.push_back(ctx.current_max_depth);
         return true;
       }
-      if (search_3_optimized(
+      if (search_3(
               ctx, n_i1a, n_i2a * 18, n_i3a * 18, n_i4a_1 * 18, n_i5a_1 * 18,
               n_i6a * 18, n_i4a_2 * 18, n_i5a_2 * 18, s1, n_i1b, n_i2b * 18,
               n_i3b * 18, n_i4b_1 * 18, n_i5b_1 * 18, n_i6b * 18, n_i4b_2 * 18,
@@ -421,7 +421,7 @@ struct XCrossSolver {
     return false;
   }
 
-  bool search_4_optimized(SearchContext &ctx, int i1a, int i2a, int i3a,
+  bool search_4(SearchContext &ctx, int i1a, int i2a, int i3a,
                           int i4a, int i5a, int i6a, int i1b, int i2b, int i3b,
                           int i4b, int i5b, int i6b, int i1c, int i2c, int i3c,
                           int i4c, int i5c, int i6c, int i1d, int i2d, int i3d,
@@ -504,7 +504,7 @@ struct XCrossSolver {
         ctx.sol_len.push_back(ctx.current_max_depth);
         return true;
       }
-      if (search_4_optimized(
+      if (search_4(
               ctx, n_i1a, n_i2a * 18, n_i3a * 18, n_i4a * 18, n_i5a * 18,
               n_i6a * 18, n_i1b, n_i2b * 18, n_i3b * 18, n_i4b * 18, n_i5b * 18,
               n_i6b * 18, n_i1c, n_i2c * 18, n_i3c * 18, n_i4c * 18, n_i5c * 18,
@@ -664,7 +664,7 @@ struct XCrossSolver {
             if (p_table_use) {
               for (int d = t.h; d <= max_search; ++d) {
                 ctx.current_max_depth = d;
-                if (search_2_optimized(
+                if (search_2(
                         ctx, st[t.a].im, st[t.a].ic * 18, st[t.a].e0 * 18,
                         ea * 18, ca * 18, t.a, st[t.b].im, st[t.b].ic * 18,
                         st[t.b].e0 * 18, eb * 18, cb * 18, t.b, t1, t2, ie6_use,
@@ -829,7 +829,7 @@ struct XCrossSolver {
 
             for (int d = t.h; d <= max_search; ++d) {
               ctx.current_max_depth = d;
-              if (search_3_optimized(
+              if (search_3(
                       ctx, st[t.a].im, st[t.a].ic * 18, st[t.a].e0 * 18,
                       ea_b * 18, ca_b * 18, st[t.a].c6 * 18, ea_c * 18,
                       ca_c * 18, t.a, st[t.b].im, st[t.b].ic * 18,
@@ -905,7 +905,7 @@ struct XCrossSolver {
             SearchContext ctx;
             for (int d = max_h; d <= 16; ++d) {
               ctx.current_max_depth = d;
-              if (search_4_optimized(
+              if (search_4(
                       ctx, st[0].im, st[0].ic * 18, st[0].e0 * 18,
                       st[0].e2 * 18, st[0].c5 * 18, st[0].c6 * 18, st[1].im,
                       st[1].ic * 18, st[1].e0 * 18, st[1].e2 * 18,
