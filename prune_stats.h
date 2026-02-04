@@ -5,7 +5,7 @@
 // ========== 开关配置 ==========
 #define ENABLE_PRUNE_STATS 0 // 总开关 (1=开, 0=关)
 
-#define ENABLE_STATS_S1 0 // std_analyzer S1 统计
+#define ENABLE_STATS_S1 0 // std_analyzer S1: xcross 86.6%
 #define ENABLE_STATS_S2 0 // S2: xcross 89.9% → cross 15.9% → pair 11.5%
 #define ENABLE_STATS_S3 0 // S3: huge 91.0% → cross 9.3% → pair 7.6%
 #define ENABLE_STATS_S4                                                        \
