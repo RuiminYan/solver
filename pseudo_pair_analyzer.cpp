@@ -11,21 +11,22 @@
 
 // NOTE: COUNT_NODE 宏已移至 analyzer_executor.h
 
-// --- Search 1 剪枝统计 ---
-std::atomic<long long> s1_prune1_checked{0};
-std::atomic<long long> s1_prune1_pruned{0};
-std::atomic<long long> s1_edge_checked{0};
-std::atomic<long long> s1_edge_pruned{0};
+// --- Search 1 剪枝统计 (已优化完成，注释以提升性能) ---
+// std::atomic<long long> s1_prune1_checked{0};
+// std::atomic<long long> s1_prune1_pruned{0};
+// std::atomic<long long> s1_edge_checked{0};
+// std::atomic<long long> s1_edge_pruned{0};
 
-// --- Search 2 剪枝统计 ---
-std::atomic<long long> s2_prune1_checked{0};
-std::atomic<long long> s2_prune1_pruned{0};
-std::atomic<long long> s2_edge_checked{0};
-std::atomic<long long> s2_edge_pruned{0};
-std::atomic<long long> s2_prune2_checked{0};
-std::atomic<long long> s2_prune2_pruned{0};
-std::atomic<long long> s2_xc2_checked{0};
-std::atomic<long long> s2_xc2_pruned{0};
+// --- Search 2 剪枝统计 (已优化完成，注释以提升性能) ---
+// std::atomic<long long> s2_prune1_checked{0};
+// std::atomic<long long> s2_prune1_pruned{0};
+// std::atomic<long long> s2_edge_checked{0};
+// std::atomic<long long> s2_edge_pruned{0};
+// NOTE: s2_prune2 已移除 (剪枝率 0%)
+// std::atomic<long long> s2_prune2_checked{0};
+// std::atomic<long long> s2_prune2_pruned{0};
+// std::atomic<long long> s2_xc2_checked{0};
+// std::atomic<long long> s2_xc2_pruned{0};
 
 // --- Search 3 剪枝统计 (已优化完成，注释以提升性能) ---
 // std::atomic<long long> s3_aux_checked{0};
@@ -551,18 +552,18 @@ struct xcross_analyzer2 {
       int index2_tmp = p_corner_move_ptr[arg_index2 + i];
 
       int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
-      ++s1_prune1_checked;
+      // ++s1_prune1_checked;  // NOTE: S1统计已禁用
       if (prune1_tmp >= depth) {
-        ++s1_prune1_pruned;
+        // ++s1_prune1_pruned;
         continue;
       }
 
       int index3_tmp = p_edge_move_ptr[arg_index3 + i];
       int edge_prune1_tmp =
           get_prune_ptr(edge_prune, index3_tmp * 24 + index2_tmp);
-      ++s1_edge_checked;
+      // ++s1_edge_checked;  // NOTE: S1统计已禁用
       if (edge_prune1_tmp >= depth) {
-        ++s1_edge_pruned;
+        // ++s1_edge_pruned;
         continue;
       }
 
@@ -700,33 +701,7 @@ struct xcross_analyzer2 {
       COUNT_NODE
       int i = moves[k];
 
-      int index1_tmp = p_multi_move_ptr[arg_index1 + i];
-      int index2_tmp = p_corner_move_ptr[arg_index2 + i];
-      int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
-      ++s2_prune1_checked;
-      if (prune1_tmp >= depth) {
-        ++s2_prune1_pruned;
-        continue;
-      }
-
-      int index5_tmp = p_edge_move_ptr[arg_index5 + i];
-      int edge_prune1_tmp =
-          get_prune_ptr(edge_prune1, index5_tmp * 24 + index2_tmp);
-      ++s2_edge_checked;
-      if (edge_prune1_tmp >= depth) {
-        ++s2_edge_pruned;
-        continue;
-      }
-
-      int index4_tmp = p_corner_move_ptr[arg_index4 + i];
-      int prune2_tmp = get_prune_ptr(prune2, index1_tmp + index4_tmp);
-      ++s2_prune2_checked;
-      if (prune2_tmp >= depth) {
-        ++s2_prune2_pruned;
-        continue;
-      }
-
-      // [Conj] 用 Conj 移动更新 XC2 状态
+      // 1. [Conj] prune_xc2 剪枝 (77.57% 剪枝率，最高优先)
       int mc = conj_moves_flat[i][pslot2];
       int xc2_cr_n = p_multi_move_ptr[xc2_cr + mc];
       int xc2_cn_n = p_corner_move_ptr[xc2_cn + mc];
@@ -741,17 +716,40 @@ struct xcross_analyzer2 {
 
       long long idx_xc2 = (long long)(xc2_cr_n + xc2_cn_n) * 24 + xc2_e_sel;
       int prune_xc2_tmp = get_prune_ptr(prune_xc2, idx_xc2);
-      ++s2_xc2_checked;
+      // ++s2_xc2_checked;  // NOTE: S2统计已禁用
       if (prune_xc2_tmp >= depth) {
-        ++s2_xc2_pruned;
+        // ++s2_xc2_pruned;
+        continue;
+      }
+
+      // 2. prune1 剪枝 (61.45% 剪枝率)
+      int index1_tmp = p_multi_move_ptr[arg_index1 + i];
+      int index2_tmp = p_corner_move_ptr[arg_index2 + i];
+      int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
+      // ++s2_prune1_checked;  // NOTE: S2统计已禁用
+      if (prune1_tmp >= depth) {
+        // ++s2_prune1_pruned;
+        continue;
+      }
+
+      // NOTE: prune2 已移除 (剪枝率 0%，被 Conj 完全覆盖)
+      int index4_tmp = p_corner_move_ptr[arg_index4 + i];
+
+      // 3. edge_prune1 剪枝 (11% 剪枝率)
+      int index5_tmp = p_edge_move_ptr[arg_index5 + i];
+      int edge_prune1_tmp =
+          get_prune_ptr(edge_prune1, index5_tmp * 24 + index2_tmp);
+      // ++s2_edge_checked;  // NOTE: S2统计已禁用
+      if (edge_prune1_tmp >= depth) {
+        // ++s2_edge_pruned;
         continue;
       }
 
       int index6_tmp = p_edge_move_ptr[arg_index6 + i];
 
       if (depth == 1) {
-        if (prune1_tmp == 0 && prune2_tmp == 0 && edge_prune1_tmp == 0 &&
-            prune_xc2_tmp == 0 && index6_tmp == edge_solved2) {
+        if (prune1_tmp == 0 && edge_prune1_tmp == 0 && prune_xc2_tmp == 0 &&
+            index6_tmp == edge_solved2) {
           return true;
         }
       } else if (depth_limited_search_2(
@@ -1861,20 +1859,19 @@ struct PseudoPairSolverWrapper {
                 << std::right << pruned << " pruned (" << std::fixed
                 << std::setprecision(2) << std::setw(6) << pct << "%)\n";
     };
-    std::cerr << "\n=== Search 1 Pruning Statistics ===\n";
-    print_line("prune1 (XC)", s1_prune1_checked.load(),
-               s1_prune1_pruned.load());
-    print_line("edge_prune1 (EC)", s1_edge_checked.load(),
-               s1_edge_pruned.load());
+    // NOTE: Search 1 统计已禁用 (优化完成)
+    // std::cerr << "\n=== Search 1 Pruning Statistics ===\n";
+    // print_line("prune1 (XC)", s1_prune1_checked.load(),
+    // s1_prune1_pruned.load()); print_line("edge_prune1 (EC)",
+    // s1_edge_checked.load(), s1_edge_pruned.load());
 
-    std::cerr << "\n=== Search 2 Pruning Statistics ===\n";
-    print_line("prune1 (XC slot1)", s2_prune1_checked.load(),
-               s2_prune1_pruned.load());
-    print_line("edge_prune1 (EC)", s2_edge_checked.load(),
-               s2_edge_pruned.load());
-    print_line("prune2 (XC slot2)", s2_prune2_checked.load(),
-               s2_prune2_pruned.load());
-    print_line("prune_xc2 (Conj)", s2_xc2_checked.load(), s2_xc2_pruned.load());
+    // NOTE: Search 2 统计已禁用 (优化完成)
+    // std::cerr << "\n=== Search 2 Pruning Statistics ===\n";
+    // print_line("prune_xc2 (Conj)", s2_xc2_checked.load(),
+    // s2_xc2_pruned.load()); print_line("prune1 (XC slot1)",
+    // s2_prune1_checked.load(), s2_prune1_pruned.load()); NOTE: prune2 已移除
+    // (剪枝率 0%) print_line("edge_prune1 (EC)", s2_edge_checked.load(),
+    // s2_edge_pruned.load());
 
     // NOTE: Search 3 统计已禁用 (优化完成)
     // std::cerr << "\n=== Search 3 Pruning Statistics ===\n";
