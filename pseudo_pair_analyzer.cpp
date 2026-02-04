@@ -18,10 +18,6 @@ std::atomic<long long> s3_prune1_checked{0};
 std::atomic<long long> s3_prune1_pruned{0};
 std::atomic<long long> s3_edge_checked{0};
 std::atomic<long long> s3_edge_pruned{0};
-std::atomic<long long> s3_prune2_checked{0};
-std::atomic<long long> s3_prune2_pruned{0};
-std::atomic<long long> s3_prune3_checked{0};
-std::atomic<long long> s3_prune3_pruned{0};
 std::atomic<long long> s3_xc3_checked{0};
 std::atomic<long long> s3_xc3_pruned{0};
 
@@ -879,15 +875,15 @@ struct xcross_analyzer2 {
   }
 
   // [Conj优化] XC3 使用 Conj 状态追踪
-  // 新增参数: xc3_cr/cn/e0-e3 (Conj 状态), diff3 (边选择)
-  bool depth_limited_search_3(
-      int arg_index1, int arg_index2, int arg_index4, int arg_index6,
-      int arg_index7, int arg_index8, int arg_index9, int depth, int prev,
-      const unsigned char *prune1, const unsigned char *prune2,
-      const unsigned char *prune3, const unsigned char *edge_prune1,
-      const unsigned char *prune_xc3, int num_aux, const AuxState *aux_states,
-      int xc3_cr, int xc3_cn, int xc3_e0, int xc3_e1, int xc3_e2, int xc3_e3,
-      int diff3) {
+  // NOTE: prune2/prune3 已移除 (剪枝率 0%, 被 AuxState 完全覆盖)
+  bool depth_limited_search_3(int arg_index1, int arg_index2, int arg_index7,
+                              int arg_index8, int arg_index9, int depth,
+                              int prev, const unsigned char *prune1,
+                              const unsigned char *edge_prune1,
+                              const unsigned char *prune_xc3, int num_aux,
+                              const AuxState *aux_states, int xc3_cr,
+                              int xc3_cn, int xc3_e0, int xc3_e1, int xc3_e2,
+                              int xc3_e3, int diff3) {
     const int *moves = valid_moves_flat[prev];
     const int count_moves = valid_moves_count[prev];
 
@@ -957,21 +953,7 @@ struct xcross_analyzer2 {
         continue;
       }
 
-      int index4_tmp = p_corner_move_ptr[arg_index4 + i];
-      int prune2_tmp = get_prune_ptr(prune2, index1_tmp + index4_tmp);
-      ++s3_prune2_checked;
-      if (prune2_tmp >= depth) {
-        ++s3_prune2_pruned;
-        continue;
-      }
-
-      int index6_tmp = p_corner_move_ptr[arg_index6 + i];
-      int prune3_tmp = get_prune_ptr(prune3, index1_tmp + index6_tmp);
-      ++s3_prune3_checked;
-      if (prune3_tmp >= depth) {
-        ++s3_prune3_pruned;
-        continue;
-      }
+      // NOTE: prune2/prune3 已移除 (剪枝率 0%)
 
       // [Conj] 用 Conj 移动更新 XC3 状态
       int mc = conj_moves_flat[i][pslot3];
@@ -998,15 +980,13 @@ struct xcross_analyzer2 {
       int index9_tmp = p_edge_move_ptr[arg_index9 + i];
 
       if (depth == 1) {
-        if (prune1_tmp == 0 && prune2_tmp == 0 && prune3_tmp == 0 &&
-            edge_prune1_tmp == 0 && prune_xc3_tmp == 0 &&
+        if (prune1_tmp == 0 && edge_prune1_tmp == 0 && prune_xc3_tmp == 0 &&
             index8_tmp == edge_solved2 && index9_tmp == edge_solved3) {
           return true;
         }
       } else if (depth_limited_search_3(
-                     index1_tmp, index2_tmp * 18, index4_tmp * 18,
-                     index6_tmp * 18, index7_tmp * 18, index8_tmp * 18,
-                     index9_tmp * 18, depth - 1, i, prune1, prune2, prune3,
+                     index1_tmp, index2_tmp * 18, index7_tmp * 18,
+                     index8_tmp * 18, index9_tmp * 18, depth - 1, i, prune1,
                      edge_prune1, prune_xc3, num_aux, next_aux, xc3_cr_n,
                      xc3_cn_n * 18, xc3_e0_n * 18, xc3_e1_n * 18, xc3_e2_n * 18,
                      xc3_e3_n * 18, diff3))
@@ -1018,8 +998,6 @@ struct xcross_analyzer2 {
   void start_search_3(int arg_slot1, int arg_slot2, int arg_slot3,
                       int arg_pslot1, int arg_pslot2, int arg_pslot3,
                       std::vector<unsigned char> &prune1,
-                      std::vector<unsigned char> &prune2,
-                      std::vector<unsigned char> &prune3,
                       std::vector<unsigned char> &edge_prune1,
                       std::vector<std::string> rotations,
                       const std::vector<int> &base_alg) {
@@ -1039,8 +1017,6 @@ struct xcross_analyzer2 {
     std::vector<unsigned char> &prune_xc3 = pseudo_base_prune_tables[diff3];
 
     const unsigned char *p_prune1 = prune1.data();
-    const unsigned char *p_prune2 = prune2.data();
-    const unsigned char *p_prune3 = prune3.data();
     const unsigned char *p_edge_prune1 = edge_prune1.data();
     const unsigned char *p_prune_xc3 = prune_xc3.data();
 
@@ -1063,8 +1039,6 @@ struct xcross_analyzer2 {
                           single_edge_index);
 
       int h1 = get_prune_ptr(p_prune1, idx1 + idx2);
-      int h2 = get_prune_ptr(p_prune2, idx1 + idx4);
-      int h3 = get_prune_ptr(p_prune3, idx1 + idx6);
       int h4 = get_prune_ptr(p_edge_prune1, idx7 * 24 + idx2);
 
       // [Conj优化] 使用 Conj 索引计算 h5
@@ -1076,7 +1050,7 @@ struct xcross_analyzer2 {
           (long long)(st.cross + st.corner) * 24 + st.edge[diff3];
       int h5 = get_prune_ptr(p_prune_xc3, conj_idx_xc3);
 
-      tasks.push_back({(int)r, std::max({h1, h2, h3, h4, h5})});
+      tasks.push_back({(int)r, std::max({h1, h4, h5})});
     }
     std::sort(tasks.begin(), tasks.end(),
               [](const RotTask &a, const RotTask &b) {
@@ -1110,8 +1084,6 @@ struct xcross_analyzer2 {
       edge_solved3 = single_edge_index[slot3];
 
       int prune1_tmp = get_prune_ptr(p_prune1, index1 + index2);
-      int prune2_tmp = get_prune_ptr(p_prune2, index1 + index4);
-      int prune3_tmp = get_prune_ptr(p_prune3, index1 + index6);
       int edge_prune1_tmp = get_prune_ptr(p_edge_prune1, index7 * 24 + index2);
 
       // [Conj优化] 计算 XC3 Conj 状态
@@ -1122,8 +1094,7 @@ struct xcross_analyzer2 {
           (long long)(st.cross + st.corner) * 24 + st.edge[diff3];
       int prune_xc3_tmp = get_prune_ptr(p_prune_xc3, conj_idx_xc3);
 
-      if (prune1_tmp == 0 && prune2_tmp == 0 && prune3_tmp == 0 &&
-          edge_prune1_tmp == 0 && prune_xc3_tmp == 0 &&
+      if (prune1_tmp == 0 && edge_prune1_tmp == 0 && prune_xc3_tmp == 0 &&
           index8 == edge_solved2 && index9 == edge_solved3) {
         results[r] = 0;
       } else {
@@ -1133,20 +1104,18 @@ struct xcross_analyzer2 {
             pslot1, slot2, slot3, pslot2, pslot3, rotated_alg, aux_init);
 
         index2 *= 18;
-        index4 *= 18;
-        index6 *= 18;
         index7 *= 18;
         index8 *= 18;
         index9 *= 18;
         int found = 999;
-        int start_depth = std::max({prune1_tmp, prune2_tmp, prune3_tmp,
-                                    edge_prune1_tmp, prune_xc3_tmp});
+        int start_depth =
+            std::max({prune1_tmp, edge_prune1_tmp, prune_xc3_tmp});
         for (int d = start_depth; d <= max_length; d++) {
           if (depth_limited_search_3(
-                  index1, index2, index4, index6, index7, index8, index9, d, 18,
-                  p_prune1, p_prune2, p_prune3, p_edge_prune1, p_prune_xc3,
-                  num_aux, aux_init, st.cross, st.corner * 18, st.edge[0] * 18,
-                  st.edge[1] * 18, st.edge[2] * 18, st.edge[3] * 18, diff3)) {
+                  index1, index2, index7, index8, index9, d, 18, p_prune1,
+                  p_edge_prune1, p_prune_xc3, num_aux, aux_init, st.cross,
+                  st.corner * 18, st.edge[0] * 18, st.edge[1] * 18,
+                  st.edge[2] * 18, st.edge[3] * 18, diff3)) {
             found = d;
             break;
           }
@@ -1188,8 +1157,6 @@ struct xcross_analyzer2 {
                            pslot1_tmp, pslot_tmps_set[j][0],
                            pslot_tmps_set[j][1],
                            xc_prune_tables[slot1_tmp * 4 + pslot1_tmp],
-                           base_prune_tables[pslot_tmps_set[j][0]],
-                           base_prune_tables[pslot_tmps_set[j][1]],
                            ec_prune_tables[slot1_tmp * 4 + pslot1_tmp],
                            rotations, base_alg);
           }
@@ -1866,10 +1833,6 @@ struct PseudoPairSolverWrapper {
                s3_prune1_pruned.load());
     print_line("edge_prune1 (EC)", s3_edge_checked.load(),
                s3_edge_pruned.load());
-    print_line("prune2 (XC slot2)", s3_prune2_checked.load(),
-               s3_prune2_pruned.load());
-    print_line("prune3 (XC slot3)", s3_prune3_checked.load(),
-               s3_prune3_pruned.load());
     print_line("prune_xc3 (Conj)", s3_xc3_checked.load(), s3_xc3_pruned.load());
   }
 };
