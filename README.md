@@ -324,7 +324,7 @@ id,cross_pair_z0,cross_pair_z1,cross_pair_z2,cross_pair_z3,cross_pair_x1,cross_p
 ### pseudo_pair_analyzer.cpp
 * 测试命令: `cmd /c "echo scramble_100.txt | pseudo_pair_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
-* 执行时间: ~39s
+* 执行时间: ~36s
 * 测试文件: scramble_100.txt
 * 正确结果 (表头 + 前20行数据):
 id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_pair_z2,pseudo_cross_pseudo_pair_z3,pseudo_cross_pseudo_pair_x1,pseudo_cross_pseudo_pair_x3,pseudo_xcross_pseudo_pair_z0,pseudo_xcross_pseudo_pair_z1,pseudo_xcross_pseudo_pair_z2,pseudo_xcross_pseudo_pair_z3,pseudo_xcross_pseudo_pair_x1,pseudo_xcross_pseudo_pair_x3,pseudo_xxcross_pseudo_pair_z0,pseudo_xxcross_pseudo_pair_z1,pseudo_xxcross_pseudo_pair_z2,pseudo_xxcross_pseudo_pair_z3,pseudo_xxcross_pseudo_pair_x1,pseudo_xxcross_pseudo_pair_x3,pseudo_xxxcross_pseudo_pair_z0,pseudo_xxxcross_pseudo_pair_z1,pseudo_xxxcross_pseudo_pair_z2,pseudo_xxxcross_pseudo_pair_z3,pseudo_xxxcross_pseudo_pair_x1,pseudo_xxxcross_pseudo_pair_x3
@@ -352,7 +352,7 @@ id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_p
 ### eo_cross_analyzer.cpp
 * 测试命令: `cmd /c "echo scramble_20.txt | eo_cross_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
-* 执行时间: 未知
+* 执行时间: 13s
 * 测试文件: scramble_20.txt
 * 正确结果 (表头 + 前20行数据):
 id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xcross_z0,eo_xcross_z1,eo_xcross_z2,eo_xcross_z3,eo_xcross_x1,eo_xcross_x3,eo_xxcross_z0,eo_xxcross_z1,eo_xxcross_z2,eo_xxcross_z3,eo_xxcross_x1,eo_xxcross_x3,eo_xxxcross_z0,eo_xxxcross_z1,eo_xxxcross_z2,eo_xxxcross_z3,eo_xxxcross_x1,eo_xxxcross_x3,eo_xxxxcross_z0,eo_xxxxcross_z1,eo_xxxxcross_z2,eo_xxxxcross_z3,eo_xxxxcross_x1,eo_xxxxcross_x3
@@ -462,19 +462,21 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 | **Aux Tiny** | `edge/corner/e2/c2` | < 100 KB | All | 基础及辅助二元状态 |
 
 
-## Search 阶段剪枝表使用详解 (不准确!!仅供参考, 具体以代码为准)
+## Search 阶段剪枝表使用详解
 
-以下表格详细展示了各 Analyzer 在 4 个搜索阶段中如何组合使用剪枝表。
+以下表格详细展示了各 Analyzer 在搜索阶段中的剪枝逻辑和效率。
 
 ### 1. Std Analyzer
-策略：标准层级递进，后期依赖 Huge Table 解决复杂 F2L 情形。
+策略：标准层级递进，每阶段仅使用单一 Huge 表进行剪枝。
 
-| 阶段 | 目标 | 核心剪枝表 | 备注 |
+| 阶段 | 目标 | 剪枝表 | 剪枝率 |
 |---|---|---|---|
-| **search_1** | Cross | `Cross` | 基础剪枝 |
-| **search_2_optimized** | XCross | `XCross Base` (C4+E0) | 加入第一个 F2L 组 |
-| **search_3_optimized** | XXCross | `Huge Neighbor` / `Huge Diag` | 及其 Huge Table |
-| **search_4_optimized** | XXXCross | `Huge Neighbor` / `Huge Diag` | 及其 Huge Table |
+| **search_1** | XCross | `XCross Base` (C4+E0) | 86.6% |
+| **search_2_optimized** | XXCross | `Huge` (Neighbor/Diag) | 单点剪枝 |
+| **search_3_optimized** | XXXCross | `Huge×2` | 级联剪枝 |
+| **search_4_optimized** | XXXXCross | `Huge×3` | 级联剪枝 |
+
+> **优化结论**: 结构已最优，无需调整剪枝顺序。
 
 ### 2. Pseudo Analyzer
 策略：依赖 Aux 表辅助定位 Pseudo 块。
@@ -482,41 +484,42 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 | 阶段 | 目标 | 核心剪枝表 | 组合/辅助表 |
 |---|---|---|---|
 | **search_1** | Pseudo Cross | `Pseudo Cross` | - |
-| **search_2** | Pseudo XCross | `Pseudo Base` (C4+Ex) | `Aux Edge2` (E0E1/E0E2) |
-| **search_3** | Pseudo XXCross | `Pseudo Base` | `Aux Corn2` (C4C5), `Aux Edge2` |
-| **search_3** | Pseudo XXXCross | `Pseudo Base` | `Aux Corn3` (C4C5C6), `Aux Edge3` |
+| **search_2** | Pseudo XCross | `Pseudo Base` (C4+Ex) | `Aux Edge2` |
+| **search_3** | Pseudo XXCross / XXXCross | `Pseudo Base` | `Aux Corn2/3`, `Aux Edge2/3` |
 
 ### 3. Pair Analyzer
-策略：在 Std 基础上增加 Pair 表约束。
+策略：Cross + XCross + Pair 级联，已优化剪枝顺序。
 
-| 阶段 | 目标 | 核心剪枝表 | 组合/辅助表 |
+| 阶段 | 目标 | 剪枝顺序 (按效率) | 剪枝率 |
 |---|---|---|---|
-| **search_1** | Cross + Pair | `Cross C4` | `Pair Base` (C4+E0) |
-| **search_2** | XCross + Pair | `XCross Base` | `Pair Base` |
-| **search_3** | XXCross + Pair | `Huge Neighbor` | `XCross`, `Pair Base` |
-| **search_4** | XXXCross + Pair | `Huge Neighbor` | `XCross`, `Pair Base` |
+| **search_1** | Cross + Pair | `Cross C4` → `Pair` | 89.9% → 24.2% |
+| **search_2** | XCross + Pair | `XCross` → `Cross C4` → `Pair` | 89.9% → 15.9% → 11.5% |
+| **search_3** | XXCross + Pair | `Huge` → `Cross` → `Pair` | 91.0% → 9.3% → 7.6% |
+| **search_4** | XXXCross + Pair | `Huge×3` → `Pair` → `Cross` | 75%→53%→35%→1%→0.9% |
 
-### 4. Pseudo Pair Analyzer (V9.0 Optimized)
-核心策略：**Base/XC 表负责整体进度，EC 表负责 Pair 配对，Aux 表辅助 Corner/Edge 归位。**
+> **优化**: S2 重排 xcross→cross→pair；S3/S4 移除 0% 的 xcross 检查。
 
-| 阶段 | 目标 (Target) | 主要剪枝表 (Primary) | 辅助/次要剪枝表 (Secondary) | 索引逻辑 (Indexing) |
-|---|---|---|---|---|
-| **depth_limited_search_1** | Pseudo Cross + Pseudo Pair | `XC[diff1]` | `EC[s1*4+ps1]` | `XC(conj) + EC(flat)` |
-| **depth_limited_search_2** | Pseudo XCross + Pseudo Pair | `PseudoBase[diff2]` | `XC[diff1]`, `EC`, `Base[C4]` | `Base(conj) + XC(conj)` |
-| **depth_limited_search_3** | Pseudo XXCross + Pseudo Pair | `XC[diff3]` | `Aux C2/E2`, `Base`, `EC` | `Aux(conj+rot) + XC(conj)` |
-| **depth_limited_search_4** | Pseudo XXXCross + Pseudo Pair | `XC[diff4]` | `Aux C3/E3`, `Base`, `EC` | `Aux(conj+rot) + XC(conj)` |
+### 4. Pseudo Pair Analyzer
+核心策略：**Base/XC 表负责整体进度，EC 表负责 Pair 配对，Aux 表辅助归位。**
 
-> **注**: `PseudoBase` 和 `Base` 在代码中通过 Conj 状态追踪复用，实际物理表仅需 Base(1) + XC(4)。
+| 阶段 | 目标 | 主要剪枝表 | 辅助表 |
+|---|---|---|---|
+| **depth_limited_search_1** | Pseudo Cross + Pair | `XC[slot]` | `EC[pair]` |
+| **depth_limited_search_2** | Pseudo XCross + Pair | `PseudoBase`+`XC` | `EC`, `Base[C4]` |
+| **depth_limited_search_3** | Pseudo XXCross + Pair | `XC` | `Aux C2/E2`, `Base`, `EC` |
+| **depth_limited_search_4** | Pseudo XXXCross + Pair | `XC` | `Aux C3/E3`, `Base`, `EC` |
 
 ### 5. EO Cross Analyzer
-策略：级联剪枝 (Cascaded Pruning)，每一层都检查多个表。
+策略：级联剪枝 (Cascaded Pruning)，先检查 Dep+EO，再检查 XCross。
 
-| 阶段 | 目标 | 级联检查 1 | 级联检查 2 | 级联检查 3 |
-|---|---|---|---|---|
-| **search (Cross)** | Cross + EO | `Dep EO` | `Base` (Cross+C4) | - |
-| **search_1** | XCross + EO | `Dep EO` | `XC Base` | - |
-| **search_2** | XXCross + EO | `Dep EO` | `XC Base` | `Plus Edge`, `Plus Corn` |
-| **search_3** | XXXCross + EO | `Dep EO` | `XC Base` | `Plus Edge/Corn`, `3 Corner` |
+| 阶段 | 目标 | 剪枝顺序 | 剪枝率 |
+|---|---|---|---|
+| **search (Cross)** | Cross + EO | `Cross` | 单点剪枝 |
+| **search_1** | XCross + EO | `Dep EO` → `XCross` | 77.0% → 67.1% |
+| **search_2** | XXCross + EO | `Huge` → `Dep EO` → `XCross×2` | 级联剪枝 |
+| **search_3** | XXXCross + EO | `Huge×2` → `Dep EO` → `XCross×3` | 级联剪枝 |
+
+> **优化结论**: S1 顺序 dep_eo→xcross 已最优。
 
 
 ## 僵尸表
