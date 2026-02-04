@@ -2,15 +2,14 @@
 #include <atomic>
 #include <cstdio>
 
-// ========== 剪枝统计开关配置 ==========
-// 用于收集各搜索阶段剪枝步骤的效率数据，优化剪枝顺序
-
+// ========== 开关配置 ==========
 #define ENABLE_PRUNE_STATS 0 // 总开关 (1=开, 0=关)
 
-#define ENABLE_STATS_S1 0 // Search 1 阶段统计
-#define ENABLE_STATS_S2 0 // Search 2 阶段统计
-#define ENABLE_STATS_S3 0 // Search 3 阶段统计
-#define ENABLE_STATS_S4 0 // Search 4 阶段统计
+#define ENABLE_STATS_S1 0 // S1: cross 89.9%, pair 24.2%
+#define ENABLE_STATS_S2 0 // S2: xcross 89.9% → cross 15.9% → pair 11.5%
+#define ENABLE_STATS_S3 0 // S3: huge 91.0% → cross 9.3% → pair 7.6%
+#define ENABLE_STATS_S4                                                        \
+  0 // S4: huge1 75% → huge2 53.4% → huge3 34.8% → pair 1% → cross 0.9%
 
 // ========== 命名规范 ==========
 // _c = checked (检查次数)

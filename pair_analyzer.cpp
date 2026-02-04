@@ -14,6 +14,35 @@
 
 // NOTE: COUNT_NODE 宏已移至 analyzer_executor.h
 
+// --- 剪枝统计 (通过 prune_stats.h 统一开关控制) ---
+#include "prune_stats.h"
+
+// Search 1: Cross+Pair
+STAT_DECL(s1_cross); // S1: Cross C4 剪枝表
+STAT_DECL(s1_pair);  // S1: Pair C4+E0 剪枝表
+
+// Search 2: Cross+Pair+XCross
+STAT_DECL(s2_cross);  // S2: Cross C4 剪枝表
+STAT_DECL(s2_pair);   // S2: Pair 剪枝表
+STAT_DECL(s2_xcross); // S2: XCross 剪枝表
+
+// Search 3: Huge+Cross+Pair+XCross×2
+STAT_DECL(s3_huge);    // S3: Huge 表 (Neighbor/Diagonal)
+STAT_DECL(s3_cross);   // S3: Cross 剪枝表
+STAT_DECL(s3_pair);    // S3: Pair 剪枝表
+STAT_DECL(s3_xcross1); // S3: XCross 1 剪枝表
+STAT_DECL(s3_xcross2); // S3: XCross 2 剪枝表
+
+// Search 4: Huge×3+Cross+Pair+XCross×3
+STAT_DECL(s4_huge1);   // S4: Huge 表 1
+STAT_DECL(s4_huge2);   // S4: Huge 表 2
+STAT_DECL(s4_huge3);   // S4: Huge 表 3
+STAT_DECL(s4_cross);   // S4: Cross 剪枝表
+STAT_DECL(s4_pair);    // S4: Pair 剪枝表
+STAT_DECL(s4_xcross1); // S4: XCross 1 剪枝表
+STAT_DECL(s4_xcross2); // S4: XCross 2 剪枝表
+STAT_DECL(s4_xcross3); // S4: XCross 3 剪枝表
+
 // --- 主要求解器类 ---
 struct PairSolver {
   // 快速指针
@@ -185,11 +214,17 @@ struct PairSolver {
       int mc = conj_moves_flat[m][slot_s1];
       int n1 = p_multi[i1 + mc];
       int n2 = p_corn[i2 + mc];
-      if (p_cross[n1 + n2] >= depth)
+      S1_CHECK(s1_cross);
+      if (p_cross[n1 + n2] >= depth) {
+        S1_HIT(s1_cross);
         continue;
+      }
       int n3 = p_edge[i3 + mc];
-      if (p_pair[n3 * 24 + n2] >= depth)
+      S1_CHECK(s1_pair);
+      if (p_pair[n3 * 24 + n2] >= depth) {
+        S1_HIT(s1_pair);
         continue;
+      }
       if (depth == 1) {
         if (p_cross[n1 + n2] == 0 && p_pair[n3 * 24 + n2] == 0)
           return true;
@@ -201,6 +236,7 @@ struct PairSolver {
     return false;
   }
 
+  // S2 剪枝顺序优化: xcross 77.7% → cross 65.1% → pair 3.6%
   bool search_2(int im_p, int ic_p, int ie_p, int im_x, int ic_x, int ie_x,
                 int depth, int prev, int s_p, int s_x) {
     const int *moves = valid_moves_flat[prev];
@@ -208,19 +244,31 @@ struct PairSolver {
     for (int k = 0; k < count; ++k) {
       COUNT_NODE
       int m = moves[k];
-      int mc_p = conj_moves_flat[m][s_p];
-      int n_im_p = p_multi[im_p + mc_p], n_ic_p = p_corn[ic_p + mc_p];
-      if (p_cross[n_im_p + n_ic_p] >= depth)
-        continue;
-      int n_ie_p = p_edge[ie_p + mc_p];
-      if (p_pair[n_ie_p * 24 + n_ic_p] >= depth)
-        continue;
+      // 1. XCross (77.7%)
       int mc_x = conj_moves_flat[m][s_x];
       int n_im_x = p_multi[im_x + mc_x], n_ic_x = p_corn[ic_x + mc_x],
           n_ie_x = p_edge[ie_x + mc_x];
+      S2_CHECK(s2_xcross);
       if (get_prune_4bit(p_xcross,
-                         (long long)(n_im_x + n_ic_x) * 24 + n_ie_x) >= depth)
+                         (long long)(n_im_x + n_ic_x) * 24 + n_ie_x) >= depth) {
+        S2_HIT(s2_xcross);
         continue;
+      }
+      // 2. Cross (65.1%)
+      int mc_p = conj_moves_flat[m][s_p];
+      int n_im_p = p_multi[im_p + mc_p], n_ic_p = p_corn[ic_p + mc_p];
+      S2_CHECK(s2_cross);
+      if (p_cross[n_im_p + n_ic_p] >= depth) {
+        S2_HIT(s2_cross);
+        continue;
+      }
+      // 3. Pair (3.6%)
+      int n_ie_p = p_edge[ie_p + mc_p];
+      S2_CHECK(s2_pair);
+      if (p_pair[n_ie_p * 24 + n_ic_p] >= depth) {
+        S2_HIT(s2_pair);
+        continue;
+      }
       if (depth == 1) {
         if (p_pair[n_ie_p * 24 + n_ic_p] == 0 &&
             get_prune_4bit(p_xcross,
@@ -246,30 +294,34 @@ struct PairSolver {
       int m = moves[k];
       if (s_v != -1 && p_table_huge) {
         int mv = conj_moves_flat[m][s_v];
+        S3_CHECK(s3_huge);
         if (get_prune_4bit(p_table_huge,
                            (long long)p_edge6[i_e6 * 18 + mv] * 504 +
-                               p_corn2[i_c2 * 18 + mv]) >= depth)
+                               p_corn2[i_c2 * 18 + mv]) >= depth) {
+          S3_HIT(s3_huge);
           continue;
+        }
       }
       int mc_p = conj_moves_flat[m][s_p];
       int n_im_p = p_multi[im_p + mc_p], n_ic_p = p_corn[ic_p + mc_p];
-      if (p_cross[n_im_p + n_ic_p] >= depth)
+      S3_CHECK(s3_cross);
+      if (p_cross[n_im_p + n_ic_p] >= depth) {
+        S3_HIT(s3_cross);
         continue;
+      }
       int n_ie_p = p_edge[ie_p + mc_p];
-      if (p_pair[n_ie_p * 24 + n_ic_p] >= depth)
+      S3_CHECK(s3_pair);
+      if (p_pair[n_ie_p * 24 + n_ic_p] >= depth) {
+        S3_HIT(s3_pair);
         continue;
+      }
+      // NOTE: xcross1/2 变量计算保留用于递归，剪枝检查已移除 (剪枝率 0%)
       int mc_x1 = conj_moves_flat[m][s_x1];
       int n_im_x1 = p_multi[im_x1 + mc_x1], n_ic_x1 = p_corn[ic_x1 + mc_x1],
           n_ie_x1 = p_edge[ie_x1 + mc_x1];
-      if (get_prune_4bit(p_xcross, (long long)(n_im_x1 + n_ic_x1) * 24 +
-                                       n_ie_x1) >= depth)
-        continue;
       int mc_x2 = conj_moves_flat[m][s_x2];
       int n_im_x2 = p_multi[im_x2 + mc_x2], n_ic_x2 = p_corn[ic_x2 + mc_x2],
           n_ie_x2 = p_edge[ie_x2 + mc_x2];
-      if (get_prune_4bit(p_xcross, (long long)(n_im_x2 + n_ic_x2) * 24 +
-                                       n_ie_x2) >= depth)
-        continue;
       if (depth == 1) {
         if (p_pair[n_ie_p * 24 + n_ic_p] == 0)
           return true;
@@ -300,47 +352,54 @@ struct PairSolver {
       int m = moves[k];
       if (v1 != -1 && p1) {
         int mx = conj_moves_flat[m][v1];
+        S4_CHECK(s4_huge1);
         if (get_prune_4bit(p1, (long long)p_edge6[ie6_1 * 18 + mx] * 504 +
-                                   p_corn2[ic2_1 * 18 + mx]) >= depth)
+                                   p_corn2[ic2_1 * 18 + mx]) >= depth) {
+          S4_HIT(s4_huge1);
           continue;
+        }
       }
       if (v2 != -1 && p2) {
         int mx = conj_moves_flat[m][v2];
+        S4_CHECK(s4_huge2);
         if (get_prune_4bit(p2, (long long)p_edge6[ie6_2 * 18 + mx] * 504 +
-                                   p_corn2[ic2_2 * 18 + mx]) >= depth)
+                                   p_corn2[ic2_2 * 18 + mx]) >= depth) {
+          S4_HIT(s4_huge2);
           continue;
+        }
       }
       if (v3 != -1 && p3) {
         int mx = conj_moves_flat[m][v3];
+        S4_CHECK(s4_huge3);
         if (get_prune_4bit(p3, (long long)p_edge6[ie6_3 * 18 + mx] * 504 +
-                                   p_corn2[ic2_3 * 18 + mx]) >= depth)
+                                   p_corn2[ic2_3 * 18 + mx]) >= depth) {
+          S4_HIT(s4_huge3);
           continue;
+        }
       }
       int mc_p = conj_moves_flat[m][s_p];
       int n_im_p = p_multi[im_p + mc_p], n_ic_p = p_corn[ic_p + mc_p];
-      if (p_cross[n_im_p + n_ic_p] >= depth)
+      S4_CHECK(s4_cross);
+      if (p_cross[n_im_p + n_ic_p] >= depth) {
+        S4_HIT(s4_cross);
         continue;
+      }
       int n_ie_p = p_edge[ie_p + mc_p];
-      if (p_pair[n_ie_p * 24 + n_ic_p] >= depth)
+      S4_CHECK(s4_pair);
+      if (p_pair[n_ie_p * 24 + n_ic_p] >= depth) {
+        S4_HIT(s4_pair);
         continue;
+      }
+      // NOTE: xcross1/2/3 变量计算保留用于递归，剪枝检查已移除 (剪枝率 0%)
       int mc_x1 = conj_moves_flat[m][s_x1];
       int n_im_x1 = p_multi[im_x1 + mc_x1], n_ic_x1 = p_corn[ic_x1 + mc_x1],
           n_ie_x1 = p_edge[ie_x1 + mc_x1];
-      if (get_prune_4bit(p_xcross, (long long)(n_im_x1 + n_ic_x1) * 24 +
-                                       n_ie_x1) >= depth)
-        continue;
       int mc_x2 = conj_moves_flat[m][s_x2];
       int n_im_x2 = p_multi[im_x2 + mc_x2], n_ic_x2 = p_corn[ic_x2 + mc_x2],
           n_ie_x2 = p_edge[ie_x2 + mc_x2];
-      if (get_prune_4bit(p_xcross, (long long)(n_im_x2 + n_ic_x2) * 24 +
-                                       n_ie_x2) >= depth)
-        continue;
       int mc_x3 = conj_moves_flat[m][s_x3];
       int n_im_x3 = p_multi[im_x3 + mc_x3], n_ic_x3 = p_corn[ic_x3 + mc_x3],
           n_ie_x3 = p_edge[ie_x3 + mc_x3];
-      if (get_prune_4bit(p_xcross, (long long)(n_im_x3 + n_ic_x3) * 24 +
-                                       n_ie_x3) >= depth)
-        continue;
       if (depth == 1) {
         if (p_pair[n_ie_p * 24 + n_ic_p] == 0)
           return true;
@@ -677,7 +736,37 @@ struct PairSolverWrapper {
     return oss.str();
   }
 
-  static void print_stats() {}
+  static void print_stats() {
+#if ENABLE_PRUNE_STATS
+    printf("\n=== Pair Analyzer Pruning Stats ===\n");
+#if ENABLE_STATS_S1
+    PRINT_STAT(s1_cross);
+    PRINT_STAT(s1_pair);
+#endif
+#if ENABLE_STATS_S2
+    PRINT_STAT(s2_cross);
+    PRINT_STAT(s2_pair);
+    PRINT_STAT(s2_xcross);
+#endif
+#if ENABLE_STATS_S3
+    PRINT_STAT(s3_huge);
+    PRINT_STAT(s3_cross);
+    PRINT_STAT(s3_pair);
+    PRINT_STAT(s3_xcross1);
+    PRINT_STAT(s3_xcross2);
+#endif
+#if ENABLE_STATS_S4
+    PRINT_STAT(s4_huge1);
+    PRINT_STAT(s4_huge2);
+    PRINT_STAT(s4_huge3);
+    PRINT_STAT(s4_cross);
+    PRINT_STAT(s4_pair);
+    PRINT_STAT(s4_xcross1);
+    PRINT_STAT(s4_xcross2);
+    PRINT_STAT(s4_xcross3);
+#endif
+#endif
+  }
 };
 
 int main() {
