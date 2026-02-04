@@ -11,6 +11,20 @@
 
 // NOTE: COUNT_NODE 宏已移至 analyzer_executor.h
 
+// --- Search 3 剪枝统计 ---
+std::atomic<long long> s3_aux_checked{0};
+std::atomic<long long> s3_aux_pruned{0};
+std::atomic<long long> s3_prune1_checked{0};
+std::atomic<long long> s3_prune1_pruned{0};
+std::atomic<long long> s3_edge_checked{0};
+std::atomic<long long> s3_edge_pruned{0};
+std::atomic<long long> s3_prune2_checked{0};
+std::atomic<long long> s3_prune2_pruned{0};
+std::atomic<long long> s3_prune3_checked{0};
+std::atomic<long long> s3_prune3_pruned{0};
+std::atomic<long long> s3_xc3_checked{0};
+std::atomic<long long> s3_xc3_pruned{0};
+
 // --- Search 4 剪枝统计 (已禁用以测试纯净版性能) ---
 // std::atomic<long long> s4_total_calls{0};
 // std::atomic<long long> s4_aux_checked{0};
@@ -919,30 +933,45 @@ struct xcross_analyzer2 {
           break;
         }
       }
-      if (aux_pruned)
+      ++s3_aux_checked;
+      if (aux_pruned) {
+        ++s3_aux_pruned;
         continue;
+      }
 
       // 3. Base Pruning 继续原有逻辑
       int index2_tmp = p_corner_move_ptr[arg_index2 + i];
       int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
-      if (prune1_tmp >= depth)
+      ++s3_prune1_checked;
+      if (prune1_tmp >= depth) {
+        ++s3_prune1_pruned;
         continue;
+      }
 
       int index7_tmp = p_edge_move_ptr[arg_index7 + i];
       int edge_prune1_tmp =
           get_prune_ptr(edge_prune1, index7_tmp * 24 + index2_tmp);
-      if (edge_prune1_tmp >= depth)
+      ++s3_edge_checked;
+      if (edge_prune1_tmp >= depth) {
+        ++s3_edge_pruned;
         continue;
+      }
 
       int index4_tmp = p_corner_move_ptr[arg_index4 + i];
       int prune2_tmp = get_prune_ptr(prune2, index1_tmp + index4_tmp);
-      if (prune2_tmp >= depth)
+      ++s3_prune2_checked;
+      if (prune2_tmp >= depth) {
+        ++s3_prune2_pruned;
         continue;
+      }
 
       int index6_tmp = p_corner_move_ptr[arg_index6 + i];
       int prune3_tmp = get_prune_ptr(prune3, index1_tmp + index6_tmp);
-      if (prune3_tmp >= depth)
+      ++s3_prune3_checked;
+      if (prune3_tmp >= depth) {
+        ++s3_prune3_pruned;
         continue;
+      }
 
       // [Conj] 用 Conj 移动更新 XC3 状态
       int mc = conj_moves_flat[i][pslot3];
@@ -959,8 +988,11 @@ struct xcross_analyzer2 {
 
       long long idx_xc3 = (long long)(xc3_cr_n + xc3_cn_n) * 24 + xc3_e_sel;
       int prune_xc3_tmp = get_prune_ptr(prune_xc3, idx_xc3);
-      if (prune_xc3_tmp >= depth)
+      ++s3_xc3_checked;
+      if (prune_xc3_tmp >= depth) {
+        ++s3_xc3_pruned;
         continue;
+      }
 
       int index8_tmp = p_edge_move_ptr[arg_index8 + i];
       int index9_tmp = p_edge_move_ptr[arg_index9 + i];
@@ -1820,9 +1852,25 @@ struct PseudoPairSolverWrapper {
   }
 
   static void print_stats() {
-    // --- 统计已禁用以测试纯净版性能 ---
-    // std::cerr << "\n=== Search 4 Pruning Statistics ===\n";
-    // ...
+    std::cerr << "\n=== Search 3 Pruning Statistics ===\n";
+    auto print_line = [](const char *name, long long checked,
+                         long long pruned) {
+      double pct = (checked > 0) ? (100.0 * pruned / checked) : 0.0;
+      std::cerr << std::setw(22) << std::right << name << ": " << std::setw(15)
+                << std::right << checked << " checked, " << std::setw(15)
+                << std::right << pruned << " pruned (" << std::fixed
+                << std::setprecision(2) << std::setw(6) << pct << "%)\n";
+    };
+    print_line("AuxState(C2+E2)", s3_aux_checked.load(), s3_aux_pruned.load());
+    print_line("prune1 (XC slot1)", s3_prune1_checked.load(),
+               s3_prune1_pruned.load());
+    print_line("edge_prune1 (EC)", s3_edge_checked.load(),
+               s3_edge_pruned.load());
+    print_line("prune2 (XC slot2)", s3_prune2_checked.load(),
+               s3_prune2_pruned.load());
+    print_line("prune3 (XC slot3)", s3_prune3_checked.load(),
+               s3_prune3_pruned.load());
+    print_line("prune_xc3 (Conj)", s3_xc3_checked.load(), s3_xc3_pruned.load());
   }
 };
 
