@@ -10,6 +10,37 @@
 
 // NOTE: COUNT_NODE 宏已移至 analyzer_executor.h
 
+// --- 剪枝统计 (通过 prune_stats.h 统一开关控制) ---
+#include "prune_stats.h"
+
+// Search 1: dep_eo + xcross
+STAT_DECL(s1_dep_eo); // S1: Dependency+EO 剪枝表
+STAT_DECL(s1_xcross); // S1: XCross 剪枝表
+
+// Search 2: huge + dep_eo + xcross
+STAT_DECL(s2_huge);    // S2: Huge 表
+STAT_DECL(s2_dep_eo);  // S2: Dependency+EO 剪枝表
+STAT_DECL(s2_xcross1); // S2: XCross 1 剪枝表
+STAT_DECL(s2_xcross2); // S2: XCross 2 剪枝表
+
+// Search 3: huge×2 + dep_eo + xcross×3
+STAT_DECL(s3_huge1);   // S3: Huge 表 1
+STAT_DECL(s3_huge2);   // S3: Huge 表 2
+STAT_DECL(s3_dep_eo);  // S3: Dependency+EO 剪枝表
+STAT_DECL(s3_xcross1); // S3: XCross 1 剪枝表
+STAT_DECL(s3_xcross2); // S3: XCross 2 剪枝表
+STAT_DECL(s3_xcross3); // S3: XCross 3 剪枝表
+
+// Search 4: huge×3 + dep_eo + xcross×4
+STAT_DECL(s4_huge1);   // S4: Huge 表 1
+STAT_DECL(s4_huge2);   // S4: Huge 表 2
+STAT_DECL(s4_huge3);   // S4: Huge 表 3
+STAT_DECL(s4_dep_eo);  // S4: Dependency+EO 剪枝表
+STAT_DECL(s4_xcross1); // S4: XCross 1 剪枝表
+STAT_DECL(s4_xcross2); // S4: XCross 2 剪枝表
+STAT_DECL(s4_xcross3); // S4: XCross 3 剪枝表
+STAT_DECL(s4_xcross4); // S4: XCross 4 剪枝表
+
 // --- Cross Analyzer (EO Cross) ---
 struct cross_analyzer {
   // 静态成员：所有实例共享
@@ -412,16 +443,22 @@ struct xcross_analyzer {
 
       // 级联 Check 1: Dependency (EO + Partial Cross)
       int nd = p_dep[i_dep + m], neo = p_eo[i_eo + m];
-      if (get_prune_ptr(p_prune_dep_eo, (long long)nd * 2048 + neo) >= depth)
+      S1_CHECK(s1_dep_eo);
+      if (get_prune_ptr(p_prune_dep_eo, (long long)nd * 2048 + neo) >= depth) {
+        S1_HIT(s1_dep_eo);
         continue;
+      }
 
       // 级联 Check 2: Main XCross
       int m_slot = conj_moves_flat[m][slot];
       int n1 = p_multi[i1 + m_slot], n2 = p_corner[i2 + m_slot],
           n3 = p_edge[i3 + m_slot];
       long long idx_xc = (long long)(n1 + n2) * 24 + n3;
-      if (get_prune_ptr(p_prune_base, idx_xc) >= depth)
+      S1_CHECK(s1_xcross);
+      if (get_prune_ptr(p_prune_base, idx_xc) >= depth) {
+        S1_HIT(s1_xcross);
         continue;
+      }
 
       if (depth == 1)
         return true;
@@ -1241,7 +1278,39 @@ struct EOCrossSolverWrapper {
     return oss.str();
   }
 
-  static void print_stats() {}
+  static void print_stats() {
+#if ENABLE_PRUNE_STATS
+    printf("\n=== EO Cross Analyzer Pruning Stats ===\n");
+#if ENABLE_STATS_S1
+    PRINT_STAT(s1_dep_eo);
+    PRINT_STAT(s1_xcross);
+#endif
+#if ENABLE_STATS_S2
+    PRINT_STAT(s2_huge);
+    PRINT_STAT(s2_dep_eo);
+    PRINT_STAT(s2_xcross1);
+    PRINT_STAT(s2_xcross2);
+#endif
+#if ENABLE_STATS_S3
+    PRINT_STAT(s3_huge1);
+    PRINT_STAT(s3_huge2);
+    PRINT_STAT(s3_dep_eo);
+    PRINT_STAT(s3_xcross1);
+    PRINT_STAT(s3_xcross2);
+    PRINT_STAT(s3_xcross3);
+#endif
+#if ENABLE_STATS_S4
+    PRINT_STAT(s4_huge1);
+    PRINT_STAT(s4_huge2);
+    PRINT_STAT(s4_huge3);
+    PRINT_STAT(s4_dep_eo);
+    PRINT_STAT(s4_xcross1);
+    PRINT_STAT(s4_xcross2);
+    PRINT_STAT(s4_xcross3);
+    PRINT_STAT(s4_xcross4);
+#endif
+#endif
+  }
 };
 
 int main() {
