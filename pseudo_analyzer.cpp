@@ -212,7 +212,7 @@ struct XCrossSolver {
 
   // const unsigned char* p_huge_diagonal = nullptr; // Disabled for memory
 
-  // === [重构] 静态 Aux 表指针 (替代 aux_registry) ===
+  // === 静态 Aux 表指针 ===
   // Edge2: 邻棱 (E0E1) 和 对棱 (E0E2)
   const unsigned char *p_aux_e2_adj = nullptr; // 邻接: {0,1},{1,2},{2,3},{0,3}
   const unsigned char *p_aux_e2_diag = nullptr; // 对角: {0,2},{1,3}
@@ -227,8 +227,7 @@ struct XCrossSolver {
   // Corner3: 规范表 (C4C5C6)
   const unsigned char *p_aux_c3 = nullptr; // 所有 Corner3 组合映射到此
 
-  // === [重构] 静态 AuxPrunerDef 对象 ===
-  // 用于替代 aux_registry map 查找
+  // === 静态 AuxPrunerDef 对象 ===
   AuxPrunerDef aux_def_e2_adj;  // Edge2 邻接
   AuxPrunerDef aux_def_e2_diag; // Edge2 对角
   AuxPrunerDef aux_def_c2_adj;  // Corner2 邻接
@@ -236,7 +235,7 @@ struct XCrossSolver {
   AuxPrunerDef aux_def_e3;      // Edge3
   AuxPrunerDef aux_def_c3;      // Corner3
 
-  // === [重构] 索引映射辅助函数 ===
+  // === 索引映射辅助函数 ===
   // Edge2: 返回 0=邻接, 1=对角
   static inline int get_e2_type(int e1, int e2) {
     int diff = (e2 - e1 + 4) & 3;
@@ -249,8 +248,8 @@ struct XCrossSolver {
     return (diff == 2) ? 1 : 0; // diff==2 是对角
   }
 
-  // === [重构] 获取 AuxPrunerDef 的辅助函数 ===
-  // 根据 keys 返回对应的 AuxPrunerDef 指针 (替代 aux_registry.find)
+  // === 获取 AuxPrunerDef 的辅助函数 ===
+  // 根据 keys 返回对应的 AuxPrunerDef 指针
   const AuxPrunerDef *get_aux_def(const std::vector<int> &keys) {
     if (keys.size() == 2) {
       // Edge2 或 Corner2
@@ -481,7 +480,7 @@ struct XCrossSolver {
             std::vector<int> keys = {r1, r2, r3};
             std::sort(keys.begin(), keys.end());
 
-            // [重构] 使用 get_aux_def 替代 aux_registry.find
+            // 使用 get_aux_def 获取 AuxPrunerDef
             const AuxPrunerDef *found_def = get_aux_def(keys);
             if (found_def) {
               def_ptr = found_def;
@@ -609,7 +608,7 @@ struct XCrossSolver {
           if (k1 > k2)
             std::swap(k1, k2);
 
-          // [重构] 使用 get_aux_def 替代 aux_registry.find
+          // 使用 get_aux_def 获取 AuxPrunerDef
           const AuxPrunerDef *found_def = get_aux_def({k1, k2});
           if (found_def) {
             def_ptr = found_def;
@@ -660,7 +659,7 @@ struct XCrossSolver {
           if (k1 > k2)
             std::swap(k1, k2);
 
-          // [重构] 使用 get_aux_def 替代 aux_registry.find
+          // 使用 get_aux_def 获取 AuxPrunerDef
           const AuxPrunerDef *found_def = get_aux_def({k1, k2});
           if (found_def) {
             def_ptr = found_def;
