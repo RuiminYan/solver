@@ -157,9 +157,9 @@ struct cross_analyzer {
 struct xcross_analyzer {
   // 静态成员：所有实例共享
   static inline bool s_initialized = false;
-  // NOTE: 移动表暂保留在此（阶段2迁移到MoveTableManager）
-  static inline std::vector<int> s_dep_mt, s_eo_mt;
-  // NOTE: 剪枝表已迁移到PruneTableManager，此处仅保留指针
+  // NOTE: 移动表和剪枝表已迁移到Manager，此处仅保留指针
+  static inline const int *s_p_dep = nullptr; // EP4 移动表指针
+  static inline const int *s_p_eo = nullptr;  // EO Alt 移动表指针
 
   static inline const int *s_p_multi = nullptr;
   static inline const int *s_p_corner = nullptr;
@@ -205,19 +205,8 @@ struct xcross_analyzer {
     mm.loadEdge6Table();   // 用于 Huge 表状态追踪
     mm.loadCorner2Table(); // 用于 Huge 表状态追踪
 
-    std::vector<int> ep_mt;
-    if (!load_vector(ep_mt, "move_table_ep_1.bin")) {
-      ep_mt = create_ep_move_table();
-      save_vector(ep_mt, "move_table_ep_1.bin");
-    }
-    if (!load_vector(s_eo_mt, "move_table_eo_12_alt.bin")) {
-      s_eo_mt = create_eo_move_table2();
-      save_vector(s_eo_mt, "move_table_eo_12_alt.bin");
-    }
-    if (!load_vector(s_dep_mt, "move_table_ep_4.bin")) {
-      s_dep_mt = create_multi_move_table(4, 1, 12, 12 * 11 * 10 * 9, ep_mt);
-      save_vector(s_dep_mt, "move_table_ep_4.bin");
-    }
+    // 加载 EOCross 专用移动表
+    mm.loadEOCrossMoveTables();
 
     // 设置移动表指针
     s_p_multi = mm.getCrossTablePtr();
@@ -225,6 +214,8 @@ struct xcross_analyzer {
     s_p_edge = mm.getEdgeTablePtr();
     s_p_edge6 = mm.getEdge6TablePtr();   // Edge6 Move Table
     s_p_corn2 = mm.getCorner2TablePtr(); // Corner2 Move Table
+    s_p_dep = mm.getEOCrossEP4Ptr();     // EP4 Move Table
+    s_p_eo = mm.getEOCrossEOAltPtr();    // EO Alt Move Table
 
     // === 剪枝表：使用 PruneTableManager ===
     auto &ptm = PruneTableManager::getInstance();
@@ -266,8 +257,8 @@ struct xcross_analyzer {
     p_edge = s_p_edge;
     p_edge6 = s_p_edge6; // Edge6 Move Table
     p_corn2 = s_p_corn2; // Corner2 Move Table
-    p_dep = s_dep_mt.data();
-    p_eo = s_eo_mt.data();
+    p_dep = s_p_dep;     // EP4 Move Table
+    p_eo = s_p_eo;       // EO Alt Move Table
     p_prune = s_p_prune;
     p_prune_dep_eo = s_p_prune_dep_eo;
     p_prune_base = s_p_prune_base;

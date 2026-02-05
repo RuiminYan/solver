@@ -22,6 +22,11 @@ private:
   std::vector<int> corner3_table; // 3个角块组合表 (C4+C5+C6)
   std::vector<int> edge3_table;   // 3个棱块组合表 (E0+E1+E2)
 
+  // EOCross 专用移动表
+  std::vector<int> eo_cross_ep4_mt; // EP4移动表 (move_table_ep_4.bin)
+  std::vector<int>
+      eo_cross_eo_alt_mt; // EO Alt移动表 (move_table_eo_12_alt.bin)
+
   // 单例模式
   static MoveTableManager *instance;
   MoveTableManager() = default;
@@ -95,6 +100,9 @@ public:
   }
   void releaseCorner3Table() { std::vector<int>().swap(corner3_table); }
 
+  // 加载 EOCross 专用移动表
+  bool loadEOCrossMoveTables();
+
   // 获取移动表的只读访问
   const std::vector<int> &getEdgeTable() const { return edge_table; }
   const std::vector<int> &getCornerTable() const { return corner_table; }
@@ -114,6 +122,10 @@ public:
   const int *getEdge6TablePtr() const { return edge6_table.data(); }
   const int *getCorner2TablePtr() const { return corner2_table.data(); }
   const int *getCorner3TablePtr() const { return corner3_table.data(); }
+
+  // EOCross 专用移动表 Getter
+  const int *getEOCrossEP4Ptr() const { return eo_cross_ep4_mt.data(); }
+  const int *getEOCrossEOAltPtr() const { return eo_cross_eo_alt_mt.data(); }
 
 private:
   // 生成函数

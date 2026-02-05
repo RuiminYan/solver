@@ -223,6 +223,38 @@ void MoveTableManager::generateCorner3Table() {
   saveTable(corner3_table, "move_table_corners_3.bin");
 }
 
+// 加载 EOCross 专用移动表
+// NOTE: 这两个表仅被 eo_cross_analyzer 使用
+bool MoveTableManager::loadEOCrossMoveTables() {
+  // 1. EO Alt 移动表
+  if (eo_cross_eo_alt_mt.empty()) {
+    if (!loadTable(eo_cross_eo_alt_mt, "move_table_eo_12_alt.bin")) {
+      std::cout << "[MoveTable] Generating EO Alt table..." << std::endl;
+      eo_cross_eo_alt_mt = create_eo_move_table2();
+      saveTable(eo_cross_eo_alt_mt, "move_table_eo_12_alt.bin");
+    }
+  }
+
+  // 2. EP4 移动表（需要先加载 EP1 作为基础）
+  if (eo_cross_ep4_mt.empty()) {
+    if (!loadTable(eo_cross_ep4_mt, "move_table_ep_4.bin")) {
+      std::cout << "[MoveTable] Generating EP4 table..." << std::endl;
+      // 先加载 EP1 基表
+      std::vector<int> ep_mt;
+      if (!load_vector(ep_mt, "move_table_ep_1.bin")) {
+        ep_mt = create_ep_move_table();
+        save_vector(ep_mt, "move_table_ep_1.bin");
+      }
+      // 生成 EP4 表
+      eo_cross_ep4_mt =
+          create_multi_move_table(4, 1, 12, 12 * 11 * 10 * 9, ep_mt);
+      saveTable(eo_cross_ep4_mt, "move_table_ep_4.bin");
+    }
+  }
+
+  return true;
+}
+
 // --- 基础移动表生成函数 ---
 std::vector<int> create_edge_move_table() {
   std::vector<int> mt(24 * 18, -1);
