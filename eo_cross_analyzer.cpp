@@ -45,8 +45,9 @@ STAT_DECL(s4_xcross4); // S4: XCross 4 剪枝表
 struct cross_analyzer {
   // 静态成员：所有实例共享
   static inline bool s_initialized = false;
-  static inline std::vector<int> s_eo_mt;
   static inline const int *s_p_multi = nullptr;
+  static inline const int *s_p_eo =
+      nullptr; // EO移动表指针(迁移到MoveTableManager)
   static inline const unsigned char *s_p_prune = nullptr;
 
   // 实例成员（指向静态数据）
@@ -60,12 +61,10 @@ struct cross_analyzer {
     auto &pm = PruneTableManager::getInstance();
     mm.loadEdgeTable();
     mm.loadEdges2Table();
-    if (!load_vector(s_eo_mt, "move_table_eo_12.bin")) {
-      s_eo_mt = create_eo_move_table();
-      save_vector(s_eo_mt, "move_table_eo_12.bin");
-    }
+    mm.loadEOTable(); // 使用 MoveTableManager 加载 EO 表
     pm.generateCrossPrune();
     s_p_multi = mm.getEdges2TablePtr();
+    s_p_eo = mm.getEOTablePtr();
     s_p_prune = pm.getCrossPrunePtr();
     s_initialized = true;
   }
@@ -73,7 +72,7 @@ struct cross_analyzer {
   cross_analyzer() {
     // 仅复制指针引用
     p_multi = s_p_multi;
-    p_eo = s_eo_mt.data();
+    p_eo = s_p_eo;
     p_prune = s_p_prune;
   }
 

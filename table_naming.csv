@@ -74,9 +74,9 @@ move_table_edges_3.bin,edge3_table,-,-,p_edge3,p_edge3_move_ptr,-,Canon,742KB,Ed
 move_table_edges_6.bin,edge6_table,p_edge6,p_edge6,p_edge6,-,p_edge6,Canon,2.85GB,Edge6移动表
 move_table_corners_2.bin,corner2_table,p_corn2,p_corn2,p_corners2,p_corner2_move_ptr,p_corn2,Canon,<100KB,Corner2移动表
 move_table_corners_3.bin,corner3_table,-,-,p_corners3,p_corner3_move_ptr,-,Canon,637KB,Corner3移动表
-move_table_eo_12.bin,-,-,-,-,-,p_eo,Canon,144KB,EO移动表
+move_table_eo_12.bin,eo_mt,-,-,-,-,p_eo,Canon,144KB,EO移动表
 move_table_eo_12_alt.bin,eo_cross_eo_alt_mt,-,-,-,-,p_eo,Canon,144KB,EO Alt移动表
-move_table_ep_1.bin,-,-,-,-,-,(临时),-,<100KB,EP1临时表
+move_table_ep_1.bin,ep1_mt,-,-,-,-,-,Canon,<100KB,EP1移动表
 move_table_ep_4.bin,eo_cross_ep4_mt,-,-,-,-,p_dep,Canon,835KB,EP4移动表
 
 ===== 加载状态说明 =====,,,,,,,,0KB,

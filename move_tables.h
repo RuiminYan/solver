@@ -25,7 +25,9 @@ private:
   // EOCross 专用移动表
   std::vector<int> eo_cross_ep4_mt; // EP4移动表 (move_table_ep_4.bin)
   std::vector<int>
-      eo_cross_eo_alt_mt; // EO Alt移动表 (move_table_eo_12_alt.bin)
+      eo_cross_eo_alt_mt;  // EO Alt移动表 (move_table_eo_12_alt.bin)
+  std::vector<int> eo_mt;  // EO移动表 (move_table_eo_12.bin)
+  std::vector<int> ep1_mt; // EP1移动表 (move_table_ep_1.bin)
 
   // 单例模式
   static MoveTableManager *instance;
@@ -102,6 +104,8 @@ public:
 
   // 加载 EOCross 专用移动表
   bool loadEOCrossMoveTables();
+  bool loadEOTable();  // 加载 EO 移动表 (move_table_eo_12.bin)
+  bool loadEP1Table(); // 加载 EP1 移动表 (move_table_ep_1.bin)
 
   // 获取移动表的只读访问
   const std::vector<int> &getEdgeTable() const { return edge_table; }
@@ -126,6 +130,8 @@ public:
   // EOCross 专用移动表 Getter
   const int *getEOCrossEP4Ptr() const { return eo_cross_ep4_mt.data(); }
   const int *getEOCrossEOAltPtr() const { return eo_cross_eo_alt_mt.data(); }
+  const int *getEOTablePtr() const { return eo_mt.data(); }
+  const int *getEP1TablePtr() const { return ep1_mt.data(); }
 
 private:
   // 生成函数

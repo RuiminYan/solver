@@ -239,19 +239,39 @@ bool MoveTableManager::loadEOCrossMoveTables() {
   if (eo_cross_ep4_mt.empty()) {
     if (!loadTable(eo_cross_ep4_mt, "move_table_ep_4.bin")) {
       std::cout << "[MoveTable] Generating EP4 table..." << std::endl;
-      // 先加载 EP1 基表
-      std::vector<int> ep_mt;
-      if (!load_vector(ep_mt, "move_table_ep_1.bin")) {
-        ep_mt = create_ep_move_table();
-        save_vector(ep_mt, "move_table_ep_1.bin");
-      }
+      // 使用Manager加载的EP1表
+      loadEP1Table();
       // 生成 EP4 表
       eo_cross_ep4_mt =
-          create_multi_move_table(4, 1, 12, 12 * 11 * 10 * 9, ep_mt);
+          create_multi_move_table(4, 1, 12, 12 * 11 * 10 * 9, ep1_mt);
       saveTable(eo_cross_ep4_mt, "move_table_ep_4.bin");
     }
   }
 
+  return true;
+}
+
+// 加载 EO 移动表 (move_table_eo_12.bin)
+bool MoveTableManager::loadEOTable() {
+  if (!eo_mt.empty())
+    return true;
+  if (!loadTable(eo_mt, "move_table_eo_12.bin")) {
+    std::cout << "[MoveTable] Generating EO table..." << std::endl;
+    eo_mt = create_eo_move_table();
+    saveTable(eo_mt, "move_table_eo_12.bin");
+  }
+  return true;
+}
+
+// 加载 EP1 移动表 (move_table_ep_1.bin)
+bool MoveTableManager::loadEP1Table() {
+  if (!ep1_mt.empty())
+    return true;
+  if (!loadTable(ep1_mt, "move_table_ep_1.bin")) {
+    std::cout << "[MoveTable] Generating EP1 table..." << std::endl;
+    ep1_mt = create_ep_move_table();
+    saveTable(ep1_mt, "move_table_ep_1.bin");
+  }
   return true;
 }
 
