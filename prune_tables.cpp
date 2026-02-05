@@ -168,8 +168,14 @@ bool PruneTableManager::loadPseudoPairTables() {
     }
   }
 
-  // 4. 复用 pseudo_cross_base_prune[4] (Pseudo XCross Base: C4+E{0-3})
-  // 该表已由 loadPseudoTables 或单独调用加载
+  // 4. 加载 Pseudo XCross Base (C4+E{0-3})
+  // 这组表用于 Conj 优化，从 C4 视角追踪 XCross 状态
+  for (int e = 0; e < 4; ++e) {
+    std::string fn =
+        "prune_table_pseudo_cross_C4_E" + std::to_string(e) + ".bin";
+    if (!loadTable(pseudo_cross_base_prune[e], fn))
+      return false;
+  }
 
   // 5. 加载 Aux 表 (复用 Pseudo Analyzer 的 Aux 表)
   // E2/C2/E3/C3 表已由 loadPseudoTables 加载，此处确保已加载

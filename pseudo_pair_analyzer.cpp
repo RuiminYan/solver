@@ -44,10 +44,12 @@ struct xcross_analyzer2;
 // 定义静态指针，供类内初始化
 struct xcross_analyzer2 {
   static bool tables_initialized;
-  static std::vector<std::vector<unsigned char>> base_prune_tables;
-  static std::vector<std::vector<unsigned char>> xc_prune_tables;
-  static std::vector<std::vector<unsigned char>> ec_prune_tables;
-  static std::vector<std::vector<unsigned char>> pseudo_base_prune_tables;
+  // [重构] 改用 Manager 统一管理的指针 (方案A)
+  static const unsigned char *p_base_prune[4]; // Cross + C{4-7}
+  static const unsigned char *p_xc_prune[16];  // XCross C{4-7} into slot{0-3}
+  static const unsigned char *p_ec_prune[16];  // Pair C{4-7}_E{0-3}
+  static const unsigned char
+      *p_pseudo_base_prune[4]; // Pseudo XCross Base (C4+E{0-3})
 
   // 静态指针成员，指向 static vector 数据，供搜索函数使用
   static const int *p_edge_move_ptr;
@@ -58,20 +60,20 @@ struct xcross_analyzer2 {
   static const int *p_corner2_move_ptr; // [新增] Corner2 移动表指针
   static const int *p_edge2_move_ptr;   // [新增] Edge2 移动表指针
 
-  // Edge3 剪枝表 (用于 Search 4: 3 个归位槽位的棱块联合剪枝)
-  // [重构] Edge3 剪枝表 (只保留规范化表)
-  static std::vector<unsigned char> prune_e0e1e2;
+  // [重构] Aux 剪枝表指针 (从 Manager 获取)
+  // Edge3 剪枝表
+  static const unsigned char *p_aux_e3_prune; // E0E1E2 规范表
 
-  // [重构] Corner3 剪枝表 (只保留规范化表)
-  static std::vector<unsigned char> prune_c4c5c6;
+  // Corner3 剪枝表
+  static const unsigned char *p_aux_c3_prune; // C4C5C6 规范表
 
-  // [重构] Corner2 剪枝表 (只保留规范化表)
-  static std::vector<unsigned char> prune_c4c5; // 邻接
-  static std::vector<unsigned char> prune_c4c6; // 对角
+  // Corner2 剪枝表
+  static const unsigned char *p_aux_c2_adj_prune;  // C4C5 邻接
+  static const unsigned char *p_aux_c2_diag_prune; // C4C6 对角
 
-  // [重构] Edge2 剪枝表 (只保留规范化表)
-  static std::vector<unsigned char> prune_e0e1; // 邻接
-  static std::vector<unsigned char> prune_e0e2; // 对角
+  // Edge2 剪枝表
+  static const unsigned char *p_aux_e2_adj_prune;  // E0E1 邻接
+  static const unsigned char *p_aux_e2_diag_prune; // E0E2 对角
 
   // [新增] 辅助剪枝定义 (用于通用 AuxState 架构)
   struct AuxPrunerDef {
@@ -180,120 +182,69 @@ struct xcross_analyzer2 {
 
     init_matrix();
 
-    // 1. Load Base Prune Tables (Cross + 1 Corner)
-    base_prune_tables.resize(4);
+    // [重构] 从 PruneTableManager 统一加载 PseudoPair 表
+    auto &ptm = PruneTableManager::getInstance();
+    if (!ptm.loadPseudoPairTables()) {
+      std::cerr << "Error: PseudoPair prune tables missing. Please run "
+                   "table_generator.exe."
+                << std::endl;
+      exit(1);
+    }
+
+    // 1. 获取 Base Prune Tables 指针 (Cross + C{4-7})
     for (int c = 0; c < 4; ++c) {
-      std::string filename =
-          "prune_table_pseudo_cross_C" + std::to_string(c + 4) + ".bin";
-      if (!load_vector(base_prune_tables[c], filename)) {
-        std::cerr << "Error: Missing table " << filename << std::endl;
-        exit(1);
-      }
+      p_base_prune[c] = ptm.getPseudoPairBasePrunePtr(c);
     }
 
-    // 2. Load XCross Prune Tables
-    xc_prune_tables.resize(16);
+    // 2. 获取 XCross Prune Tables 指针
+    for (int idx = 0; idx < 16; ++idx) {
+      p_xc_prune[idx] = ptm.getPseudoPairXCPrunePtr(idx);
+    }
+
+    // 3. 获取 Pair Prune Tables 指针
+    for (int idx = 0; idx < 16; ++idx) {
+      p_ec_prune[idx] = ptm.getPseudoPairECPrunePtr(idx);
+    }
+
+    // 4. 获取 Pseudo Base Prune Tables 指针 (C4+E{0-3})
+    // 复用 Pseudo Analyzer 的 pseudo_cross_base_prune
     for (int e = 0; e < 4; ++e) {
-      for (int c = 0; c < 4; ++c) {
-        int idx = e * 4 + c;
-        std::string fn_xc = "prune_table_pseudo_cross_C" +
-                            std::to_string(c + 4) + "_into_slot" +
-                            std::to_string(e) + ".bin";
-        if (!load_vector(xc_prune_tables[idx], fn_xc)) {
-          std::cerr << "Error: Missing table " << fn_xc << std::endl;
-          exit(1);
-        }
-      }
+      p_pseudo_base_prune[e] = ptm.getPseudoCrossBasePrunePtr(e);
     }
 
-    // 3. Load Pair Prune Tables
-    ec_prune_tables.resize(16);
-    for (int e = 0; e < 4; ++e) {
-      for (int c = 0; c < 4; ++c) {
-        int idx = e * 4 + c;
-        std::string fn_ec = "prune_table_pseudo_pair_C" +
-                            std::to_string(c + 4) + "_E" + std::to_string(e) +
-                            ".bin";
-        if (!load_vector(ec_prune_tables[idx], fn_ec)) {
-          std::cerr << "Error: Missing table " << fn_ec << std::endl;
-          exit(1);
-        }
-      }
-    }
-
-    // 4. Load Pseudo Base Prune Tables (XCross Base)
-    // [Conj优化] 只加载 4 个 C4 基准表 (diff=0,1,2,3 对应 E0,E1,E2,E3)
-    pseudo_base_prune_tables.resize(4);
-    for (int e = 0; e < 4; ++e) {
-      std::string filename =
-          "prune_table_pseudo_cross_C4_E" + std::to_string(e) + ".bin";
-      if (!load_vector(pseudo_base_prune_tables[e], filename)) {
-        std::cerr << "Error: Missing table " << filename << std::endl;
-        exit(1);
-      }
-    }
-
-    // 5. [重构] Load Edge3 Prune Tables (只加载规范化表)
+    // 5. 获取 Aux 表指针 (从 Manager，已由 loadPseudoPairTables 加载)
+    // Edge3 移动表
     mtm.loadEdge3Table();
     p_edge3_move_ptr = mtm.getEdge3TablePtr();
+    p_aux_e3_prune = ptm.getPseudoCrossE0E1E2PrunePtr();
 
-    if (!load_vector(prune_e0e1e2, "prune_table_pseudo_cross_E0_E1_E2.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_E0_E1_E2.bin"
-                << std::endl;
-      exit(1);
-    }
-
-    // 6. [重构] Load Corner3 Prune Tables (只加载规范化表)
+    // Corner3 移动表
     mtm.loadCorner3Table();
     p_corner3_move_ptr = mtm.getCorner3TablePtr();
+    p_aux_c3_prune = ptm.getPseudoCrossC4C5C6PrunePtr();
 
-    if (!load_vector(prune_c4c5c6, "prune_table_pseudo_cross_C4_C5_C6.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_C4_C5_C6.bin"
-                << std::endl;
-      exit(1);
-    }
-
-    // 7. [重构] Load Corner2 Prune Tables (只加载规范化表)
+    // Corner2 移动表
     mtm.loadCorner2Table();
     p_corner2_move_ptr = mtm.getCorner2TablePtr();
+    p_aux_c2_adj_prune = ptm.getPseudoCrossC4C5PrunePtr();
+    p_aux_c2_diag_prune = ptm.getPseudoCrossC4C6PrunePtr();
 
-    if (!load_vector(prune_c4c5, "prune_table_pseudo_cross_C4_C5.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_C4_C5.bin"
-                << std::endl;
-      exit(1);
-    }
-    if (!load_vector(prune_c4c6, "prune_table_pseudo_cross_C4_C6.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_C4_C6.bin"
-                << std::endl;
-      exit(1);
-    }
-
-    // 8. [重构] Load Edge2 Prune Tables (只加载规范化表)
+    // Edge2 移动表
     mtm.loadEdges2Table();
     p_edge2_move_ptr = mtm.getEdges2TablePtr();
+    p_aux_e2_adj_prune = ptm.getPseudoCrossE0E1PrunePtr();
+    p_aux_e2_diag_prune = ptm.getPseudoCrossE0E2PrunePtr();
 
-    if (!load_vector(prune_e0e1, "prune_table_pseudo_cross_E0_E1.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_E0_E1.bin"
-                << std::endl;
-      exit(1);
-    }
-    if (!load_vector(prune_e0e2, "prune_table_pseudo_cross_E0_E2.bin")) {
-      std::cerr << "Error: Missing prune_table_pseudo_cross_E0_E2.bin"
-                << std::endl;
-      exit(1);
-    }
-
-    // 9. 初始化静态 AuxPrunerDef 对象
-    // Corner3 表 (multiplier = 9072)
-    aux_def_c3 = {prune_c4c5c6.data(), p_corner3_move_ptr, 9072};
-    // Edge3 表 (multiplier = 10560)
-    aux_def_e3 = {prune_e0e1e2.data(), p_edge3_move_ptr, 10560};
-    // Corner2 表 (multiplier = 504)
-    aux_def_c2_adj = {prune_c4c5.data(), p_corner2_move_ptr, 504};  // 邻接
-    aux_def_c2_diag = {prune_c4c6.data(), p_corner2_move_ptr, 504}; // 对角
-    // Edge2 表 (multiplier = 528)
-    aux_def_e2_adj = {prune_e0e1.data(), p_edge2_move_ptr, 528};  // 邻接
-    aux_def_e2_diag = {prune_e0e2.data(), p_edge2_move_ptr, 528}; // 对角
+    // 6. 初始化静态 AuxPrunerDef 对象
+    aux_def_c3 = {p_aux_c3_prune, p_corner3_move_ptr, 9072}; // Corner3
+    aux_def_e3 = {p_aux_e3_prune, p_edge3_move_ptr, 10560};  // Edge3
+    aux_def_c2_adj = {p_aux_c2_adj_prune, p_corner2_move_ptr,
+                      504}; // Corner2 邻接
+    aux_def_c2_diag = {p_aux_c2_diag_prune, p_corner2_move_ptr,
+                       504}; // Corner2 对角
+    aux_def_e2_adj = {p_aux_e2_adj_prune, p_edge2_move_ptr, 528}; // Edge2 邻接
+    aux_def_e2_diag = {p_aux_e2_diag_prune, p_edge2_move_ptr,
+                       528}; // Edge2 对角
 
     tables_initialized = true;
   }
@@ -627,8 +578,8 @@ struct xcross_analyzer2 {
   }
 
   void start_search_1(int arg_slot1, int arg_pslot1,
-                      std::vector<unsigned char> &prune1,
-                      std::vector<unsigned char> &edge_prune,
+                      const unsigned char *prune1,
+                      const unsigned char *edge_prune,
                       std::vector<std::string> rotations,
                       const std::vector<int> &base_alg) {
     slot1 = arg_slot1;
@@ -642,8 +593,8 @@ struct xcross_analyzer2 {
       int heuristic;
     };
     std::vector<RotTask> tasks;
-    const unsigned char *p_prune1 = prune1.data();
-    const unsigned char *p_edge_prune = edge_prune.data();
+    const unsigned char *p_prune1 = prune1;
+    const unsigned char *p_edge_prune = edge_prune;
 
     for (size_t r = 0; r < rotations.size(); ++r) {
       int idx1, idx2, idx3;
@@ -704,8 +655,8 @@ struct xcross_analyzer2 {
     for (int slot1_tmp = 0; slot1_tmp < 4; slot1_tmp++) {
       for (int pslot1_tmp = 0; pslot1_tmp < 4; pslot1_tmp++) {
         int idx = slot1_tmp * 4 + pslot1_tmp;
-        start_search_1(slot1_tmp, pslot1_tmp, xc_prune_tables[idx],
-                       ec_prune_tables[idx], rotations, base_alg);
+        start_search_1(slot1_tmp, pslot1_tmp, p_xc_prune[idx], p_ec_prune[idx],
+                       rotations, base_alg);
       }
     }
   }
@@ -787,9 +738,9 @@ struct xcross_analyzer2 {
   }
 
   void start_search_2(int arg_slot1, int arg_slot2, int arg_pslot1,
-                      int arg_pslot2, std::vector<unsigned char> &prune1,
-                      std::vector<unsigned char> &prune2,
-                      std::vector<unsigned char> &edge_prune1,
+                      int arg_pslot2, const unsigned char *prune1,
+                      const unsigned char *prune2,
+                      const unsigned char *edge_prune1,
                       std::vector<std::string> rotations,
                       const std::vector<int> &base_alg) {
     slot1 = arg_slot1;
@@ -803,12 +754,12 @@ struct xcross_analyzer2 {
 
     // [Conj优化] 使用 diff 选择 C4 基准表
     int diff2 = (slot2 - pslot2 + 4) & 3;
-    std::vector<unsigned char> &prune_xc2 = pseudo_base_prune_tables[diff2];
+    const unsigned char *prune_xc2 = p_pseudo_base_prune[diff2];
 
-    const unsigned char *p_prune1 = prune1.data();
-    const unsigned char *p_prune2 = prune2.data();
-    const unsigned char *p_edge_prune1 = edge_prune1.data();
-    const unsigned char *p_prune_xc2 = prune_xc2.data();
+    const unsigned char *p_prune1 = prune1;
+    const unsigned char *p_prune2 = prune2;
+    const unsigned char *p_edge_prune1 = edge_prune1;
+    const unsigned char *p_prune_xc2 = prune_xc2;
 
     struct RotTask {
       int rot_idx;
@@ -918,10 +869,10 @@ struct xcross_analyzer2 {
             if (pslot1_tmp == pslot2_tmp)
               continue;
             start_search_2(slot1_tmp, slot2_tmp, pslot1_tmp, pslot2_tmp,
-                           xc_prune_tables[slot1_tmp * 4 + pslot1_tmp],
-                           base_prune_tables[pslot2_tmp],
-                           ec_prune_tables[slot1_tmp * 4 + pslot1_tmp],
-                           rotations, base_alg);
+                           p_xc_prune[slot1_tmp * 4 + pslot1_tmp],
+                           p_base_prune[pslot2_tmp],
+                           p_ec_prune[slot1_tmp * 4 + pslot1_tmp], rotations,
+                           base_alg);
           }
         }
       }
@@ -1047,8 +998,8 @@ struct xcross_analyzer2 {
 
   void start_search_3(int arg_slot1, int arg_slot2, int arg_slot3,
                       int arg_pslot1, int arg_pslot2, int arg_pslot3,
-                      std::vector<unsigned char> &prune1,
-                      std::vector<unsigned char> &edge_prune1,
+                      const unsigned char *prune1,
+                      const unsigned char *edge_prune1,
                       std::vector<std::string> rotations,
                       const std::vector<int> &base_alg) {
     slot1 = arg_slot1;
@@ -1064,11 +1015,11 @@ struct xcross_analyzer2 {
 
     // [Conj优化] 使用 diff 选择 C4 基准表
     int diff3 = (slot3 - pslot3 + 4) & 3;
-    std::vector<unsigned char> &prune_xc3 = pseudo_base_prune_tables[diff3];
+    const unsigned char *prune_xc3 = p_pseudo_base_prune[diff3];
 
-    const unsigned char *p_prune1 = prune1.data();
-    const unsigned char *p_edge_prune1 = edge_prune1.data();
-    const unsigned char *p_prune_xc3 = prune_xc3.data();
+    const unsigned char *p_prune1 = prune1;
+    const unsigned char *p_edge_prune1 = edge_prune1;
+    const unsigned char *p_prune_xc3 = prune_xc3;
 
     struct RotTask {
       int rot_idx;
@@ -1202,12 +1153,11 @@ struct xcross_analyzer2 {
                              a_pslot_tmps.end());
         for (int slot1_tmp : a_slot_tmps) {
           for (int pslot1_tmp : a_pslot_tmps) {
-            start_search_3(slot1_tmp, slot_tmps_set[i][0], slot_tmps_set[i][1],
-                           pslot1_tmp, pslot_tmps_set[j][0],
-                           pslot_tmps_set[j][1],
-                           xc_prune_tables[slot1_tmp * 4 + pslot1_tmp],
-                           ec_prune_tables[slot1_tmp * 4 + pslot1_tmp],
-                           rotations, base_alg);
+            start_search_3(
+                slot1_tmp, slot_tmps_set[i][0], slot_tmps_set[i][1], pslot1_tmp,
+                pslot_tmps_set[j][0], pslot_tmps_set[j][1],
+                p_xc_prune[slot1_tmp * 4 + pslot1_tmp],
+                p_ec_prune[slot1_tmp * 4 + pslot1_tmp], rotations, base_alg);
           }
         }
       }
@@ -1334,13 +1284,14 @@ struct xcross_analyzer2 {
     return false;
   }
 
-  void start_search_4(
-      int arg_slot1, int arg_slot2, int arg_slot3, int arg_slot4,
-      int arg_pslot1, int arg_pslot2, int arg_pslot3, int arg_pslot4,
-      std::vector<unsigned char> &prune1, std::vector<unsigned char> &prune2,
-      std::vector<unsigned char> &prune3, std::vector<unsigned char> &prune4,
-      std::vector<unsigned char> &edge_prune1,
-      std::vector<std::string> rotations, const std::vector<int> &base_alg) {
+  void start_search_4(int arg_slot1, int arg_slot2, int arg_slot3,
+                      int arg_slot4, int arg_pslot1, int arg_pslot2,
+                      int arg_pslot3, int arg_pslot4,
+                      const unsigned char *prune1, const unsigned char *prune2,
+                      const unsigned char *prune3, const unsigned char *prune4,
+                      const unsigned char *edge_prune1,
+                      std::vector<std::string> rotations,
+                      const std::vector<int> &base_alg) {
     slot1 = arg_slot1;
     slot2 = arg_slot2;
     slot3 = arg_slot3;
@@ -1356,14 +1307,14 @@ struct xcross_analyzer2 {
 
     // [Conj优化] 使用 diff 选择 C4 基准表
     int diff4 = (slot4 - pslot4 + 4) & 3;
-    std::vector<unsigned char> &prune_xc4 = pseudo_base_prune_tables[diff4];
+    const unsigned char *prune_xc4 = p_pseudo_base_prune[diff4];
 
-    const unsigned char *p_prune1 = prune1.data();
-    const unsigned char *p_prune2 = prune2.data();
-    const unsigned char *p_prune3 = prune3.data();
-    const unsigned char *p_prune4 = prune4.data();
-    const unsigned char *p_edge_prune1 = edge_prune1.data();
-    const unsigned char *p_prune_xc4 = prune_xc4.data();
+    const unsigned char *p_prune1 = prune1;
+    const unsigned char *p_prune2 = prune2;
+    const unsigned char *p_prune3 = prune3;
+    const unsigned char *p_prune4 = prune4;
+    const unsigned char *p_edge_prune1 = edge_prune1;
+    const unsigned char *p_prune_xc4 = prune_xc4;
 
     struct RotTask {
       int rot_idx;
@@ -1521,45 +1472,37 @@ struct xcross_analyzer2 {
           if (k != j)
             p_rem.push_back(k);
         start_search_4(i, s_rem[0], s_rem[1], s_rem[2], j, p_rem[0], p_rem[1],
-                       p_rem[2], xc_prune_tables[i * 4 + j],
-                       base_prune_tables[p_rem[0]], base_prune_tables[p_rem[1]],
-                       base_prune_tables[p_rem[2]], ec_prune_tables[i * 4 + j],
-                       rotations, base_alg);
+                       p_rem[2], p_xc_prune[i * 4 + j], p_base_prune[p_rem[0]],
+                       p_base_prune[p_rem[1]], p_base_prune[p_rem[2]],
+                       p_ec_prune[i * 4 + j], rotations, base_alg);
       }
     }
   }
 };
 
 bool xcross_analyzer2::tables_initialized = false;
-std::vector<std::vector<unsigned char>> xcross_analyzer2::base_prune_tables;
-std::vector<std::vector<unsigned char>> xcross_analyzer2::xc_prune_tables;
-std::vector<std::vector<unsigned char>> xcross_analyzer2::ec_prune_tables;
-std::vector<std::vector<unsigned char>>
-    xcross_analyzer2::pseudo_base_prune_tables;
+
+// [重构] 指针数组静态定义 (从 Manager 获取)
+const unsigned char *xcross_analyzer2::p_base_prune[4] = {nullptr};
+const unsigned char *xcross_analyzer2::p_xc_prune[16] = {nullptr};
+const unsigned char *xcross_analyzer2::p_ec_prune[16] = {nullptr};
+const unsigned char *xcross_analyzer2::p_pseudo_base_prune[4] = {nullptr};
 
 const int *xcross_analyzer2::p_edge_move_ptr = nullptr;
 const int *xcross_analyzer2::p_corner_move_ptr = nullptr;
 const int *xcross_analyzer2::p_multi_move_ptr = nullptr;
 const int *xcross_analyzer2::p_edge3_move_ptr = nullptr;
-const int *xcross_analyzer2::p_corner3_move_ptr = nullptr; // [新增]
-
-// [重构] Edge3 剪枝表定义 (只保留规范化表)
-std::vector<unsigned char> xcross_analyzer2::prune_e0e1e2;
-
-// [重构] Corner3 剪枝表定义 (只保留规范化表)
-std::vector<unsigned char> xcross_analyzer2::prune_c4c5c6;
-
-// [新增] Corner2/Edge2 移动表指针定义
+const int *xcross_analyzer2::p_corner3_move_ptr = nullptr;
 const int *xcross_analyzer2::p_corner2_move_ptr = nullptr;
 const int *xcross_analyzer2::p_edge2_move_ptr = nullptr;
 
-// [重构] Corner2 剪枝表定义 (只保留规范化表)
-std::vector<unsigned char> xcross_analyzer2::prune_c4c5;
-std::vector<unsigned char> xcross_analyzer2::prune_c4c6;
-
-// [重构] Edge2 剪枝表定义 (只保留规范化表)
-std::vector<unsigned char> xcross_analyzer2::prune_e0e1;
-std::vector<unsigned char> xcross_analyzer2::prune_e0e2;
+// [重构] Aux 表指针静态定义
+const unsigned char *xcross_analyzer2::p_aux_e3_prune = nullptr;
+const unsigned char *xcross_analyzer2::p_aux_c3_prune = nullptr;
+const unsigned char *xcross_analyzer2::p_aux_c2_adj_prune = nullptr;
+const unsigned char *xcross_analyzer2::p_aux_c2_diag_prune = nullptr;
+const unsigned char *xcross_analyzer2::p_aux_e2_adj_prune = nullptr;
+const unsigned char *xcross_analyzer2::p_aux_e2_diag_prune = nullptr;
 
 // 静态 AuxPrunerDef 成员定义
 xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_e2_adj;
