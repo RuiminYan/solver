@@ -11,6 +11,11 @@
 
 PruneTableManager *PruneTableManager::instance = nullptr;
 
+// 统一打印深度分布
+inline void printDepth(int depth, long long count) {
+  std::cout << "  Depth " << depth << ": " << count << std::endl;
+}
+
 PruneTableManager &PruneTableManager::getInstance() {
   if (instance == nullptr) {
     instance = new PruneTableManager();
@@ -265,19 +270,16 @@ bool PruneTableManager::loadEOCrossTables() {
 // --- 前向声明: Pseudo 表生成函数 ---
 void create_prune_table_pseudo_cross_corner(
     int index2, int depth, const std::vector<int> &table1,
-    const std::vector<int> &table2, std::vector<unsigned char> &prune_table,
-    const std::string &log_prefix);
+    const std::vector<int> &table2, std::vector<unsigned char> &prune_table);
 void create_prune_table_pseudo_xcross(int index3, int index2, int depth,
                                       const std::vector<int> &table1,
                                       const std::vector<int> &table2,
-                                      std::vector<unsigned char> &prune_table,
-                                      const std::string &log_prefix);
+                                      std::vector<unsigned char> &prune_table);
 void create_prune_table_pseudo_pair(int index1, int index2, int size1,
                                     int size2, int depth,
                                     const std::vector<int> &table1,
                                     const std::vector<int> &table2,
-                                    std::vector<unsigned char> &prune_table,
-                                    const std::string &log_prefix);
+                                    std::vector<unsigned char> &prune_table);
 
 void PruneTableManager::generateAllSequentially() {
   auto &mtm = MoveTableManager::getInstance();
@@ -587,7 +589,7 @@ void PruneTableManager::generateAllSequentially() {
         std::cout << "  Generating " << fn << "..." << std::endl;
         create_prune_table_pseudo_cross_corner(
             corner_indices[c], 10, mtm.getCrossTable(), mtm.getCornerTable(),
-            temp_table, "[Gen Cross C" + std::to_string(c + 4) + "]");
+            temp_table);
         saveTable(temp_table, fn);
       }
     }
@@ -601,9 +603,7 @@ void PruneTableManager::generateAllSequentially() {
           std::cout << "  Generating " << fn << "..." << std::endl;
           create_prune_table_pseudo_xcross(edge_indices[e], corner_indices[c],
                                            10, mtm.getCrossTable(),
-                                           mtm.getCornerTable(), temp_table,
-                                           "[Gen XC C" + std::to_string(c + 4) +
-                                               " S" + std::to_string(e) + "]");
+                                           mtm.getCornerTable(), temp_table);
           saveTable(temp_table, fn);
         }
       }
@@ -618,9 +618,7 @@ void PruneTableManager::generateAllSequentially() {
           std::cout << "  Generating " << fn << "..." << std::endl;
           create_prune_table_pseudo_pair(edge_indices[e], corner_indices[c], 24,
                                          24, 8, mtm.getEdgeTable(),
-                                         mtm.getCornerTable(), temp_table,
-                                         "[Gen Pair C" + std::to_string(c + 4) +
-                                             " E" + std::to_string(e) + "]");
+                                         mtm.getCornerTable(), temp_table);
           saveTable(temp_table, fn);
         }
       }
@@ -1183,7 +1181,7 @@ void create_prune_table_pseudo_cross_corners2(int idx_cr, int idx_c2, int sz_cr,
         }
       }
     }
-    std::cout << "  [Gen Corner2] Depth " << d << ": " << cnt << std::endl;
+    printDepth(d, cnt);
     if (cnt == 0)
       break;
   }
@@ -1244,7 +1242,7 @@ void create_prune_table_pseudo_cross_corners3(int idx_cr, int idx_c3, int sz_cr,
         }
       }
     }
-    std::cout << "  [Gen Corner3] Depth " << d << ": " << cnt << std::endl;
+    printDepth(d, cnt);
     if (cnt == 0)
       break;
   }
@@ -1305,7 +1303,7 @@ void create_prune_table_pseudo_cross_edges3(int idx_cr, int idx_e3, int sz_cr,
         }
       }
     }
-    std::cout << "  [Gen Edge3] Depth " << d << ": " << cnt << std::endl;
+    printDepth(d, cnt);
     if (cnt == 0)
       break;
   }
@@ -1353,8 +1351,7 @@ void create_prune_table_pseudo_base(int idx_cr, int idx_cn, int idx_ed,
       tmp[start_idx] = 0;
   }
 
-  std::cout << "  [Gen Pseudo Diff " << (idx_ed / 2) << "] Depth 0 initialized."
-            << std::endl;
+  std::cout << "  Depth 0 initialized." << std::endl;
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
@@ -1376,8 +1373,7 @@ void create_prune_table_pseudo_base(int idx_cr, int idx_cn, int idx_ed,
         }
       }
     }
-    std::cout << "  [Gen Pseudo Diff " << (idx_ed / 2) << "] Depth " << nd
-              << ": " << cnt << std::endl;
+    printDepth(nd, cnt);
     if (cnt == 0)
       break;
   }
@@ -1426,7 +1422,7 @@ void create_prune_table_cross_c4(int idx1, int idx2, int sz1, int sz2,
         }
       }
     }
-    std::cout << "  [Base Cross+C4] Depth " << d << ": " << cnt << std::endl;
+    printDepth(d, cnt);
     if (cnt == 0)
       break;
   }
@@ -1470,7 +1466,7 @@ void create_prune_table_pair_base(int idx_e, int idx_c, int sz_e, int sz_c,
         }
       }
     }
-    std::cout << "  [Base Pair C4+E0] Depth " << d << ": " << cnt << std::endl;
+    printDepth(d, cnt);
     if (cnt == 0)
       break;
   }
@@ -1517,7 +1513,7 @@ void create_prune_table_xcross_base(int idx_cr, int idx_cn, int idx_ex,
         }
       }
     }
-    std::cout << "  [XCross Gen] Depth " << d << ": " << cnt << std::endl;
+    printDepth(d, cnt);
     if (cnt == 0)
       break;
   }
@@ -1585,7 +1581,7 @@ void create_prune_table_xcross_full(int idx_cr, int idx_cn, int idx_ed,
         }
       }
     }
-    std::cout << "  [Gen XCross] Depth " << d << ": " << cnt << std::endl;
+    printDepth(d, cnt);
     if (cnt == 0)
       break;
   }
@@ -1638,7 +1634,7 @@ void create_prune_table_huge(int sz_e6, int sz_c2, int depth,
         }
       }
     }
-    std::cout << "  [Gen Huge] Depth " << d << ": " << cnt << std::endl;
+    printDepth(d, cnt);
     if (cnt == 0)
       break;
   }
@@ -1699,7 +1695,7 @@ void create_prune_table_pseudo_cross_edges2(int idx_cr, int idx_e2, int sz_cr,
         }
       }
     }
-    std::cout << "  [Gen E0E2] Depth " << d << ": " << cnt << std::endl;
+    printDepth(d, cnt);
     if (cnt == 0)
       break;
   }
@@ -1723,7 +1719,7 @@ create_cascaded_prune_table(int i1, int i2, int s1, int s2, int depth,
   long long cnt_0 = 0;
   if (tmp[i1 * s2 + i2] == 0)
     cnt_0 = 1;
-  std::cout << "    [Gen Prune 1] Depth 0: " << cnt_0 << std::endl;
+  printDepth(0, cnt_0);
 
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
@@ -1743,7 +1739,7 @@ create_cascaded_prune_table(int i1, int i2, int s1, int s2, int depth,
         }
       }
     }
-    std::cout << "    [Gen Prune 1] Depth " << nd << ": " << cnt << std::endl;
+    printDepth(nd, cnt);
     if (cnt == 0)
       break;
   }
@@ -1771,8 +1767,8 @@ void create_cascaded_prune_table2(int i1, int i2, int s1, int s2, int depth,
       cnt_1++;
     }
   }
-  std::cout << "    [Gen Prune 2] Depth 0: 1" << std::endl;
-  std::cout << "    [Gen Prune 2] Depth 1: " << cnt_1 << std::endl;
+  printDepth(0, 1);
+  printDepth(1, cnt_1);
 
   for (int d = 1; d < depth; ++d) {
     int nd = d + 1;
@@ -1792,7 +1788,7 @@ void create_cascaded_prune_table2(int i1, int i2, int s1, int s2, int depth,
         }
       }
     }
-    std::cout << "    [Gen Prune 2] Depth " << nd << ": " << cnt << std::endl;
+    printDepth(nd, cnt);
     if (cnt == 0)
       break;
   }
@@ -1809,7 +1805,7 @@ void create_cascaded_prune_table3(int i1, int i2, int s1, int s2, int depth,
   int sz = s1 * s2;
   std::vector<unsigned char> tmp(sz, 0xF);
   tmp[i1 * s2 + i2] = 0;
-  std::cout << "    [Gen Prune 3] Depth 0: 1" << std::endl;
+  printDepth(0, 1);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     if (nd >= 15)
@@ -1828,7 +1824,7 @@ void create_cascaded_prune_table3(int i1, int i2, int s1, int s2, int depth,
         }
       }
     }
-    std::cout << "    [Gen Prune 3] Depth " << nd << ": " << cnt << std::endl;
+    printDepth(nd, cnt);
     if (cnt == 0)
       break;
   }
@@ -1896,7 +1892,7 @@ void create_prune_table_xcross_plus(
         }
       }
     }
-    std::cout << "  [Gen XC+Plus] Depth " << d << ": " << cnt << std::endl;
+    printDepth(d, cnt);
     if (cnt == 0)
       break;
   }
@@ -1965,7 +1961,7 @@ void create_prune_table_xcross_corn3(
         }
       }
     }
-    std::cout << "  [Gen 3-Corn] Depth " << d << ": " << cnt << std::endl;
+    printDepth(d, cnt);
     if (cnt == 0)
       break;
   }
@@ -1985,8 +1981,7 @@ void create_prune_table_xcross_corn3(
 // index2: corner 初始索引 (如 12=C4, 15=C5, 18=C6, 21=C7)
 void create_prune_table_pseudo_cross_corner(
     int index2, int depth, const std::vector<int> &table1,
-    const std::vector<int> &table2, std::vector<unsigned char> &prune_table,
-    const std::string &log_prefix) {
+    const std::vector<int> &table2, std::vector<unsigned char> &prune_table) {
   int size1 = 190080, size2 = 24, size = size1 * size2;
   std::vector<unsigned char> temp_table(size, 0xF);
   int next_i, index1_tmp, index2_tmp, next_d;
@@ -2000,7 +1995,7 @@ void create_prune_table_pseudo_cross_corner(
   for (int i = 0; i < size; ++i)
     if (temp_table[i] == 0)
       count++;
-  std::cout << "  " << log_prefix << " Depth 0: " << count << std::endl;
+  printDepth(0, count);
   for (int d = 0; d < depth; ++d) {
     next_d = d + 1;
     if (next_d >= 15)
@@ -2019,8 +2014,7 @@ void create_prune_table_pseudo_cross_corner(
         }
       }
     }
-    std::cout << "  " << log_prefix << " Depth " << next_d << ": " << next_count
-              << std::endl;
+    printDepth(next_d, next_count);
   }
   prune_table.resize((size + 1) / 2);
   std::fill(prune_table.begin(), prune_table.end(), 0xFF);
@@ -2035,8 +2029,7 @@ void create_prune_table_pseudo_cross_corner(
 void create_prune_table_pseudo_xcross(int index3, int index2, int depth,
                                       const std::vector<int> &table1,
                                       const std::vector<int> &table2,
-                                      std::vector<unsigned char> &prune_table,
-                                      const std::string &log_prefix) {
+                                      std::vector<unsigned char> &prune_table) {
   int size1 = 190080, size2 = 24, size = size1 * size2;
   std::vector<unsigned char> temp_table(size, 0xF);
   int next_i, index1_tmp, index2_tmp, next_d;
@@ -2107,7 +2100,7 @@ void create_prune_table_pseudo_xcross(int index3, int index2, int depth,
   for (int i = 0; i < size; ++i)
     if (temp_table[i] == 0)
       count++;
-  std::cout << "  " << log_prefix << " Depth 0: " << count << std::endl;
+  printDepth(0, count);
 
   for (int d = 0; d < depth; ++d) {
     next_d = d + 1;
@@ -2127,8 +2120,7 @@ void create_prune_table_pseudo_xcross(int index3, int index2, int depth,
         }
       }
     }
-    std::cout << "  " << log_prefix << " Depth " << next_d << ": " << next_count
-              << std::endl;
+    printDepth(next_d, next_count);
   }
   prune_table.resize((size + 1) / 2);
   std::fill(prune_table.begin(), prune_table.end(), 0xFF);
@@ -2144,8 +2136,7 @@ void create_prune_table_pseudo_pair(int index1, int index2, int size1,
                                     int size2, int depth,
                                     const std::vector<int> &table1,
                                     const std::vector<int> &table2,
-                                    std::vector<unsigned char> &prune_table,
-                                    const std::string &log_prefix) {
+                                    std::vector<unsigned char> &prune_table) {
   int size = size1 * size2;
   std::vector<unsigned char> temp_table(size, 0xF);
   int start = index1 * size2 + index2, next_i, index1_tmp, index2_tmp, next_d;
@@ -2218,7 +2209,7 @@ void create_prune_table_pseudo_pair(int index1, int index2, int size1,
   for (int i = 0; i < size; ++i)
     if (temp_table[i] == 0)
       count++;
-  std::cout << "  " << log_prefix << " Depth 0: " << count << std::endl;
+  printDepth(0, count);
 
   for (int d = 0; d < depth; ++d) {
     next_d = d + 1;
@@ -2238,8 +2229,7 @@ void create_prune_table_pseudo_pair(int index1, int index2, int size1,
         }
       }
     }
-    std::cout << "  " << log_prefix << " Depth " << next_d << ": " << next_count
-              << std::endl;
+    printDepth(next_d, next_count);
   }
   prune_table.resize((size + 1) / 2);
   std::fill(prune_table.begin(), prune_table.end(), 0xFF);
