@@ -2,7 +2,6 @@
 #include "cube_common.h"
 #include "move_tables.h"
 #include "prune_tables.h"
-#include <map>
 
 // --- 全局统计变量重定向到 AnalyzerStats ---
 #define global_nodes AnalyzerStats::globalNodes
@@ -98,7 +97,53 @@ struct xcross_analyzer2 {
   };
 
   static constexpr int MAX_AUX = 8;
-  static std::map<std::vector<int>, AuxPrunerDef> aux_registry;
+
+  // === 静态 AuxPrunerDef 对象 (替代 aux_registry map) ===
+  // Edge2: 邻接 (E0E1) 和 对角 (E0E2)
+  static AuxPrunerDef aux_def_e2_adj;  // {0,1}: prune_e0e1
+  static AuxPrunerDef aux_def_e2_diag; // {0,2}: prune_e0e2
+  // Corner2: 邻接 (C4C5) 和 对角 (C4C6)
+  static AuxPrunerDef aux_def_c2_adj;  // {4,5}: prune_c4c5
+  static AuxPrunerDef aux_def_c2_diag; // {4,6}: prune_c4c6
+  // Edge3: 规范表 (E0E1E2)
+  static AuxPrunerDef aux_def_e3; // {0,1,2}: prune_e0e1e2
+  // Corner3: 规范表 (C4C5C6)
+  static AuxPrunerDef aux_def_c3; // {4,5,6}: prune_c4c5c6
+
+  // === 索引类型判断辅助函数 ===
+  // Edge2: 返回 0=邻接, 1=对角
+  static inline int get_e2_type(int e1, int e2) {
+    int diff = (e2 - e1 + 4) & 3;
+    return (diff == 2) ? 1 : 0; // diff==2 表示对角 ({0,2} 或 {1,3})
+  }
+  // Corner2: 返回 0=邻接, 1=对角
+  static inline int get_c2_type(int c1, int c2) {
+    int diff = (c2 - c1 + 4) & 3;
+    return (diff == 2) ? 1 : 0; // diff==2 表示对角 ({4,6} 或 {5,7})
+  }
+
+  // === 获取 AuxPrunerDef 的辅助函数 ===
+  // 根据规范化 keys 返回对应的 AuxPrunerDef 指针
+  static const AuxPrunerDef *get_aux_def(const std::vector<int> &keys) {
+    if (keys.size() == 2) {
+      if (keys[0] < 4) {
+        // Edge2
+        return (get_e2_type(keys[0], keys[1]) == 1) ? &aux_def_e2_diag
+                                                    : &aux_def_e2_adj;
+      } else {
+        // Corner2
+        return (get_c2_type(keys[0], keys[1]) == 1) ? &aux_def_c2_diag
+                                                    : &aux_def_c2_adj;
+      }
+    } else if (keys.size() == 3) {
+      if (keys[0] < 4) {
+        return &aux_def_e3; // Edge3
+      } else {
+        return &aux_def_c3; // Corner3
+      }
+    }
+    return nullptr;
+  }
 
   int slot1, slot2, slot3, slot4, pslot1, pslot2, pslot3, pslot4;
   int max_length;
@@ -238,17 +283,17 @@ struct xcross_analyzer2 {
       exit(1);
     }
 
-    // 9. [重构] Register aux_registry (只注册规范化表)
-    // Corner3 表 (multiplier = 9072) - 只注册规范化表
-    aux_registry[{4, 5, 6}] = {prune_c4c5c6.data(), p_corner3_move_ptr, 9072};
-    // Edge3 表 (multiplier = 10560) - 只注册规范化表
-    aux_registry[{0, 1, 2}] = {prune_e0e1e2.data(), p_edge3_move_ptr, 10560};
-    // Corner2 表 (multiplier = 504) - 只注册规范化表
-    aux_registry[{4, 5}] = {prune_c4c5.data(), p_corner2_move_ptr, 504}; // 邻接
-    aux_registry[{4, 6}] = {prune_c4c6.data(), p_corner2_move_ptr, 504}; // 对角
-    // Edge2 表 (multiplier = 528) - 只注册规范化表
-    aux_registry[{0, 1}] = {prune_e0e1.data(), p_edge2_move_ptr, 528}; // 邻接
-    aux_registry[{0, 2}] = {prune_e0e2.data(), p_edge2_move_ptr, 528}; // 对角
+    // 9. 初始化静态 AuxPrunerDef 对象
+    // Corner3 表 (multiplier = 9072)
+    aux_def_c3 = {prune_c4c5c6.data(), p_corner3_move_ptr, 9072};
+    // Edge3 表 (multiplier = 10560)
+    aux_def_e3 = {prune_e0e1e2.data(), p_edge3_move_ptr, 10560};
+    // Corner2 表 (multiplier = 504)
+    aux_def_c2_adj = {prune_c4c5.data(), p_corner2_move_ptr, 504};  // 邻接
+    aux_def_c2_diag = {prune_c4c6.data(), p_corner2_move_ptr, 504}; // 对角
+    // Edge2 表 (multiplier = 528)
+    aux_def_e2_adj = {prune_e0e1.data(), p_edge2_move_ptr, 528};  // 邻接
+    aux_def_e2_diag = {prune_e0e2.data(), p_edge2_move_ptr, 528}; // 对角
 
     tables_initialized = true;
   }
@@ -303,10 +348,9 @@ struct xcross_analyzer2 {
       std::vector<int> keys = {r1, r2, r3};
       std::sort(keys.begin(), keys.end());
 
-      // 规范化表 key: {4, 5, 6}
-      std::vector<int> canon_key = {4, 5, 6};
-      auto it = aux_registry.find(canon_key);
-      if (it != aux_registry.end()) {
+      // 使用静态 AuxPrunerDef 替代 aux_registry.find
+      const AuxPrunerDef *def_ptr = &aux_def_c3;
+      {
         int rot_idx = 0;
         // 确定旋转：将 keys 映射到 {4, 5, 6}
         if (keys[0] == 4 && keys[1] == 5 && keys[2] == 6)
@@ -333,7 +377,7 @@ struct xcross_analyzer2 {
           cur_cr = p_multi_move_ptr[cur_cr + m_rot];
         }
 
-        out_aux[count].def = &it->second;
+        out_aux[count].def = def_ptr;
         out_aux[count].current_idx = cur_c3;
         out_aux[count].current_cross_scaled = cur_cr;
         out_aux[count].move_mapper = mapper;
@@ -351,10 +395,9 @@ struct xcross_analyzer2 {
       std::vector<int> keys = {r1, r2, r3};
       std::sort(keys.begin(), keys.end());
 
-      // 规范化表 key: {0, 1, 2}
-      std::vector<int> canon_key = {0, 1, 2};
-      auto it = aux_registry.find(canon_key);
-      if (it != aux_registry.end()) {
+      // 使用静态 AuxPrunerDef 替代 aux_registry.find
+      const AuxPrunerDef *def_ptr = &aux_def_e3;
+      {
         int rot_idx = 0;
         // 确定旋转：将 keys 映射到 {0, 1, 2}
         if (keys[0] == 0 && keys[1] == 1 && keys[2] == 2)
@@ -381,7 +424,7 @@ struct xcross_analyzer2 {
           cur_cr = p_multi_move_ptr[cur_cr + m_rot];
         }
 
-        out_aux[count].def = &it->second;
+        out_aux[count].def = def_ptr;
         out_aux[count].current_idx = cur_e3;
         out_aux[count].current_cross_scaled = cur_cr;
         out_aux[count].move_mapper = mapper;
@@ -416,11 +459,11 @@ struct xcross_analyzer2 {
         std::swap(k1, k2);
 
       bool is_diag = (k2 - k1) == 2;
-      std::vector<int> canon_key =
-          is_diag ? std::vector<int>{4, 6} : std::vector<int>{4, 5};
+      // 使用静态 AuxPrunerDef 替代 aux_registry.find
+      const AuxPrunerDef *def_ptr =
+          is_diag ? &aux_def_c2_diag : &aux_def_c2_adj;
 
-      auto it = aux_registry.find(canon_key);
-      if (it != aux_registry.end()) {
+      {
         int rot_idx = 0;
         std::vector<int> target;
 
@@ -454,7 +497,7 @@ struct xcross_analyzer2 {
           cur_cr = p_multi_move_ptr[cur_cr + m_rot];
         }
 
-        out_aux[count].def = &it->second;
+        out_aux[count].def = def_ptr;
         out_aux[count].current_idx = cur_c2;
         out_aux[count].current_cross_scaled = cur_cr;
         out_aux[count].move_mapper = mapper;
@@ -473,11 +516,11 @@ struct xcross_analyzer2 {
         std::swap(k1, k2);
 
       bool is_diag = (k2 - k1) == 2;
-      std::vector<int> canon_key =
-          is_diag ? std::vector<int>{0, 2} : std::vector<int>{0, 1};
+      // 使用静态 AuxPrunerDef 替代 aux_registry.find
+      const AuxPrunerDef *def_ptr =
+          is_diag ? &aux_def_e2_diag : &aux_def_e2_adj;
 
-      auto it = aux_registry.find(canon_key);
-      if (it != aux_registry.end()) {
+      {
         int rot_idx = 0;
         std::vector<int> target;
 
@@ -511,7 +554,7 @@ struct xcross_analyzer2 {
           cur_cr = p_multi_move_ptr[cur_cr + m_rot];
         }
 
-        out_aux[count].def = &it->second;
+        out_aux[count].def = def_ptr;
         out_aux[count].current_idx = cur_e2;
         out_aux[count].current_cross_scaled = cur_cr;
         out_aux[count].move_mapper = mapper;
@@ -523,9 +566,9 @@ struct xcross_analyzer2 {
     return count;
   }
 
-  bool search_1(int arg_index1, int arg_index2, int arg_index3,
-                              int depth, int prev, const unsigned char *prune1,
-                              const unsigned char *edge_prune) {
+  bool search_1(int arg_index1, int arg_index2, int arg_index3, int depth,
+                int prev, const unsigned char *prune1,
+                const unsigned char *edge_prune) {
     const int *moves = valid_moves_flat[prev];
     const int count_moves = valid_moves_count[prev];
 
@@ -556,9 +599,8 @@ struct xcross_analyzer2 {
         if (prune1_tmp == 0 && edge_prune1_tmp == 0) {
           return true;
         }
-      } else if (search_1(index1_tmp, index2_tmp * 18,
-                                        index3_tmp * 18, depth - 1, i, prune1,
-                                        edge_prune))
+      } else if (search_1(index1_tmp, index2_tmp * 18, index3_tmp * 18,
+                          depth - 1, i, prune1, edge_prune))
         return true;
     }
     return false;
@@ -640,8 +682,7 @@ struct xcross_analyzer2 {
         int found = 999;
         for (int d = std::max(prune1_tmp, edge_prune1_tmp); d <= max_length;
              d++) {
-          if (search_1(index1, index2, index3, d, 18, p_prune1,
-                                     p_edge_prune)) {
+          if (search_1(index1, index2, index3, d, 18, p_prune1, p_edge_prune)) {
             found = d;
             break;
           }
@@ -671,14 +712,12 @@ struct xcross_analyzer2 {
 
   // [Conj优化] XC2 使用 Conj 状态追踪
   // 新增参数: xc2_cross, xc2_corner, xc2_e0-e3 (Conj 状态), diff2 (边选择)
-  bool search_2(int arg_index1, int arg_index2, int arg_index4,
-                              int arg_index5, int arg_index6, int depth,
-                              int prev, const unsigned char *prune1,
-                              const unsigned char *prune2,
-                              const unsigned char *edge_prune1,
-                              const unsigned char *prune_xc2, int xc2_cr,
-                              int xc2_cn, int xc2_e0, int xc2_e1, int xc2_e2,
-                              int xc2_e3, int diff2) {
+  bool search_2(int arg_index1, int arg_index2, int arg_index4, int arg_index5,
+                int arg_index6, int depth, int prev,
+                const unsigned char *prune1, const unsigned char *prune2,
+                const unsigned char *edge_prune1,
+                const unsigned char *prune_xc2, int xc2_cr, int xc2_cn,
+                int xc2_e0, int xc2_e1, int xc2_e2, int xc2_e3, int diff2) {
     const int *moves = valid_moves_flat[prev];
     const int count_moves = valid_moves_count[prev];
 
@@ -737,12 +776,11 @@ struct xcross_analyzer2 {
             index6_tmp == edge_solved2) {
           return true;
         }
-      } else if (search_2(
-                     index1_tmp, index2_tmp * 18, index4_tmp * 18,
-                     index5_tmp * 18, index6_tmp * 18, depth - 1, i, prune1,
-                     prune2, edge_prune1, prune_xc2, xc2_cr_n, xc2_cn_n * 18,
-                     xc2_e0_n * 18, xc2_e1_n * 18, xc2_e2_n * 18, xc2_e3_n * 18,
-                     diff2))
+      } else if (search_2(index1_tmp, index2_tmp * 18, index4_tmp * 18,
+                          index5_tmp * 18, index6_tmp * 18, depth - 1, i,
+                          prune1, prune2, edge_prune1, prune_xc2, xc2_cr_n,
+                          xc2_cn_n * 18, xc2_e0_n * 18, xc2_e1_n * 18,
+                          xc2_e2_n * 18, xc2_e3_n * 18, diff2))
         return true;
     }
     return false;
@@ -849,11 +887,10 @@ struct xcross_analyzer2 {
         int start_depth =
             std::max({prune1_tmp, prune2_tmp, edge_prune1_tmp, prune_xc2_tmp});
         for (int d = start_depth; d <= max_length; d++) {
-          if (search_2(index1, index2, index4, index5, index6, d,
-                                     18, p_prune1, p_prune2, p_edge_prune1,
-                                     p_prune_xc2, st.cross, st.corner * 18,
-                                     st.edge[0] * 18, st.edge[1] * 18,
-                                     st.edge[2] * 18, st.edge[3] * 18, diff2)) {
+          if (search_2(index1, index2, index4, index5, index6, d, 18, p_prune1,
+                       p_prune2, p_edge_prune1, p_prune_xc2, st.cross,
+                       st.corner * 18, st.edge[0] * 18, st.edge[1] * 18,
+                       st.edge[2] * 18, st.edge[3] * 18, diff2)) {
             found = d;
             break;
           }
@@ -893,14 +930,12 @@ struct xcross_analyzer2 {
 
   // [Conj优化] XC3 使用 Conj 状态追踪
   // NOTE: prune2/prune3 已移除 (剪枝率 0%, 被 AuxState 完全覆盖)
-  bool search_3(int arg_index1, int arg_index2, int arg_index7,
-                              int arg_index8, int arg_index9, int depth,
-                              int prev, const unsigned char *prune1,
-                              const unsigned char *edge_prune1,
-                              const unsigned char *prune_xc3, int num_aux,
-                              const AuxState *aux_states, int xc3_cr,
-                              int xc3_cn, int xc3_e0, int xc3_e1, int xc3_e2,
-                              int xc3_e3, int diff3) {
+  bool search_3(int arg_index1, int arg_index2, int arg_index7, int arg_index8,
+                int arg_index9, int depth, int prev,
+                const unsigned char *prune1, const unsigned char *edge_prune1,
+                const unsigned char *prune_xc3, int num_aux,
+                const AuxState *aux_states, int xc3_cr, int xc3_cn, int xc3_e0,
+                int xc3_e1, int xc3_e2, int xc3_e3, int diff3) {
     const int *moves = valid_moves_flat[prev];
     const int count_moves = valid_moves_count[prev];
 
@@ -1000,12 +1035,11 @@ struct xcross_analyzer2 {
             index8_tmp == edge_solved2 && index9_tmp == edge_solved3) {
           return true;
         }
-      } else if (search_3(
-                     index1_tmp, index2_tmp * 18, index7_tmp * 18,
-                     index8_tmp * 18, index9_tmp * 18, depth - 1, i, prune1,
-                     edge_prune1, prune_xc3, num_aux, next_aux, xc3_cr_n,
-                     xc3_cn_n * 18, xc3_e0_n * 18, xc3_e1_n * 18, xc3_e2_n * 18,
-                     xc3_e3_n * 18, diff3))
+      } else if (search_3(index1_tmp, index2_tmp * 18, index7_tmp * 18,
+                          index8_tmp * 18, index9_tmp * 18, depth - 1, i,
+                          prune1, edge_prune1, prune_xc3, num_aux, next_aux,
+                          xc3_cr_n, xc3_cn_n * 18, xc3_e0_n * 18, xc3_e1_n * 18,
+                          xc3_e2_n * 18, xc3_e3_n * 18, diff3))
         return true;
     }
     return false;
@@ -1127,11 +1161,10 @@ struct xcross_analyzer2 {
         int start_depth =
             std::max({prune1_tmp, edge_prune1_tmp, prune_xc3_tmp});
         for (int d = start_depth; d <= max_length; d++) {
-          if (search_3(
-                  index1, index2, index7, index8, index9, d, 18, p_prune1,
-                  p_edge_prune1, p_prune_xc3, num_aux, aux_init, st.cross,
-                  st.corner * 18, st.edge[0] * 18, st.edge[1] * 18,
-                  st.edge[2] * 18, st.edge[3] * 18, diff3)) {
+          if (search_3(index1, index2, index7, index8, index9, d, 18, p_prune1,
+                       p_edge_prune1, p_prune_xc3, num_aux, aux_init, st.cross,
+                       st.corner * 18, st.edge[0] * 18, st.edge[1] * 18,
+                       st.edge[2] * 18, st.edge[3] * 18, diff3)) {
             found = d;
             break;
           }
@@ -1184,15 +1217,15 @@ struct xcross_analyzer2 {
   // [Conj优化] XC4 使用 Conj 状态追踪
   // 新增参数: xc4_cr/cn/e0-e3 (Conj 状态), diff4 (边选择)
   // Search 4
-  bool search_4(
-      int arg_index1, int arg_index2, int arg_index4, int arg_index6,
-      int arg_index8, int arg_index9, int arg_index10, int arg_index11,
-      int arg_index12, int depth, int prev, const unsigned char *prune1,
-      const unsigned char *prune2, const unsigned char *prune3,
-      const unsigned char *prune4, const unsigned char *edge_prune1,
-      const unsigned char *prune_xc4, int num_aux, AuxState *aux_states,
-      int xc4_cr, int xc4_cn, int xc4_e0, int xc4_e1, int xc4_e2, int xc4_e3,
-      int diff4) {
+  bool search_4(int arg_index1, int arg_index2, int arg_index4, int arg_index6,
+                int arg_index8, int arg_index9, int arg_index10,
+                int arg_index11, int arg_index12, int depth, int prev,
+                const unsigned char *prune1, const unsigned char *prune2,
+                const unsigned char *prune3, const unsigned char *prune4,
+                const unsigned char *edge_prune1,
+                const unsigned char *prune_xc4, int num_aux,
+                AuxState *aux_states, int xc4_cr, int xc4_cn, int xc4_e0,
+                int xc4_e1, int xc4_e2, int xc4_e3, int diff4) {
     const int *moves = valid_moves_flat[prev];
     const int count_moves = valid_moves_count[prev];
 
@@ -1289,14 +1322,13 @@ struct xcross_analyzer2 {
             index12_tmp == edge_solved4) {
           return true;
         }
-      } else if (search_4(
-                     index1_tmp, index2_tmp * 18, index4_tmp * 18,
-                     index6_tmp * 18, index8_tmp * 18, index9_tmp * 18,
-                     index10_tmp * 18, index11_tmp * 18, index12_tmp * 18,
-                     depth - 1, i, prune1, prune2, prune3, prune4, edge_prune1,
-                     prune_xc4, num_aux, next_aux, xc4_cr_n, xc4_cn_n * 18,
-                     xc4_e0_n * 18, xc4_e1_n * 18, xc4_e2_n * 18, xc4_e3_n * 18,
-                     diff4))
+      } else if (search_4(index1_tmp, index2_tmp * 18, index4_tmp * 18,
+                          index6_tmp * 18, index8_tmp * 18, index9_tmp * 18,
+                          index10_tmp * 18, index11_tmp * 18, index12_tmp * 18,
+                          depth - 1, i, prune1, prune2, prune3, prune4,
+                          edge_prune1, prune_xc4, num_aux, next_aux, xc4_cr_n,
+                          xc4_cn_n * 18, xc4_e0_n * 18, xc4_e1_n * 18,
+                          xc4_e2_n * 18, xc4_e3_n * 18, diff4))
         return true;
     }
     return false;
@@ -1454,12 +1486,12 @@ struct xcross_analyzer2 {
             std::max({prune1_tmp, prune2_tmp, prune3_tmp, prune4_tmp,
                       edge_prune1_tmp, prune_xc4_tmp});
         for (int d = start_depth; d <= max_length; d++) {
-          if (search_4(
-                  index1, index2, index4, index6, index8, index9, index10,
-                  index11, index12, d, 18, p_prune1, p_prune2, p_prune3,
-                  p_prune4, p_edge_prune1, p_prune_xc4, num_aux, aux_init,
-                  st.cross, st.corner * 18, st.edge[0] * 18, st.edge[1] * 18,
-                  st.edge[2] * 18, st.edge[3] * 18, diff4)) {
+          if (search_4(index1, index2, index4, index6, index8, index9, index10,
+                       index11, index12, d, 18, p_prune1, p_prune2, p_prune3,
+                       p_prune4, p_edge_prune1, p_prune_xc4, num_aux, aux_init,
+                       st.cross, st.corner * 18, st.edge[0] * 18,
+                       st.edge[1] * 18, st.edge[2] * 18, st.edge[3] * 18,
+                       diff4)) {
             found = d;
             break;
           }
@@ -1529,9 +1561,13 @@ std::vector<unsigned char> xcross_analyzer2::prune_c4c6;
 std::vector<unsigned char> xcross_analyzer2::prune_e0e1;
 std::vector<unsigned char> xcross_analyzer2::prune_e0e2;
 
-// [新增] aux_registry 定义
-std::map<std::vector<int>, xcross_analyzer2::AuxPrunerDef>
-    xcross_analyzer2::aux_registry;
+// 静态 AuxPrunerDef 成员定义
+xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_e2_adj;
+xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_e2_diag;
+xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_c2_adj;
+xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_c2_diag;
+xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_e3;
+xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_c3;
 
 // ============================================================
 // [验证] Conj 映射可行性测试
