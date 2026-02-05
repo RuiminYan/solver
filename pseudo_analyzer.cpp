@@ -519,9 +519,10 @@ struct XCrossSolver {
             std::vector<int> keys = {r1, r2, r3};
             std::sort(keys.begin(), keys.end());
 
-            auto it = aux_registry.find(keys);
-            if (it != aux_registry.end()) {
-              def_ptr = &it->second;
+            // [重构] 使用 get_aux_def 替代 aux_registry.find
+            const AuxPrunerDef *found_def = get_aux_def(keys);
+            if (found_def) {
+              def_ptr = found_def;
               int conjugated_idx = 0;
               int virtual_cross_scaled = 187520 * 24; // Solved Cross * 24
               const int *mapper = nullptr;
@@ -646,9 +647,10 @@ struct XCrossSolver {
           if (k1 > k2)
             std::swap(k1, k2);
 
-          auto it = aux_registry.find({k1, k2});
-          if (it != aux_registry.end()) {
-            def_ptr = &it->second;
+          // [重构] 使用 get_aux_def 替代 aux_registry.find
+          const AuxPrunerDef *found_def = get_aux_def({k1, k2});
+          if (found_def) {
+            def_ptr = found_def;
             int rot_idx = 0;
             std::vector<int> target;
 
@@ -696,9 +698,10 @@ struct XCrossSolver {
           if (k1 > k2)
             std::swap(k1, k2);
 
-          auto it = aux_registry.find({k1, k2});
-          if (it != aux_registry.end()) {
-            def_ptr = &it->second;
+          // [重构] 使用 get_aux_def 替代 aux_registry.find
+          const AuxPrunerDef *found_def = get_aux_def({k1, k2});
+          if (found_def) {
+            def_ptr = found_def;
             int rot_idx = 0;
             std::vector<int> target;
 
