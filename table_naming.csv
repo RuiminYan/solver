@@ -1,0 +1,85 @@
+文件名,管理层变量名(prune_tables.cpp),Std变量名,Pair变量名,Pseudo变量名,PseudoPair变量名,EOCross变量名,加载状态,大小,说明
+===== 剪枝表 (Prune Tables) =====,,,,,,,,0KB,
+prune_table_cross.bin,cross_prune,p_prune(CrossSolver),-,p_prune(CrossSolver),-,p_prune,Canon,136KB,Cross剪枝表
+prune_table_cross_C4.bin,cross_c4_prune,-,p_cross,-,-,p_prune(XCross),Canon,4.35MB,Cross+C4
+prune_table_pair_C4_E0.bin,pair_c4_e0_prune,-,p_pair,-,-,-,Canon,584B,Pair(C4+E0)
+prune_table_cross_C4_E0.bin,xcross_c4_e0_prune,p_prune_base,p_xcross,-,-,p_prune_base,Canon,52.2MB,XCross(C4+E0)
+prune_table_cross_C4_E0_C5_E1.bin,huge_neighbor_prune,p_prune_neighbor,p_prune_neighbor,p_huge_neighbor,-,p_huge_neighbor,Canon,9.99GB,Huge邻近表
+prune_table_cross_C4_E0_C6_E2.bin,huge_diagonal_prune,p_prune_diagonal,p_prune_diagonal,-,-,p_huge_diagonal,Canon,9.99GB,Huge对角表
+prune_table_pseudo_cross.bin,pseudo_cross_prune,-,-,p_prune(CrossSolver),-,-,Canon,136KB,Pseudo Cross
+prune_table_pseudo_cross_C4.bin,pseudo_pair_base_prune[0],-,-,-,p_base_prune[0],-,Canon,2.17MB,Pseudo C4 Base
+prune_table_pseudo_cross_C5.bin,pseudo_pair_base_prune[1],-,-,-,p_base_prune[1],-,Canon,2.17MB,Pseudo C5 Base
+prune_table_pseudo_cross_C6.bin,pseudo_pair_base_prune[2],-,-,-,p_base_prune[2],-,Canon,2.17MB,Pseudo C6 Base
+prune_table_pseudo_cross_C7.bin,pseudo_pair_base_prune[3],-,-,-,p_base_prune[3],-,Canon,2.17MB,Pseudo C7 Base
+prune_table_pseudo_cross_C4_E0.bin,pseudo_cross_base_prune[0],-,-,p_prune_base[0],p_pseudo_base_prune[0],-,Canon,52.2MB,Pseudo Base(diff=0)
+prune_table_pseudo_cross_C4_E1.bin,pseudo_cross_base_prune[1],-,-,p_prune_base[1],p_pseudo_base_prune[1],-,Canon,52.2MB,Pseudo Base(diff=1)
+prune_table_pseudo_cross_C4_E2.bin,pseudo_cross_base_prune[2],-,-,p_prune_base[2],p_pseudo_base_prune[2],-,Canon,52.2MB,Pseudo Base(diff=2)
+prune_table_pseudo_cross_C4_E3.bin,pseudo_cross_base_prune[3],-,-,p_prune_base[3],p_pseudo_base_prune[3],-,Canon,52.2MB,Pseudo Base(diff=3)
+prune_table_pseudo_cross_C4_into_slot0.bin,pseudo_pair_xc_prune[0*4+0],-,-,-,p_xc_prune[*4+0],-,Canon,2.17MB,Pseudo XC Slot0
+prune_table_pseudo_cross_C4_into_slot1.bin,pseudo_pair_xc_prune[1*4+0],-,-,-,p_xc_prune[*4+1],-,Canon,2.17MB,Pseudo XC Slot1
+prune_table_pseudo_cross_C4_into_slot2.bin,pseudo_pair_xc_prune[2*4+0],-,-,-,p_xc_prune[*4+2],-,Canon,2.17MB,Pseudo XC Slot2
+prune_table_pseudo_cross_C4_into_slot3.bin,pseudo_pair_xc_prune[3*4+0],-,-,-,p_xc_prune[*4+3],-,Canon,2.17MB,Pseudo XC Slot3
+prune_table_pseudo_cross_E0_E1.bin,pseudo_cross_E0_E1_prune,-,-,p_aux_e2_adj,p_aux_e2_adj_prune,-,Canon,47.8MB,Edge2邻接规范表
+prune_table_pseudo_cross_E0_E2.bin,pseudo_cross_E0_E2_prune,-,-,p_aux_e2_diag,p_aux_e2_diag_prune,-,Canon,47.8MB,Edge2对角规范表
+prune_table_pseudo_cross_E0_E3.bin,pseudo_cross_E0_E3_prune,-,-,→p_aux_e2_adj via rot,-,-,Conj,47.8MB,复用E0E1
+prune_table_pseudo_cross_E1_E2.bin,pseudo_cross_E1_E2_prune,-,-,→p_aux_e2_adj via rot,-,-,Conj,47.8MB,复用E0E1
+prune_table_pseudo_cross_E1_E3.bin,pseudo_cross_E1_E3_prune,-,-,→p_aux_e2_diag via rot,-,-,Conj,47.8MB,复用E0E2
+prune_table_pseudo_cross_E2_E3.bin,pseudo_cross_E2_E3_prune,-,-,→p_aux_e2_adj via rot,-,-,Conj,47.8MB,复用E0E1
+prune_table_pseudo_cross_E0_E1_E2.bin,pseudo_cross_E0_E1_E2_prune,-,-,p_aux_e3,p_aux_e3_prune,-,Canon,957MB,Edge3规范表
+prune_table_pseudo_cross_E0_E1_E3.bin,pseudo_cross_E0_E1_E3_prune,-,-,→p_aux_e3 via rot,-,-,Zombie,957MB,僵尸表(不使用)
+prune_table_pseudo_cross_E0_E2_E3.bin,pseudo_cross_E0_E2_E3_prune,-,-,→p_aux_e3 via rot,-,-,Zombie,957MB,僵尸表(不使用)
+prune_table_pseudo_cross_E1_E2_E3.bin,pseudo_cross_E1_E2_E3_prune,-,-,→p_aux_e3 via rot,-,-,Zombie,957MB,僵尸表(不使用)
+prune_table_pseudo_cross_C4_C5.bin,pseudo_cross_C4_C5_prune,-,-,p_aux_c2_adj,p_aux_c2_adj_prune,-,Canon,45.6MB,Corner2邻接规范表
+prune_table_pseudo_cross_C4_C6.bin,pseudo_cross_C4_C6_prune,-,-,p_aux_c2_diag,p_aux_c2_diag_prune,-,Canon,45.6MB,Corner2对角规范表
+prune_table_pseudo_cross_C4_C7.bin,pseudo_cross_C4_C7_prune,-,-,→p_aux_c2_adj via rot,-,-,Conj,45.6MB,复用C4C5
+prune_table_pseudo_cross_C5_C6.bin,pseudo_cross_C5_C6_prune,-,-,→p_aux_c2_adj via rot,-,-,Conj,45.6MB,复用C4C5
+prune_table_pseudo_cross_C5_C7.bin,pseudo_cross_C5_C7_prune,-,-,→p_aux_c2_diag via rot,-,-,Conj,45.6MB,复用C4C6
+prune_table_pseudo_cross_C6_C7.bin,pseudo_cross_C6_C7_prune,-,-,→p_aux_c2_adj via rot,-,-,Conj,45.6MB,复用C4C5
+prune_table_pseudo_cross_C4_C5_C6.bin,pseudo_cross_C4_C5_C6_prune,-,-,p_aux_c3,p_aux_c3_prune,-,Canon,822MB,Corner3规范表
+prune_table_pseudo_cross_C4_C5_C7.bin,pseudo_cross_C4_C5_C7_prune,-,-,→p_aux_c3 via rot,-,-,Zombie,822MB,僵尸表(不使用)
+prune_table_pseudo_cross_C4_C6_C7.bin,pseudo_cross_C4_C6_C7_prune,-,-,→p_aux_c3 via rot,-,-,Zombie,822MB,僵尸表(不使用)
+prune_table_pseudo_cross_C5_C6_C7.bin,pseudo_cross_C5_C6_C7_prune,-,-,→p_aux_c3 via rot,-,-,Zombie,822MB,僵尸表(不使用)
+prune_table_pseudo_pair_C4_E0.bin,pseudo_pair_ec_prune[0*4+0],-,-,-,p_ec_prune[0*4+0],-,Canon,296B,Pseudo Pair(C4+E0)
+prune_table_pseudo_pair_C4_E1.bin,pseudo_pair_ec_prune[1*4+0],-,-,-,p_ec_prune[1*4+0],-,Canon,296B,Pseudo Pair(C4+E1)
+prune_table_pseudo_pair_C4_E2.bin,pseudo_pair_ec_prune[2*4+0],-,-,-,p_ec_prune[2*4+0],-,Canon,296B,Pseudo Pair(C4+E2)
+prune_table_pseudo_pair_C4_E3.bin,pseudo_pair_ec_prune[3*4+0],-,-,-,p_ec_prune[3*4+0],-,Canon,296B,Pseudo Pair(C4+E3)
+prune_table_pseudo_pair_C5_E0.bin,pseudo_pair_ec_prune[0*4+1],-,-,-,p_ec_prune[0*4+1],-,Canon,296B,Pseudo Pair(C5+E0)
+prune_table_pseudo_pair_C5_E1.bin,pseudo_pair_ec_prune[1*4+1],-,-,-,p_ec_prune[1*4+1],-,Canon,296B,Pseudo Pair(C5+E1)
+prune_table_pseudo_pair_C5_E2.bin,pseudo_pair_ec_prune[2*4+1],-,-,-,p_ec_prune[2*4+1],-,Canon,296B,Pseudo Pair(C5+E2)
+prune_table_pseudo_pair_C5_E3.bin,pseudo_pair_ec_prune[3*4+1],-,-,-,p_ec_prune[3*4+1],-,Canon,296B,Pseudo Pair(C5+E3)
+prune_table_pseudo_pair_C6_E0.bin,pseudo_pair_ec_prune[0*4+2],-,-,-,p_ec_prune[0*4+2],-,Canon,296B,Pseudo Pair(C6+E0)
+prune_table_pseudo_pair_C6_E1.bin,pseudo_pair_ec_prune[1*4+2],-,-,-,p_ec_prune[1*4+2],-,Canon,296B,Pseudo Pair(C6+E1)
+prune_table_pseudo_pair_C6_E2.bin,pseudo_pair_ec_prune[2*4+2],-,-,-,p_ec_prune[2*4+2],-,Canon,296B,Pseudo Pair(C6+E2)
+prune_table_pseudo_pair_C6_E3.bin,pseudo_pair_ec_prune[3*4+2],-,-,-,p_ec_prune[3*4+2],-,Canon,296B,Pseudo Pair(C6+E3)
+prune_table_pseudo_pair_C7_E0.bin,pseudo_pair_ec_prune[0*4+3],-,-,-,p_ec_prune[0*4+3],-,Canon,296B,Pseudo Pair(C7+E0)
+prune_table_pseudo_pair_C7_E1.bin,pseudo_pair_ec_prune[1*4+3],-,-,-,p_ec_prune[1*4+3],-,Canon,296B,Pseudo Pair(C7+E1)
+prune_table_pseudo_pair_C7_E2.bin,pseudo_pair_ec_prune[2*4+3],-,-,-,p_ec_prune[2*4+3],-,Canon,296B,Pseudo Pair(C7+E2)
+prune_table_pseudo_pair_C7_E3.bin,pseudo_pair_ec_prune[3*4+3],-,-,-,p_ec_prune[3*4+3],-,Canon,296B,Pseudo Pair(C7+E3)
+prune_table_ep_4_eo_12.bin,eo_cross_dep_eo_prune,-,-,-,-,p_prune_dep_eo,Canon,11.6MB,EO Dependency表
+prune_table_cross_C4_E0_E1.bin,eo_cross_plus_edge_prune[0],-,-,-,-,p_plus_edge[0],Canon,1.22GB,EO Plus Edge(Right)
+prune_table_cross_C4_E0_E2.bin,eo_cross_plus_edge_prune[1],-,-,-,-,p_plus_edge[1],Canon,1.22GB,EO Plus Edge(Diag)
+prune_table_cross_C4_E0_E3.bin,eo_cross_plus_edge_prune[2],-,-,-,-,p_plus_edge[2],Canon,1.22GB,EO Plus Edge(Left)
+prune_table_cross_C4_E0_C5.bin,eo_cross_plus_corn_prune[0],-,-,-,-,p_plus_corn[0],Canon,1.22GB,EO Plus Corn(Right)
+prune_table_cross_C4_E0_C6.bin,eo_cross_plus_corn_prune[1],-,-,-,-,p_plus_corn[1],Canon,1.22GB,EO Plus Corn(Diag)
+prune_table_cross_C4_E0_C7.bin,eo_cross_plus_corn_prune[2],-,-,-,-,p_plus_corn[2],Canon,1.22GB,EO Plus Corn(Left)
+prune_table_cross_C4_C5_C6.bin,eo_cross_3corner_prune,-,-,-,-,p_prune_3c,Canon,1.22GB,EO三角表
+
+
+===== 移动表 (Move Tables) =====,,,,,,,,0KB,
+move_table_edge.bin,edge_table,-,-,p_edge,p_edge_move_ptr,p_edge,Canon,<100KB,单棱移动表
+move_table_corner.bin,corner_table,-,-,p_corn,p_corner_move_ptr,p_corner,Canon,<100KB,单角移动表
+move_table_cross.bin,cross_table,p_multi,p_multi,p_multi,p_multi_move_ptr,p_multi,Canon,17.4MB,Cross移动表
+move_table_edges_2.bin,edges_2_table,p_multi(CrossSolver),-,p_edges2,p_edge2_move_ptr,-,Canon,<100KB,Edge2移动表
+move_table_edges_3.bin,edge3_table,-,-,p_edge3,p_edge3_move_ptr,-,Canon,742KB,Edge3移动表
+move_table_edges_6.bin,edge6_table,p_edge6,p_edge6,p_edge6,-,p_edge6,Canon,2.85GB,Edge6移动表
+move_table_corners_2.bin,corner2_table,p_corn2,p_corn2,p_corners2,p_corner2_move_ptr,p_corn2,Canon,<100KB,Corner2移动表
+move_table_corners_3.bin,corner3_table,-,-,p_corners3,p_corner3_move_ptr,-,Canon,637KB,Corner3移动表
+move_table_eo_12.bin,-,-,-,-,-,p_eo,Canon,144KB,EO移动表
+move_table_eo_12_alt.bin,-,-,-,-,-,p_eo,Canon,144KB,EO Alt移动表
+move_table_ep_1.bin,-,-,-,-,-,(临时),-,<100KB,EP1临时表
+move_table_ep_4.bin,-,-,-,-,-,p_dep,Canon,835KB,EP4移动表
+
+===== 加载状态说明 =====,,,,,,,,0KB,
+Canon,"规范表,实际加载到内存",,,,,,,,
+Conj,"共轭复用表,不加载,运行时通过rot_map映射到规范表",,,,,,,,
+Zombie,"僵尸表,生成但完全不使用,仅用于调试",,,,,,,,

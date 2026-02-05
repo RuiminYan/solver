@@ -9,4 +9,5 @@
 
 # Temp/Output files
 *.csv
+!table_naming.csv
 output.txt
