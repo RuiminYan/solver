@@ -336,6 +336,9 @@ public:
   void generateHugeNeighborPrune();
   void generateHugeDiagonalPrune();
 
+  // EOCross 专用生成函数
+  void generateEODepEOPrune(); // EP4 + EO12 联合剪枝表
+
   // Pseudo 生成函数
   void generatePseudoCrossPrune();
   void generatePseudoCrossBasePrune(int offset_idx);

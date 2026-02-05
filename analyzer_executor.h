@@ -171,7 +171,7 @@ inline void printSummaryTable(int totalTasks, long long totalNodes,
 
   std::ostringstream npsStr;
   npsStr << std::fixed << std::setprecision(2) << avgNps << " M/s";
-  printColorRow("Avg Performance", npsStr.str(), ANSI_MAGENTA);
+  printColorRow("NPS", npsStr.str(), ANSI_MAGENTA);
   printColorRow("Total Duration", formatDuration(totalDuration), ANSI_GREEN);
 
   std::cout << "+----------------------------------------------------------+"

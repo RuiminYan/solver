@@ -132,6 +132,11 @@ public:
   const int *getEOCrossEOAltPtr() const { return eo_cross_eo_alt_mt.data(); }
   const int *getEOTablePtr() const { return eo_mt.data(); }
   const int *getEP1TablePtr() const { return ep1_mt.data(); }
+  // EOCross 专用移动表 Vector Getter (用于剪枝表生成)
+  const std::vector<int> &getEOCrossEP4Table() const { return eo_cross_ep4_mt; }
+  const std::vector<int> &getEOCrossEOAltTable() const {
+    return eo_cross_eo_alt_mt;
+  }
 
 private:
   // 生成函数

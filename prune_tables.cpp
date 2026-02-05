@@ -343,7 +343,14 @@ void PruneTableManager::generateAllSequentially() {
     }
   }
 
-  // 7. Pseudo Cross Prune
+  // 7. EO Dependency+EO Prune (Needs EOCross Move Tables: EP4 + EO_Alt)
+  if (!fileExists("prune_table_ep_4_eo_12.bin")) {
+    mtm.loadEOCrossMoveTables();
+    generateEODepEOPrune();
+    // NOTE: EOCross 移动表较小，保持加载不释放
+  }
+
+  // 8. Pseudo Cross Prune
   if (!fileExists("prune_table_pseudo_cross.bin")) {
     mtm.loadEdges2Table();
     generatePseudoCrossPrune();
@@ -669,8 +676,10 @@ void PruneTableManager::generateCrossPrune() {
         for (int j = 0; j < 18; ++j) {
           long long ni = (long long)edges_2_table[idx1 + j] * 528 +
                          edges_2_table[idx2 + j];
-          if (tmp[ni] == 255)
-            tmp[ni] = d + 1;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected,
+                                      (unsigned char)(d + 1));
         }
       }
     }
@@ -748,6 +757,22 @@ void PruneTableManager::generateHugeDiagonalPrune() {
   saveTable(huge_diagonal_prune, "prune_table_cross_C4_E0_C6_E2.bin");
 }
 
+void PruneTableManager::generateEODepEOPrune() {
+  if (loadTable(eo_cross_dep_eo_prune, "prune_table_ep_4_eo_12.bin"))
+    return;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
+            << " Generating EO dependency prune table (EP4+EO12)..."
+            << std::endl;
+  auto &mtm = MoveTableManager::getInstance();
+  // 状态空间: EP4 (12*11*10*9 = 11880) x EO12 (2^11 = 2048)
+  // 初始状态: EP4_SOLVED=11720, EO_SOLVED=0
+  // 使用 MoveTableManager 中已加载的移动表
+  create_cascaded_prune_table3(
+      11720, 0, 12 * 11 * 10 * 9, 2048, 11, mtm.getEOCrossEP4Table(),
+      mtm.getEOCrossEOAltTable(), eo_cross_dep_eo_prune);
+  saveTable(eo_cross_dep_eo_prune, "prune_table_ep_4_eo_12.bin");
+}
+
 void PruneTableManager::generatePseudoCrossPrune() {
   if (loadTable(pseudo_cross_prune, "prune_table_pseudo_cross.bin"))
     return;
@@ -776,8 +801,10 @@ void PruneTableManager::generatePseudoCrossPrune() {
         for (int j = 0; j < 18; ++j) {
           long long ni = (long long)edges_2_table[idx1 + j] * 528 +
                          edges_2_table[idx2 + j];
-          if (tmp[ni] == 255)
-            tmp[ni] = d + 1;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected,
+                                      (unsigned char)(d + 1));
         }
       }
     }
@@ -1176,8 +1203,9 @@ void create_prune_table_pseudo_cross_corners2(int idx_cr, int idx_c2, int sz_cr,
           int n_cr = t_cr[base_cr + j] / 24;
           int n_c2 = t_c2[base_c2 + j];
           long long ni = (long long)n_cr * sz_c2 + n_c2;
-          if (tmp[ni] == 255)
-            tmp[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
@@ -1237,8 +1265,9 @@ void create_prune_table_pseudo_cross_corners3(int idx_cr, int idx_c3, int sz_cr,
           int n_cr = t_cr[base_cr + j] / 24;
           int n_c3 = t_c3[base_c3 + j];
           long long ni = (long long)n_cr * sz_c3 + n_c3;
-          if (tmp[ni] == 255)
-            tmp[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
@@ -1298,8 +1327,9 @@ void create_prune_table_pseudo_cross_edges3(int idx_cr, int idx_e3, int sz_cr,
           int n_cr = t_cr[base_cr + j] / 24;
           int n_e3 = t_e3[base_e3 + j];
           long long ni = (long long)n_cr * sz_e3 + n_e3;
-          if (tmp[ni] == 255)
-            tmp[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
@@ -1368,8 +1398,9 @@ void create_prune_table_pseudo_base(int idx_cr, int idx_cn, int idx_ed,
           long long n_cr = t1[cur_cr + j];
           int n_cn = t2[cur_cn + j];
           long long ni = (n_cr + n_cn) * 24 + t3[idx3_base + j];
-          if (tmp[ni] == 255)
-            tmp[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
@@ -1508,8 +1539,9 @@ void create_prune_table_xcross_base(int idx_cr, int idx_cn, int idx_ex,
           long long n_cr = t1[cur_cr + j];
           int n_cn = t2[cur_cn + j];
           long long ni = (n_cr + n_cn) * 24 + t3[idx3_base + j];
-          if (tmp[ni] == 255)
-            tmp[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
@@ -1576,8 +1608,9 @@ void create_prune_table_xcross_full(int idx_cr, int idx_cn, int idx_ed,
           long long n_cr = t1[cur_cr + j];
           int n_cn = t2[cur_cn + j];
           long long ni = (n_cr + n_cn) * 24 + t3[idx3_base + j];
-          if (tmp[ni] == 255)
-            tmp[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
@@ -1629,8 +1662,9 @@ void create_prune_table_huge(int sz_e6, int sz_c2, int depth,
           int n_e6 = mt_e6[base_e6 + j];
           int n_c2 = mt_c2[base_c2 + j];
           long long ni = (long long)n_e6 * sz_c2 + n_c2;
-          if (tmp[ni] == 255)
-            tmp[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
@@ -1690,8 +1724,9 @@ void create_prune_table_pseudo_cross_edges2(int idx_cr, int idx_e2, int sz_cr,
           int n_cr = t_cr[base_cr + j] / 24;
           int n_e2 = t_e2[base_e2 + j];
           long long ni = (long long)n_cr * sz_e2 + n_e2;
-          if (tmp[ni] == 255)
-            tmp[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
@@ -1732,8 +1767,9 @@ create_cascaded_prune_table(int i1, int i2, int s1, int s2, int depth,
         int t1b = (i / s2) * 18, t2b = (i % s2) * 18;
         for (int j = 0; j < 18; ++j) {
           int ni = t1[t1b + j] * s2 + t2[t2b + j];
-          if (tmp[ni] == 0xF) {
-            tmp[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件，只有成功将 0xF 改为 nd 的线程才计数
+          unsigned char expected = 0xF;
+          if (__sync_val_compare_and_swap(&tmp[ni], expected, nd) == expected) {
             cnt++;
           }
         }
@@ -1781,8 +1817,9 @@ void create_cascaded_prune_table2(int i1, int i2, int s1, int s2, int depth,
         int tb1 = (i / s2) * 24, tb2 = (i % s2) * 18;
         for (int j = 0; j < 18; ++j) {
           int ni = t1[tb1 + j] + t2[tb2 + j];
-          if (tmp[ni] == 0xF) {
-            tmp[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件，只有成功将 0xF 改为 nd 的线程才计数
+          unsigned char expected = 0xF;
+          if (__sync_val_compare_and_swap(&tmp[ni], expected, nd) == expected) {
             cnt++;
           }
         }
@@ -1817,8 +1854,9 @@ void create_cascaded_prune_table3(int i1, int i2, int s1, int s2, int depth,
         int tb1 = (i / s2) * 18, tb2 = (i % s2) * 18;
         for (int j = 0; j < 18; ++j) {
           int ni = t1[tb1 + j] * s2 + t2[tb2 + j];
-          if (tmp[ni] == 0xF) {
-            tmp[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件，只有成功将 0xF 改为 nd 的线程才计数
+          unsigned char expected = 0xF;
+          if (__sync_val_compare_and_swap(&tmp[ni], expected, nd) == expected) {
             cnt++;
           }
         }
@@ -1887,8 +1925,9 @@ void create_prune_table_xcross_plus(
           int n_ex = t4[idx4_base + j];
 
           long long ni = ((n_cr + n_cn) * 24 + n_ed) * 24 + n_ex;
-          if (tmp[ni] == 255)
-            tmp[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
@@ -1956,8 +1995,9 @@ void create_prune_table_xcross_corn3(
           int n_c6 = t_c6[idx6_base + j];
 
           long long ni = ((n_cr + n_cn) * 24 + n_c5) * 24 + n_c6;
-          if (tmp[ni] == 255)
-            tmp[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
@@ -2015,6 +2055,8 @@ void create_prune_table_pseudo_cross_corner(
       }
     }
     printDepth(next_d, next_count);
+    if (next_count == 0)
+      break;
   }
   prune_table.resize((size + 1) / 2);
   std::fill(prune_table.begin(), prune_table.end(), 0xFF);
@@ -2121,6 +2163,8 @@ void create_prune_table_pseudo_xcross(int index3, int index2, int depth,
       }
     }
     printDepth(next_d, next_count);
+    if (next_count == 0)
+      break;
   }
   prune_table.resize((size + 1) / 2);
   std::fill(prune_table.begin(), prune_table.end(), 0xFF);
@@ -2230,6 +2274,8 @@ void create_prune_table_pseudo_pair(int index1, int index2, int size1,
       }
     }
     printDepth(next_d, next_count);
+    if (next_count == 0)
+      break;
   }
   prune_table.resize((size + 1) / 2);
   std::fill(prune_table.begin(), prune_table.end(), 0xFF);
