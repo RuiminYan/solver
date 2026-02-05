@@ -4,6 +4,7 @@
 
 #include "prune_tables.h"
 #include "move_tables.h"
+#include <iomanip>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -11,10 +12,74 @@
 
 PruneTableManager *PruneTableManager::instance = nullptr;
 
-// 统一打印深度分布
-inline void printDepth(int depth, long long count) {
-  std::cout << "  Depth " << depth << ": " << count << std::endl;
-}
+// 深度分布打印器 - 用于打印带百分比的深度分布表格
+// NOTE: 使用 ANSI 转义码在 done() 时覆盖输出，修正百分比为 Count/Total
+struct DistributionPrinter {
+  long long total_size;                           // 状态空间大小
+  long long accumulated;                          // 累计计数
+  std::vector<std::pair<int, long long>> records; // 存储 (depth, count)
+
+  // 格式化数字为带千分位的字符串
+  static std::string formatWithCommas(long long n) {
+    std::string s = std::to_string(n);
+    int insertPos = s.length() - 3;
+    while (insertPos > 0) {
+      s.insert(insertPos, ",");
+      insertPos -= 3;
+    }
+    return s;
+  }
+
+  DistributionPrinter(long long total) : total_size(total), accumulated(0) {
+    // 打印状态空间大小
+    std::cout << "  State Space: " << formatWithCommas(total_size) << std::endl;
+    // 打印表头
+    std::cout << "  Depth         Count           Pct         Cum" << std::endl;
+    std::cout << "  -------------------------------------------------"
+              << std::endl;
+  }
+
+  void print(int depth, long long count) {
+    if (count == 0)
+      return; // 跳过空行
+    accumulated += count;
+    records.push_back({depth, count});
+    // 临时打印（百分比稍后修正）
+    double pct = (total_size > 0) ? (100.0 * count / total_size) : 0.0;
+    double cumPct = (total_size > 0) ? (100.0 * accumulated / total_size) : 0.0;
+    std::cout << "  " << std::setw(5) << std::right << depth << "  "
+              << std::setw(14) << std::right << formatWithCommas(count) << "  "
+              << std::fixed << std::setprecision(6) << std::setw(10)
+              << std::right << pct << "%  " << std::setw(10) << std::right
+              << cumPct << "%" << std::endl;
+  }
+
+  void done() {
+    // 光标上移 records.size() 行，重新打印正确的百分比
+    int lineCount = records.size();
+    std::cout << "\033[" << lineCount << "A"; // ANSI: 上移 lineCount 行
+
+    long long total = accumulated; // 最终 Total
+    long long cumSum = 0;
+    for (auto &p : records) {
+      cumSum += p.second;
+      double pct = (total > 0) ? (100.0 * p.second / total) : 0.0;
+      double cumPct = (total > 0) ? (100.0 * cumSum / total) : 0.0;
+      std::cout << "\033[2K"; // ANSI: 清除当前行
+      std::cout << "  " << std::setw(5) << std::right << p.first << "  "
+                << std::setw(14) << std::right << formatWithCommas(p.second)
+                << "  " << std::fixed << std::setprecision(6) << std::setw(10)
+                << std::right << pct << "%  " << std::setw(10) << std::right
+                << cumPct << "%" << std::endl;
+    }
+
+    std::cout << "  -------------------------------------------------"
+              << std::endl;
+    std::cout << "  Total  " << std::setw(14) << std::right
+              << formatWithCommas(accumulated) << "  100.000000%" << std::endl;
+    std::cout << std::endl; // 空行分隔
+  }
+};
 
 PruneTableManager &PruneTableManager::getInstance() {
   if (instance == nullptr) {
@@ -666,6 +731,7 @@ void PruneTableManager::generateCrossPrune() {
   std::vector<unsigned char> tmp(sz, 255);
   int i1 = 416, i2 = 520;
   tmp[(long long)i1 * 528 + i2] = 0;
+  DistributionPrinter dp(sz);
   for (int d = 0; d < 10; ++d) {
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
@@ -683,7 +749,11 @@ void PruneTableManager::generateCrossPrune() {
         }
       }
     }
+    dp.print(d, cnt);
+    if (cnt == 0)
+      break;
   }
+  dp.done();
   int c_sz = (sz + 1) / 2;
   cross_prune.assign(c_sz, 0xFF);
   for (long long i = 0; i < sz; ++i)
@@ -791,6 +861,7 @@ void PruneTableManager::generatePseudoCrossPrune() {
     }
     tmp[(long long)i1 * 528 + i2] = 0;
   }
+  DistributionPrinter dp(sz);
   for (int d = 0; d < 10; ++d) {
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
@@ -808,7 +879,11 @@ void PruneTableManager::generatePseudoCrossPrune() {
         }
       }
     }
+    dp.print(d, cnt);
+    if (cnt == 0)
+      break;
   }
+  dp.done();
   int c_sz = (sz + 1) / 2;
   pseudo_cross_prune.assign(c_sz, 0xFF);
   for (long long i = 0; i < sz; ++i)
@@ -1188,6 +1263,7 @@ void create_prune_table_pseudo_cross_corners2(int idx_cr, int idx_c2, int sz_cr,
       tmp[start_idx] = 0;
   }
 
+  DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
@@ -1209,10 +1285,11 @@ void create_prune_table_pseudo_cross_corners2(int idx_cr, int idx_c2, int sz_cr,
         }
       }
     }
-    printDepth(d, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
+  dp.done();
   std::fill(pt.begin(), pt.end(), 0xFF);
 #pragma omp parallel for
   for (long long i = 0; i < total; ++i)
@@ -1250,6 +1327,7 @@ void create_prune_table_pseudo_cross_corners3(int idx_cr, int idx_c3, int sz_cr,
       tmp[start_idx] = 0;
   }
 
+  DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
@@ -1271,10 +1349,11 @@ void create_prune_table_pseudo_cross_corners3(int idx_cr, int idx_c3, int sz_cr,
         }
       }
     }
-    printDepth(d, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
+  dp.done();
   std::fill(pt.begin(), pt.end(), 0xFF);
 #pragma omp parallel for
   for (long long i = 0; i < total; ++i)
@@ -1312,6 +1391,7 @@ void create_prune_table_pseudo_cross_edges3(int idx_cr, int idx_e3, int sz_cr,
       tmp[start_idx] = 0;
   }
 
+  DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
@@ -1333,10 +1413,11 @@ void create_prune_table_pseudo_cross_edges3(int idx_cr, int idx_e3, int sz_cr,
         }
       }
     }
-    printDepth(d, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
+  dp.done();
   std::fill(pt.begin(), pt.end(), 0xFF);
 #pragma omp parallel for
   for (long long i = 0; i < total; ++i)
@@ -1381,7 +1462,7 @@ void create_prune_table_pseudo_base(int idx_cr, int idx_cn, int idx_ed,
       tmp[start_idx] = 0;
   }
 
-  std::cout << "  Depth 0 initialized." << std::endl;
+  DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
@@ -1404,10 +1485,11 @@ void create_prune_table_pseudo_base(int idx_cr, int idx_cn, int idx_ed,
         }
       }
     }
-    printDepth(nd, cnt);
+    dp.print(nd, cnt);
     if (cnt == 0)
       break;
   }
+  dp.done();
   pt.resize((total + 1) / 2);
   std::fill(pt.begin(), pt.end(), 0xFF);
 #pragma omp parallel for
@@ -1437,6 +1519,7 @@ void create_prune_table_cross_c4(int idx1, int idx2, int sz1, int sz2,
     pt[t1[base1 + 1] + t2[base2 + 1]] = 0;
     pt[t1[base1 + 2] + t2[base2 + 2]] = 0;
   }
+  DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
@@ -1453,10 +1536,11 @@ void create_prune_table_cross_c4(int idx1, int idx2, int sz1, int sz2,
         }
       }
     }
-    printDepth(d, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
+  dp.done();
 }
 
 // 2. Pair C4 + E0 (Base)
@@ -1481,6 +1565,7 @@ void create_prune_table_pair_base(int idx_e, int idx_c, int sz_e, int sz_c,
       pt[n1 * sz_c + n2] = 0;
     }
   }
+  DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
@@ -1497,10 +1582,11 @@ void create_prune_table_pair_base(int idx_e, int idx_c, int sz_e, int sz_c,
         }
       }
     }
-    printDepth(d, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
+  dp.done();
 }
 
 // 3. XCross Base Generator
@@ -1523,6 +1609,7 @@ void create_prune_table_xcross_base(int idx_cr, int idx_cn, int idx_ex,
   if (start_idx < total)
     tmp[start_idx] = 0;
 
+  DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
@@ -1545,10 +1632,11 @@ void create_prune_table_xcross_base(int idx_cr, int idx_cn, int idx_ex,
         }
       }
     }
-    printDepth(d, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
+  dp.done();
   pt.assign((total + 1) / 2, 0xFF);
 #pragma omp parallel for
   for (long long i = 0; i < total; ++i)
@@ -1592,6 +1680,7 @@ void create_prune_table_xcross_full(int idx_cr, int idx_cn, int idx_ed,
       tmp[start_idx] = 0;
   }
 
+  DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
@@ -1614,10 +1703,11 @@ void create_prune_table_xcross_full(int idx_cr, int idx_cn, int idx_ed,
         }
       }
     }
-    printDepth(d, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
+  dp.done();
   std::fill(pt.begin(), pt.end(), 0xFF);
 #pragma omp parallel for
   for (long long i = 0; i < total; ++i)
@@ -1647,6 +1737,7 @@ void create_prune_table_huge(int sz_e6, int sz_c2, int depth,
   if (start_idx < total)
     tmp[start_idx] = 0;
 
+  DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
@@ -1668,10 +1759,11 @@ void create_prune_table_huge(int sz_e6, int sz_c2, int depth,
         }
       }
     }
-    printDepth(d, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
+  dp.done();
   long long c_sz = (total + 1) / 2;
   pt.assign(c_sz, 0xFF);
 #pragma omp parallel for
@@ -1709,6 +1801,7 @@ void create_prune_table_pseudo_cross_edges2(int idx_cr, int idx_e2, int sz_cr,
       tmp[start_idx] = 0;
   }
 
+  DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
@@ -1730,10 +1823,11 @@ void create_prune_table_pseudo_cross_edges2(int idx_cr, int idx_e2, int sz_cr,
         }
       }
     }
-    printDepth(d, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
+  dp.done();
   std::fill(pt.begin(), pt.end(), 0xFF);
 #pragma omp parallel for
   for (long long i = 0; i < total; ++i)
@@ -1743,95 +1837,75 @@ void create_prune_table_pseudo_cross_edges2(int idx_cr, int idx_e2, int sz_cr,
 
 // --- 级联剪枝表生成函数实现 (from eo_cross_analyzer) ---
 
-std::vector<unsigned char>
-create_cascaded_prune_table(int i1, int i2, int s1, int s2, int depth,
-                            const std::vector<int> &t1,
-                            const std::vector<int> &t2) {
-  int sz = s1 * s2;
-  std::vector<unsigned char> tmp(sz, 0xF);
-  tmp[i1 * s2 + i2] = 0;
+void create_cascaded_prune_table(int i1, int i2, int s1, int s2, int depth,
+                                 const std::vector<int> &t1,
+                                 const std::vector<int> &t2,
+                                 std::vector<unsigned char> &pt) {
+  long long sz = (long long)s1 * s2;
+  std::vector<unsigned char> tmp(sz, 255);
+  tmp[(long long)i1 * s2 + i2] = 0;
 
-  long long cnt_0 = 0;
-  if (tmp[i1 * s2 + i2] == 0)
-    cnt_0 = 1;
-  printDepth(0, cnt_0);
-
+  DistributionPrinter dp(sz);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
-    if (nd >= 15)
-      break;
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
-    for (int i = 0; i < sz; ++i) {
+    for (long long i = 0; i < sz; ++i) {
       if (tmp[i] == d) {
+        cnt++;
         int t1b = (i / s2) * 18, t2b = (i % s2) * 18;
         for (int j = 0; j < 18; ++j) {
-          int ni = t1[t1b + j] * s2 + t2[t2b + j];
-          // NOTE: 使用 CAS 避免竞态条件，只有成功将 0xF 改为 nd 的线程才计数
-          unsigned char expected = 0xF;
-          if (__sync_val_compare_and_swap(&tmp[ni], expected, nd) == expected) {
-            cnt++;
-          }
+          long long ni = (long long)t1[t1b + j] * s2 + t2[t2b + j];
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
-    printDepth(nd, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
-  std::vector<unsigned char> pt((sz + 1) / 2, 0xFF);
-  for (int i = 0; i < sz; ++i)
-    if (tmp[i] != 0xF)
+  dp.done();
+  pt.assign((sz + 1) / 2, 0xFF);
+  for (long long i = 0; i < sz; ++i)
+    if (tmp[i] != 255)
       set_prune(pt, i, tmp[i]);
-  return pt;
 }
 
 void create_cascaded_prune_table2(int i1, int i2, int s1, int s2, int depth,
                                   const std::vector<int> &t1,
                                   const std::vector<int> &t2,
                                   std::vector<unsigned char> &pt) {
-  int sz = s1 * s2;
-  std::vector<unsigned char> tmp(sz, 0xF);
-  tmp[i1 * s2 + i2] = 0;
+  long long sz = (long long)s1 * s2;
+  std::vector<unsigned char> tmp(sz, 255);
+  tmp[(long long)i1 * s2 + i2] = 0;
 
-  long long cnt_1 = 0;
-  int t1b = i1 * 24, t2b = i2 * 18;
-  for (int j = 0; j < 18; ++j) {
-    int ni = t1[t1b + j] + t2[t2b + j];
-    if (tmp[ni] == 0xF) {
-      tmp[ni] = 1;
-      cnt_1++;
-    }
-  }
-  printDepth(0, 1);
-  printDepth(1, cnt_1);
-
-  for (int d = 1; d < depth; ++d) {
+  DistributionPrinter dp(sz);
+  for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
-    if (nd >= 15)
-      break;
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
-    for (int i = 0; i < sz; ++i) {
+    for (long long i = 0; i < sz; ++i) {
       if (tmp[i] == d) {
+        cnt++;
         int tb1 = (i / s2) * 24, tb2 = (i % s2) * 18;
         for (int j = 0; j < 18; ++j) {
-          int ni = t1[tb1 + j] + t2[tb2 + j];
-          // NOTE: 使用 CAS 避免竞态条件，只有成功将 0xF 改为 nd 的线程才计数
-          unsigned char expected = 0xF;
-          if (__sync_val_compare_and_swap(&tmp[ni], expected, nd) == expected) {
-            cnt++;
-          }
+          long long ni = (long long)t1[tb1 + j] + t2[tb2 + j];
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
-    printDepth(nd, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
+  dp.done();
   pt.assign((sz + 1) / 2, 0xFF);
-  for (int i = 0; i < sz; ++i)
-    if (tmp[i] != 0xF)
+  for (long long i = 0; i < sz; ++i)
+    if (tmp[i] != 255)
       set_prune(pt, i, tmp[i]);
 }
 
@@ -1839,36 +1913,35 @@ void create_cascaded_prune_table3(int i1, int i2, int s1, int s2, int depth,
                                   const std::vector<int> &t1,
                                   const std::vector<int> &t2,
                                   std::vector<unsigned char> &pt) {
-  int sz = s1 * s2;
-  std::vector<unsigned char> tmp(sz, 0xF);
-  tmp[i1 * s2 + i2] = 0;
-  printDepth(0, 1);
+  long long sz = (long long)s1 * s2;
+  std::vector<unsigned char> tmp(sz, 255);
+  tmp[(long long)i1 * s2 + i2] = 0;
+
+  DistributionPrinter dp(sz);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
-    if (nd >= 15)
-      break;
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
-    for (int i = 0; i < sz; ++i) {
+    for (long long i = 0; i < sz; ++i) {
       if (tmp[i] == d) {
+        cnt++;
         int tb1 = (i / s2) * 18, tb2 = (i % s2) * 18;
         for (int j = 0; j < 18; ++j) {
-          int ni = t1[tb1 + j] * s2 + t2[tb2 + j];
-          // NOTE: 使用 CAS 避免竞态条件，只有成功将 0xF 改为 nd 的线程才计数
-          unsigned char expected = 0xF;
-          if (__sync_val_compare_and_swap(&tmp[ni], expected, nd) == expected) {
-            cnt++;
-          }
+          long long ni = (long long)t1[tb1 + j] * s2 + t2[tb2 + j];
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
-    printDepth(nd, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
+  dp.done();
   pt.assign((sz + 1) / 2, 0xFF);
-  for (int i = 0; i < sz; ++i)
-    if (tmp[i] != 0xF)
+  for (long long i = 0; i < sz; ++i)
+    if (tmp[i] != 255)
       set_prune(pt, i, tmp[i]);
 }
 
@@ -1897,6 +1970,7 @@ void create_prune_table_xcross_plus(
   if (start_idx < total)
     tmp[start_idx] = 0;
 
+  DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
@@ -1931,11 +2005,11 @@ void create_prune_table_xcross_plus(
         }
       }
     }
-    printDepth(d, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
-
+  dp.done();
   long long c_sz = (total + 1) / 2;
   pt.assign(c_sz, 0xFF);
 #pragma omp parallel for
@@ -1967,6 +2041,7 @@ void create_prune_table_xcross_corn3(
   if (start_idx < total)
     tmp[start_idx] = 0;
 
+  DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
@@ -2001,11 +2076,11 @@ void create_prune_table_xcross_corn3(
         }
       }
     }
-    printDepth(d, cnt);
+    dp.print(d, cnt);
     if (cnt == 0)
       break;
   }
-
+  dp.done();
   long long c_sz = (total + 1) / 2;
   pt.assign(c_sz, 0xFF);
 #pragma omp parallel for
@@ -2022,46 +2097,42 @@ void create_prune_table_xcross_corn3(
 void create_prune_table_pseudo_cross_corner(
     int index2, int depth, const std::vector<int> &table1,
     const std::vector<int> &table2, std::vector<unsigned char> &prune_table) {
-  int size1 = 190080, size2 = 24, size = size1 * size2;
-  std::vector<unsigned char> temp_table(size, 0xF);
-  int next_i, index1_tmp, index2_tmp, next_d;
+  long long size1 = 190080, size2 = 24, size = size1 * size2;
+  std::vector<unsigned char> temp_table(size, 255);
   std::vector<int> a = {16, 18, 20, 22};
   int index1 = array_to_index(a, 4, 2, 12);
   temp_table[index1 * size2 + index2] = 0;
   temp_table[table1[index1 * 24 + 3] + table2[index2 * 18 + 3]] = 0;
   temp_table[table1[index1 * 24 + 4] + table2[index2 * 18 + 4]] = 0;
   temp_table[table1[index1 * 24 + 5] + table2[index2 * 18 + 5]] = 0;
-  long long count = 0;
-  for (int i = 0; i < size; ++i)
-    if (temp_table[i] == 0)
-      count++;
-  printDepth(0, count);
+
+  DistributionPrinter dp(size);
   for (int d = 0; d < depth; ++d) {
-    next_d = d + 1;
-    if (next_d >= 15)
-      break;
-    long long next_count = 0;
-    for (int i = 0; i < size; ++i) {
+    int nd = d + 1;
+    long long cnt = 0;
+#pragma omp parallel for reduction(+ : cnt)
+    for (long long i = 0; i < size; ++i) {
       if (temp_table[i] == d) {
-        index1_tmp = (i / size2) * 24;
-        index2_tmp = (i % size2) * 18;
+        cnt++;
+        int index1_tmp = (i / size2) * 24;
+        int index2_tmp = (i % size2) * 18;
         for (int j = 0; j < 18; ++j) {
-          next_i = table1[index1_tmp + j] + table2[index2_tmp + j];
-          if (temp_table[next_i] == 0xF) {
-            temp_table[next_i] = next_d;
-            next_count++;
-          }
+          int next_i = table1[index1_tmp + j] + table2[index2_tmp + j];
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&temp_table[next_i], expected, nd);
         }
       }
     }
-    printDepth(next_d, next_count);
-    if (next_count == 0)
+    dp.print(d, cnt);
+    if (cnt == 0)
       break;
   }
+  dp.done();
   prune_table.resize((size + 1) / 2);
   std::fill(prune_table.begin(), prune_table.end(), 0xFF);
-  for (int i = 0; i < size; ++i)
-    if (temp_table[i] != 0xF)
+  for (long long i = 0; i < size; ++i)
+    if (temp_table[i] != 255)
       set_prune(prune_table, i, temp_table[i]);
 }
 
@@ -2072,9 +2143,8 @@ void create_prune_table_pseudo_xcross(int index3, int index2, int depth,
                                       const std::vector<int> &table1,
                                       const std::vector<int> &table2,
                                       std::vector<unsigned char> &prune_table) {
-  int size1 = 190080, size2 = 24, size = size1 * size2;
-  std::vector<unsigned char> temp_table(size, 0xF);
-  int next_i, index1_tmp, index2_tmp, next_d;
+  long long size1 = 190080, size2 = 24, size = size1 * size2;
+  std::vector<unsigned char> temp_table(size, 255);
 
   // 根据边块位置选择初始化序列
   std::vector<std::string> appl_moves;
@@ -2138,38 +2208,33 @@ void create_prune_table_pseudo_xcross(int index3, int index2, int depth,
                table2[table2[index2_tmp_2 * 18 + 2] * 18 + 5]] = 0;
   }
 
-  long long count = 0;
-  for (int i = 0; i < size; ++i)
-    if (temp_table[i] == 0)
-      count++;
-  printDepth(0, count);
-
+  DistributionPrinter dp(size);
   for (int d = 0; d < depth; ++d) {
-    next_d = d + 1;
-    if (next_d >= 15)
-      break;
-    long long next_count = 0;
-    for (int i = 0; i < size; ++i) {
+    int nd = d + 1;
+    long long cnt = 0;
+#pragma omp parallel for reduction(+ : cnt)
+    for (long long i = 0; i < size; ++i) {
       if (temp_table[i] == d) {
-        index1_tmp = (i / size2) * 24;
-        index2_tmp = (i % size2) * 18;
+        cnt++;
+        int index1_tmp = (i / size2) * 24;
+        int index2_tmp = (i % size2) * 18;
         for (int j = 0; j < 18; ++j) {
-          next_i = table1[index1_tmp + j] + table2[index2_tmp + j];
-          if (temp_table[next_i] == 0xF) {
-            temp_table[next_i] = next_d;
-            next_count++;
-          }
+          int next_i = table1[index1_tmp + j] + table2[index2_tmp + j];
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&temp_table[next_i], expected, nd);
         }
       }
     }
-    printDepth(next_d, next_count);
-    if (next_count == 0)
+    dp.print(d, cnt);
+    if (cnt == 0)
       break;
   }
+  dp.done();
   prune_table.resize((size + 1) / 2);
   std::fill(prune_table.begin(), prune_table.end(), 0xFF);
-  for (int i = 0; i < size; ++i)
-    if (temp_table[i] != 0xF)
+  for (long long i = 0; i < size; ++i)
+    if (temp_table[i] != 255)
       set_prune(prune_table, i, temp_table[i]);
 }
 
@@ -2181,9 +2246,9 @@ void create_prune_table_pseudo_pair(int index1, int index2, int size1,
                                     const std::vector<int> &table1,
                                     const std::vector<int> &table2,
                                     std::vector<unsigned char> &prune_table) {
-  int size = size1 * size2;
-  std::vector<unsigned char> temp_table(size, 0xF);
-  int start = index1 * size2 + index2, next_i, index1_tmp, index2_tmp, next_d;
+  long long size = (long long)size1 * size2;
+  std::vector<unsigned char> temp_table(size, 255);
+  long long start = (long long)index1 * size2 + index2;
   temp_table[start] = 0;
   temp_table[table1[index1 * 18 + 3] * size2 + table2[index2 * 18 + 3]] = 0;
   temp_table[table1[index1 * 18 + 4] * size2 + table2[index2 * 18 + 4]] = 0;
@@ -2249,37 +2314,32 @@ void create_prune_table_pseudo_pair(int index1, int index2, int size1,
                table2[table2[index2_tmp_2 * 18 + 2] * 18 + 5]] = 0;
   }
 
-  long long count = 0;
-  for (int i = 0; i < size; ++i)
-    if (temp_table[i] == 0)
-      count++;
-  printDepth(0, count);
-
+  DistributionPrinter dp(size);
   for (int d = 0; d < depth; ++d) {
-    next_d = d + 1;
-    if (next_d >= 15)
-      break;
-    long long next_count = 0;
-    for (int i = 0; i < size; ++i) {
+    int nd = d + 1;
+    long long cnt = 0;
+#pragma omp parallel for reduction(+ : cnt)
+    for (long long i = 0; i < size; ++i) {
       if (temp_table[i] == d) {
-        index1_tmp = (i / size2) * 18;
-        index2_tmp = (i % size2) * 18;
+        cnt++;
+        int index1_tmp = (i / size2) * 18;
+        int index2_tmp = (i % size2) * 18;
         for (int j = 0; j < 18; ++j) {
-          next_i = table1[index1_tmp + j] * size2 + table2[index2_tmp + j];
-          if (temp_table[next_i] == 0xF) {
-            temp_table[next_i] = next_d;
-            next_count++;
-          }
+          int next_i = table1[index1_tmp + j] * size2 + table2[index2_tmp + j];
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&temp_table[next_i], expected, nd);
         }
       }
     }
-    printDepth(next_d, next_count);
-    if (next_count == 0)
+    dp.print(d, cnt);
+    if (cnt == 0)
       break;
   }
+  dp.done();
   prune_table.resize((size + 1) / 2);
   std::fill(prune_table.begin(), prune_table.end(), 0xFF);
-  for (int i = 0; i < size; ++i)
-    if (temp_table[i] != 0xF)
+  for (long long i = 0; i < size; ++i)
+    if (temp_table[i] != 255)
       set_prune(prune_table, i, temp_table[i]);
 }

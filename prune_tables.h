@@ -437,10 +437,10 @@ void create_prune_table_huge(int sz_e6, int sz_c2, int depth,
                              std::vector<unsigned char> &pt);
 
 // --- 级联剪枝表生成函数 (from eo_cross_analyzer) ---
-std::vector<unsigned char>
-create_cascaded_prune_table(int i1, int i2, int s1, int s2, int depth,
-                            const std::vector<int> &t1,
-                            const std::vector<int> &t2);
+void create_cascaded_prune_table(int i1, int i2, int s1, int s2, int depth,
+                                 const std::vector<int> &t1,
+                                 const std::vector<int> &t2,
+                                 std::vector<unsigned char> &pt);
 void create_cascaded_prune_table2(int i1, int i2, int s1, int s2, int depth,
                                   const std::vector<int> &t1,
                                   const std::vector<int> &t2,
