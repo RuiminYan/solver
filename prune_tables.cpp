@@ -548,62 +548,89 @@ void PruneTableManager::generateAllSequentially() {
   std::vector<int> edge_indices = {0, 2, 4, 6};       // E0, E1, E2, E3
   std::vector<unsigned char> temp_table;
 
-  // NOTE: 一次性加载变体表需要的所有小表，避免重复加载
-  mtm.loadEdgeTable();
-  mtm.loadCornerTable();
-  mtm.loadCrossTable();
-
-  // 22. Pseudo Cross + Corner 变体表 (4 个: C4, C5, C6, C7)
-  for (int c = 0; c < 4; ++c) {
+  // 先检查是否有任何变体表需要生成
+  bool need_variant_tables = false;
+  for (int c = 0; c < 4 && !need_variant_tables; ++c) {
     std::string fn =
         "prune_table_pseudo_cross_C" + std::to_string(c + 4) + ".bin";
-    if (!fileExists(fn)) {
-      std::cout << "  Generating " << fn << "..." << std::endl;
-      create_prune_table_pseudo_cross_corner(
-          corner_indices[c], 10, mtm.getCrossTable(), mtm.getCornerTable(),
-          temp_table, "[Gen Cross C" + std::to_string(c + 4) + "]");
-      saveTable(temp_table, fn);
-    }
+    if (!fileExists(fn))
+      need_variant_tables = true;
   }
-
-  // 23. Pseudo XCross 变体表 (16 个: C{4-7}_into_slot{0-3})
-  for (int c = 0; c < 4; ++c) {
-    for (int e = 0; e < 4; ++e) {
+  for (int c = 0; c < 4 && !need_variant_tables; ++c) {
+    for (int e = 0; e < 4 && !need_variant_tables; ++e) {
       std::string fn = "prune_table_pseudo_cross_C" + std::to_string(c + 4) +
                        "_into_slot" + std::to_string(e) + ".bin";
-      if (!fileExists(fn)) {
-        std::cout << "  Generating " << fn << "..." << std::endl;
-        create_prune_table_pseudo_xcross(edge_indices[e], corner_indices[c], 10,
-                                         mtm.getCrossTable(),
-                                         mtm.getCornerTable(), temp_table,
-                                         "[Gen XC C" + std::to_string(c + 4) +
-                                             " S" + std::to_string(e) + "]");
-        saveTable(temp_table, fn);
-      }
+      if (!fileExists(fn))
+        need_variant_tables = true;
     }
   }
-
-  // 24. Pseudo Pair 变体表 (16 个: C{4-7}_E{0-3})
-  for (int c = 0; c < 4; ++c) {
-    for (int e = 0; e < 4; ++e) {
+  for (int c = 0; c < 4 && !need_variant_tables; ++c) {
+    for (int e = 0; e < 4 && !need_variant_tables; ++e) {
       std::string fn = "prune_table_pseudo_pair_C" + std::to_string(c + 4) +
                        "_E" + std::to_string(e) + ".bin";
-      if (!fileExists(fn)) {
-        std::cout << "  Generating " << fn << "..." << std::endl;
-        create_prune_table_pseudo_pair(edge_indices[e], corner_indices[c], 24,
-                                       24, 8, mtm.getEdgeTable(),
-                                       mtm.getCornerTable(), temp_table,
-                                       "[Gen Pair C" + std::to_string(c + 4) +
-                                           " E" + std::to_string(e) + "]");
-        saveTable(temp_table, fn);
-      }
+      if (!fileExists(fn))
+        need_variant_tables = true;
     }
   }
 
-  // NOTE: 变体表生成完成后统一释放
-  mtm.releaseEdgeTable();
-  mtm.releaseCornerTable();
-  mtm.releaseCrossTable();
+  // 只有在需要生成时才加载依赖表
+  if (need_variant_tables) {
+    mtm.loadEdgeTable();
+    mtm.loadCornerTable();
+    mtm.loadCrossTable();
+
+    // 22. Pseudo Cross + Corner 变体表 (4 个: C4, C5, C6, C7)
+    for (int c = 0; c < 4; ++c) {
+      std::string fn =
+          "prune_table_pseudo_cross_C" + std::to_string(c + 4) + ".bin";
+      if (!fileExists(fn)) {
+        std::cout << "  Generating " << fn << "..." << std::endl;
+        create_prune_table_pseudo_cross_corner(
+            corner_indices[c], 10, mtm.getCrossTable(), mtm.getCornerTable(),
+            temp_table, "[Gen Cross C" + std::to_string(c + 4) + "]");
+        saveTable(temp_table, fn);
+      }
+    }
+
+    // 23. Pseudo XCross 变体表 (16 个: C{4-7}_into_slot{0-3})
+    for (int c = 0; c < 4; ++c) {
+      for (int e = 0; e < 4; ++e) {
+        std::string fn = "prune_table_pseudo_cross_C" + std::to_string(c + 4) +
+                         "_into_slot" + std::to_string(e) + ".bin";
+        if (!fileExists(fn)) {
+          std::cout << "  Generating " << fn << "..." << std::endl;
+          create_prune_table_pseudo_xcross(edge_indices[e], corner_indices[c],
+                                           10, mtm.getCrossTable(),
+                                           mtm.getCornerTable(), temp_table,
+                                           "[Gen XC C" + std::to_string(c + 4) +
+                                               " S" + std::to_string(e) + "]");
+          saveTable(temp_table, fn);
+        }
+      }
+    }
+
+    // 24. Pseudo Pair 变体表 (16 个: C{4-7}_E{0-3})
+    for (int c = 0; c < 4; ++c) {
+      for (int e = 0; e < 4; ++e) {
+        std::string fn = "prune_table_pseudo_pair_C" + std::to_string(c + 4) +
+                         "_E" + std::to_string(e) + ".bin";
+        if (!fileExists(fn)) {
+          std::cout << "  Generating " << fn << "..." << std::endl;
+          create_prune_table_pseudo_pair(edge_indices[e], corner_indices[c], 24,
+                                         24, 8, mtm.getEdgeTable(),
+                                         mtm.getCornerTable(), temp_table,
+                                         "[Gen Pair C" + std::to_string(c + 4) +
+                                             " E" + std::to_string(e) + "]");
+          saveTable(temp_table, fn);
+        }
+      }
+    }
+
+    // NOTE: 变体表生成完成后统一释放
+    mtm.releaseEdgeTable();
+    mtm.releaseCornerTable();
+    mtm.releaseCrossTable();
+  }
 }
 
 bool PruneTableManager::loadTable(std::vector<unsigned char> &table,
