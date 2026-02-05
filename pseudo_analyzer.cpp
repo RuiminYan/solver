@@ -276,9 +276,6 @@ struct XCrossSolver {
     return nullptr;
   }
 
-  // 剪枝表注册表: Key = {PieceID1, PieceID2...} (有序) [TODO: Phase 4 移除]
-  std::map<std::vector<int>, AuxPrunerDef> aux_registry;
-
   struct PseudoTask1 {
     int c_idx;
     int diff;
@@ -346,71 +343,36 @@ struct XCrossSolver {
     for (int i = 0; i < 4; ++i)
       p_prune_base[i] = ptm.getPseudoCrossBasePrunePtr(i);
 
-    // 注册 E0_E2 表 (IDs: 0, 2) - 对棱
+    // 初始化 Edge2 对角表 (E0E2)
     if (ptm.hasPseudoCrossE0E2Prune()) {
-      aux_registry[{0, 2}] = {ptm.getPseudoCrossE0E2PrunePtr(), p_edges2, 528};
-      aux_registry[{1, 3}] = aux_registry[{0, 2}];
-      // [重构] 新指针和 AuxPrunerDef 初始化
       p_aux_e2_diag = ptm.getPseudoCrossE0E2PrunePtr();
       aux_def_e2_diag = {p_aux_e2_diag, p_edges2, 528};
     }
-    // 注册邻棱表 (Neighboring Edges)
+    // 初始化 Edge2 邻接表 (E0E1)
     if (ptm.hasPseudoCrossE0E1Prune()) {
-      aux_registry[{0, 1}] = {ptm.getPseudoCrossE0E1PrunePtr(), p_edges2, 528};
-      aux_registry[{1, 2}] = aux_registry[{0, 1}];
-      aux_registry[{2, 3}] = aux_registry[{0, 1}];
-      aux_registry[{0, 3}] = aux_registry[{0, 1}];
-      // [重构] 新指针和 AuxPrunerDef 初始化
       p_aux_e2_adj = ptm.getPseudoCrossE0E1PrunePtr();
       aux_def_e2_adj = {p_aux_e2_adj, p_edges2, 528};
     }
 
-    // 注册角块对表 (Corner Pairs)
-    // 对角
+    // 初始化 Corner2 对角表 (C4C6)
     if (ptm.hasPseudoCrossC4C6Prune()) {
-      aux_registry[{4, 6}] = {ptm.getPseudoCrossC4C6PrunePtr(), p_corners2,
-                              504};
-      aux_registry[{5, 7}] = aux_registry[{4, 6}];
-      // [重构] 新指针和 AuxPrunerDef 初始化
       p_aux_c2_diag = ptm.getPseudoCrossC4C6PrunePtr();
       aux_def_c2_diag = {p_aux_c2_diag, p_corners2, 504};
     }
-    // 邻角
+    // 初始化 Corner2 邻接表 (C4C5)
     if (ptm.hasPseudoCrossC4C5Prune()) {
-      aux_registry[{4, 5}] = {ptm.getPseudoCrossC4C5PrunePtr(), p_corners2,
-                              504};
-      aux_registry[{5, 6}] = aux_registry[{4, 5}];
-      aux_registry[{6, 7}] = aux_registry[{4, 5}];
-      aux_registry[{4, 7}] = aux_registry[{4, 5}];
-      // [重构] 新指针和 AuxPrunerDef 初始化
       p_aux_c2_adj = ptm.getPseudoCrossC4C5PrunePtr();
       aux_def_c2_adj = {p_aux_c2_adj, p_corners2, 504};
     }
 
-    // Register Corner3 Tables (Triples)
-    // Optimization: Only load C4_C5_C6 and use conjugation
+    // 初始化 Corner3 规范表 (C4C5C6，其他组合通过旋转映射)
     if (ptm.hasPseudoCrossC4C5C6Prune()) {
-      aux_registry[{4, 5, 6}] = {ptm.getPseudoCrossC4C5C6PrunePtr(), p_corners3,
-                                 9072};
-      // Map others to the same definition
-      aux_registry[{5, 6, 7}] = aux_registry[{4, 5, 6}];
-      aux_registry[{4, 6, 7}] = aux_registry[{4, 5, 6}];
-      aux_registry[{4, 5, 7}] = aux_registry[{4, 5, 6}];
-      // [重构] 新指针和 AuxPrunerDef 初始化
       p_aux_c3 = ptm.getPseudoCrossC4C5C6PrunePtr();
       aux_def_c3 = {p_aux_c3, p_corners3, 9072};
     }
 
-    // Register Edge3 Tables (Triples)
-    // Optimization: Only load E0_E1_E2 and use conjugation for others
+    // 初始化 Edge3 规范表 (E0E1E2，其他组合通过旋转映射)
     if (ptm.hasPseudoCrossE0E1E2Prune()) {
-      aux_registry[{0, 1, 2}] = {ptm.getPseudoCrossE0E1E2PrunePtr(), p_edge3,
-                                 10560};
-      // Map others to the same definition (setup logic handles rotation)
-      aux_registry[{0, 1, 3}] = aux_registry[{0, 1, 2}];
-      aux_registry[{0, 2, 3}] = aux_registry[{0, 1, 2}];
-      aux_registry[{1, 2, 3}] = aux_registry[{0, 1, 2}];
-      // [重构] 新指针和 AuxPrunerDef 初始化
       p_aux_e3 = ptm.getPseudoCrossE0E1E2PrunePtr();
       aux_def_e3 = {p_aux_e3, p_edge3, 10560};
     }
