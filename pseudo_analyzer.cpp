@@ -285,21 +285,34 @@ struct XCrossSolver {
     int c1, c2;
     int diff1, diff2;
     int h;
+    int num_aux;
+    AuxState aux_init[MAX_AUX];
     int i_e6, i_c2;
     const unsigned char *p_huge_table = nullptr;
     bool mirror_huge = false;
 
-    PseudoTask2(int _c1, int _c2, int _d1, int _d2, int _h)
-        : c1(_c1), c2(_c2), diff1(_d1), diff2(_d2), h(_h), i_e6(0), i_c2(0) {}
+    // Explicit constructor to avoid warnings
+    PseudoTask2(int _c1, int _c2, int _d1, int _d2, int _h, int _n)
+        : c1(_c1), c2(_c2), diff1(_d1), diff2(_d2), h(_h), num_aux(_n), i_e6(0),
+          i_c2(0) {
+      for (int i = 0; i < MAX_AUX; ++i)
+        aux_init[i] = AuxState();
+    }
   };
 
   struct PseudoTask3 {
     int c1, c2, c3;
     int diff1, diff2, diff3;
     int h;
+    int num_aux;
+    AuxState aux_init[MAX_AUX];
 
-    PseudoTask3(int _c1, int _c2, int _c3, int _d1, int _d2, int _d3, int _h)
-        : c1(_c1), c2(_c2), c3(_c3), diff1(_d1), diff2(_d2), diff3(_d3), h(_h) {
+    PseudoTask3(int _c1, int _c2, int _c3, int _d1, int _d2, int _d3, int _h,
+                int _n)
+        : c1(_c1), c2(_c2), c3(_c3), diff1(_d1), diff2(_d2), diff3(_d3), h(_h),
+          num_aux(_n) {
+      for (int i = 0; i < MAX_AUX; ++i)
+        aux_init[i] = AuxState();
     }
   };
 
@@ -732,8 +745,9 @@ struct XCrossSolver {
   bool search_2(SearchContext &ctx, int i1a, int i2a, int i3a,
                 const unsigned char *p1, int i1b, int i2b, int i3b,
                 const int *tr_b, const unsigned char *p2, int i_e6, int i_c2,
-                const unsigned char *p_huge_table, bool mirror_huge, int depth,
-                int prev) {
+                const unsigned char *p_huge_table,
+                bool mirror_huge, // Added mirror_huge
+                int depth, int prev, int num_aux, const AuxState *aux_states) {
 
     const int *moves = valid_moves_flat[prev];
     const int count = valid_moves_count[prev];
@@ -741,9 +755,48 @@ struct XCrossSolver {
       int m = moves[k];
       COUNT_NODE
 
+      // 1. Aux Pruning (First!)
       int n_i1a = p_multi[i1a + m];
+      int cross_state_idx = n_i1a / 24;
 
-      // 1. Huge Table Pruning
+      bool aux_pruned = false;
+      AuxState next_aux[MAX_AUX];
+      for (int i = 0; i < num_aux; ++i) {
+        const auto &cur = aux_states[i];
+        if (!cur.def)
+          continue;
+        next_aux[i].def = cur.def;
+        next_aux[i].move_mapper = cur.move_mapper;
+
+        int lookup_cross_idx;
+        if (cur.move_mapper) {
+          // Use Rotation Logic
+          int m_rot = cur.move_mapper[m];
+          next_aux[i].current_idx =
+              cur.def->p_move[cur.current_idx * 18 + m_rot];
+          next_aux[i].current_cross_scaled =
+              p_multi[cur.current_cross_scaled + m_rot];
+          lookup_cross_idx = next_aux[i].current_cross_scaled / 24;
+        } else {
+          // Standard Logic (Use Main Cross)
+          next_aux[i].current_idx = cur.def->p_move[cur.current_idx * 18 + m];
+          lookup_cross_idx = cross_state_idx;
+        }
+
+        long long idx_aux = (long long)lookup_cross_idx * cur.def->multiplier +
+                            next_aux[i].current_idx;
+        if (get_prune_ptr(cur.def->p_prune, idx_aux) >= depth) {
+          aux_pruned = true;
+          break;
+        }
+      }
+      // ++s2_aux_checked;  // NOTE: 统计已禁用
+      if (aux_pruned) {
+        // ++s2_aux_pruned;
+        continue;
+      }
+
+      // 2. Huge Table Pruning
       int n_e6 = 0, n_c2 = 0;
       bool huge_pruned = false;
       if (p_huge_table) {
@@ -766,27 +819,36 @@ struct XCrossSolver {
         }
       }
 
+      // ++s2_huge_checked;  // NOTE: 统计已禁用
       if (huge_pruned) {
+        // ++s2_huge_pruned;
         continue;
       }
 
-      // 2. Base Pruning (Side A)
+      // 3. Base Pruning (Side A) - Skip if Huge Table was checked (Twin Titans
+      // dominance) Compute Side A recursive states (needed regardless of
+      // pruning source)
       int n_i2a = p_corn[i2a + m];
       int n_i3a = p_edge[i3a + m];
 
       if (!p_huge_table) {
         long long idx1 = (long long)(n_i1a + n_i2a) * 24 + n_i3a;
+        // ++s2_baseA_checked;  // NOTE: 统计已禁用
         if (get_prune_ptr(p1, idx1) >= depth) {
+          // ++s2_baseA_pruned;
           continue;
         }
       }
 
-      // 3. Base Pruning (Side B)
+      // 4. Base Pruning (Side B)
+
       int m_b = tr_b[m];
       int n_i1b = p_multi[i1b + m_b];
       int n_i2b = p_corn[i2b + m_b];
       long long idx2 = (long long)(n_i1b + n_i2b) * 24 + p_edge[i3b + m_b];
+      // ++s2_baseB_checked;  // NOTE: 统计已禁用
       if (get_prune_ptr(p2, idx2) >= depth) {
+        // ++s2_baseB_pruned;
         continue;
       }
 
@@ -795,7 +857,7 @@ struct XCrossSolver {
       }
       if (search_2(ctx, n_i1a, n_i2a * 18, n_i3a * 18, p1, n_i1b, n_i2b * 18,
                    p_edge[i3b + m_b] * 18, tr_b, p2, n_e6 * 18, n_c2 * 18,
-                   p_huge_table, mirror_huge, depth - 1, m))
+                   p_huge_table, mirror_huge, depth - 1, m, num_aux, next_aux))
         return true;
     }
     return false;
@@ -805,7 +867,7 @@ struct XCrossSolver {
                 const unsigned char *p1, int i1b, int i2b, int i3b,
                 const int *tr_b, const unsigned char *p2, int i1c, int i2c,
                 int i3c, const int *tr_c, const unsigned char *p3, int depth,
-                int prev) {
+                int prev, int num_aux, const AuxState *aux_states) {
 
     const int *moves = valid_moves_flat[prev];
     const int count = valid_moves_count[prev];
@@ -813,29 +875,72 @@ struct XCrossSolver {
       int m = moves[k];
       COUNT_NODE
 
-      // 1. Base Pruning (Side A)
+      // 1. Aux Pruning (Moved to Front)
       int n_i1a = p_multi[i1a + m];
-      int n_i2a = p_corn[i2a + m];
-      long long idx1 = (long long)(n_i1a + n_i2a) * 24 + p_edge[i3a + m];
-      if (get_prune_ptr(p1, idx1) >= depth) {
+      int cross_state_idx = n_i1a / 24;
+
+      bool aux_pruned = false;
+      AuxState next_aux[MAX_AUX];
+      for (int i = 0; i < num_aux; ++i) {
+        const auto &cur = aux_states[i];
+        if (!cur.def)
+          continue;
+        next_aux[i].def = cur.def;
+        next_aux[i].move_mapper = cur.move_mapper;
+
+        int lookup_cross_idx;
+        if (cur.move_mapper) {
+          // Use Rotation Logic
+          int m_rot = cur.move_mapper[m];
+          next_aux[i].current_idx =
+              cur.def->p_move[cur.current_idx * 18 + m_rot];
+          next_aux[i].current_cross_scaled =
+              p_multi[cur.current_cross_scaled + m_rot];
+          lookup_cross_idx = next_aux[i].current_cross_scaled / 24;
+        } else {
+          // Standard Logic
+          next_aux[i].current_idx = cur.def->p_move[cur.current_idx * 18 + m];
+          lookup_cross_idx = cross_state_idx;
+        }
+
+        long long idx_aux = (long long)lookup_cross_idx * cur.def->multiplier +
+                            next_aux[i].current_idx;
+        if (get_prune_ptr(cur.def->p_prune, idx_aux) >= depth) {
+          aux_pruned = true;
+          break;
+        }
+      }
+      // ++s3_aux_checked;  // NOTE: 统计已禁用
+      if (aux_pruned) {
+        // ++s3_aux_pruned;
         continue;
       }
 
-      // 2. Base Pruning (Side B)
+      int n_i2a = p_corn[i2a + m];
+      long long idx1 = (long long)(n_i1a + n_i2a) * 24 + p_edge[i3a + m];
+      // ++s3_baseA_checked;  // NOTE: 统计已禁用
+      if (get_prune_ptr(p1, idx1) >= depth) {
+        // ++s3_baseA_pruned;
+        continue;
+      }
+
       int m_b = tr_b[m];
       int n_i1b = p_multi[i1b + m_b];
       int n_i2b = p_corn[i2b + m_b];
       long long idx2 = (long long)(n_i1b + n_i2b) * 24 + p_edge[i3b + m_b];
+      // ++s3_baseB_checked;  // NOTE: 统计已禁用
       if (get_prune_ptr(p2, idx2) >= depth) {
+        // ++s3_baseB_pruned;
         continue;
       }
 
-      // 3. Base Pruning (Side C)
       int m_c = tr_c[m];
       int n_i1c = p_multi[i1c + m_c];
       int n_i2c = p_corn[i2c + m_c];
       long long idx3 = (long long)(n_i1c + n_i2c) * 24 + p_edge[i3c + m_c];
+      // ++s3_baseC_checked;  // NOTE: 统计已禁用
       if (get_prune_ptr(p3, idx3) >= depth) {
+        // ++s3_baseC_pruned;
         continue;
       }
 
@@ -844,7 +949,8 @@ struct XCrossSolver {
       }
       if (search_3(ctx, n_i1a, n_i2a * 18, p_edge[i3a + m] * 18, p1, n_i1b,
                    n_i2b * 18, p_edge[i3b + m_b] * 18, tr_b, p2, n_i1c,
-                   n_i2c * 18, p_edge[i3c + m_c] * 18, tr_c, p3, depth - 1, m))
+                   n_i2c * 18, p_edge[i3c + m_c] * 18, tr_c, p3, depth - 1, m,
+                   num_aux, next_aux))
         return true;
     }
     return false;
@@ -970,11 +1076,31 @@ struct XCrossSolver {
             }
             // ------------------------------------------------
 
-            PseudoTask2 t(cp.first, cp.second, d1, d2, h_base);
+            AuxState aux[MAX_AUX];
+            int n_aux = 0;
+            if (true) { // Safety constraint removed
+              n_aux = setup_aux_pruners_struct(
+                  {cp.first + 4, cp.second + 4, ep.first, ep.second}, alg,
+                  cp.first, aux);
+              for (int k = 0; k < n_aux; ++k) {
+                int lookup_c = aux[k].move_mapper
+                                   ? (aux[k].current_cross_scaled / 24)
+                                   : precomputed_states[r][cp.first].im / 24;
+                long long idx_aux =
+                    (long long)lookup_c * aux[k].def->multiplier +
+                    aux[k].current_idx;
+                h_base = std::max(h_base,
+                                  get_prune_ptr(aux[k].def->p_prune, idx_aux));
+              }
+            }
+
+            PseudoTask2 t(cp.first, cp.second, d1, d2, h_base, n_aux);
             t.i_e6 = init_e6;
             t.i_c2 = init_c2;
             t.p_huge_table = selected_huge_table;
             t.mirror_huge = use_mirror;
+            for (int k = 0; k < n_aux; ++k)
+              t.aux_init[k] = aux[k];
             tasks.push_back(t);
 
             int d1_s = get_diff(cp.first, ep.second);
@@ -982,7 +1108,26 @@ struct XCrossSolver {
             h_base = std::max(get_h(precomputed_states[r][cp.first], d1_s),
                               get_h(precomputed_states[r][cp.second], d2_s));
 
-            PseudoTask2 t2(cp.first, cp.second, d1_s, d2_s, h_base);
+            n_aux = 0;
+            if (true) {
+              n_aux = setup_aux_pruners_struct(
+                  {cp.first + 4, cp.second + 4, ep.second, ep.first}, alg,
+                  cp.first, aux);
+              for (int k = 0; k < n_aux; ++k) {
+                int lookup_c = aux[k].move_mapper
+                                   ? (aux[k].current_cross_scaled / 24)
+                                   : precomputed_states[r][cp.first].im / 24;
+                long long idx_aux =
+                    (long long)lookup_c * aux[k].def->multiplier +
+                    aux[k].current_idx;
+                h_base = std::max(h_base,
+                                  get_prune_ptr(aux[k].def->p_prune, idx_aux));
+              }
+            }
+
+            PseudoTask2 t2(cp.first, cp.second, d1_s, d2_s, h_base, n_aux);
+            for (int k = 0; k < n_aux; ++k)
+              t2.aux_init[k] = aux[k];
             tasks.push_back(t2);
           }
         }
@@ -1006,7 +1151,8 @@ struct XCrossSolver {
                            p_prune_base[t.diff1], st2.im, st2.ic_b * 18,
                            st2.ie_rel[t.diff2] * 18, trans_moves[t.c1][t.c2],
                            p_prune_base[t.diff2], t.i_e6 * 18, t.i_c2 * 18,
-                           t.p_huge_table, t.mirror_huge, d, 18)) {
+                           t.p_huge_table, t.mirror_huge, d, 18, t.num_aux,
+                           t.aux_init)) {
                 res = d;
                 break;
               }
@@ -1043,7 +1189,26 @@ struct XCrossSolver {
                               get_h(precomputed_states[r][ct[1]], d2),
                               get_h(precomputed_states[r][ct[2]], d3)});
 
-                PseudoTask3 t(ct[0], ct[1], ct[2], d1, d2, d3, h_base);
+                AuxState aux[MAX_AUX];
+                int n_aux = 0;
+                n_aux =
+                    setup_aux_pruners_struct({ct[0] + 4, ct[1] + 4, ct[2] + 4,
+                                              et[p[0]], et[p[1]], et[p[2]]},
+                                             alg, ct[0], aux);
+                for (int k = 0; k < n_aux; ++k) {
+                  int lookup_c = aux[k].move_mapper
+                                     ? (aux[k].current_cross_scaled / 24)
+                                     : precomputed_states[r][ct[0]].im / 24;
+                  long long idx_aux =
+                      (long long)lookup_c * aux[k].def->multiplier +
+                      aux[k].current_idx;
+                  h_base = std::max(
+                      h_base, get_prune_ptr(aux[k].def->p_prune, idx_aux));
+                }
+
+                PseudoTask3 t(ct[0], ct[1], ct[2], d1, d2, d3, h_base, n_aux);
+                for (int k = 0; k < n_aux; ++k)
+                  t.aux_init[k] = aux[k];
                 tasks.push_back(t);
               }
             } while (std::next_permutation(p.begin(), p.end()));
@@ -1071,7 +1236,8 @@ struct XCrossSolver {
                            s2.ie_rel[t.diff2] * 18, trans_moves[t.c1][t.c2],
                            p_prune_base[t.diff2], s3.im, s3.ic_b * 18,
                            s3.ie_rel[t.diff3] * 18, trans_moves[t.c1][t.c3],
-                           p_prune_base[t.diff3], d, 18)) {
+                           p_prune_base[t.diff3], d, 18, t.num_aux,
+                           t.aux_init)) {
                 res = d;
                 break;
               }
