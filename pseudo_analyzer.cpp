@@ -212,7 +212,71 @@ struct XCrossSolver {
 
   // const unsigned char* p_huge_diagonal = nullptr; // Disabled for memory
 
-  // 剪枝表注册表: Key = {PieceID1, PieceID2...} (有序)
+  // === [重构] 静态 Aux 表指针 (替代 aux_registry) ===
+  // Edge2: 邻棱 (E0E1) 和 对棱 (E0E2)
+  const unsigned char *p_aux_e2_adj = nullptr; // 邻接: {0,1},{1,2},{2,3},{0,3}
+  const unsigned char *p_aux_e2_diag = nullptr; // 对角: {0,2},{1,3}
+
+  // Corner2: 邻角 (C4C5) 和 对角 (C4C6)
+  const unsigned char *p_aux_c2_adj = nullptr; // 邻接: {4,5},{5,6},{6,7},{4,7}
+  const unsigned char *p_aux_c2_diag = nullptr; // 对角: {4,6},{5,7}
+
+  // Edge3: 规范表 (E0E1E2)
+  const unsigned char *p_aux_e3 = nullptr; // 所有 Edge3 组合映射到此
+
+  // Corner3: 规范表 (C4C5C6)
+  const unsigned char *p_aux_c3 = nullptr; // 所有 Corner3 组合映射到此
+
+  // === [重构] 静态 AuxPrunerDef 对象 ===
+  // 用于替代 aux_registry map 查找
+  AuxPrunerDef aux_def_e2_adj;  // Edge2 邻接
+  AuxPrunerDef aux_def_e2_diag; // Edge2 对角
+  AuxPrunerDef aux_def_c2_adj;  // Corner2 邻接
+  AuxPrunerDef aux_def_c2_diag; // Corner2 对角
+  AuxPrunerDef aux_def_e3;      // Edge3
+  AuxPrunerDef aux_def_c3;      // Corner3
+
+  // === [重构] 索引映射辅助函数 ===
+  // Edge2: 返回 0=邻接, 1=对角
+  static inline int get_e2_type(int e1, int e2) {
+    int diff = (e2 - e1 + 4) & 3;
+    return (diff == 2) ? 1 : 0; // diff==2 是对角
+  }
+
+  // Corner2: 返回 0=邻接, 1=对角
+  static inline int get_c2_type(int c1, int c2) {
+    int diff = (c2 - c1 + 4) & 3;
+    return (diff == 2) ? 1 : 0; // diff==2 是对角
+  }
+
+  // === [重构] 获取 AuxPrunerDef 的辅助函数 ===
+  // 根据 keys 返回对应的 AuxPrunerDef 指针 (替代 aux_registry.find)
+  const AuxPrunerDef *get_aux_def(const std::vector<int> &keys) {
+    if (keys.size() == 2) {
+      // Edge2 或 Corner2
+      if (keys[0] < 4) {
+        // Edge2
+        return (get_e2_type(keys[0], keys[1]) == 1)
+                   ? (p_aux_e2_diag ? &aux_def_e2_diag : nullptr)
+                   : (p_aux_e2_adj ? &aux_def_e2_adj : nullptr);
+      } else {
+        // Corner2
+        return (get_c2_type(keys[0], keys[1]) == 1)
+                   ? (p_aux_c2_diag ? &aux_def_c2_diag : nullptr)
+                   : (p_aux_c2_adj ? &aux_def_c2_adj : nullptr);
+      }
+    } else if (keys.size() == 3) {
+      // Edge3 或 Corner3
+      if (keys[0] < 4) {
+        return p_aux_e3 ? &aux_def_e3 : nullptr;
+      } else {
+        return p_aux_c3 ? &aux_def_c3 : nullptr;
+      }
+    }
+    return nullptr;
+  }
+
+  // 剪枝表注册表: Key = {PieceID1, PieceID2...} (有序) [TODO: Phase 4 移除]
   std::map<std::vector<int>, AuxPrunerDef> aux_registry;
 
   struct PseudoTask1 {
@@ -286,6 +350,9 @@ struct XCrossSolver {
     if (ptm.hasPseudoCrossE0E2Prune()) {
       aux_registry[{0, 2}] = {ptm.getPseudoCrossE0E2PrunePtr(), p_edges2, 528};
       aux_registry[{1, 3}] = aux_registry[{0, 2}];
+      // [重构] 新指针和 AuxPrunerDef 初始化
+      p_aux_e2_diag = ptm.getPseudoCrossE0E2PrunePtr();
+      aux_def_e2_diag = {p_aux_e2_diag, p_edges2, 528};
     }
     // 注册邻棱表 (Neighboring Edges)
     if (ptm.hasPseudoCrossE0E1Prune()) {
@@ -293,6 +360,9 @@ struct XCrossSolver {
       aux_registry[{1, 2}] = aux_registry[{0, 1}];
       aux_registry[{2, 3}] = aux_registry[{0, 1}];
       aux_registry[{0, 3}] = aux_registry[{0, 1}];
+      // [重构] 新指针和 AuxPrunerDef 初始化
+      p_aux_e2_adj = ptm.getPseudoCrossE0E1PrunePtr();
+      aux_def_e2_adj = {p_aux_e2_adj, p_edges2, 528};
     }
 
     // 注册角块对表 (Corner Pairs)
@@ -301,6 +371,9 @@ struct XCrossSolver {
       aux_registry[{4, 6}] = {ptm.getPseudoCrossC4C6PrunePtr(), p_corners2,
                               504};
       aux_registry[{5, 7}] = aux_registry[{4, 6}];
+      // [重构] 新指针和 AuxPrunerDef 初始化
+      p_aux_c2_diag = ptm.getPseudoCrossC4C6PrunePtr();
+      aux_def_c2_diag = {p_aux_c2_diag, p_corners2, 504};
     }
     // 邻角
     if (ptm.hasPseudoCrossC4C5Prune()) {
@@ -309,6 +382,9 @@ struct XCrossSolver {
       aux_registry[{5, 6}] = aux_registry[{4, 5}];
       aux_registry[{6, 7}] = aux_registry[{4, 5}];
       aux_registry[{4, 7}] = aux_registry[{4, 5}];
+      // [重构] 新指针和 AuxPrunerDef 初始化
+      p_aux_c2_adj = ptm.getPseudoCrossC4C5PrunePtr();
+      aux_def_c2_adj = {p_aux_c2_adj, p_corners2, 504};
     }
 
     // Register Corner3 Tables (Triples)
@@ -320,6 +396,9 @@ struct XCrossSolver {
       aux_registry[{5, 6, 7}] = aux_registry[{4, 5, 6}];
       aux_registry[{4, 6, 7}] = aux_registry[{4, 5, 6}];
       aux_registry[{4, 5, 7}] = aux_registry[{4, 5, 6}];
+      // [重构] 新指针和 AuxPrunerDef 初始化
+      p_aux_c3 = ptm.getPseudoCrossC4C5C6PrunePtr();
+      aux_def_c3 = {p_aux_c3, p_corners3, 9072};
     }
 
     // Register Edge3 Tables (Triples)
@@ -331,6 +410,9 @@ struct XCrossSolver {
       aux_registry[{0, 1, 3}] = aux_registry[{0, 1, 2}];
       aux_registry[{0, 2, 3}] = aux_registry[{0, 1, 2}];
       aux_registry[{1, 2, 3}] = aux_registry[{0, 1, 2}];
+      // [重构] 新指针和 AuxPrunerDef 初始化
+      p_aux_e3 = ptm.getPseudoCrossE0E1E2PrunePtr();
+      aux_def_e3 = {p_aux_e3, p_edge3, 10560};
     }
   }
 
