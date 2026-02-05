@@ -76,6 +76,11 @@ private:
   std::vector<unsigned char> pseudo_cross_C4_C6_C7_prune; // Newly Added
   std::vector<unsigned char> pseudo_cross_C5_C6_C7_prune; // Newly Added
 
+  // === PseudoPair 专用表 ===
+  std::vector<unsigned char> pseudo_pair_base_prune[4]; // Cross + C{4-7}
+  std::vector<unsigned char> pseudo_pair_xc_prune[16];  // XC: slot*4+corner
+  std::vector<unsigned char> pseudo_pair_ec_prune[16]; // EC Pair: edge*4+corner
+
   // 单例模式
   static PruneTableManager *instance;
   PruneTableManager() = default;
@@ -94,6 +99,9 @@ public:
 
   // 仅加载 Pseudo Analyzer 所需的表
   bool loadPseudoTables();
+
+  // 加载 PseudoPair Analyzer 所需的表
+  bool loadPseudoPairTables();
 
   // 顺序生成所有表
   void generateAllSequentially();
@@ -277,6 +285,17 @@ public:
   }
   const unsigned char *getHugeDiagonalPrunePtr() const {
     return huge_diagonal_prune.data();
+  }
+
+  // === PseudoPair Getters ===
+  const unsigned char *getPseudoPairBasePrunePtr(int c) const {
+    return pseudo_pair_base_prune[c].data();
+  }
+  const unsigned char *getPseudoPairXCPrunePtr(int idx) const {
+    return pseudo_pair_xc_prune[idx].data();
+  }
+  const unsigned char *getPseudoPairECPrunePtr(int idx) const {
+    return pseudo_pair_ec_prune[idx].data();
   }
 
   // 生成函数

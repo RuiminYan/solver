@@ -137,6 +137,88 @@ bool PruneTableManager::loadPseudoTables() {
   return true;
 }
 
+bool PruneTableManager::loadPseudoPairTables() {
+  // 1. 加载 Base 表 (Cross + C{4-7})
+  for (int c = 0; c < 4; ++c) {
+    std::string fn =
+        "prune_table_pseudo_cross_C" + std::to_string(c + 4) + ".bin";
+    if (!loadTable(pseudo_pair_base_prune[c], fn))
+      return false;
+  }
+
+  // 2. 加载 XC 表 (Cross + C{4-7} into slot{0-3})
+  for (int e = 0; e < 4; ++e) {
+    for (int c = 0; c < 4; ++c) {
+      int idx = e * 4 + c;
+      std::string fn = "prune_table_pseudo_cross_C" + std::to_string(c + 4) +
+                       "_into_slot" + std::to_string(e) + ".bin";
+      if (!loadTable(pseudo_pair_xc_prune[idx], fn))
+        return false;
+    }
+  }
+
+  // 3. 加载 EC 表 (Pair C{4-7}_E{0-3})
+  for (int e = 0; e < 4; ++e) {
+    for (int c = 0; c < 4; ++c) {
+      int idx = e * 4 + c;
+      std::string fn = "prune_table_pseudo_pair_C" + std::to_string(c + 4) +
+                       "_E" + std::to_string(e) + ".bin";
+      if (!loadTable(pseudo_pair_ec_prune[idx], fn))
+        return false;
+    }
+  }
+
+  // 4. 复用 pseudo_cross_base_prune[4] (Pseudo XCross Base: C4+E{0-3})
+  // 该表已由 loadPseudoTables 或单独调用加载
+
+  // 5. 加载 Aux 表 (复用 Pseudo Analyzer 的 Aux 表)
+  // E2/C2/E3/C3 表已由 loadPseudoTables 加载，此处确保已加载
+  if (pseudo_cross_E0_E1_prune.empty()) {
+    if (!loadTable(pseudo_cross_E0_E1_prune,
+                   "prune_table_pseudo_cross_E0_E1.bin")) {
+      std::cout << "Warning: prune_table_pseudo_cross_E0_E1.bin not found."
+                << std::endl;
+    }
+  }
+  if (pseudo_cross_E0_E2_prune.empty()) {
+    if (!loadTable(pseudo_cross_E0_E2_prune,
+                   "prune_table_pseudo_cross_E0_E2.bin")) {
+      std::cout << "Warning: prune_table_pseudo_cross_E0_E2.bin not found."
+                << std::endl;
+    }
+  }
+  if (pseudo_cross_C4_C5_prune.empty()) {
+    if (!loadTable(pseudo_cross_C4_C5_prune,
+                   "prune_table_pseudo_cross_C4_C5.bin")) {
+      std::cout << "Warning: prune_table_pseudo_cross_C4_C5.bin not found."
+                << std::endl;
+    }
+  }
+  if (pseudo_cross_C4_C6_prune.empty()) {
+    if (!loadTable(pseudo_cross_C4_C6_prune,
+                   "prune_table_pseudo_cross_C4_C6.bin")) {
+      std::cout << "Warning: prune_table_pseudo_cross_C4_C6.bin not found."
+                << std::endl;
+    }
+  }
+  if (pseudo_cross_E0_E1_E2_prune.empty()) {
+    if (!loadTable(pseudo_cross_E0_E1_E2_prune,
+                   "prune_table_pseudo_cross_E0_E1_E2.bin")) {
+      std::cout << "Warning: prune_table_pseudo_cross_E0_E1_E2.bin not found."
+                << std::endl;
+    }
+  }
+  if (pseudo_cross_C4_C5_C6_prune.empty()) {
+    if (!loadTable(pseudo_cross_C4_C5_C6_prune,
+                   "prune_table_pseudo_cross_C4_C5_C6.bin")) {
+      std::cout << "Warning: prune_table_pseudo_cross_C4_C5_C6.bin not found."
+                << std::endl;
+    }
+  }
+
+  return true;
+}
+
 // --- 前向声明: Pseudo 表生成函数 ---
 void create_prune_table_pseudo_cross_corner(
     int index2, int depth, const std::vector<int> &table1,
