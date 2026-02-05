@@ -81,6 +81,16 @@ private:
   std::vector<unsigned char> pseudo_pair_xc_prune[16];  // XC: slot*4+corner
   std::vector<unsigned char> pseudo_pair_ec_prune[16]; // EC Pair: edge*4+corner
 
+  // === EOCross 专用表 ===
+  // NOTE: eo_cross_c4使用不同生成函数，与cross_c4_prune不同
+  std::vector<unsigned char> eo_cross_c4_prune;     // Cross+C4 (EOCross版)
+  std::vector<unsigned char> eo_cross_dep_eo_prune; // Dependency+EO
+  std::vector<unsigned char>
+      eo_cross_plus_edge_prune[3]; // Plus Edge: Right/Diag/Left
+  std::vector<unsigned char>
+      eo_cross_plus_corn_prune[3]; // Plus Corner: Right/Diag/Left
+  std::vector<unsigned char> eo_cross_3corner_prune; // 3-Corner (C4+C5+C6)
+
   // 单例模式
   static PruneTableManager *instance;
   PruneTableManager() = default;
@@ -102,6 +112,9 @@ public:
 
   // 加载 PseudoPair Analyzer 所需的表
   bool loadPseudoPairTables();
+
+  // 加载 EOCross Analyzer 所需的表
+  bool loadEOCrossTables();
 
   // 顺序生成所有表
   void generateAllSequentially();
@@ -296,6 +309,23 @@ public:
   }
   const unsigned char *getPseudoPairECPrunePtr(int idx) const {
     return pseudo_pair_ec_prune[idx].data();
+  }
+
+  // === EOCross Getters ===
+  const unsigned char *getEOCrossC4PrunePtr() const {
+    return eo_cross_c4_prune.data();
+  }
+  const unsigned char *getEODepEOPrunePtr() const {
+    return eo_cross_dep_eo_prune.data();
+  }
+  const unsigned char *getEOPlusEdgePrunePtr(int idx) const {
+    return eo_cross_plus_edge_prune[idx].data();
+  }
+  const unsigned char *getEOPlusCornerPrunePtr(int idx) const {
+    return eo_cross_plus_corn_prune[idx].data();
+  }
+  const unsigned char *getEO3CornerPrunePtr() const {
+    return eo_cross_3corner_prune.data();
   }
 
   // 生成函数

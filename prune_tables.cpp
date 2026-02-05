@@ -225,6 +225,43 @@ bool PruneTableManager::loadPseudoPairTables() {
   return true;
 }
 
+// 加载 EOCross Analyzer 所需的表
+// NOTE: 仅加载表到PruneTableManager，不负责生成
+// 表生成逻辑仍保留在eo_cross_analyzer.cpp中(阶段2会迁移)
+bool PruneTableManager::loadEOCrossTables() {
+  // 1. Cross+C4 (EOCross专用版本 - 使用不同生成算法)
+  if (!loadTable(eo_cross_c4_prune, "prune_table_cross_C4.bin"))
+    return false;
+
+  // 2. Dependency+EO 表
+  if (!loadTable(eo_cross_dep_eo_prune, "prune_table_ep_4_eo_12.bin"))
+    return false;
+
+  // 3. Plus Edge 表 (Right/Diag/Left)
+  const char *edge_files[] = {"prune_table_cross_C4_E0_E1.bin",
+                              "prune_table_cross_C4_E0_E2.bin",
+                              "prune_table_cross_C4_E0_E3.bin"};
+  for (int i = 0; i < 3; ++i) {
+    if (!loadTable(eo_cross_plus_edge_prune[i], edge_files[i]))
+      return false;
+  }
+
+  // 4. Plus Corner 表 (Right/Diag/Left)
+  const char *corn_files[] = {"prune_table_cross_C4_E0_C5.bin",
+                              "prune_table_cross_C4_E0_C6.bin",
+                              "prune_table_cross_C4_E0_C7.bin"};
+  for (int i = 0; i < 3; ++i) {
+    if (!loadTable(eo_cross_plus_corn_prune[i], corn_files[i]))
+      return false;
+  }
+
+  // 5. 3-Corner 表
+  if (!loadTable(eo_cross_3corner_prune, "prune_table_cross_C4_C5_C6.bin"))
+    return false;
+
+  return true;
+}
+
 // --- 前向声明: Pseudo 表生成函数 ---
 void create_prune_table_pseudo_cross_corner(
     int index2, int depth, const std::vector<int> &table1,

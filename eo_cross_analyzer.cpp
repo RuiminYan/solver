@@ -157,12 +157,9 @@ struct cross_analyzer {
 struct xcross_analyzer {
   // 静态成员：所有实例共享
   static inline bool s_initialized = false;
+  // NOTE: 移动表暂保留在此（阶段2迁移到MoveTableManager）
   static inline std::vector<int> s_dep_mt, s_eo_mt;
-  static inline std::vector<unsigned char> s_prune_t, s_prune_dep_eo;
-  static inline std::vector<unsigned char> s_prune_xcross_base;
-  static inline std::vector<std::vector<unsigned char>> s_prune_plus_edge;
-  static inline std::vector<std::vector<unsigned char>> s_prune_plus_corn;
-  static inline std::vector<unsigned char> s_prune_3c;
+  // NOTE: 剪枝表已迁移到PruneTableManager，此处仅保留指针
 
   static inline const int *s_p_multi = nullptr;
   static inline const int *s_p_corner = nullptr;
@@ -222,98 +219,42 @@ struct xcross_analyzer {
       save_vector(s_dep_mt, "move_table_ep_4.bin");
     }
 
-    const char *pn_c4 = "prune_table_cross_C4.bin";
-    if (!load_vector(s_prune_t, pn_c4)) {
-      std::cout << "  Generating " << pn_c4 << " ..." << std::endl;
-      create_cascaded_prune_table2(187520, 12, 24 * 22 * 20 * 18, 24, 10,
-                                   mm.getCrossTable(), mm.getCornerTable(),
-                                   s_prune_t);
-      save_vector(s_prune_t, pn_c4);
-    }
-    s_p_prune = s_prune_t.data();
-
-    if (!load_vector(s_prune_dep_eo, "prune_table_ep_4_eo_12.bin")) {
-      std::cout << "  Generating prune_table_ep_4_eo_12.bin ..." << std::endl;
-      create_cascaded_prune_table3(11720, 0, 12 * 11 * 10 * 9, 2048, 11,
-                                   s_dep_mt, s_eo_mt, s_prune_dep_eo);
-      save_vector(s_prune_dep_eo, "prune_table_ep_4_eo_12.bin");
-    }
-
+    // 设置移动表指针
     s_p_multi = mm.getCrossTablePtr();
     s_p_corner = mm.getCornerTablePtr();
     s_p_edge = mm.getEdgeTablePtr();
     s_p_edge6 = mm.getEdge6TablePtr();   // Edge6 Move Table
     s_p_corn2 = mm.getCorner2TablePtr(); // Corner2 Move Table
-    s_p_prune_dep_eo = s_prune_dep_eo.data();
+
+    // === 剪枝表：使用 PruneTableManager ===
+    auto &ptm = PruneTableManager::getInstance();
+
+    // 先加载复用的xcross_c4_e0表（与std_analyzer/pair_analyzer共享）
+    ptm.generateXCrossC4E0Prune();
+
+    // 加载 EOCross 专用剪枝表
+    ptm.loadEOCrossTables();
+
+    // 获取剪枝表指针
+    s_p_prune = ptm.getEOCrossC4PrunePtr();
+    s_p_prune_dep_eo = ptm.getEODepEOPrunePtr();
+    s_p_prune_base = ptm.getXCrossC4E0PrunePtr(); // 复用已有表
+
+    s_p_plus_edge.resize(3);
+    s_p_plus_corn.resize(3);
+    for (int i = 0; i < 3; ++i) {
+      s_p_plus_edge[i] = ptm.getEOPlusEdgePrunePtr(i);
+      s_p_plus_corn[i] = ptm.getEOPlusCornerPrunePtr(i);
+    }
+    s_p_prune_3c = ptm.getEO3CornerPrunePtr();
 
     // 加载 Huge Neighbor/Diagonal Prune Tables
-    auto &ptm = PruneTableManager::getInstance();
     ptm.generateHugeNeighborPrune();
     s_p_huge_neighbor = ptm.getHugeNeighborPrunePtr();
     if (ENABLE_DIAGONAL_EO_CROSS) {
       ptm.generateHugeDiagonalPrune();
       s_p_huge_diagonal = ptm.getHugeDiagonalPrunePtr();
     }
-
-    // 1. 基准 XCross Table (C4 + E0)
-    std::string fn_base = "prune_table_cross_C4_E0.bin";
-    if (!load_vector(s_prune_xcross_base, fn_base)) {
-      std::cout << "  Generating " << fn_base << " ..." << std::endl;
-      create_prune_table_xcross_full(
-          187520, 12, 0, 24 * 22 * 20 * 18, 24, 24, 11, mm.getCrossTable(),
-          mm.getCornerTable(), mm.getEdgeTable(), s_prune_xcross_base);
-      save_vector(s_prune_xcross_base, fn_base);
-    }
-    s_p_prune_base = s_prune_xcross_base.data();
-
-    // 2. Plus Tables (Relative: Right, Diag, Left)
-    std::vector<int> plus_edges = {2, 4, 6};
-    s_prune_plus_edge.resize(3);
-    s_p_plus_edge.resize(3);
-    for (int i = 0; i < 3; ++i) {
-      std::string fn = "prune_table_cross_C4_E0_E" +
-                       std::to_string(plus_edges[i] / 2) + ".bin";
-      if (!load_vector(s_prune_plus_edge[i], fn)) {
-        std::cout << "  Generating " << fn << " (Depth 14)..." << std::endl;
-        create_prune_table_xcross_plus(
-            187520, 12, 0, plus_edges[i], 24 * 22 * 20 * 18, 24, 24, 24, 14,
-            mm.getCrossTable(), mm.getCornerTable(), mm.getEdgeTable(),
-            mm.getEdgeTable(), s_prune_plus_edge[i]);
-        save_vector(s_prune_plus_edge[i], fn);
-      }
-      s_p_plus_edge[i] = s_prune_plus_edge[i].data();
-    }
-
-    std::vector<int> plus_corns = {15, 18, 21};
-    s_prune_plus_corn.resize(3);
-    s_p_plus_corn.resize(3);
-    for (int i = 0; i < 3; ++i) {
-      std::string fn = "prune_table_cross_C4_E0_C" +
-                       std::to_string(plus_corns[i] / 3) + ".bin";
-      if (!load_vector(s_prune_plus_corn[i], fn)) {
-        std::cout << "  Generating " << fn << " (Depth 14)..." << std::endl;
-        create_prune_table_xcross_plus(
-            187520, 12, 0, plus_corns[i], 24 * 22 * 20 * 18, 24, 24, 24, 14,
-            mm.getCrossTable(), mm.getCornerTable(), mm.getEdgeTable(),
-            mm.getCornerTable(), s_prune_plus_corn[i]);
-        save_vector(s_prune_plus_corn[i], fn);
-      }
-      s_p_plus_corn[i] = s_prune_plus_corn[i].data();
-    }
-
-    // 3. 3-Corner Table (C4+C5+C6)
-    std::string fn_3c = "prune_table_cross_C4_C5_C6.bin";
-    if (!load_vector(s_prune_3c, fn_3c)) {
-      std::cout << "  Generating " << fn_3c << " (Depth 14) ..." << std::endl;
-      int c5 = 15;
-      int c6 = 18;
-      create_prune_table_xcross_corn3(187520, 12, c5, c6, 24 * 22 * 20 * 18, 24,
-                                      24, 24, 14, mm.getCrossTable(),
-                                      mm.getCornerTable(), mm.getCornerTable(),
-                                      mm.getCornerTable(), s_prune_3c);
-      save_vector(s_prune_3c, fn_3c);
-    }
-    s_p_prune_3c = s_prune_3c.data();
 
     s_initialized = true;
   }
