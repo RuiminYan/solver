@@ -46,63 +46,63 @@ public:
 
   // 细粒度资源管理（供 PruneTableManager 生成时使用）
   // NOTE: 小表添加"已加载"检查，避免重复从磁盘加载
-  bool loadEdgeMT() {
+  bool loadMTEdge() {
     if (!mt_edge.empty())
       return true;
     return loadTable(mt_edge, "mt_edge.bin");
   }
-  void releaseEdgeMT() { std::vector<int>().swap(mt_edge); }
+  void releaseMTEdge() { std::vector<int>().swap(mt_edge); }
 
-  bool loadCornMT() {
+  bool loadMTCorn() {
     if (!mt_corn.empty())
       return true;
     return loadTable(mt_corn, "mt_corn.bin");
   }
-  void releaseCornMT() { std::vector<int>().swap(mt_corn); }
+  void releaseMTCorn() { std::vector<int>().swap(mt_corn); }
 
-  bool loadCrossMT() {
+  bool loadMTCross() {
     if (!mt_cross.empty())
       return true;
     return loadTable(mt_cross, "mt_cross.bin");
   }
-  void releaseCrossMT() { std::vector<int>().swap(mt_cross); }
+  void releaseMTCross() { std::vector<int>().swap(mt_cross); }
 
-  bool loadEdge2MT() {
+  bool loadMTEdge2() {
     if (!mt_edge2.empty())
       return true;
     return loadTable(mt_edge2, "mt_edge2.bin");
   }
-  void releaseEdge2MT() { std::vector<int>().swap(mt_edge2); }
+  void releaseMTEdge2() { std::vector<int>().swap(mt_edge2); }
 
-  bool loadEdge3MT() {
+  bool loadMTEdge3() {
     if (!mt_edge3.empty())
       return true;
     return loadTable(mt_edge3, "mt_edge3.bin");
   }
-  void releaseEdge3MT() { std::vector<int>().swap(mt_edge3); }
+  void releaseMTEdge3() { std::vector<int>().swap(mt_edge3); }
 
   // NOTE: Edge6 保持原有行为，按需加载+用完释放，因为它占用 ~3GB 内存
-  bool loadEdge6MT() { return loadTable(mt_edge6, "mt_edge6.bin"); }
-  void releaseEdge6MT() { std::vector<int>().swap(mt_edge6); }
+  bool loadMTEdge6() { return loadTable(mt_edge6, "mt_edge6.bin"); }
+  void releaseMTEdge6() { std::vector<int>().swap(mt_edge6); }
 
-  bool loadCorn2MT() {
+  bool loadMTCorn2() {
     if (!mt_corn2.empty())
       return true;
     return loadTable(mt_corn2, "mt_corn2.bin");
   }
-  void releaseCorn2MT() { std::vector<int>().swap(mt_corn2); }
+  void releaseMTCorn2() { std::vector<int>().swap(mt_corn2); }
 
-  bool loadCorn3MT() {
+  bool loadMTCorn3() {
     if (!mt_corn3.empty())
       return true;
     return loadTable(mt_corn3, "mt_corn3.bin");
   }
-  void releaseCorn3MT() { std::vector<int>().swap(mt_corn3); }
+  void releaseMTCorn3() { std::vector<int>().swap(mt_corn3); }
 
   // 加载 EOCross 专用移动表
-  bool loadEOCrossMTs();
-  bool loadEOMT();  // 加载 EO 移动表 (mt_eo.bin)
-  bool loadEP1MT(); // 加载 EP1 移动表 (mt_ep1.bin)
+  bool loadMTEOCross();
+  bool loadMTEO();  // 加载 EO 移动表 (mt_eo.bin)
+  bool loadMTEP1(); // 加载 EP1 移动表 (mt_ep1.bin)
 
   // 获取移动表的只读访问
   const std::vector<int> &getEdgeMT() const { return mt_edge; }
@@ -135,14 +135,14 @@ public:
 
 private:
   // 生成函数
-  void generateEdgeMT();
-  void generateCornMT();
-  void generateCrossMT();
-  void generateEdge2MT();
-  void generateEdge3MT();
-  void generateEdge6MT();
-  void generateCorn2MT();
-  void generateCorn3MT();
+  void generateMTEdge();
+  void generateMTCorn();
+  void generateMTCross();
+  void generateMTEdge2();
+  void generateMTEdge3();
+  void generateMTEdge6();
+  void generateMTCorn2();
+  void generateMTCorn3();
 
   // 文件操作
   bool loadTable(std::vector<int> &table, const std::string &filename);

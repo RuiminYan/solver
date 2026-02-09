@@ -38,7 +38,6 @@
 #define ANSI_BLUE "\033[34m"
 
 // --- 日志标签统一颜色（蓝色）---
-// NOTE: 所有 [INIT], [MOVE], [PRUNE], [LOAD] 等标签统一使用此颜色
 #define TAG_COLOR "\033[34m"
 
 // --- Logo 和打印函数 ---
@@ -47,6 +46,23 @@ void printTableInfo(const std::string &category, const std::string &filename,
                     size_t sizeBytes);
 bool fileExists(const std::string &filename);
 std::string formatFileSize(size_t bytes);
+
+// 表生成计时器 - 在生成开始前构造，saveTable 之后调用 printElapsed
+struct GenerationTimer {
+  std::chrono::steady_clock::time_point start;
+
+  GenerationTimer() : start(std::chrono::steady_clock::now()) {}
+
+  void printElapsed(const std::string &filename) const {
+    auto end = std::chrono::steady_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+                  .count();
+    int min = static_cast<int>(ms / 60000);
+    int sec = static_cast<int>((ms % 60000) / 1000);
+    std::cout << TAG_COLOR << "[DONE]" << ANSI_RESET << " " << filename << " ("
+              << min << " min " << sec << " s)" << std::endl;
+  }
+};
 
 // --- 全局变量 ---
 extern int valid_moves_flat[20][18];

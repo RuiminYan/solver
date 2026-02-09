@@ -1,5 +1,5 @@
 /*
- * prune_tables.cpp - 剪枝表实现
+ * prune_tables.cpp - 剪枝表实�?
  */
 
 #include "prune_tables.h"
@@ -13,10 +13,10 @@
 
 PruneTableManager *PruneTableManager::instance = nullptr;
 
-// 深度分布打印器 - 用于打印带百分比的深度分布表格
+// 深度分布打印�?- 用于打印带百分比的深度分布表�?
 // NOTE: 使用 ANSI 转义码在 done() 时覆盖输出，修正百分比为 Count/Total
 struct DistributionPrinter {
-  long long total_size;                           // 状态空间大小
+  long long total_size;                           // 状态空间大�?
   long long accumulated;                          // 累计计数
   std::vector<std::pair<int, long long>> records; // 存储 (depth, count)
 
@@ -32,9 +32,9 @@ struct DistributionPrinter {
   }
 
   DistributionPrinter(long long total) : total_size(total), accumulated(0) {
-    // 打印状态空间大小
+    // 打印状态空间大�?
     std::cout << "  State Space: " << formatWithCommas(total_size) << std::endl;
-    // 打印表头（上下都有横线，类似 cloc 风格）
+    // 打印表头（上下都有横线，类似 cloc 风格�?
     std::cout << "  -------------------------------------------------"
               << std::endl;
     std::cout << "  Depth         Count           Pct         Cum" << std::endl;
@@ -47,7 +47,7 @@ struct DistributionPrinter {
       return; // 跳过空行
     accumulated += count;
     records.push_back({depth, count});
-    // 临时打印（百分比稍后修正）
+    // 临时打印（百分比稍后修正�?
     double pct = (total_size > 0) ? (100.0 * count / total_size) : 0.0;
     double cumPct = (total_size > 0) ? (100.0 * accumulated / total_size) : 0.0;
     std::cout << "  " << std::setw(5) << std::right << depth << "  "
@@ -60,15 +60,15 @@ struct DistributionPrinter {
   void done() {
     // 光标上移 records.size() 行，重新打印正确的百分比
     int lineCount = records.size();
-    std::cout << "\033[" << lineCount << "A"; // ANSI: 上移 lineCount 行
+    std::cout << "\033[" << lineCount << "A"; // ANSI: 上移 lineCount �?
 
-    long long total = accumulated; // 最终 Total
+    long long total = accumulated; // 最�?Total
     long long cumSum = 0;
     for (auto &p : records) {
       cumSum += p.second;
       double pct = (total > 0) ? (100.0 * p.second / total) : 0.0;
       double cumPct = (total > 0) ? (100.0 * cumSum / total) : 0.0;
-      std::cout << "\033[2K"; // ANSI: 清除当前行
+      std::cout << "\033[2K"; // ANSI: 清除当前�?
       std::cout << "  " << std::setw(5) << std::right << p.first << "  "
                 << std::setw(14) << std::right << formatWithCommas(p.second)
                 << "  " << std::fixed << std::setprecision(6) << std::setw(10)
@@ -83,13 +83,13 @@ struct DistributionPrinter {
     std::cout << std::endl; // 空行分隔
   }
 
-  // 在并行 BFS 循环内部显示扫描进度
-  // 位掩码检查放最前面（最便宜），绝大多数迭代在此处 return
+  // 在并�?BFS 循环内部显示扫描进度
+  // 位掩码检查放最前面（最便宜），绝大多数迭代在此�?return
   void progress(long long i, long long loopTotal, int depth) {
-    // 每 ~100 万次迭代检查一次（便宜的位运算，放第一位）
+    // �?~100 万次迭代检查一次（便宜的位运算，放第一位）
     if ((i & 0xFFFFF) != 0)
       return;
-    // 仅线程0报告（避免 cout 竞争）
+    // 仅线�?报告（避�?cout 竞争�?
     if (omp_get_thread_num() != 0)
       return;
     int numThreads = omp_get_num_threads();
@@ -100,7 +100,7 @@ struct DistributionPrinter {
               << std::flush;
   }
 
-  // 在 dp.print() 前调用，清除进度行
+  // �?dp.print() 前调用，清除进度�?
   void clearProgress() { std::cout << "\r\033[2K\033[?25h" << std::flush; }
 };
 
@@ -169,7 +169,7 @@ bool PruneTableManager::loadAll() {
     return false;
   if (!loadTable(pt_cross_C4C5E0E1, "pt_cross_C4C5E0E1.bin"))
     return false;
-  // 只要任意 analyzer 需要 Diagonal 表就加载
+  // 只要任意 analyzer 需�?Diagonal 表就加载
   if (ENABLE_DIAGONAL_STD || ENABLE_DIAGONAL_PAIR || ENABLE_DIAGONAL_EO_CROSS) {
     if (!loadTable(pt_cross_C4C6E0E2, "pt_cross_C4C6E0E2.bin"))
       return false;
@@ -188,7 +188,7 @@ bool PruneTableManager::loadPseudoTables() {
   if (!loadTable(pt_pscross_E0E2, "pt_pscross_E0E2.bin")) {
     std::cout << "Warning: pt_pscross_E0E2.bin not found." << std::endl;
   }
-  // 新增邻棱表加载
+  // 新增邻棱表加�?
   if (!loadTable(pt_pscross_E0E1, "pt_pscross_E0E1.bin")) {
     std::cout << "Warning: pt_pscross_E0E1.bin not found." << std::endl;
   }
@@ -197,13 +197,13 @@ bool PruneTableManager::loadPseudoTables() {
   if (!loadTable(pt_pscross_E0E1E2, "pt_pscross_E0E1E2.bin")) {
     std::cout << "Warning: pt_pscross_E0E1E2.bin not found." << std::endl;
   }
-  // NOTE: E1_E2_E3, E0_E2_E3, E0_E1_E3 通过 conj 复用 E0_E1_E2，不再加载
+  // NOTE: E1_E2_E3, E0_E2_E3, E0_E1_E3 通过 conj 复用 E0_E1_E2，不再加�?
 
-  // 对角表加载
+  // 对角表加�?
   if (!loadTable(pt_pscross_C4C6, "pt_pscross_C4C6.bin")) {
     std::cout << "Warning: pt_pscross_C4C6.bin not found." << std::endl;
   }
-  // 邻角表加载
+  // 邻角表加�?
   if (!loadTable(pt_pscross_C4C5, "pt_pscross_C4C5.bin")) {
     std::cout << "Warning: pt_pscross_C4C5.bin not found." << std::endl;
   }
@@ -212,20 +212,20 @@ bool PruneTableManager::loadPseudoTables() {
   if (!loadTable(pt_pscross_C4C5C6, "pt_pscross_C4C5C6.bin")) {
     std::cout << "Warning: pt_pscross_C4C5C6.bin not found." << std::endl;
   }
-  // NOTE: C4_C5_C7, C4_C6_C7, C5_C6_C7 通过 conj 复用 C4_C5_C6，不再加载
+  // NOTE: C4_C5_C7, C4_C6_C7, C5_C6_C7 通过 conj 复用 C4_C5_C6，不再加�?
 
   return true;
 }
 
 bool PruneTableManager::loadPseudoPairTables() {
-  // 1. 加载 Base 表 (Cross + C{4-7})
+  // 1. 加载 Base �?(Cross + C{4-7})
   for (int c = 0; c < 4; ++c) {
     std::string fn = "pt_pscross_C" + std::to_string(c + 4) + ".bin";
     if (!loadTable(pt_pscross_C[c], fn))
       return false;
   }
 
-  // 2. 加载 XC 表 (Cross + C{4-7} into slot{0-3})
+  // 2. 加载 XC �?(Cross + C{4-7} into slot{0-3})
   for (int e = 0; e < 4; ++e) {
     for (int c = 0; c < 4; ++c) {
       int idx = e * 4 + c;
@@ -236,7 +236,7 @@ bool PruneTableManager::loadPseudoPairTables() {
     }
   }
 
-  // 3. 加载 EC 表 (Pair C{4-7}_E{0-3})
+  // 3. 加载 EC �?(Pair C{4-7}_E{0-3})
   for (int e = 0; e < 4; ++e) {
     for (int c = 0; c < 4; ++c) {
       int idx = e * 4 + c;
@@ -248,15 +248,15 @@ bool PruneTableManager::loadPseudoPairTables() {
   }
 
   // 4. 加载 Pseudo XCross Base (C4+E{0-3})
-  // 这组表用于 Conj 优化，从 C4 视角追踪 XCross 状态
+  // 这组表用�?Conj 优化，从 C4 视角追踪 XCross 状�?
   for (int e = 0; e < 4; ++e) {
     std::string fn = "pt_pscross_C4E" + std::to_string(e) + ".bin";
     if (!loadTable(pt_pscross_C4E[e], fn))
       return false;
   }
 
-  // 5. 加载 Aux 表 (复用 Pseudo Analyzer 的 Aux 表)
-  // E2/C2/E3/C3 表已由 loadPseudoTables 加载，此处确保已加载
+  // 5. 加载 Aux �?(复用 Pseudo Analyzer �?Aux �?
+  // E2/C2/E3/C3 表已�?loadPseudoTables 加载，此处确保已加载
   if (pt_pscross_E0E1.empty()) {
     if (!loadTable(pt_pscross_E0E1, "pt_pscross_E0E1.bin")) {
       std::cout << "Warning: pt_pscross_E0E1.bin not found." << std::endl;
@@ -293,17 +293,17 @@ bool PruneTableManager::loadPseudoPairTables() {
 
 // 加载 EOCross Analyzer 所需的表
 // NOTE: 仅加载表到PruneTableManager，不负责生成
-// 表生成逻辑仍保留在eo_cross_analyzer.cpp中(阶段2会迁移)
+// 表生成逻辑仍保留在eo_cross_analyzer.cpp�?阶段2会迁�?
 bool PruneTableManager::loadEOCrossTables() {
   // 1. Cross+C4 (EOCross专用版本 - 使用不同生成算法)
   if (!loadTable(pt_eoc_C4, "pt_cross_C4.bin"))
     return false;
 
-  // 2. Dependency+EO 表
+  // 2. Dependency+EO �?
   if (!loadTable(pt_ep4eo12, "pt_ep4eo12.bin"))
     return false;
 
-  // 3. Plus Edge 表 (Right/Diag/Left)
+  // 3. Plus Edge �?(Right/Diag/Left)
   const char *edge_files[] = {"pt_cross_C4E0E1.bin", "pt_cross_C4E0E2.bin",
                               "pt_cross_C4E0E3.bin"};
   for (int i = 0; i < 3; ++i) {
@@ -311,7 +311,7 @@ bool PruneTableManager::loadEOCrossTables() {
       return false;
   }
 
-  // 4. Plus Corner 表 (Right/Diag/Left)
+  // 4. Plus Corner �?(Right/Diag/Left)
   const char *corn_files[] = {"pt_cross_C4C5E0.bin", "pt_cross_C4C6E0.bin",
                               "pt_cross_C4C7E0.bin"};
   for (int i = 0; i < 3; ++i) {
@@ -319,14 +319,14 @@ bool PruneTableManager::loadEOCrossTables() {
       return false;
   }
 
-  // 5. 3-Corner 表
+  // 5. 3-Corner �?
   if (!loadTable(pt_cross_C4C5C6, "pt_cross_C4C5C6.bin"))
     return false;
 
   return true;
 }
 
-// --- 前向声明: Pseudo 表生成函数 ---
+// --- 前向声明: Pseudo 表生成函�?---
 void create_pt_pscross_corner(int index2, int depth,
                               const std::vector<int> &table1,
                               const std::vector<int> &table2,
@@ -347,356 +347,356 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_cross.bin")) {
     std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
               << " Generating pt_cross.bin..." << std::endl;
-    mtm.loadEdge2MT();
+    mtm.loadMTEdge2();
     generateCrossPT();
     std::vector<unsigned char>().swap(pt_cross);
-    mtm.releaseEdge2MT();
+    mtm.releaseMTEdge2();
   }
 
   // 2. Cross C4 Prune (Needs Cross, Corner)
   if (!fileExists("pt_cross_C4.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadCornMT();
+    mtm.loadMTCross();
+    mtm.loadMTCorn();
     generateCrossC4PT();
     std::vector<unsigned char>().swap(pt_cross_C4);
-    mtm.releaseCrossMT();
-    mtm.releaseCornMT();
+    mtm.releaseMTCross();
+    mtm.releaseMTCorn();
   }
 
   // 3. Pair C4 E0 Prune (Needs Edge, Corner)
   if (!fileExists("pt_pair_C4E0.bin")) {
-    mtm.loadEdgeMT();
-    mtm.loadCornMT();
+    mtm.loadMTEdge();
+    mtm.loadMTCorn();
     generatePairC4E0PT();
     std::vector<unsigned char>().swap(pt_pair_C4E0);
-    mtm.releaseEdgeMT();
-    mtm.releaseCornMT();
+    mtm.releaseMTEdge();
+    mtm.releaseMTCorn();
   }
 
   // 4. XCross C4 E0 Prune (Needs Cross, Corner, Edge)
   if (!fileExists("pt_cross_C4E0.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadCornMT();
-    mtm.loadEdgeMT();
+    mtm.loadMTCross();
+    mtm.loadMTCorn();
+    mtm.loadMTEdge();
     generateCrossC4E0PT();
     std::vector<unsigned char>().swap(pt_cross_C4E0);
-    mtm.releaseCrossMT();
-    mtm.releaseCornMT();
-    mtm.releaseEdgeMT();
+    mtm.releaseMTCross();
+    mtm.releaseMTCorn();
+    mtm.releaseMTEdge();
   }
 
   // 5. Huge Neighbor (Needs Edge6, Corner2)
   if (!fileExists("pt_cross_C4C5E0E1.bin")) {
-    mtm.loadEdge6MT();
-    mtm.loadCorn2MT();
+    mtm.loadMTEdge6();
+    mtm.loadMTCorn2();
     generateCrossC4C5E0E1PT();
     std::vector<unsigned char>().swap(pt_cross_C4C5E0E1);
-    mtm.releaseEdge6MT();
-    mtm.releaseCorn2MT();
+    mtm.releaseMTEdge6();
+    mtm.releaseMTCorn2();
   }
 
   // 6. Huge Diagonal (Needs Edge6, Corner2)
-  // 只要任意 analyzer 需要 Diagonal 表就生成
+  // 只要任意 analyzer 需�?Diagonal 表就生成
   if (ENABLE_DIAGONAL_STD || ENABLE_DIAGONAL_PAIR || ENABLE_DIAGONAL_EO_CROSS) {
     if (!fileExists("pt_cross_C4C6E0E2.bin")) {
-      mtm.loadEdge6MT();
-      mtm.loadCorn2MT();
+      mtm.loadMTEdge6();
+      mtm.loadMTCorn2();
       generateCrossC4C6E0E2PT();
       std::vector<unsigned char>().swap(pt_cross_C4C6E0E2);
-      mtm.releaseEdge6MT();
-      mtm.releaseCorn2MT();
+      mtm.releaseMTEdge6();
+      mtm.releaseMTCorn2();
     }
   }
 
   // 7. EO Dependency+EO Prune (Needs EOCross Move Tables: EP4 + EO_Alt)
   if (!fileExists("pt_ep4eo12.bin")) {
-    mtm.loadEOCrossMTs();
+    mtm.loadMTEOCross();
     generateEP4EO12PT();
     std::vector<unsigned char>().swap(pt_ep4eo12);
-    // NOTE: EOCross 移动表较小，保持加载不释放
+    // NOTE: EOCross 移动表较小，保持加载不释�?
   }
 
-  // 7.1 EOCross Plus Edge (3 张, 各 ~1.22GB, Needs Cross, Corner, Edge)
+  // 7.1 EOCross Plus Edge (3 �? �?~1.22GB, Needs Cross, Corner, Edge)
   {
     bool need_plus = !fileExists("pt_cross_C4E0E1.bin") ||
                      !fileExists("pt_cross_C4E0E2.bin") ||
                      !fileExists("pt_cross_C4E0E3.bin");
     if (need_plus) {
-      mtm.loadCrossMT();
-      mtm.loadCornMT();
-      mtm.loadEdgeMT();
+      mtm.loadMTCross();
+      mtm.loadMTCorn();
+      mtm.loadMTEdge();
       generateCrossC4E0E1PT();
       std::vector<unsigned char>().swap(pt_cross_C4E0E1_C4E0E2_C4E0E3[0]);
       generateCrossC4E0E2PT();
       std::vector<unsigned char>().swap(pt_cross_C4E0E1_C4E0E2_C4E0E3[1]);
       generateCrossC4E0E3PT();
       std::vector<unsigned char>().swap(pt_cross_C4E0E1_C4E0E2_C4E0E3[2]);
-      mtm.releaseCrossMT();
-      mtm.releaseCornMT();
-      mtm.releaseEdgeMT();
+      mtm.releaseMTCross();
+      mtm.releaseMTCorn();
+      mtm.releaseMTEdge();
     }
   }
 
-  // 7.2 EOCross Plus Corner (3 张, 各 ~1.22GB, Needs Cross, Corner, Edge)
+  // 7.2 EOCross Plus Corner (3 �? �?~1.22GB, Needs Cross, Corner, Edge)
   {
     bool need_plus = !fileExists("pt_cross_C4C5E0.bin") ||
                      !fileExists("pt_cross_C4C6E0.bin") ||
                      !fileExists("pt_cross_C4C7E0.bin");
     if (need_plus) {
-      mtm.loadCrossMT();
-      mtm.loadCornMT();
-      mtm.loadEdgeMT();
+      mtm.loadMTCross();
+      mtm.loadMTCorn();
+      mtm.loadMTEdge();
       generateCrossC4C5E0PT();
       std::vector<unsigned char>().swap(pt_cross_C4C5E0_C4C6E0_C4C7E0[0]);
       generateCrossC4C6E0PT();
       std::vector<unsigned char>().swap(pt_cross_C4C5E0_C4C6E0_C4C7E0[1]);
       generateCrossC4C7E0PT();
       std::vector<unsigned char>().swap(pt_cross_C4C5E0_C4C6E0_C4C7E0[2]);
-      mtm.releaseCrossMT();
-      mtm.releaseCornMT();
-      mtm.releaseEdgeMT();
+      mtm.releaseMTCross();
+      mtm.releaseMTCorn();
+      mtm.releaseMTEdge();
     }
   }
 
-  // 7.3 EOCross 3-Corner (1 张, ~1.22GB, Needs Cross, Corner)
+  // 7.3 EOCross 3-Corner (1 �? ~1.22GB, Needs Cross, Corner)
   if (!fileExists("pt_cross_C4C5C6.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadCornMT();
+    mtm.loadMTCross();
+    mtm.loadMTCorn();
     generateCrossC4C5C6PT();
     std::vector<unsigned char>().swap(pt_cross_C4C5C6);
-    mtm.releaseCrossMT();
-    mtm.releaseCornMT();
+    mtm.releaseMTCross();
+    mtm.releaseMTCorn();
   }
 
   // 8. Pseudo Cross Prune
   if (!fileExists("pt_pscross.bin")) {
-    mtm.loadEdge2MT();
+    mtm.loadMTEdge2();
     generatePsCrossPT();
     std::vector<unsigned char>().swap(pt_pscross);
-    mtm.releaseEdge2MT();
+    mtm.releaseMTEdge2();
   }
 
   // 8. Pseudo XCross Prunes
   for (int i = 0; i < 4; ++i) {
     std::string fn = "pt_pscross_C4E" + std::to_string(i) + ".bin";
     if (!fileExists(fn)) {
-      mtm.loadCrossMT();
-      mtm.loadCornMT();
-      mtm.loadEdgeMT();
+      mtm.loadMTCross();
+      mtm.loadMTCorn();
+      mtm.loadMTEdge();
       generatePsCrossC4EPT(i);
       std::vector<unsigned char>().swap(pt_pscross_C4E[i]);
-      mtm.releaseCrossMT();
-      mtm.releaseCornMT();
-      mtm.releaseEdgeMT();
+      mtm.releaseMTCross();
+      mtm.releaseMTCorn();
+      mtm.releaseMTEdge();
     }
   }
 
   // 9. Pseudo Cross + E0,E2 Prune
   if (!fileExists("pt_pscross_E0E2.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadEdge2MT();
+    mtm.loadMTCross();
+    mtm.loadMTEdge2();
     generatePsCrossE0E2PT();
     std::vector<unsigned char>().swap(pt_pscross_E0E2);
-    mtm.releaseCrossMT();
-    mtm.releaseEdge2MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTEdge2();
   }
 
   // 11. Pseudo Cross + E0,E1 Prune
   if (!fileExists("pt_pscross_E0E1.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadEdge2MT();
+    mtm.loadMTCross();
+    mtm.loadMTEdge2();
     generatePsCrossE0E1PT();
     std::vector<unsigned char>().swap(pt_pscross_E0E1);
-    mtm.releaseCrossMT();
-    mtm.releaseEdge2MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTEdge2();
   }
 
   // 11.1 Pseudo Cross + E1,E3 Prune (Edge2 对棱)
   if (!fileExists("pt_pscross_E1E3.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadEdge2MT();
+    mtm.loadMTCross();
+    mtm.loadMTEdge2();
     generatePsCrossE1E3PT();
     std::vector<unsigned char>().swap(pt_pscross_E1E3);
-    mtm.releaseCrossMT();
-    mtm.releaseEdge2MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTEdge2();
   }
 
   // 11.2 Pseudo Cross + E0,E3 Prune (Edge2 邻棱)
   if (!fileExists("pt_pscross_E0E3.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadEdge2MT();
+    mtm.loadMTCross();
+    mtm.loadMTEdge2();
     generatePsCrossE0E3PT();
     std::vector<unsigned char>().swap(pt_pscross_E0E3);
-    mtm.releaseCrossMT();
-    mtm.releaseEdge2MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTEdge2();
   }
 
   // 11.3 Pseudo Cross + E1,E2 Prune (Edge2 邻棱)
   if (!fileExists("pt_pscross_E1E2.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadEdge2MT();
+    mtm.loadMTCross();
+    mtm.loadMTEdge2();
     generatePsCrossE1E2PT();
     std::vector<unsigned char>().swap(pt_pscross_E1E2);
-    mtm.releaseCrossMT();
-    mtm.releaseEdge2MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTEdge2();
   }
 
   // 11.4 Pseudo Cross + E2,E3 Prune (Edge2 邻棱)
   if (!fileExists("pt_pscross_E2E3.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadEdge2MT();
+    mtm.loadMTCross();
+    mtm.loadMTEdge2();
     generatePsCrossE2E3PT();
     std::vector<unsigned char>().swap(pt_pscross_E2E3);
-    mtm.releaseCrossMT();
-    mtm.releaseEdge2MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTEdge2();
   }
 
   // 14.1 Pseudo Cross + E0,E1,E2 Prune (Edge3)
   if (!fileExists("pt_pscross_E0E1E2.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadEdge3MT();
+    mtm.loadMTCross();
+    mtm.loadMTEdge3();
     generatePsCrossE0E1E2PT();
     std::vector<unsigned char>().swap(pt_pscross_E0E1E2);
-    mtm.releaseCrossMT();
-    mtm.releaseEdge3MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTEdge3();
   }
 
   // 14.2 Pseudo Cross + E1,E2,E3 Prune (Edge3)
   if (!fileExists("pt_pscross_E1E2E3.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadEdge3MT();
+    mtm.loadMTCross();
+    mtm.loadMTEdge3();
     generatePsCrossE1E2E3PT();
     std::vector<unsigned char>().swap(pt_pscross_E1E2E3);
-    mtm.releaseCrossMT();
-    mtm.releaseEdge3MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTEdge3();
   }
 
   // 14.3 Pseudo Cross + E0,E2,E3 Prune (Edge3)
   if (!fileExists("pt_pscross_E0E2E3.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadEdge3MT();
+    mtm.loadMTCross();
+    mtm.loadMTEdge3();
     generatePsCrossE0E2E3PT();
     std::vector<unsigned char>().swap(pt_pscross_E0E2E3);
-    mtm.releaseCrossMT();
-    mtm.releaseEdge3MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTEdge3();
   }
 
   // 14.4 Pseudo Cross + E0,E1,E3 Prune (Edge3)
   if (!fileExists("pt_pscross_E0E1E3.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadEdge3MT();
+    mtm.loadMTCross();
+    mtm.loadMTEdge3();
     generatePsCrossE0E1E3PT();
     std::vector<unsigned char>().swap(pt_pscross_E0E1E3);
-    mtm.releaseCrossMT();
-    mtm.releaseEdge3MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTEdge3();
   }
 
   // 15. Pseudo Cross + C4,C6 Prune (Corner2)
   if (!fileExists("pt_pscross_C4C6.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadCorn2MT();
+    mtm.loadMTCross();
+    mtm.loadMTCorn2();
     generatePsCrossC4C6PT();
     std::vector<unsigned char>().swap(pt_pscross_C4C6);
-    mtm.releaseCrossMT();
-    mtm.releaseCorn2MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTCorn2();
   }
 
   // 17. Pseudo Cross + C4,C5 Prune (Corner2)
   if (!fileExists("pt_pscross_C4C5.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadCorn2MT();
+    mtm.loadMTCross();
+    mtm.loadMTCorn2();
     generatePsCrossC4C5PT();
     std::vector<unsigned char>().swap(pt_pscross_C4C5);
-    mtm.releaseCrossMT();
-    mtm.releaseCorn2MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTCorn2();
   }
 
   // 17.1 Pseudo Cross + C4,C7 Prune (Corner2 邻角)
   if (!fileExists("pt_pscross_C4C7.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadCorn2MT();
+    mtm.loadMTCross();
+    mtm.loadMTCorn2();
     generatePsCrossC4C7PT();
     std::vector<unsigned char>().swap(pt_pscross_C4C7);
-    mtm.releaseCrossMT();
-    mtm.releaseCorn2MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTCorn2();
   }
 
   // 17.2 Pseudo Cross + C5,C6 Prune (Corner2 邻角)
   if (!fileExists("pt_pscross_C5C6.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadCorn2MT();
+    mtm.loadMTCross();
+    mtm.loadMTCorn2();
     generatePsCrossC5C6PT();
     std::vector<unsigned char>().swap(pt_pscross_C5C6);
-    mtm.releaseCrossMT();
-    mtm.releaseCorn2MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTCorn2();
   }
 
   // 16. Pseudo Cross + C5,C7 Prune (Corner2 对角)
   if (!fileExists("pt_pscross_C5C7.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadCorn2MT();
+    mtm.loadMTCross();
+    mtm.loadMTCorn2();
     generatePsCrossC5C7PT();
     std::vector<unsigned char>().swap(pt_pscross_C5C7);
-    mtm.releaseCrossMT();
-    mtm.releaseCorn2MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTCorn2();
   }
 
   // 17.3 Pseudo Cross + C6,C7 Prune (Corner2 邻角)
   if (!fileExists("pt_pscross_C6C7.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadCorn2MT();
+    mtm.loadMTCross();
+    mtm.loadMTCorn2();
     generatePsCrossC6C7PT();
     std::vector<unsigned char>().swap(pt_pscross_C6C7);
-    mtm.releaseCrossMT();
-    mtm.releaseCorn2MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTCorn2();
   }
 
   // 21. Pseudo Cross + C4,C5,C6 Prune (Corner3)
   if (!fileExists("pt_pscross_C4C5C6.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadCorn3MT();
+    mtm.loadMTCross();
+    mtm.loadMTCorn3();
     generatePsCrossC4C5C6PT();
     std::vector<unsigned char>().swap(pt_pscross_C4C5C6);
-    mtm.releaseCrossMT();
-    mtm.releaseCorn3MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTCorn3();
   }
 
   // 21.2 Pseudo Cross + C4,C5,C7 Prune (Corner3)
   if (!fileExists("pt_pscross_C4C5C7.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadCorn3MT();
+    mtm.loadMTCross();
+    mtm.loadMTCorn3();
     generatePsCrossC4C5C7PT();
     std::vector<unsigned char>().swap(pt_pscross_C4C5C7);
-    mtm.releaseCrossMT();
-    mtm.releaseCorn3MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTCorn3();
   }
 
   // 21.3 Pseudo Cross + C4,C6,C7 Prune (Corner3)
   if (!fileExists("pt_pscross_C4C6C7.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadCorn3MT();
+    mtm.loadMTCross();
+    mtm.loadMTCorn3();
     generatePsCrossC4C6C7PT();
     std::vector<unsigned char>().swap(pt_pscross_C4C6C7);
-    mtm.releaseCrossMT();
-    mtm.releaseCorn3MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTCorn3();
   }
 
   // 21.4 Pseudo Cross + C5,C6,C7 Prune (Corner3)
   if (!fileExists("pt_pscross_C5C6C7.bin")) {
-    mtm.loadCrossMT();
-    mtm.loadCorn3MT();
+    mtm.loadMTCross();
+    mtm.loadMTCorn3();
     generatePsCrossC5C6C7PT();
     std::vector<unsigned char>().swap(pt_pscross_C5C6C7);
-    mtm.releaseCrossMT();
-    mtm.releaseCorn3MT();
+    mtm.releaseMTCross();
+    mtm.releaseMTCorn3();
   }
 
-  // --- Pseudo Cross/XCross/Pair 变体表 (共 36 个) ---
+  // --- Pseudo Cross/XCross/Pair 变体�?(�?36 �? ---
   std::vector<int> corner_indices = {12, 15, 18, 21}; // C4, C5, C6, C7
   std::vector<int> edge_indices = {0, 2, 4, 6};       // E0, E1, E2, E3
   std::vector<unsigned char> temp_table;
 
-  // 先检查是否有任何变体表需要生成
+  // 先检查是否有任何变体表需要生�?
   bool need_variant_tables = false;
   for (int c = 0; c < 4 && !need_variant_tables; ++c) {
     std::string fn = "pt_pscross_C" + std::to_string(c + 4) + ".bin";
@@ -722,11 +722,11 @@ void PruneTableManager::generateAllSequentially() {
 
   // 只有在需要生成时才加载依赖表
   if (need_variant_tables) {
-    mtm.loadEdgeMT();
-    mtm.loadCornMT();
-    mtm.loadCrossMT();
+    mtm.loadMTEdge();
+    mtm.loadMTCorn();
+    mtm.loadMTCross();
 
-    // 22. Pseudo Cross + Corner 变体表 (4 个: C4, C5, C6, C7)
+    // 22. Pseudo Cross + Corner 变体�?(4 �? C4, C5, C6, C7)
     for (int c = 0; c < 4; ++c) {
       std::string fn = "pt_pscross_C" + std::to_string(c + 4) + ".bin";
       if (!fileExists(fn)) {
@@ -739,7 +739,7 @@ void PruneTableManager::generateAllSequentially() {
       }
     }
 
-    // 23. Pseudo XCross 变体表 (16 个: C{4-7}_into_slot{0-3})
+    // 23. Pseudo XCross 变体�?(16 �? C{4-7}_into_slot{0-3})
     for (int c = 0; c < 4; ++c) {
       for (int e = 0; e < 4; ++e) {
         std::string fn = "pt_pscross_C" + std::to_string(c + 4) + "_into_slot" +
@@ -756,7 +756,7 @@ void PruneTableManager::generateAllSequentially() {
       }
     }
 
-    // 24. Pseudo Pair 变体表 (16 个: C{4-7}_E{0-3})
+    // 24. Pseudo Pair 变体�?(16 �? C{4-7}_E{0-3})
     for (int c = 0; c < 4; ++c) {
       for (int e = 0; e < 4; ++e) {
         std::string fn = "pt_pspair_C" + std::to_string(c + 4) + "_E" +
@@ -773,9 +773,9 @@ void PruneTableManager::generateAllSequentially() {
     }
 
     // NOTE: 变体表生成完成后统一释放
-    mtm.releaseEdgeMT();
-    mtm.releaseCornMT();
-    mtm.releaseCrossMT();
+    mtm.releaseMTEdge();
+    mtm.releaseMTCorn();
+    mtm.releaseMTCross();
   }
 }
 
@@ -820,7 +820,7 @@ void PruneTableManager::generateCrossPT() {
         for (int j = 0; j < 18; ++j) {
           long long ni =
               (long long)edge2_mt[idx1 + j] * 528 + edge2_mt[idx2 + j];
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected,
                                       (unsigned char)(d + 1));
@@ -921,8 +921,8 @@ void PruneTableManager::generateEP4EO12PT() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pt_ep4eo12.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  // 状态空间: EP4 (12*11*10*9 = 11880) x EO12 (2^11 = 2048)
-  // 初始状态: EP4_SOLVED=11720, EO_SOLVED=0
+  // 状态空�? EP4 (12*11*10*9 = 11880) x EO12 (2^11 = 2048)
+  // 初始状�? EP4_SOLVED=11720, EO_SOLVED=0
   // 使用 MoveTableManager 中已加载的移动表
   create_cascaded_pt3(11720, 0, 12 * 11 * 10 * 9, 2048, 11, mtm.getEP4MT(),
                       mtm.getEOAltMT(), pt_ep4eo12);
@@ -931,7 +931,7 @@ void PruneTableManager::generateEP4EO12PT() {
 }
 
 // === EOCross Plus Edge 生成函数 ===
-// NOTE: 状态空间 Cross(187560) × C4(24) × E0(24) × Extra(24)
+// NOTE: 状态空�?Cross(187560) × C4(24) × E0(24) × Extra(24)
 // 参数来源: eo_cross_analyzer_old.cpp:L278-L281
 
 void PruneTableManager::generateCrossC4E0E1PT() {
@@ -941,7 +941,7 @@ void PruneTableManager::generateCrossC4E0E1PT() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pt_cross_C4E0E1.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  // Plus Edge Right: idx_extra=2 (E1 初始状态值), t4=EdgeMT
+  // Plus Edge Right: idx_extra=2 (E1 初始状态�?, t4=EdgeMT
   create_pt_xcross_plus(187520, 12, 0, 2, 24 * 22 * 20 * 18, 24, 24, 24, 14,
                         mtm.getCrossMT(), mtm.getCornMT(), mtm.getEdgeMT(),
                         mtm.getEdgeMT(), pt_cross_C4E0E1_C4E0E2_C4E0E3[0]);
@@ -956,7 +956,7 @@ void PruneTableManager::generateCrossC4E0E2PT() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pt_cross_C4E0E2.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  // Plus Edge Diag: idx_extra=4 (E2 初始状态值), t4=EdgeMT
+  // Plus Edge Diag: idx_extra=4 (E2 初始状态�?, t4=EdgeMT
   create_pt_xcross_plus(187520, 12, 0, 4, 24 * 22 * 20 * 18, 24, 24, 24, 14,
                         mtm.getCrossMT(), mtm.getCornMT(), mtm.getEdgeMT(),
                         mtm.getEdgeMT(), pt_cross_C4E0E1_C4E0E2_C4E0E3[1]);
@@ -971,7 +971,7 @@ void PruneTableManager::generateCrossC4E0E3PT() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pt_cross_C4E0E3.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  // Plus Edge Left: idx_extra=6 (E3 初始状态值), t4=EdgeMT
+  // Plus Edge Left: idx_extra=6 (E3 初始状态�?, t4=EdgeMT
   create_pt_xcross_plus(187520, 12, 0, 6, 24 * 22 * 20 * 18, 24, 24, 24, 14,
                         mtm.getCrossMT(), mtm.getCornMT(), mtm.getEdgeMT(),
                         mtm.getEdgeMT(), pt_cross_C4E0E1_C4E0E2_C4E0E3[2]);
@@ -980,7 +980,7 @@ void PruneTableManager::generateCrossC4E0E3PT() {
 }
 
 // === EOCross Plus Corner 生成函数 ===
-// NOTE: 与 Plus Edge 结构相同，但 idx_extra 是角块初始状态，t4=CornMT
+// NOTE: �?Plus Edge 结构相同，但 idx_extra 是角块初始状态，t4=CornMT
 // 参数来源: eo_cross_analyzer_old.cpp:L295-L298
 
 void PruneTableManager::generateCrossC4C5E0PT() {
@@ -990,7 +990,7 @@ void PruneTableManager::generateCrossC4C5E0PT() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pt_cross_C4C5E0.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  // Plus Corn Right: idx_extra=15 (C5 初始状态值), t4=CornMT
+  // Plus Corn Right: idx_extra=15 (C5 初始状态�?, t4=CornMT
   create_pt_xcross_plus(187520, 12, 0, 15, 24 * 22 * 20 * 18, 24, 24, 24, 14,
                         mtm.getCrossMT(), mtm.getCornMT(), mtm.getEdgeMT(),
                         mtm.getCornMT(), pt_cross_C4C5E0_C4C6E0_C4C7E0[0]);
@@ -1005,7 +1005,7 @@ void PruneTableManager::generateCrossC4C6E0PT() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pt_cross_C4C6E0.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  // Plus Corn Diag: idx_extra=18 (C6 初始状态值), t4=CornMT
+  // Plus Corn Diag: idx_extra=18 (C6 初始状态�?, t4=CornMT
   create_pt_xcross_plus(187520, 12, 0, 18, 24 * 22 * 20 * 18, 24, 24, 24, 14,
                         mtm.getCrossMT(), mtm.getCornMT(), mtm.getEdgeMT(),
                         mtm.getCornMT(), pt_cross_C4C5E0_C4C6E0_C4C7E0[1]);
@@ -1020,7 +1020,7 @@ void PruneTableManager::generateCrossC4C7E0PT() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pt_cross_C4C7E0.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  // Plus Corn Left: idx_extra=21 (C7 初始状态值), t4=CornMT
+  // Plus Corn Left: idx_extra=21 (C7 初始状态�?, t4=CornMT
   create_pt_xcross_plus(187520, 12, 0, 21, 24 * 22 * 20 * 18, 24, 24, 24, 14,
                         mtm.getCrossMT(), mtm.getCornMT(), mtm.getEdgeMT(),
                         mtm.getCornMT(), pt_cross_C4C5E0_C4C6E0_C4C7E0[2]);
@@ -1029,7 +1029,7 @@ void PruneTableManager::generateCrossC4C7E0PT() {
 }
 
 // === EOCross 3-Corner 生成函数 ===
-// NOTE: 使用 create_pt_xcross_corn3，跟踪 C4+C5+C6 三个角块
+// NOTE: 使用 create_pt_xcross_corn3，跟�?C4+C5+C6 三个角块
 // 参数来源: eo_cross_analyzer_old.cpp:L310-L313
 
 void PruneTableManager::generateCrossC4C5C6PT() {
@@ -1078,7 +1078,7 @@ void PruneTableManager::generatePsCrossPT() {
         for (int j = 0; j < 18; ++j) {
           long long ni =
               (long long)edge2_mt[idx1 + j] * 528 + edge2_mt[idx2 + j];
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected,
                                       (unsigned char)(d + 1));
@@ -1497,7 +1497,7 @@ void create_pt_pscross_corners2(int idx_cr, int idx_c2, int sz_cr, int sz_c2,
           int n_cr = t_cr[base_cr + j] / 24;
           int n_c2 = t_c2[base_c2 + j];
           long long ni = (long long)n_cr * sz_c2 + n_c2;
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -1562,7 +1562,7 @@ void create_pt_pscross_corners3(int idx_cr, int idx_c3, int sz_cr, int sz_c3,
           int n_cr = t_cr[base_cr + j] / 24;
           int n_c3 = t_c3[base_c3 + j];
           long long ni = (long long)n_cr * sz_c3 + n_c3;
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -1627,7 +1627,7 @@ void create_pt_pscross_edges3(int idx_cr, int idx_e3, int sz_cr, int sz_e3,
           int n_cr = t_cr[base_cr + j] / 24;
           int n_e3 = t_e3[base_e3 + j];
           long long ni = (long long)n_cr * sz_e3 + n_e3;
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -1646,7 +1646,7 @@ void create_pt_pscross_edges3(int idx_cr, int idx_e3, int sz_cr, int sz_e3,
       set_prune(pt, i, tmp[i]);
 }
 
-// --- 辅助生成函数实现 (移植自 pseudo_pair_analyzer.cpp) ---
+// --- 辅助生成函数实现 (移植�?pseudo_pair_analyzer.cpp) ---
 
 void create_pt_pscross_base(int idx_cr, int idx_cn, int idx_ed, int sz_cr,
                             int sz_cn, int sz_ed, int depth,
@@ -1701,7 +1701,7 @@ void create_pt_pscross_base(int idx_cr, int idx_cn, int idx_ed, int sz_cr,
           long long n_cr = t1[cur_cr + j];
           int n_cn = t2[cur_cn + j];
           long long ni = (n_cr + n_cn) * 24 + t3[idx3_base + j];
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -1853,7 +1853,7 @@ void create_pt_xcross_base(int idx_cr, int idx_cn, int idx_ex, int sz_cr,
           long long n_cr = t1[cur_cr + j];
           int n_cn = t2[cur_cn + j];
           long long ni = (n_cr + n_cn) * 24 + t3[idx3_base + j];
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -1925,7 +1925,7 @@ void create_pt_xcross_full(int idx_cr, int idx_cn, int idx_ed, int sz_cr,
           long long n_cr = t1[cur_cr + j];
           int n_cn = t2[cur_cn + j];
           long long ni = (n_cr + n_cn) * 24 + t3[idx3_base + j];
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -1983,7 +1983,7 @@ void create_pt_huge(int sz_e6, int sz_c2, int depth,
           int n_e6 = mt_e6[base_e6 + j];
           int n_c2 = mt_c2[base_c2 + j];
           long long ni = (long long)n_e6 * sz_c2 + n_c2;
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -2048,7 +2048,7 @@ void create_pt_pscross_edges2(int idx_cr, int idx_e2, int sz_cr, int sz_e2,
           int n_cr = t_cr[base_cr + j] / 24;
           int n_e2 = t_e2[base_e2 + j];
           long long ni = (long long)n_cr * sz_e2 + n_e2;
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -2067,7 +2067,7 @@ void create_pt_pscross_edges2(int idx_cr, int idx_e2, int sz_cr, int sz_e2,
       set_prune(pt, i, tmp[i]);
 }
 
-// --- 级联剪枝表生成函数实现 (from eo_cross_analyzer) ---
+// --- 级联剪枝表生成函数实�?(from eo_cross_analyzer) ---
 
 void create_cascaded_pt(int i1, int i2, int s1, int s2, int depth,
                         const std::vector<int> &t1, const std::vector<int> &t2,
@@ -2088,7 +2088,7 @@ void create_cascaded_pt(int i1, int i2, int s1, int s2, int depth,
         int t1b = (i / s2) * 18, t2b = (i % s2) * 18;
         for (int j = 0; j < 18; ++j) {
           long long ni = (long long)t1[t1b + j] * s2 + t2[t2b + j];
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -2125,7 +2125,7 @@ void create_cascaded_pt2(int i1, int i2, int s1, int s2, int depth,
         int tb1 = (i / s2) * 24, tb2 = (i % s2) * 18;
         for (int j = 0; j < 18; ++j) {
           long long ni = (long long)t1[tb1 + j] + t2[tb2 + j];
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -2162,7 +2162,7 @@ void create_cascaded_pt3(int i1, int i2, int s1, int s2, int depth,
         int tb1 = (i / s2) * 18, tb2 = (i % s2) * 18;
         for (int j = 0; j < 18; ++j) {
           long long ni = (long long)t1[tb1 + j] * s2 + t2[tb2 + j];
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -2237,7 +2237,7 @@ void create_pt_xcross_plus(int idx_cr, int idx_cn, int idx_ed, int idx_extra,
           int n_ex = t4[idx4_base + j];
 
           long long ni = ((n_cr + n_cn) * 24 + n_ed) * 24 + n_ex;
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -2312,7 +2312,7 @@ void create_pt_xcross_corn3(int idx_cr, int idx_cn, int idx_c5, int idx_c6,
           int n_c6 = t_c6[idx6_base + j];
 
           long long ni = ((n_cr + n_cn) * 24 + n_c5) * 24 + n_c6;
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -2332,11 +2332,11 @@ void create_pt_xcross_corn3(int idx_cr, int idx_cn, int idx_c5, int idx_c6,
       set_prune(pt, i, tmp[i]);
 }
 
-// --- Pseudo Cross/XCross/Pair 变体表生成函数 ---
+// --- Pseudo Cross/XCross/Pair 变体表生成函�?---
 // NOTE: 以下函数用于生成 C{4-7} 变体的剪枝表
 
-// 生成 Pseudo Cross + Corner 表 (例如: prune_table_pseudo_cross_C4.bin)
-// index2: corner 初始索引 (如 12=C4, 15=C5, 18=C6, 21=C7)
+// 生成 Pseudo Cross + Corner �?(例如: prune_table_pseudo_cross_C4.bin)
+// index2: corner 初始索引 (�?12=C4, 15=C5, 18=C6, 21=C7)
 void create_pt_pscross_corner(int index2, int depth,
                               const std::vector<int> &table1,
                               const std::vector<int> &table2,
@@ -2363,7 +2363,7 @@ void create_pt_pscross_corner(int index2, int depth,
         int index2_tmp = (i % size2) * 18;
         for (int j = 0; j < 18; ++j) {
           int next_i = table1[index1_tmp + j] + table2[index2_tmp + j];
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&temp_table[next_i], expected, nd);
         }
@@ -2382,7 +2382,7 @@ void create_pt_pscross_corner(int index2, int depth,
       set_prune(prune_table, i, temp_table[i]);
 }
 
-// 生成 Pseudo XCross 表 (例如: prune_table_pseudo_cross_C4_into_slot0.bin)
+// 生成 Pseudo XCross �?(例如: prune_table_pseudo_cross_C4_into_slot0.bin)
 // index3: edge 初始索引 (0, 2, 4, 6 for E0-E3)
 // index2: corner 初始索引 (12, 15, 18, 21 for C4-C7)
 void create_pt_pscross_xcross(int index3, int index2, int depth,
@@ -2392,7 +2392,7 @@ void create_pt_pscross_xcross(int index3, int index2, int depth,
   long long size1 = 190080, size2 = 24, size = size1 * size2;
   std::vector<unsigned char> temp_table(size, 255);
 
-  // 根据边块位置选择初始化序列
+  // 根据边块位置选择初始化序�?
   std::vector<std::string> appl_moves;
   std::vector<int> tmp_moves;
   if (index3 == 0) {
@@ -2419,7 +2419,7 @@ void create_pt_pscross_xcross(int index3, int index2, int depth,
   temp_table[table1[index1 * 24 + 4] + table2[index2 * 18 + 4]] = 0;
   temp_table[table1[index1 * 24 + 5] + table2[index2 * 18 + 5]] = 0;
 
-  // 初始化所有 pseudo 等效状态
+  // 初始化所�?pseudo 等效状�?
   for (int i = 0; i < 4; i++) {
     int index1_tmp_2 = index1 * 24, index2_tmp_2 = index2;
     index1_tmp_2 = table1[index1_tmp_2 + tmp_moves[index2 / 3 - 4]];
@@ -2467,7 +2467,7 @@ void create_pt_pscross_xcross(int index3, int index2, int depth,
         int index2_tmp = (i % size2) * 18;
         for (int j = 0; j < 18; ++j) {
           int next_i = table1[index1_tmp + j] + table2[index2_tmp + j];
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&temp_table[next_i], expected, nd);
         }
@@ -2486,7 +2486,7 @@ void create_pt_pscross_xcross(int index3, int index2, int depth,
       set_prune(prune_table, i, temp_table[i]);
 }
 
-// 生成 Pseudo Pair 表 (例如: prune_table_pseudo_pair_C4_E0.bin)
+// 生成 Pseudo Pair �?(例如: prune_table_pseudo_pair_C4_E0.bin)
 // index1: edge 初始索引 (0, 2, 4, 6)
 // index2: corner 初始索引 (12, 15, 18, 21)
 void create_pt_pspair(int index1, int index2, int size1, int size2, int depth,
@@ -2574,7 +2574,7 @@ void create_pt_pspair(int index1, int index2, int size1, int size2, int depth,
         int index2_tmp = (i % size2) * 18;
         for (int j = 0; j < 18; ++j) {
           int next_i = table1[index1_tmp + j] * size2 + table2[index2_tmp + j];
-          // NOTE: 使用 CAS 避免竞态条件
+          // NOTE: 使用 CAS 避免竞态条�?
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&temp_table[next_i], expected, nd);
         }
