@@ -45,11 +45,11 @@ struct xcross_analyzer2;
 struct xcross_analyzer2 {
   static bool tables_initialized;
   // [重构] 改用 Manager 统一管理的指针(方案A)
-  static const unsigned char *p_base_prune[4]; // Cross + C{4-7}
+  static const unsigned char *p_pt_pscross_C[4]; // Cross + C{4-7}
   static const unsigned char *p_xc_prune[16];  // XCross C{4-7} into slot{0-3}
   static const unsigned char *p_ec_prune[16];  // Pair C{4-7}_E{0-3}
   static const unsigned char
-      *p_pseudo_base_prune[4]; // Pseudo XCross Base (C4+E{0-3})
+      *p_pt_pscross_C4E[4]; // Pseudo XCross Base (C4+E{0-3})
 
   // 静态指针成员，指向 static vector 数据，供搜索函数使用
   static const int *p_edge_move_ptr;
@@ -193,7 +193,7 @@ struct xcross_analyzer2 {
 
     // 1. 获取 Base Prune Tables 指针 (Cross + C{4-7})
     for (int c = 0; c < 4; ++c) {
-      p_base_prune[c] = ptm.getPsCrossCPTPtr(c);
+      p_pt_pscross_C[c] = ptm.getPsCrossCPTPtr(c);
     }
 
     // 2. 获取 XCross Prune Tables 指针
@@ -209,7 +209,7 @@ struct xcross_analyzer2 {
     // 4. 获取 Pseudo Base Prune Tables 指针 (C4+E{0-3})
     // 复用 Pseudo Analyzer 的pt_pscross_C4E
     for (int e = 0; e < 4; ++e) {
-      p_pseudo_base_prune[e] = ptm.getPsCrossC4EPTPtr(e);
+      p_pt_pscross_C4E[e] = ptm.getPsCrossC4EPTPtr(e);
     }
 
     // 5. 获取 Aux 表指针(从 Manager，已由loadPseudoPairTables 加载)
@@ -754,7 +754,7 @@ struct xcross_analyzer2 {
 
     // [Conj优化] 使用 diff 选择 C4 基准的
     int diff2 = (slot2 - pslot2 + 4) & 3;
-    const unsigned char *prune_xc2 = p_pseudo_base_prune[diff2];
+    const unsigned char *prune_xc2 = p_pt_pscross_C4E[diff2];
 
     const unsigned char *p_prune1 = prune1;
     const unsigned char *p_prune2 = prune2;
@@ -870,7 +870,7 @@ struct xcross_analyzer2 {
               continue;
             start_search_2(slot1_tmp, slot2_tmp, pslot1_tmp, pslot2_tmp,
                            p_xc_prune[slot1_tmp * 4 + pslot1_tmp],
-                           p_base_prune[pslot2_tmp],
+                           p_pt_pscross_C[pslot2_tmp],
                            p_ec_prune[slot1_tmp * 4 + pslot1_tmp], rotations,
                            base_alg);
           }
@@ -1015,7 +1015,7 @@ struct xcross_analyzer2 {
 
     // [Conj优化] 使用 diff 选择 C4 基准的
     int diff3 = (slot3 - pslot3 + 4) & 3;
-    const unsigned char *prune_xc3 = p_pseudo_base_prune[diff3];
+    const unsigned char *prune_xc3 = p_pt_pscross_C4E[diff3];
 
     const unsigned char *p_prune1 = prune1;
     const unsigned char *p_edge_prune1 = edge_prune1;
@@ -1307,7 +1307,7 @@ struct xcross_analyzer2 {
 
     // [Conj优化] 使用 diff 选择 C4 基准的
     int diff4 = (slot4 - pslot4 + 4) & 3;
-    const unsigned char *prune_xc4 = p_pseudo_base_prune[diff4];
+    const unsigned char *prune_xc4 = p_pt_pscross_C4E[diff4];
 
     const unsigned char *p_prune1 = prune1;
     const unsigned char *p_prune2 = prune2;
@@ -1472,8 +1472,8 @@ struct xcross_analyzer2 {
           if (k != j)
             p_rem.push_back(k);
         start_search_4(i, s_rem[0], s_rem[1], s_rem[2], j, p_rem[0], p_rem[1],
-                       p_rem[2], p_xc_prune[i * 4 + j], p_base_prune[p_rem[0]],
-                       p_base_prune[p_rem[1]], p_base_prune[p_rem[2]],
+                       p_rem[2], p_xc_prune[i * 4 + j], p_pt_pscross_C[p_rem[0]],
+                       p_pt_pscross_C[p_rem[1]], p_pt_pscross_C[p_rem[2]],
                        p_ec_prune[i * 4 + j], rotations, base_alg);
       }
     }
@@ -1483,10 +1483,10 @@ struct xcross_analyzer2 {
 bool xcross_analyzer2::tables_initialized = false;
 
 // [重构] 指针数组静态定义(从 Manager 获取)
-const unsigned char *xcross_analyzer2::p_base_prune[4] = {nullptr};
+const unsigned char *xcross_analyzer2::p_pt_pscross_C[4] = {nullptr};
 const unsigned char *xcross_analyzer2::p_xc_prune[16] = {nullptr};
 const unsigned char *xcross_analyzer2::p_ec_prune[16] = {nullptr};
-const unsigned char *xcross_analyzer2::p_pseudo_base_prune[4] = {nullptr};
+const unsigned char *xcross_analyzer2::p_pt_pscross_C4E[4] = {nullptr};
 
 const int *xcross_analyzer2::p_edge_move_ptr = nullptr;
 const int *xcross_analyzer2::p_corner_move_ptr = nullptr;
