@@ -79,7 +79,7 @@ private:
   // === PseudoPair 专用表 ===
   std::vector<unsigned char> pt_pscross_C[4];       // Cross + C{4-7}
   std::vector<unsigned char> pt_pscross_C_diff[16]; // XC: diff*4+corner_offset
-  std::vector<unsigned char> pt_pspair_ce[16];      // EC Pair: edge*4+corner
+  std::vector<unsigned char> pt_pspair_CE[16];      // EC Pair: edge*4+corner
 
   // === EOCross 专用表 ===
   // NOTE: eo_cross_c4使用不同生成函数，与pt_cross_C4不同
@@ -252,7 +252,7 @@ public:
     return pt_pscross_C_diff[idx].data();
   }
   const unsigned char *getPsPairECPTPtr(int idx) const {
-    return pt_pspair_ce[idx].data();
+    return pt_pspair_CE[idx].data();
   }
 
   // === EOCross Getters (新名) ===
@@ -336,13 +336,6 @@ void create_pt_pair_base(int idx_e, int idx_c, int sz_e, int sz_c, int depth,
                          const std::vector<int> &t_corn,
                          std::vector<unsigned char> &pt);
 
-void create_pt_xcross_base(int idx_cr, int idx_cn, int idx_ex, int sz_cr,
-                           int sz_cn, int sz_ex, int depth,
-                           const std::vector<int> &t1,
-                           const std::vector<int> &t2,
-                           const std::vector<int> &t3,
-                           std::vector<unsigned char> &pt);
-
 void create_pt_xcross_full(int idx_cr, int idx_cn, int idx_ed, int sz_cr,
                            int sz_cn, int sz_ed, int depth,
                            const std::vector<int> &t1,
@@ -380,12 +373,6 @@ void create_pt_huge(int sz_e6, int sz_c2, int depth,
                     std::vector<unsigned char> &pt);
 
 // --- 级联剪枝表生成函数 (from eo_cross_analyzer) ---
-void create_cascaded_pt(int i1, int i2, int s1, int s2, int depth,
-                        const std::vector<int> &t1, const std::vector<int> &t2,
-                        std::vector<unsigned char> &pt);
-void create_cascaded_pt2(int i1, int i2, int s1, int s2, int depth,
-                         const std::vector<int> &t1, const std::vector<int> &t2,
-                         std::vector<unsigned char> &pt);
 void create_cascaded_pt3(int i1, int i2, int s1, int s2, int depth,
                          const std::vector<int> &t1, const std::vector<int> &t2,
                          std::vector<unsigned char> &pt);

@@ -242,7 +242,7 @@ bool PruneTableManager::loadPseudoPairTables() {
       int idx = e * 4 + c;
       std::string fn = "pt_pspair_C" + std::to_string(c + 4) + "_E" +
                        std::to_string(e) + ".bin";
-      if (!loadTable(pt_pspair_ce[idx], fn))
+      if (!loadTable(pt_pspair_CE[idx], fn))
         return false;
     }
   }
@@ -754,7 +754,7 @@ void PruneTableManager::genPTPsPairCE(int c, int e) {
   std::string fn =
       "pt_pspair_C" + std::to_string(c + 4) + "_E" + std::to_string(e) + ".bin";
   int idx = e * 4 + c;
-  if (loadTable(pt_pspair_ce[idx], fn))
+  if (loadTable(pt_pspair_CE[idx], fn))
     return;
   if (fileExists(fn))
     return;
@@ -1587,81 +1587,6 @@ void create_pt_pscross_edges3(int idx_cr, int idx_e3, int sz_cr, int sz_e3,
       set_prune(pt, i, tmp[i]);
 }
 
-// --- 辅助生成函数实现 (移植?pseudo_pair_analyzer.cpp) ---
-
-void create_pt_pscross_base(int idx_cr, int idx_cn, int idx_ed, int sz_cr,
-                            int sz_cn, int sz_ed, int depth,
-                            const std::vector<int> &t1,
-                            const std::vector<int> &t2,
-                            const std::vector<int> &t3,
-                            std::vector<unsigned char> &pt) {
-  long long total = (long long)sz_cr * sz_cn * sz_ed;
-  std::vector<unsigned char> tmp;
-  try {
-    tmp.resize(total, 255);
-  } catch (...) {
-    std::cerr << "Alloc fail\n";
-    exit(1);
-  }
-
-  int d_moves[] = {-1, 3, 4, 5};
-  int num_init = 4;
-
-  for (int m_idx = 0; m_idx < num_init; ++m_idx) {
-    long long cur_cr;
-    int cur_cn;
-    int cur_ed = idx_ed;
-    if (m_idx > 0) {
-      int move = d_moves[m_idx];
-      cur_cr = t1[idx_cr * 24 + move];
-      cur_cn = t2[idx_cn * 18 + move] * 18;
-    } else {
-      cur_cr = idx_cr * 24LL;
-      cur_cn = idx_cn * 18;
-    }
-    long long start_idx = (cur_cr + cur_cn / 18) * 24 + cur_ed;
-    if (start_idx < total)
-      tmp[start_idx] = 0;
-  }
-
-  DistributionPrinter dp(total);
-  for (int d = 0; d < depth; ++d) {
-    int nd = d + 1;
-    long long cnt = 0;
-#pragma omp parallel for reduction(+ : cnt)
-    for (long long i = 0; i < total; ++i) {
-      dp.progress(i, total, d);
-      if (tmp[i] == d) {
-        cnt++;
-        long long comb = i / sz_ed;
-        int cur_ed = i % sz_ed;
-        int cur_cr = (comb / sz_cn) * 24;
-        int cur_cn = (comb % sz_cn) * 18;
-        int idx3_base = cur_ed * 18;
-        for (int j = 0; j < 18; ++j) {
-          long long n_cr = t1[cur_cr + j];
-          int n_cn = t2[cur_cn + j];
-          long long ni = (n_cr + n_cn) * 24 + t3[idx3_base + j];
-          // NOTE: 使用 CAS 避免竞态条?
-          unsigned char expected = 255;
-          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
-        }
-      }
-    }
-    dp.clearProgress();
-    dp.print(nd, cnt);
-    if (cnt == 0)
-      break;
-  }
-  dp.done();
-  pt.resize((total + 1) / 2);
-  std::fill(pt.begin(), pt.end(), 0xFF);
-#pragma omp parallel for
-  for (long long i = 0; i < total; ++i)
-    if (tmp[i] != 255)
-      set_prune(pt, i, tmp[i]);
-}
-
 // 1. Cross + C4 (Base)
 void create_pt_cross_c4(int idx1, int idx2, int sz1, int sz2, int depth,
                         const std::vector<int> &t1, const std::vector<int> &t2,
@@ -1754,63 +1679,6 @@ void create_pt_pair_base(int idx_e, int idx_c, int sz_e, int sz_c, int depth,
       break;
   }
   dp.done();
-}
-
-// 3. XCross Base Generator
-void create_pt_xcross_base(int idx_cr, int idx_cn, int idx_ex, int sz_cr,
-                           int sz_cn, int sz_ex, int depth,
-                           const std::vector<int> &t1,
-                           const std::vector<int> &t2,
-                           const std::vector<int> &t3,
-                           std::vector<unsigned char> &pt) {
-  long long total = (long long)sz_cr * sz_cn * sz_ex;
-  std::vector<unsigned char> tmp;
-  try {
-    tmp.resize(total, 255);
-  } catch (...) {
-    std::cerr << "Alloc fail XCross\n";
-    exit(1);
-  }
-  long long cur_cr = (long long)idx_cr * 24;
-  long long start_idx = (cur_cr + idx_cn) * 24 + idx_ex;
-  if (start_idx < total)
-    tmp[start_idx] = 0;
-
-  DistributionPrinter dp(total);
-  for (int d = 0; d < depth; ++d) {
-    int nd = d + 1;
-    long long cnt = 0;
-#pragma omp parallel for reduction(+ : cnt)
-    for (long long i = 0; i < total; ++i) {
-      dp.progress(i, total, d);
-      if (tmp[i] == d) {
-        cnt++;
-        long long comb = i / sz_ex;
-        int cur_ex = i % sz_ex;
-        int cur_cr = (comb / sz_cn) * 24;
-        int cur_cn = (comb % sz_cn) * 18;
-        int idx3_base = cur_ex * 18;
-        for (int j = 0; j < 18; ++j) {
-          long long n_cr = t1[cur_cr + j];
-          int n_cn = t2[cur_cn + j];
-          long long ni = (n_cr + n_cn) * 24 + t3[idx3_base + j];
-          // NOTE: 使用 CAS 避免竞态条?
-          unsigned char expected = 255;
-          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
-        }
-      }
-    }
-    dp.clearProgress();
-    dp.print(d, cnt);
-    if (cnt == 0)
-      break;
-  }
-  dp.done();
-  pt.assign((total + 1) / 2, 0xFF);
-#pragma omp parallel for
-  for (long long i = 0; i < total; ++i)
-    if (tmp[i] != 255)
-      set_prune(pt, i, tmp[i]);
 }
 
 void create_pt_xcross_full(int idx_cr, int idx_cn, int idx_ed, int sz_cr,
@@ -2008,81 +1876,7 @@ void create_pt_pscross_edges2(int idx_cr, int idx_e2, int sz_cr, int sz_e2,
       set_prune(pt, i, tmp[i]);
 }
 
-// --- 级联剪枝表生成函数实?(from eo_cross_analyzer) ---
-
-void create_cascaded_pt(int i1, int i2, int s1, int s2, int depth,
-                        const std::vector<int> &t1, const std::vector<int> &t2,
-                        std::vector<unsigned char> &pt) {
-  long long sz = (long long)s1 * s2;
-  std::vector<unsigned char> tmp(sz, 255);
-  tmp[(long long)i1 * s2 + i2] = 0;
-
-  DistributionPrinter dp(sz);
-  for (int d = 0; d < depth; ++d) {
-    int nd = d + 1;
-    long long cnt = 0;
-#pragma omp parallel for reduction(+ : cnt)
-    for (long long i = 0; i < sz; ++i) {
-      dp.progress(i, sz, d);
-      if (tmp[i] == d) {
-        cnt++;
-        int t1b = (i / s2) * 18, t2b = (i % s2) * 18;
-        for (int j = 0; j < 18; ++j) {
-          long long ni = (long long)t1[t1b + j] * s2 + t2[t2b + j];
-          // NOTE: 使用 CAS 避免竞态条?
-          unsigned char expected = 255;
-          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
-        }
-      }
-    }
-    dp.clearProgress();
-    dp.print(d, cnt);
-    if (cnt == 0)
-      break;
-  }
-  dp.done();
-  pt.assign((sz + 1) / 2, 0xFF);
-  for (long long i = 0; i < sz; ++i)
-    if (tmp[i] != 255)
-      set_prune(pt, i, tmp[i]);
-}
-
-void create_cascaded_pt2(int i1, int i2, int s1, int s2, int depth,
-                         const std::vector<int> &t1, const std::vector<int> &t2,
-                         std::vector<unsigned char> &pt) {
-  long long sz = (long long)s1 * s2;
-  std::vector<unsigned char> tmp(sz, 255);
-  tmp[(long long)i1 * s2 + i2] = 0;
-
-  DistributionPrinter dp(sz);
-  for (int d = 0; d < depth; ++d) {
-    int nd = d + 1;
-    long long cnt = 0;
-#pragma omp parallel for reduction(+ : cnt)
-    for (long long i = 0; i < sz; ++i) {
-      dp.progress(i, sz, d);
-      if (tmp[i] == d) {
-        cnt++;
-        int tb1 = (i / s2) * 24, tb2 = (i % s2) * 18;
-        for (int j = 0; j < 18; ++j) {
-          long long ni = (long long)t1[tb1 + j] + t2[tb2 + j];
-          // NOTE: 使用 CAS 避免竞态条?
-          unsigned char expected = 255;
-          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
-        }
-      }
-    }
-    dp.clearProgress();
-    dp.print(d, cnt);
-    if (cnt == 0)
-      break;
-  }
-  dp.done();
-  pt.assign((sz + 1) / 2, 0xFF);
-  for (long long i = 0; i < sz; ++i)
-    if (tmp[i] != 255)
-      set_prune(pt, i, tmp[i]);
-}
+// --- 级联剪枝表生成函数实现 (from eo_cross_analyzer) ---
 
 void create_cascaded_pt3(int i1, int i2, int s1, int s2, int depth,
                          const std::vector<int> &t1, const std::vector<int> &t2,

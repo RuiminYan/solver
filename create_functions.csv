@@ -1,0 +1,27 @@
+函数名,所在文件,状态空间,维度公式,初始状态数,BFS最大深度,移动表1(步长),移动表2(步长),移动表3(步长),移动表4(步长),调用者(gen函数),说明
+
+--- 标准剪枝表引擎 ---,,,,,,,,,,
+create_pt_cross_c4,prune_tables.cpp,Cross×Corner,sz1×sz2,20,10,Edge4MT(24),CornMT(18),-,-,genPTCrossC4,Cross+1Corner(初始化含U系列插入操作)
+create_pt_pair_base,prune_tables.cpp,Edge×Corner,sz_e×sz_c,20,8,EdgeMT(18),CornMT(18),-,-,genPTPairC4E0,Pair(初始化含U系列插入操作)
+create_pt_xcross_full,prune_tables.cpp,Cross×Corner×Edge,sz_cr×sz_cn×sz_ed,1或4,11,Edge4MT(24),CornMT(18),EdgeMT(18),-,genPTCrossC4E0 genPTPsCrossC4E,XCross核心引擎(is_pseudo区分标准/伪模式)
+create_pt_huge,prune_tables.cpp,Edge6×Corner2,sz_e6×sz_c2,1,15,Edge6MT(18),Corn2MT(18),-,-,genPTCrossC4C5E0E1 genPTCrossC4C6E0E2,超大表(~20GB RAM)
+create_pt_xcross_plus,prune_tables.cpp,Cross×Corner×Edge×Extra,sz_cr×sz_cn×sz_ed×sz_ex,1,14,Edge4MT(24),CornMT(18),EdgeMT(18),EdgeMT或CornMT(18),genPTCrossCEE(×3) genPTCrossCCE(×3),4维XCross扩展(Plus Edge/Plus Corner)
+create_pt_xcross_corn3,prune_tables.cpp,Cross×C4×C5×C6,sz_cr×sz_cn×sz_c5×sz_c6,1,14,Edge4MT(24),CornMT(18),CornMT(18),CornMT(18),genPTCrossC4C5C6,4维3-Corner表
+
+--- 级联剪枝表引擎 ---,,,,,,,,,,
+create_cascaded_pt3,prune_tables.cpp,Dim1×Dim2,s1×s2,1,11,EP4MT(18),EOAltMT(18),-,-,genPTEP4EO12,级联BFS(步长18+18)
+
+--- Pseudo Cross/XCross 引擎 ---,,,,,,,,,,
+create_pt_pscross_corner,prune_tables.cpp,Cross×Corner,190080×24,4,10,Edge4MT(24),CornMT(18),-,-,genPTPsCrossC(×4),Pseudo Cross+1Corner(4个D偏移初始化)
+create_pt_pscross_xcross,prune_tables.cpp,Cross×Corner,190080×24,4×4=16,10,Edge4MT(24),CornMT(18),-,-,genPTPsCrossCDiff(×16),Pseudo XCross(含U插入+D偏移+边块展开)
+create_pt_pspair,prune_tables.cpp,Edge×Corner,size1×size2,4×4=16,8,EdgeMT(18),CornMT(18),-,-,genPTPsPairCE(×16),Pseudo Pair(含U插入+D偏移+边块展开)
+
+--- Pseudo Aux 表引擎 ---,,,,,,,,,,
+create_pt_pscross_edges2,prune_tables.cpp,Cross×Edge2,190080×528,4,11,Edge4MT(24),Edge2MT(18),-,-,genPTPsCrossE0E1等(×6),Pseudo Cross+2Edge(4个D偏移)
+create_pt_pscross_edges3,prune_tables.cpp,Cross×Edge3,190080×10560,4,12,Edge4MT(24),Edge3MT(18),-,-,genPTPsCrossE0E1E2等(×4),Pseudo Cross+3Edge(4个D偏移)
+create_pt_pscross_corners2,prune_tables.cpp,Cross×Corner2,190080×504,4,11,Edge4MT(24),Corn2MT(18),-,-,genPTPsCrossC4C5等(×6),Pseudo Cross+2Corner(4个D偏移)
+create_pt_pscross_corners3,prune_tables.cpp,Cross×Corner3,190080×9072,4,13,Edge4MT(24),Corn3MT(18),-,-,genPTPsCrossC4C5C6等(×4),Pseudo Cross+3Corner(4个D偏移)
+
+--- 移动表引擎 ---,,,,,,,,,,
+create_multi_move_table,cube_common.cpp,-,-,-,-,basic_t,-,-,-,mt_edge2/3/6 mt_corn2/3 mt_ep4,标准多块移动表(步长18 逆操作优化)
+create_multi_move_table2,cube_common.cpp,-,-,-,-,basic_t,-,-,-,mt_edge4,预乘偏移移动表(步长24 空间换时间)
