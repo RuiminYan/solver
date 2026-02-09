@@ -10,44 +10,44 @@
 
 // NOTE: COUNT_NODE 宏已移至 analyzer_executor.h
 
-// --- 剪枝统计 (通过 prune_stats.h 统一开关控�? ---
+// --- 剪枝统计 (通过 prune_stats.h 统一开关控制) ---
 #include "prune_stats.h"
 
 // Search 1: dep_eo + xcross
-STAT_DECL(s1_dep_eo); // S1: Dependency+EO 剪枝�?
-STAT_DECL(s1_xcross); // S1: XCross 剪枝�?
+STAT_DECL(s1_dep_eo); // S1: Dependency+EO 剪枝表
+STAT_DECL(s1_xcross); // S1: XCross 剪枝表
 
 // Search 2: huge + dep_eo + xcross
-STAT_DECL(s2_huge);    // S2: Huge �?
-STAT_DECL(s2_dep_eo);  // S2: Dependency+EO 剪枝�?
-STAT_DECL(s2_xcross1); // S2: XCross 1 剪枝�?
-STAT_DECL(s2_xcross2); // S2: XCross 2 剪枝�?
+STAT_DECL(s2_huge);    // S2: Huge 表
+STAT_DECL(s2_dep_eo);  // S2: Dependency+EO 剪枝表
+STAT_DECL(s2_xcross1); // S2: XCross 1 剪枝表
+STAT_DECL(s2_xcross2); // S2: XCross 2 剪枝表
 
 // Search 3: huge×2 + dep_eo + xcross×3
-STAT_DECL(s3_huge1);   // S3: Huge �?1
-STAT_DECL(s3_huge2);   // S3: Huge �?2
-STAT_DECL(s3_dep_eo);  // S3: Dependency+EO 剪枝�?
-STAT_DECL(s3_xcross1); // S3: XCross 1 剪枝�?
-STAT_DECL(s3_xcross2); // S3: XCross 2 剪枝�?
-STAT_DECL(s3_xcross3); // S3: XCross 3 剪枝�?
+STAT_DECL(s3_huge1);   // S3: Huge 表1
+STAT_DECL(s3_huge2);   // S3: Huge 表2
+STAT_DECL(s3_dep_eo);  // S3: Dependency+EO 剪枝表
+STAT_DECL(s3_xcross1); // S3: XCross 1 剪枝表
+STAT_DECL(s3_xcross2); // S3: XCross 2 剪枝表
+STAT_DECL(s3_xcross3); // S3: XCross 3 剪枝表
 
 // Search 4: huge×3 + dep_eo + xcross×4
-STAT_DECL(s4_huge1);   // S4: Huge �?1
-STAT_DECL(s4_huge2);   // S4: Huge �?2
-STAT_DECL(s4_huge3);   // S4: Huge �?3
-STAT_DECL(s4_dep_eo);  // S4: Dependency+EO 剪枝�?
-STAT_DECL(s4_xcross1); // S4: XCross 1 剪枝�?
-STAT_DECL(s4_xcross2); // S4: XCross 2 剪枝�?
-STAT_DECL(s4_xcross3); // S4: XCross 3 剪枝�?
-STAT_DECL(s4_xcross4); // S4: XCross 4 剪枝�?
+STAT_DECL(s4_huge1);   // S4: Huge 表1
+STAT_DECL(s4_huge2);   // S4: Huge 表2
+STAT_DECL(s4_huge3);   // S4: Huge 表3
+STAT_DECL(s4_dep_eo);  // S4: Dependency+EO 剪枝表
+STAT_DECL(s4_xcross1); // S4: XCross 1 剪枝表
+STAT_DECL(s4_xcross2); // S4: XCross 2 剪枝表
+STAT_DECL(s4_xcross3); // S4: XCross 3 剪枝表
+STAT_DECL(s4_xcross4); // S4: XCross 4 剪枝表
 
 // --- Cross Analyzer (EO Cross) ---
 struct cross_analyzer {
-  // 静态成员：所有实例共�?
+  // 静态成员：所有实例共享
   static inline bool s_initialized = false;
   static inline const int *s_p_mt_edge2 = nullptr;
   static inline const int *s_p_mt_eo12 =
-      nullptr; // EO移动表指�?迁移到MoveTableManager)
+      nullptr; // EO移动表指针迁移到MoveTableManager)
   static inline const unsigned char *s_p_pt_cross = nullptr;
 
   // 实例成员（指向静态数据）
@@ -61,7 +61,7 @@ struct cross_analyzer {
     auto &pm = PruneTableManager::getInstance();
     mm.loadMTEdge();
     mm.loadMTEdge2();
-    mm.loadMTEO(); // 使用 MoveTableManager 加载 EO �?
+    mm.loadMTEO(); // 使用 MoveTableManager 加载 EO 表
     pm.genPTCross();
     s_p_mt_edge2 = mm.getEdge2MTPtr();
     s_p_mt_eo12 = mm.getEOMTPtr();
@@ -70,7 +70,7 @@ struct cross_analyzer {
   }
 
   cross_analyzer() {
-    // 仅复制指针引�?
+    // 仅复制指针引用
     p_mt_edge2 = s_p_mt_edge2;
     p_mt_eo12 = s_p_mt_eo12;
     p_pt_cross = s_p_pt_cross;
@@ -98,14 +98,14 @@ struct cross_analyzer {
       COUNT_NODE
       int m = moves[k];
 
-      // 级联: �?Cross 查表
+      // 级联: 先Cross 查表
       int n1 = p_mt_edge2[i1 + m], n2 = p_mt_edge2[i2 + m];
       long long idx = (long long)n1 * 528 + n2;
       int pr = get_prune_ptr(p_pt_cross, idx);
       if (pr >= depth)
         continue;
 
-      // �?EO 计算
+      // 再 EO 计算
       int neo = p_mt_eo12[i_eo + m];
 
       if (depth == 1) {
@@ -154,19 +154,19 @@ struct cross_analyzer {
 
 // --- XCross Analyzer (Optimized with Symmetry + Single Base Tables) ---
 struct xcross_analyzer {
-  // 静态成员：所有实例共�?
+  // 静态成员：所有实例共享
   static inline bool s_initialized = false;
   // NOTE: 移动表和剪枝表已迁移到Manager，此处仅保留指针
-  static inline const int *s_p_mt_ep4 = nullptr;  // EP4 移动表指�?
-  static inline const int *s_p_mt_eo12_alt = nullptr; // EO Alt 移动表指�?
+  static inline const int *s_p_mt_ep4 = nullptr;  // EP4 移动表指针
+  static inline const int *s_p_mt_eo12_alt = nullptr; // EO Alt 移动表指针
 
   static inline const int *s_p_mt_edge4 = nullptr;
   static inline const int *s_p_mt_corn = nullptr;
   static inline const int *s_p_mt_edge = nullptr;
   static inline const int *s_p_mt_edge6 =
-      nullptr; // Edge6 Move Table (用于 Huge �?
+      nullptr; // Edge6 Move Table (用于 Huge 表
   static inline const int *s_p_mt_corn2 =
-      nullptr; // Corner2 Move Table (用于 Huge �?
+      nullptr; // Corner2 Move Table (用于 Huge 表
   static inline const unsigned char *s_p_pt_cross_C4 = nullptr;
   static inline const unsigned char *s_p_pt_ep4eo12 = nullptr;
   static inline const unsigned char *s_p_pt_cross_C4E0 = nullptr;
@@ -174,9 +174,9 @@ struct xcross_analyzer {
   static inline std::vector<const unsigned char *> s_p_pt_cross_CCE;
   static inline const unsigned char *s_p_pt_cross_C4C5C6 = nullptr;
   static inline const unsigned char *s_p_pt_cross_C4C5E0E1 =
-      nullptr; // Huge Neighbor �?
+      nullptr; // Huge Neighbor 表
   static inline const unsigned char *s_p_pt_cross_C4C6E0E2 =
-      nullptr; // Huge Diagonal �?
+      nullptr; // Huge Diagonal 表
 
   // 实例成员（指向静态数据）
   const int *p_mt_edge4, *p_mt_corn, *p_mt_edge, *p_mt_ep4, *p_mt_eo12_alt;
@@ -187,8 +187,8 @@ struct xcross_analyzer {
   std::vector<const unsigned char *> p_pt_cross_CEE;
   std::vector<const unsigned char *> p_pt_cross_CCE;
   const unsigned char *p_pt_cross_C4C5C6 = nullptr;
-  const unsigned char *p_pt_cross_C4C5E0E1 = nullptr; // Huge Neighbor �?
-  const unsigned char *p_pt_cross_C4C6E0E2 = nullptr; // Huge Diagonal �?
+  const unsigned char *p_pt_cross_C4C5E0E1 = nullptr; // Huge Neighbor 表
+  const unsigned char *p_pt_cross_C4C6E0E2 = nullptr; // Huge Diagonal 表
 
   const int SOLVED_MULTI = 187520 * 24;
   const int SOLVED_CORNER = 12;
@@ -202,13 +202,13 @@ struct xcross_analyzer {
     mm.loadMTEdge();
     mm.loadMTCorn();
     mm.loadMTEdge4();
-    mm.loadMTEdge6(); // 用于 Huge 表状态追�?
-    mm.loadMTCorn2(); // 用于 Huge 表状态追�?
+    mm.loadMTEdge6(); // 用于 Huge 表状态追踪
+    mm.loadMTCorn2(); // 用于 Huge 表状态追踪
 
-    // 加载 EOCross 专用移动�?
+    // 加载 EOCross 专用移动表
     mm.loadMTEOCross();
 
-    // 设置移动表指�?
+    // 设置移动表指针
     s_p_mt_edge4 = mm.getEdge4MTPtr();
     s_p_mt_corn = mm.getCornMTPtr();
     s_p_mt_edge = mm.getEdgeMTPtr();
@@ -220,11 +220,11 @@ struct xcross_analyzer {
     // === 剪枝表：使用 PruneTableManager ===
     auto &ptm = PruneTableManager::getInstance();
 
-    // 先加载复用的xcross_c4_e0表（与std_analyzer/pair_analyzer共享�?
+    // 先加载复用的xcross_c4_e0表（与std_analyzer/pair_analyzer共享)
     ptm.genPTCrossC4E0();
 
-    // 生成/加载 EOCross 专用剪枝�?
-    ptm.genPTCrossC4(); // Cross+C4 (EOCross �?
+    // 生成/加载 EOCross 专用剪枝表
+    ptm.genPTCrossC4(); // Cross+C4 (EOCross 表)
     ptm.genPTEP4EO12(); // Dependency+EO
     // Plus Edge (参数化) // Plus Edge Right
     for (int i = 0; i < 3; ++i)
@@ -235,10 +235,10 @@ struct xcross_analyzer {
 
     ptm.genPTCrossC4C5C6(); // 3-Corner
 
-    // 获取剪枝表指�?
+    // 获取剪枝表指针
     s_p_pt_cross_C4 = ptm.getEOCC4PTPtr();
     s_p_pt_ep4eo12 = ptm.getEP4EO12PTPtr();
-    s_p_pt_cross_C4E0 = ptm.getCrossC4E0PTPtr(); // 复用已有�?
+    s_p_pt_cross_C4E0 = ptm.getCrossC4E0PTPtr(); // 复用已有表
 
     s_p_pt_cross_CEE.resize(3);
     s_p_pt_cross_CCE.resize(3);
@@ -260,7 +260,7 @@ struct xcross_analyzer {
   }
 
   xcross_analyzer() {
-    // 仅复制指针引�?
+    // 仅复制指针引用
     p_mt_edge4 = s_p_mt_edge4;
     p_mt_corn = s_p_mt_corn;
     p_mt_edge = s_p_mt_edge;
@@ -274,8 +274,8 @@ struct xcross_analyzer {
     p_pt_cross_CEE = s_p_pt_cross_CEE;
     p_pt_cross_CCE = s_p_pt_cross_CCE;
     p_pt_cross_C4C5C6 = s_p_pt_cross_C4C5C6;
-    p_pt_cross_C4C5E0E1 = s_p_pt_cross_C4C5E0E1; // Huge Neighbor �?
-    p_pt_cross_C4C6E0E2 = s_p_pt_cross_C4C6E0E2; // Huge Diagonal �?
+    p_pt_cross_C4C5E0E1 = s_p_pt_cross_C4C5E0E1; // Huge Neighbor 表
+    p_pt_cross_C4C6E0E2 = s_p_pt_cross_C4C6E0E2; // Huge Diagonal 表
   }
 
   inline int get_plus_table_idx(int s_base, int s_target) {
@@ -290,31 +290,31 @@ struct xcross_analyzer {
   }
 
   // 判断两个 slot 是否为相邻关系，返回用于 Huge Neighbor 表的 Conj View
-  // 返回�? 应作�?conj 基准�?slot�?1 表示非相�?
+  // 返回值: 应作为conj 基准的slot; 1 表示非相邻
   inline int get_neighbor_view(int s1, int s2) {
     if ((s2 - s1 + 4) % 4 == 1)
-      return s1; // s2 �?s1 的右�?�?View=s1
+      return s1; // s2 是 s1 的右邻, View=s1
     if ((s1 - s2 + 4) % 4 == 1)
-      return s2; // s1 �?s2 的右�?�?View=s2
-    return -1;   // 非相�?
+      return s2; // s1 是 s2 的右邻, View=s2
+    return -1;   // 非相邻
   }
 
   // 判断两个 slot 是否为对角关系，返回用于 Huge Diagonal 表的 Conj View
-  // 返回�? 应作�?conj 基准�?slot�?1 表示非对�?
+  // 返回值: 应作为conj 基准的slot; 1 表示非对角
   inline int get_diagonal_view(int s1, int s2) {
     int mn = std::min(s1, s2), mx = std::max(s1, s2);
     if (mn == 0 && mx == 2)
-      return 0; // (0,2) 对角 �?View=0
+      return 0; // (0,2) 对角线;View=0
     if (mn == 1 && mx == 3)
-      return 1; // (1,3) 对角 �?View=1
-    return -1;  // 非对�?
+      return 1; // (1,3) 对角线;View=1
+    return -1;  // 非对角
   }
 
   void get_indices_conj_full(const std::vector<int> &alg, int sym_idx,
                              int slot_idx, int &i1, int &i2, int &i3,
                              int &i_dep, int &i_eo, int *track_e, int *track_c,
-                             int &i_e6_nb, int &i_c2_nb, // Huge Neighbor 状�?
-                             int &i_e6_dg, int &i_c2_dg) { // Huge Diagonal 状�?
+                             int &i_e6_nb, int &i_c2_nb, // Huge Neighbor 状态
+                             int &i_e6_dg, int &i_c2_dg) { // Huge Diagonal 状态
     i1 = SOLVED_MULTI;
     i2 = SOLVED_CORNER;
     i3 = SOLVED_EDGE;
@@ -328,7 +328,7 @@ struct xcross_analyzer {
     track_c[1] = 18;
     track_c[2] = 21;
 
-    // 初始�?Huge 表索�?(参�?std_analyzer.cpp)
+    // 初始化Huge 表索引(参考std_analyzer.cpp)
     static int solved_e6_nb = -1, solved_c2_nb = -1;
     static int solved_e6_dg = -1, solved_c2_dg = -1;
     if (solved_e6_nb == -1) {
@@ -356,7 +356,7 @@ struct xcross_analyzer {
         track_c[k] = p_mt_corn[track_c[k] * 18 + m_slot];
       }
 
-      // 追踪 Huge 表状�?
+      // 追踪 Huge 表状态
       cur_e6_nb = p_mt_edge6[cur_e6_nb * 18 + m_slot];
       cur_c2_nb = p_mt_corn2[cur_c2_nb * 18 + m_slot];
       cur_e6_dg = p_mt_edge6[cur_e6_dg * 18 + m_slot];
@@ -415,7 +415,7 @@ struct xcross_analyzer {
                 int i_eo, int depth, int prev, int s1, int s2, int bound,
                 int tab, int tba, int ea_rel, int ca_rel, int eb_rel,
                 int cb_rel,
-                // Huge 表参�?
+                // Huge 表参考
                 int v_huge, const unsigned char *p_huge_active, int i_e6,
                 int i_c2) {
     if (depth > bound)
@@ -428,7 +428,7 @@ struct xcross_analyzer {
       COUNT_NODE
       int m = moves[k];
 
-      // 级联 Check 0: Huge �?(最前置，剪枝力最�?
+      // 级联 Check 0: Huge 表(最前置，剪枝力最强)
       int n_ie6 = -1, n_ic2 = -1;
       if (v_huge != -1 && p_huge_active) {
         int mv = conj_moves_flat[m][v_huge];
@@ -493,7 +493,7 @@ struct xcross_analyzer {
                 int t_cb, int t_ac, int t_ca, int ea_b, int ca_b, int ea_c,
                 int ca_c, int eb_a, int cb_a, int eb_c, int cb_c, int ec_a,
                 int cc_a, int ec_b, int cc_b,
-                // Huge 表参�?(仅追踪第一�?s1-s2)
+                // Huge 表参考(仅追踪第一对s1-s2)
                 int v_huge, const unsigned char *p_huge_active, int i_e6,
                 int i_c2) {
     if (depth > bound)
@@ -510,7 +510,7 @@ struct xcross_analyzer {
       COUNT_NODE
       int m = moves[k];
 
-      // 级联 Check 0: Huge �?(最前置)
+      // 级联 Check 0: Huge 表(最前置)
       int n_ie6 = -1, n_ic2 = -1;
       if (v_huge != -1 && p_huge_active) {
         int mv = conj_moves_flat[m][v_huge];
@@ -624,24 +624,24 @@ struct xcross_analyzer {
     return false;
   }
 
-  // --- Search 4: XXXXCross+EO (优化版，�?search_3 剪枝策略一�? ---
-  // 4 个视角，每个视角检查对其他 3 个槽位的 Plus �?+ 3-Corner �?
+  // --- Search 4: XXXXCross+EO (优化版，与search_3 剪枝策略一致) ---
+  // 4 个视角，每个视角检查对其他 3 个槽位的 Plus 表+ 3-Corner 表
   bool search_4(
-      // 4 个视角的状�?
+      // 4 个视角的状态
       int i1_a, int i2_a, int i3_a, int i1_b, int i2_b, int i3_b, int i1_c,
       int i2_c, int i3_c, int i1_d, int i2_d, int i3_d,
       // 全局约束
       int i_dep, int i_eo, int depth, int prev, int bound,
       // 追踪状态：每视角对其他 3 个槽位的 Edge/Corner
-      // View A (s0): �?s1,s2,s3
+      // View A (s0): 看s1,s2,s3
       int ea_1, int ca_1, int ea_2, int ca_2, int ea_3, int ca_3,
-      // View B (s1): �?s0,s2,s3
+      // View B (s1): 看s0,s2,s3
       int eb_0, int cb_0, int eb_2, int cb_2, int eb_3, int cb_3,
-      // View C (s2): �?s0,s1,s3
+      // View C (s2): 看s0,s1,s3
       int ec_0, int cc_0, int ec_1, int cc_1, int ec_3, int cc_3,
-      // View D (s3): �?s0,s1,s2
+      // View D (s3): 看s0,s1,s2
       int ed_0, int cd_0, int ed_1, int cd_1, int ed_2, int cd_2,
-      // Huge 表参�?
+      // Huge 表参考
       int v_huge, const unsigned char *p_huge_active, int i_e6, int i_c2) {
     if (depth > bound)
       return false;
@@ -653,7 +653,7 @@ struct xcross_analyzer {
       COUNT_NODE
       int m = moves[k];
 
-      // --- Check 0: Huge �?(最前置) ---
+      // --- Check 0: Huge 表(最前置) ---
       int n_ie6 = -1, n_ic2 = -1;
       if (v_huge != -1 && p_huge_active) {
         int mv = conj_moves_flat[m][v_huge];
@@ -669,7 +669,7 @@ struct xcross_analyzer {
       if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * 2048 + neo) >= depth)
         continue;
 
-      // --- View A (s0): �?s1(Right), s2(Diag), s3(Left) ---
+      // --- View A (s0): 看s1(Right), s2(Diag), s3(Left) ---
       int m0 = conj_moves_flat[m][0];
       int n1a = p_mt_edge4[i1_a + m0], n2a = p_mt_corn[i2_a + m0],
           n3a = p_mt_edge[i3_a + m0];
@@ -698,12 +698,12 @@ struct xcross_analyzer {
       if (get_prune_ptr(p_pt_cross_CCE[2], idx_a * 24 + n_ca_3) >= depth)
         continue;
 
-      // 3-Corner: s1(Right) + s2(Diag) �?始终满足
+      // 3-Corner: s1(Right) + s2(Diag) -- 始终满足
       long long idx_3c_a = ((long long)(n1a + n2a) * 24 + n_ca_1) * 24 + n_ca_2;
       if (get_prune_ptr(p_pt_cross_C4C5C6, idx_3c_a) >= depth)
         continue;
 
-      // --- View B (s1): �?s0(Left), s2(Right), s3(Diag) ---
+      // --- View B (s1): 看s0(Left), s2(Right), s3(Diag) ---
       int m1 = conj_moves_flat[m][1];
       int n1b = p_mt_edge4[i1_b + m1], n2b = p_mt_corn[i2_b + m1],
           n3b = p_mt_edge[i3_b + m1];
@@ -737,7 +737,7 @@ struct xcross_analyzer {
       if (get_prune_ptr(p_pt_cross_C4C5C6, idx_3c_b) >= depth)
         continue;
 
-      // --- View C (s2): �?s0(Diag), s1(Left), s3(Right) ---
+      // --- View C (s2): 看s0(Diag), s1(Left), s3(Right) ---
       int m2 = conj_moves_flat[m][2];
       int n1c = p_mt_edge4[i1_c + m2], n2c = p_mt_corn[i2_c + m2],
           n3c = p_mt_edge[i3_c + m2];
@@ -771,7 +771,7 @@ struct xcross_analyzer {
       if (get_prune_ptr(p_pt_cross_C4C5C6, idx_3c_c) >= depth)
         continue;
 
-      // --- View D (s3): �?s0(Right), s1(Diag), s2(Left) ---
+      // --- View D (s3): 看s0(Right), s1(Diag), s2(Left) ---
       int m3 = conj_moves_flat[m][3];
       int n1d = p_mt_edge4[i1_d + m3], n2d = p_mt_corn[i2_d + m3],
           n3d = p_mt_edge[i3_d + m3];
@@ -829,8 +829,8 @@ struct xcross_analyzer {
       struct SlotState {
         int i1, i2, i3, idep, ieo;
         int e_trk[3], c_trk[3];
-        int i_e6_nb, i_c2_nb; // Huge Neighbor 状�?
-        int i_e6_dg, i_c2_dg; // Huge Diagonal 状�?
+        int i_e6_nb, i_c2_nb; // Huge Neighbor 状态
+        int i_e6_dg, i_c2_dg; // Huge Diagonal 状态
       };
       std::vector<SlotState> st(4);
       for (int s = 0; s < 4; ++s) {
@@ -918,11 +918,11 @@ struct xcross_analyzer {
             int t_ba = get_plus_table_idx(s2, s1);
 
             for (int d = t.first; d <= std::min(20, best_xx - 1); ++d) {
-              // 确定 Huge 表视角和初始状�?
+              // 确定 Huge 表视角和初始状态
               int v_nb = get_neighbor_view(s1, s2);
               int v_dg = get_diagonal_view(s1, s2);
 
-              // 选择使用 Neighbor �?Diagonal �?
+              // 选择使用 Neighbor 或 Diagonal 表
               int v_huge = (v_nb != -1) ? v_nb : v_dg;
               const unsigned char *p_huge = nullptr;
               int init_e6 = -1, init_c2 = -1;
@@ -1059,7 +1059,7 @@ struct xcross_analyzer {
                 t_ca = get_plus_table_idx(s3, s1);
 
             for (int d = t.first; d <= std::min(20, best_xxx - 1); ++d) {
-              // 确定 Huge 表视角和初始状�?(选择第一�?s1-s2)
+              // 确定 Huge 表视角和初始状态(选择第一对s1-s2)
               int v_nb = get_neighbor_view(s1, s2);
               int v_dg = get_diagonal_view(s1, s2);
 
@@ -1099,31 +1099,31 @@ struct xcross_analyzer {
 
 #if ENABLE_EO_SEARCH_4
         // --- 4. XXXXCross+EO ---
-        // 只有 1 种组�?{0, 1, 2, 3}
+        // 只有 1 种组合{0, 1, 2, 3}
         {
-          // 获取初始下界：检查所�?4 个视角的 Base �?+ Plus �?+ 3-Corner �?
+          // 获取初始下界：检查所有4 个视角的 Base 表+ Plus 表+ 3-Corner 表
           int h_de = get_prune_ptr(p_pt_ep4eo12,
                                    (long long)st[0].idep * 2048 + st[0].ieo);
           int h_max = h_de;
           for (int s = 0; s < 4; ++s) {
             long long idx = (long long)(st[s].i1 + st[s].i2) * 24 + st[s].i3;
             h_max = std::max(h_max, get_prune_ptr(p_pt_cross_C4E0, idx));
-            // Plus Edge/Corner 检�?
+            // Plus Edge/Corner 检查
             for (int t = 0; t < 3; ++t) {
               h_max = std::max(h_max, get_prune_ptr(p_pt_cross_CEE[t],
                                                     idx * 24 + st[s].e_trk[t]));
               h_max = std::max(h_max, get_prune_ptr(p_pt_cross_CCE[t],
                                                     idx * 24 + st[s].c_trk[t]));
             }
-            // 3-Corner 检�?(Right + Diag)
+            // 3-Corner 检查(Right + Diag)
             long long idx_3c =
                 ((long long)(st[s].i1 + st[s].i2) * 24 + st[s].c_trk[0]) * 24 +
                 st[s].c_trk[1];
             h_max = std::max(h_max, get_prune_ptr(p_pt_cross_C4C5C6, idx_3c));
           }
 
-          // 确定 Huge 表视�?(使用 s0-s1 相邻�?
-          int v_nb = get_neighbor_view(0, 1); // 始终�?0
+          // 确定 Huge 表视角(使用 s0-s1 相邻对)
+          int v_nb = get_neighbor_view(0, 1); // 始终是0
           int v_huge = v_nb;
           const unsigned char *p_huge = nullptr;
           int init_e6 = -1, init_c2 = -1;
@@ -1139,7 +1139,7 @@ struct xcross_analyzer {
           } else {
             for (int d = h_max; d <= std::min(20, best_xxxx - 1); ++d) {
               // 初始追踪状态：每视角对其他 3 个槽位的 Edge/Corner
-              // View A (s0): �?s1(e_trk[0],c_trk[0]), s2(e_trk[1],c_trk[1]),
+              // View A (s0): 看s1(e_trk[0],c_trk[0]), s2(e_trk[1],c_trk[1]),
               // s3(e_trk[2],c_trk[2]) View B (s1): s0→Left(2), s2→Right(0),
               // s3→Diag(1) View C (s2): s0→Diag(1), s1→Left(2), s3→Right(0)
               // View D (s3): s0→Right(0), s1→Diag(1), s2→Left(2)
@@ -1160,7 +1160,7 @@ struct xcross_analyzer {
                            // View D: s0(Right:0), s1(Diag:1), s2(Left:2)
                            st[3].e_trk[0], st[3].c_trk[0], st[3].e_trk[1],
                            st[3].c_trk[1], st[3].e_trk[2], st[3].c_trk[2],
-                           // Huge �?
+                           // Huge 表
                            v_huge, p_huge, init_e6, init_c2)) {
                 best_xxxx = d;
                 break;

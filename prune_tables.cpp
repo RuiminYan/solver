@@ -1,5 +1,5 @@
 /*
- * prune_tables.cpp - 剪枝表实�?
+ * prune_tables.cpp - 剪枝表实现
  */
 
 #include "prune_tables.h"
@@ -13,10 +13,10 @@
 
 PruneTableManager *PruneTableManager::instance = nullptr;
 
-// 深度分布打印�?- 用于打印带百分比的深度分布表�?
+// 深度分布打印器- 用于打印带百分比的深度分布表格
 // NOTE: 使用 ANSI 转义码在 done() 时覆盖输出，修正百分比为 Count/Total
 struct DistributionPrinter {
-  long long total_size;                           // 状态空间大�?
+  long long total_size;                           // 状态空间大小
   long long accumulated;                          // 累计计数
   std::vector<std::pair<int, long long>> records; // 存储 (depth, count)
 
@@ -32,9 +32,9 @@ struct DistributionPrinter {
   }
 
   DistributionPrinter(long long total) : total_size(total), accumulated(0) {
-    // 打印状态空间大�?
+    // 打印状态空间大小
     std::cout << "  State Space: " << formatWithCommas(total_size) << std::endl;
-    // 打印表头（上下都有横线，类似 cloc 风格�?
+    // 打印表头（上下都有横线，类似 cloc 风格)
     std::cout << "  -------------------------------------------------"
               << std::endl;
     std::cout << "  Depth         Count           Pct         Cum" << std::endl;
@@ -47,7 +47,7 @@ struct DistributionPrinter {
       return; // 跳过空行
     accumulated += count;
     records.push_back({depth, count});
-    // 临时打印（百分比稍后修正�?
+    // 临时打印（百分比稍后修正)
     double pct = (total_size > 0) ? (100.0 * count / total_size) : 0.0;
     double cumPct = (total_size > 0) ? (100.0 * accumulated / total_size) : 0.0;
     std::cout << "  " << std::setw(5) << std::right << depth << "  "
@@ -60,15 +60,15 @@ struct DistributionPrinter {
   void done() {
     // 光标上移 records.size() 行，重新打印正确的百分比
     int lineCount = records.size();
-    std::cout << "\033[" << lineCount << "A"; // ANSI: 上移 lineCount �?
+    std::cout << "\033[" << lineCount << "A"; // ANSI: 上移 lineCount 行
 
-    long long total = accumulated; // 最�?Total
+    long long total = accumulated; // 最终 Total
     long long cumSum = 0;
     for (auto &p : records) {
       cumSum += p.second;
       double pct = (total > 0) ? (100.0 * p.second / total) : 0.0;
       double cumPct = (total > 0) ? (100.0 * cumSum / total) : 0.0;
-      std::cout << "\033[2K"; // ANSI: 清除当前�?
+      std::cout << "\033[2K"; // ANSI: 清除当前行
       std::cout << "  " << std::setw(5) << std::right << p.first << "  "
                 << std::setw(14) << std::right << formatWithCommas(p.second)
                 << "  " << std::fixed << std::setprecision(6) << std::setw(10)
@@ -83,13 +83,13 @@ struct DistributionPrinter {
     std::cout << std::endl; // 空行分隔
   }
 
-  // 在并�?BFS 循环内部显示扫描进度
-  // 位掩码检查放最前面（最便宜），绝大多数迭代在此�?return
+  // 在并发BFS 循环内部显示扫描进度
+  // 位掩码检查放最前面（最便宜），绝大多数迭代在此处 return
   void progress(long long i, long long loopTotal, int depth) {
-    // �?~100 万次迭代检查一次（便宜的位运算，放第一位）
+    // 每 ~100 万次迭代检查一次（便宜的位运算，放第一位）
     if ((i & 0xFFFFF) != 0)
       return;
-    // 仅线�?报告（避�?cout 竞争�?
+    // 仅线程 0 报告（避免cout 竞争)
     if (omp_get_thread_num() != 0)
       return;
     int numThreads = omp_get_num_threads();
@@ -100,7 +100,7 @@ struct DistributionPrinter {
               << std::flush;
   }
 
-  // �?dp.print() 前调用，清除进度�?
+  // 在 dp.print() 前调用，清除进度行
   void clearProgress() { std::cout << "\r\033[2K\033[?25h" << std::flush; }
 };
 
@@ -169,7 +169,7 @@ bool PruneTableManager::loadAll() {
     return false;
   if (!loadTable(pt_cross_C4C5E0E1, "pt_cross_C4C5E0E1.bin"))
     return false;
-  // 只要任意 analyzer 需�?Diagonal 表就加载
+  // 只要任意 analyzer 需要Diagonal 表就加载
   if (ENABLE_DIAGONAL_STD || ENABLE_DIAGONAL_PAIR || ENABLE_DIAGONAL_EO_CROSS) {
     if (!loadTable(pt_cross_C4C6E0E2, "pt_cross_C4C6E0E2.bin"))
       return false;
@@ -188,7 +188,7 @@ bool PruneTableManager::loadPseudoTables() {
   if (!loadTable(pt_pscross_E0E2, "pt_pscross_E0E2.bin")) {
     std::cout << "Warning: pt_pscross_E0E2.bin not found." << std::endl;
   }
-  // 新增邻棱表加�?
+  // 新增邻棱表加载
   if (!loadTable(pt_pscross_E0E1, "pt_pscross_E0E1.bin")) {
     std::cout << "Warning: pt_pscross_E0E1.bin not found." << std::endl;
   }
@@ -197,13 +197,13 @@ bool PruneTableManager::loadPseudoTables() {
   if (!loadTable(pt_pscross_E0E1E2, "pt_pscross_E0E1E2.bin")) {
     std::cout << "Warning: pt_pscross_E0E1E2.bin not found." << std::endl;
   }
-  // NOTE: E1_E2_E3, E0_E2_E3, E0_E1_E3 通过 conj 复用 E0_E1_E2，不再加�?
+  // NOTE: E1_E2_E3, E0_E2_E3, E0_E1_E3 通过 conj 复用 E0_E1_E2，不再加载
 
-  // 对角表加�?
+  // 对角表加载
   if (!loadTable(pt_pscross_C4C6, "pt_pscross_C4C6.bin")) {
     std::cout << "Warning: pt_pscross_C4C6.bin not found." << std::endl;
   }
-  // 邻角表加�?
+  // 邻角表加载
   if (!loadTable(pt_pscross_C4C5, "pt_pscross_C4C5.bin")) {
     std::cout << "Warning: pt_pscross_C4C5.bin not found." << std::endl;
   }
@@ -212,13 +212,13 @@ bool PruneTableManager::loadPseudoTables() {
   if (!loadTable(pt_pscross_C4C5C6, "pt_pscross_C4C5C6.bin")) {
     std::cout << "Warning: pt_pscross_C4C5C6.bin not found." << std::endl;
   }
-  // NOTE: C4_C5_C7, C4_C6_C7, C5_C6_C7 通过 conj 复用 C4_C5_C6，不再加�?
+  // NOTE: C4_C5_C7, C4_C6_C7, C5_C6_C7 通过 conj 复用 C4_C5_C6，不再加载
 
   return true;
 }
 
 bool PruneTableManager::loadPseudoPairTables() {
-  // 1. 加载 Base �?(Cross + C{4-7})
+  // 1. 加载 Base 表(Cross + C{4-7})
   for (int c = 0; c < 4; ++c) {
     std::string fn = "pt_pscross_C" + std::to_string(c + 4) + ".bin";
     if (!loadTable(pt_pscross_C[c], fn))
@@ -2333,7 +2333,7 @@ void create_pt_pscross_xcross(int index3, int index2, int depth,
   long long size1 = 190080, size2 = 24, size = size1 * size2;
   std::vector<unsigned char> temp_table(size, 255);
 
-  // 根据边块位置选择初始化序�?
+  // 根据边块位置选择初始化序列
   std::vector<std::string> appl_moves;
   std::vector<int> tmp_moves;
   if (index3 == 0) {
@@ -2360,7 +2360,7 @@ void create_pt_pscross_xcross(int index3, int index2, int depth,
   temp_table[table1[index1 * 24 + 4] + table2[index2 * 18 + 4]] = 0;
   temp_table[table1[index1 * 24 + 5] + table2[index2 * 18 + 5]] = 0;
 
-  // 初始化所�?pseudo 等效状�?
+  // 初始化所有pseudo 等效状态
   for (int i = 0; i < 4; i++) {
     int index1_tmp_2 = index1 * 24, index2_tmp_2 = index2;
     index1_tmp_2 = table1[index1_tmp_2 + tmp_moves[index2 / 3 - 4]];
@@ -2408,7 +2408,7 @@ void create_pt_pscross_xcross(int index3, int index2, int depth,
         int index2_tmp = (i % size2) * 18;
         for (int j = 0; j < 18; ++j) {
           int next_i = table1[index1_tmp + j] + table2[index2_tmp + j];
-          // NOTE: 使用 CAS 避免竞态条�?
+          // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&temp_table[next_i], expected, nd);
         }
@@ -2427,7 +2427,7 @@ void create_pt_pscross_xcross(int index3, int index2, int depth,
       set_prune(prune_table, i, temp_table[i]);
 }
 
-// 生成 Pseudo Pair �?(例如: prune_table_pseudo_pair_C4_E0.bin)
+// 生成 Pseudo Pair 表(例如: prune_table_pseudo_pair_C4_E0.bin)
 // index1: edge 初始索引 (0, 2, 4, 6)
 // index2: corner 初始索引 (12, 15, 18, 21)
 void create_pt_pspair(int index1, int index2, int size1, int size2, int depth,
@@ -2515,7 +2515,7 @@ void create_pt_pspair(int index1, int index2, int size1, int size2, int depth,
         int index2_tmp = (i % size2) * 18;
         for (int j = 0; j < 18; ++j) {
           int next_i = table1[index1_tmp + j] * size2 + table2[index2_tmp + j];
-          // NOTE: 使用 CAS 避免竞态条�?
+          // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&temp_table[next_i], expected, nd);
         }
