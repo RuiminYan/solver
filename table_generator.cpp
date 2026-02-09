@@ -21,9 +21,9 @@ int main() {
 
   // 初始化管理器
   // 使用 Sequential 模式生成，以节省内存
-  mtm.generateAllSequentially();
+  mtm.genAllSequentially();
 
-  ptm.generateAllSequentially();
+  ptm.genAllSequentially();
 
   std::cout << "\nAll tables are ready." << std::endl;
 

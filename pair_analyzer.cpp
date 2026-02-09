@@ -104,7 +104,7 @@ struct PairSolver {
     auto &ptm = PruneTableManager::getInstance();
 
     // 获取移动表指针
-    s_p_multi = mtm.getCrossMTPtr();
+    s_p_multi = mtm.getEdge4MTPtr();
     s_p_corn = mtm.getCornMTPtr();
     s_p_edge = mtm.getEdgeMTPtr();
     s_p_edge6 = mtm.getEdge6MTPtr();

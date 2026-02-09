@@ -15,7 +15,7 @@ private:
   std::vector<int> mt_corn;
 
   // 复合移动表
-  std::vector<int> mt_cross; // 4个棱块的Cross表
+  std::vector<int> mt_edge4; // 4个棱块组合表
   std::vector<int> mt_edge2; // 2个棱块组合表
   std::vector<int> mt_edge6; // 6个棱块组合表 (E0+E1)
   std::vector<int> mt_corn2; // 2个角块组合表 (C4+C5)
@@ -42,7 +42,7 @@ public:
   bool loadAll();
 
   // 顺序生成所有表（生成后释放，仅保留文件，用于节省内存）
-  void generateAllSequentially();
+  void genAllSequentially();
 
   // 细粒度资源管理（供 PruneTableManager 生成时使用）
   // NOTE: 小表添加"已加载"检查，避免重复从磁盘加载
@@ -60,12 +60,12 @@ public:
   }
   void releaseMTCorn() { std::vector<int>().swap(mt_corn); }
 
-  bool loadMTCross() {
-    if (!mt_cross.empty())
+  bool loadMTEdge4() {
+    if (!mt_edge4.empty())
       return true;
-    return loadTable(mt_cross, "mt_cross.bin");
+    return loadTable(mt_edge4, "mt_edge4.bin");
   }
-  void releaseMTCross() { std::vector<int>().swap(mt_cross); }
+  void releaseMTEdge4() { std::vector<int>().swap(mt_edge4); }
 
   bool loadMTEdge2() {
     if (!mt_edge2.empty())
@@ -107,7 +107,7 @@ public:
   // 获取移动表的只读访问
   const std::vector<int> &getEdgeMT() const { return mt_edge; }
   const std::vector<int> &getCornMT() const { return mt_corn; }
-  const std::vector<int> &getCrossMT() const { return mt_cross; }
+  const std::vector<int> &getEdge4MT() const { return mt_edge4; }
   const std::vector<int> &getEdge2MT() const { return mt_edge2; }
   const std::vector<int> &getEdge3MT() const { return mt_edge3; }
   const std::vector<int> &getEdge6MT() const { return mt_edge6; }
@@ -117,7 +117,7 @@ public:
   // 获取指针（用于性能关键的代码）
   const int *getEdgeMTPtr() const { return mt_edge.data(); }
   const int *getCornMTPtr() const { return mt_corn.data(); }
-  const int *getCrossMTPtr() const { return mt_cross.data(); }
+  const int *getEdge4MTPtr() const { return mt_edge4.data(); }
   const int *getEdge2MTPtr() const { return mt_edge2.data(); }
   const int *getEdge3MTPtr() const { return mt_edge3.data(); }
   const int *getEdge6MTPtr() const { return mt_edge6.data(); }
@@ -135,14 +135,14 @@ public:
 
 private:
   // 生成函数
-  void generateMTEdge();
-  void generateMTCorn();
-  void generateMTCross();
-  void generateMTEdge2();
-  void generateMTEdge3();
-  void generateMTEdge6();
-  void generateMTCorn2();
-  void generateMTCorn3();
+  void genMTEdge();
+  void genMTCorn();
+  void genMTEdge4();
+  void genMTEdge2();
+  void genMTEdge3();
+  void genMTEdge6();
+  void genMTCorn2();
+  void genMTCorn3();
 
   // 文件操作
   bool loadTable(std::vector<int> &table, const std::string &filename);

@@ -16,14 +16,14 @@ MoveTableManager &MoveTableManager::getInstance() {
 void MoveTableManager::initialize() {
   std::cout << "Initializing move tables..." << std::endl;
 
-  generateMTEdge();
-  generateMTCorn();
-  generateMTCross();
-  generateMTEdge2();
-  generateMTEdge3();
-  generateMTEdge6();
-  generateMTCorn2();
-  generateMTCorn3();
+  genMTEdge();
+  genMTCorn();
+  genMTEdge4();
+  genMTEdge2();
+  genMTEdge3();
+  genMTEdge6();
+  genMTCorn2();
+  genMTCorn3();
 }
 
 bool MoveTableManager::loadAll() {
@@ -31,7 +31,7 @@ bool MoveTableManager::loadAll() {
     return false;
   if (!loadTable(mt_corn, "mt_corn.bin"))
     return false;
-  if (!loadTable(mt_cross, "mt_cross.bin"))
+  if (!loadTable(mt_edge4, "mt_edge4.bin"))
     return false;
   if (!loadTable(mt_edge2, "mt_edge2.bin"))
     return false;
@@ -46,7 +46,7 @@ bool MoveTableManager::loadAll() {
   return true;
 }
 
-void MoveTableManager::generateAllSequentially() {
+void MoveTableManager::genAllSequentially() {
   // NOTE: 每张表生成+保存后立即释放，避免内存累积导致 OOM
   // mt_edge/mt_corn 是基础依赖表且极小(<100KB)，在最后释放
 
@@ -68,15 +68,15 @@ void MoveTableManager::generateAllSequentially() {
     timer.printElapsed("mt_corn.bin");
   }
 
-  // 3. Cross Table (depends on edge_table, 17.4MB)
-  if (!fileExists("mt_cross.bin")) {
+  // 3. Edge4 Table (depends on edge_table, 17.4MB)
+  if (!fileExists("mt_edge4.bin")) {
     loadMTEdge();
     GenerationTimer timer;
-    std::cout << "Generating mt_cross.bin..." << std::endl;
-    mt_cross = create_multi_move_table2(4, 2, 12, 24 * 22 * 20 * 18, mt_edge);
-    saveTable(mt_cross, "mt_cross.bin");
-    timer.printElapsed("mt_cross.bin");
-    releaseMTCross();
+    std::cout << "Generating mt_edge4.bin..." << std::endl;
+    mt_edge4 = create_multi_move_table2(4, 2, 12, 24 * 22 * 20 * 18, mt_edge);
+    saveTable(mt_edge4, "mt_edge4.bin");
+    timer.printElapsed("mt_edge4.bin");
+    releaseMTEdge4();
   }
 
   // 4. Edges2 Table (depends on edge_table, <100KB)
@@ -158,7 +158,7 @@ void MoveTableManager::saveTable(const std::vector<int> &table,
   save_vector_chunked(table, filename);
 }
 
-void MoveTableManager::generateMTEdge() {
+void MoveTableManager::genMTEdge() {
   if (loadTable(mt_edge, "mt_edge.bin")) {
     std::cout << "Loaded edge table from file." << std::endl;
     return;
@@ -169,7 +169,7 @@ void MoveTableManager::generateMTEdge() {
   saveTable(mt_edge, "mt_edge.bin");
 }
 
-void MoveTableManager::generateMTCorn() {
+void MoveTableManager::genMTCorn() {
   if (loadTable(mt_corn, "mt_corn.bin")) {
     std::cout << "Loaded corner table from file." << std::endl;
     return;
@@ -180,19 +180,19 @@ void MoveTableManager::generateMTCorn() {
   saveTable(mt_corn, "mt_corn.bin");
 }
 
-void MoveTableManager::generateMTCross() {
-  if (loadTable(mt_cross, "mt_cross.bin")) {
-    std::cout << "Loaded cross table from file." << std::endl;
+void MoveTableManager::genMTEdge4() {
+  if (loadTable(mt_edge4, "mt_edge4.bin")) {
+    std::cout << "Loaded edge4 table from file." << std::endl;
     return;
   }
 
-  std::cout << "Generating mt_cross.bin..." << std::endl;
-  // Cross表：4个棱块的组合 (24*22*20*18 states)
-  mt_cross = create_multi_move_table2(4, 2, 12, 24 * 22 * 20 * 18, mt_edge);
-  saveTable(mt_cross, "mt_cross.bin");
+  std::cout << "Generating mt_edge4.bin..." << std::endl;
+  // Edge4表：4个棱块的组合 (24*22*20*18 states)
+  mt_edge4 = create_multi_move_table2(4, 2, 12, 24 * 22 * 20 * 18, mt_edge);
+  saveTable(mt_edge4, "mt_edge4.bin");
 }
 
-void MoveTableManager::generateMTEdge2() {
+void MoveTableManager::genMTEdge2() {
   if (loadTable(mt_edge2, "mt_edge2.bin")) {
     std::cout << "Loaded edges_2 table from file." << std::endl;
     return;
@@ -204,7 +204,7 @@ void MoveTableManager::generateMTEdge2() {
   saveTable(mt_edge2, "mt_edge2.bin");
 }
 
-void MoveTableManager::generateMTEdge3() {
+void MoveTableManager::genMTEdge3() {
   if (loadTable(mt_edge3, "mt_edge3.bin")) {
     std::cout << "Loaded edge3 table from file." << std::endl;
     return;
@@ -216,7 +216,7 @@ void MoveTableManager::generateMTEdge3() {
   saveTable(mt_edge3, "mt_edge3.bin");
 }
 
-void MoveTableManager::generateMTEdge6() {
+void MoveTableManager::genMTEdge6() {
   if (loadTable(mt_edge6, "mt_edge6.bin")) {
     std::cout << "Loaded edge6 table from file." << std::endl;
     return;
@@ -228,7 +228,7 @@ void MoveTableManager::generateMTEdge6() {
   saveTable(mt_edge6, "mt_edge6.bin");
 }
 
-void MoveTableManager::generateMTCorn2() {
+void MoveTableManager::genMTCorn2() {
   if (loadTable(mt_corn2, "mt_corn2.bin")) {
     std::cout << "Loaded corner2 table from file." << std::endl;
     return;
@@ -240,7 +240,7 @@ void MoveTableManager::generateMTCorn2() {
   saveTable(mt_corn2, "mt_corn2.bin");
 }
 
-void MoveTableManager::generateMTCorn3() {
+void MoveTableManager::genMTCorn3() {
   if (loadTable(mt_corn3, "mt_corn3.bin")) {
     std::cout << "Loaded corner3 table from file." << std::endl;
     return;

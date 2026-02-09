@@ -14,24 +14,24 @@
 #define completed_tasks AnalyzerStats::completedTasks
 #define is_solving AnalyzerStats::isSolving
 
-// --- 剪枝统计 (通过 prune_stats.h 统一开关控�? ---
-// 优化完成后的最优顺�?
+// --- 剪枝统计 (通过 prune_stats.h 统一开关控�? ---
+// 优化完成后的最优顺�?
 // Search 1: base 87%
-// Search 2: Aux 88% �?Huge 0% �?baseA 30% �?baseB 27%
-// Search 3: Aux 91% �?baseA 6% �?baseB 5% �?baseC 4%
+// Search 2: Aux 88% �?Huge 0% �?baseA 30% �?baseB 27%
+// Search 3: Aux 91% �?baseA 6% �?baseB 5% �?baseC 4%
 #include "prune_stats.h"
 
-STAT_DECL(s1_base); // Search 1: 基础剪枝�?
+STAT_DECL(s1_base); // Search 1: 基础剪枝�?
 
-STAT_DECL(s2_aux);   // Search 2: 辅助�?(Corner2/Edge2)
-STAT_DECL(s2_huge);  // Search 2: Huge �?
-STAT_DECL(s2_baseA); // Search 2: 视角 A 基础�?
-STAT_DECL(s2_baseB); // Search 2: 视角 B 基础�?
+STAT_DECL(s2_aux);   // Search 2: 辅助�?(Corner2/Edge2)
+STAT_DECL(s2_huge);  // Search 2: Huge �?
+STAT_DECL(s2_baseA); // Search 2: 视角 A 基础�?
+STAT_DECL(s2_baseB); // Search 2: 视角 B 基础�?
 
-STAT_DECL(s3_aux);   // Search 3: 辅助�?(Corner3/Edge3)
-STAT_DECL(s3_baseA); // Search 3: 视角 A 基础�?
-STAT_DECL(s3_baseB); // Search 3: 视角 B 基础�?
-STAT_DECL(s3_baseC); // Search 3: 视角 C 基础�?
+STAT_DECL(s3_aux);   // Search 3: 辅助�?(Corner3/Edge3)
+STAT_DECL(s3_baseA); // Search 3: 视角 A 基础�?
+STAT_DECL(s3_baseB); // Search 3: 视角 B 基础�?
+STAT_DECL(s3_baseC); // Search 3: 视角 C 基础�?
 
 struct SearchContext {
   int current_max_depth = 0;
@@ -39,7 +39,7 @@ struct SearchContext {
 
 int trans_moves[4][4][18];
 
-// --- 镜像映射�?(用于 Diff=3 -> Diff=1) ---
+// --- 镜像映射�?(用于 Diff=3 -> Diff=1) ---
 int sym_corner2[504];
 int sym_edge6_pos[665280]; // 12P6
 int sym_edge6_ori[64];     // 2^6
@@ -130,9 +130,9 @@ void init_pseudo_matrix() {
 
 // --- 通用辅助剪枝结构 ---
 struct AuxPrunerDef {
-  const unsigned char *p_prune; // 剪枝表指�?
-  const int *p_move;            // 移动表指�?(Edges2, Corners2, etc.)
-  int multiplier;               // 状态乘�?(用于结合 Cross 状�?
+  const unsigned char *p_prune; // 剪枝表指�?
+  const int *p_move;            // 移动表指�?(Edges2, Corners2, etc.)
+  int multiplier;               // 状态乘�?(用于结合 Cross 状�?
 };
 
 struct AuxState {
@@ -142,7 +142,7 @@ struct AuxState {
   const int *move_mapper = nullptr; // Map move m -> m'
 };
 
-// 最大支持的辅助表数�?(每个搜索路径)
+// 最大支持的辅助表数�?(每个搜索路径)
 constexpr int MAX_AUX = 8;
 
 struct CrossSolver {
@@ -212,22 +212,22 @@ struct XCrossSolver {
 
   // const unsigned char* p_cross_C4C6E0E2 = nullptr; // Disabled for memory
 
-  // === 静�?Aux 表指�?===
-  // Edge2: 邻棱 (E0E1) �?对棱 (E0E2)
+  // === 静�?Aux 表指�?===
+  // Edge2: 邻棱 (E0E1) �?对棱 (E0E2)
   const unsigned char *p_aux_e2_adj = nullptr; // 邻接: {0,1},{1,2},{2,3},{0,3}
   const unsigned char *p_aux_e2_diag = nullptr; // 对角: {0,2},{1,3}
 
-  // Corner2: 邻角 (C4C5) �?对角 (C4C6)
+  // Corner2: 邻角 (C4C5) �?对角 (C4C6)
   const unsigned char *p_aux_c2_adj = nullptr; // 邻接: {4,5},{5,6},{6,7},{4,7}
   const unsigned char *p_aux_c2_diag = nullptr; // 对角: {4,6},{5,7}
 
-  // Edge3: 规范�?(E0E1E2)
-  const unsigned char *p_aux_e3 = nullptr; // 所�?Edge3 组合映射到此
+  // Edge3: 规范�?(E0E1E2)
+  const unsigned char *p_aux_e3 = nullptr; // 所�?Edge3 组合映射到此
 
-  // Corner3: 规范�?(C4C5C6)
-  const unsigned char *p_aux_c3 = nullptr; // 所�?Corner3 组合映射到此
+  // Corner3: 规范�?(C4C5C6)
+  const unsigned char *p_aux_c3 = nullptr; // 所�?Corner3 组合映射到此
 
-  // === 静�?AuxPrunerDef 对象 ===
+  // === 静�?AuxPrunerDef 对象 ===
   AuxPrunerDef aux_def_e2_adj;  // Edge2 邻接
   AuxPrunerDef aux_def_e2_diag; // Edge2 对角
   AuxPrunerDef aux_def_c2_adj;  // Corner2 邻接
@@ -239,20 +239,20 @@ struct XCrossSolver {
   // Edge2: 返回 0=邻接, 1=对角
   static inline int get_e2_type(int e1, int e2) {
     int diff = (e2 - e1 + 4) & 3;
-    return (diff == 2) ? 1 : 0; // diff==2 是对�?
+    return (diff == 2) ? 1 : 0; // diff==2 是对�?
   }
 
   // Corner2: 返回 0=邻接, 1=对角
   static inline int get_c2_type(int c1, int c2) {
     int diff = (c2 - c1 + 4) & 3;
-    return (diff == 2) ? 1 : 0; // diff==2 是对�?
+    return (diff == 2) ? 1 : 0; // diff==2 是对�?
   }
 
-  // === 获取 AuxPrunerDef 的辅助函�?===
-  // 根据 keys 返回对应�?AuxPrunerDef 指针
+  // === 获取 AuxPrunerDef 的辅助函�?===
+  // 根据 keys 返回对应�?AuxPrunerDef 指针
   const AuxPrunerDef *get_aux_def(const std::vector<int> &keys) {
     if (keys.size() == 2) {
-      // Edge2 �?Corner2
+      // Edge2 �?Corner2
       if (keys[0] < 4) {
         // Edge2
         return (get_e2_type(keys[0], keys[1]) == 1)
@@ -265,7 +265,7 @@ struct XCrossSolver {
                    : (p_aux_c2_adj ? &aux_def_c2_adj : nullptr);
       }
     } else if (keys.size() == 3) {
-      // Edge3 �?Corner3
+      // Edge3 �?Corner3
       if (keys[0] < 4) {
         return p_aux_e3 ? &aux_def_e3 : nullptr;
       } else {
@@ -325,7 +325,7 @@ struct XCrossSolver {
   XCrossSolver() {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
-    p_multi = mtm.getCrossMTPtr();
+    p_multi = mtm.getEdge4MTPtr();
     p_corn = mtm.getCornMTPtr();
     p_edge = mtm.getEdgeMTPtr();
     p_edges2 = mtm.getEdge2MTPtr();
@@ -334,7 +334,7 @@ struct XCrossSolver {
     p_edge3 = mtm.getEdge3MTPtr();
     p_edge6 = mtm.getEdge6MTPtr();
 
-    // 使用 Ptr 方式获取 Huge Table (�?std_analyzer 一致，无日志输�?
+    // 使用 Ptr 方式获取 Huge Table (�?std_analyzer 一致，无日志输�?
     p_cross_C4C5E0E1 = ptm.getCrossC4C5E0E1PTPtr();
 
     // p_cross_C4C6E0E2 = ptm.getCrossC4C6E0E2PTPtr(); // Disabled
@@ -342,35 +342,35 @@ struct XCrossSolver {
     for (int i = 0; i < 4; ++i)
       p_prune_base[i] = ptm.getPsCrossC4EPTPtr(i);
 
-    // 初始�?Edge2 对角�?(E0E2)
+    // 初始�?Edge2 对角�?(E0E2)
     if (ptm.hasPsCrossE0E2PT()) {
       p_aux_e2_diag = ptm.getPsCrossE0E2PTPtr();
       aux_def_e2_diag = {p_aux_e2_diag, p_edges2, 528};
     }
-    // 初始�?Edge2 邻接�?(E0E1)
+    // 初始�?Edge2 邻接�?(E0E1)
     if (ptm.hasPsCrossE0E1PT()) {
       p_aux_e2_adj = ptm.getPsCrossE0E1PTPtr();
       aux_def_e2_adj = {p_aux_e2_adj, p_edges2, 528};
     }
 
-    // 初始�?Corner2 对角�?(C4C6)
+    // 初始�?Corner2 对角�?(C4C6)
     if (ptm.hasPsCrossC4C6PT()) {
       p_aux_c2_diag = ptm.getPsCrossC4C6PTPtr();
       aux_def_c2_diag = {p_aux_c2_diag, p_corners2, 504};
     }
-    // 初始�?Corner2 邻接�?(C4C5)
+    // 初始�?Corner2 邻接�?(C4C5)
     if (ptm.hasPsCrossC4C5PT()) {
       p_aux_c2_adj = ptm.getPsCrossC4C5PTPtr();
       aux_def_c2_adj = {p_aux_c2_adj, p_corners2, 504};
     }
 
-    // 初始�?Corner3 规范�?(C4C5C6，其他组合通过旋转映射)
+    // 初始�?Corner3 规范�?(C4C5C6，其他组合通过旋转映射)
     if (ptm.hasPsCrossC4C5C6PT()) {
       p_aux_c3 = ptm.getPsCrossC4C5C6PTPtr();
       aux_def_c3 = {p_aux_c3, p_corners3, 9072};
     }
 
-    // 初始�?Edge3 规范�?(E0E1E2，其他组合通过旋转映射)
+    // 初始�?Edge3 规范�?(E0E1E2，其他组合通过旋转映射)
     if (ptm.hasPsCrossE0E1E2PT()) {
       p_aux_e3 = ptm.getPsCrossE0E1E2PTPtr();
       aux_def_e3 = {p_aux_e3, p_edge3, 10560};
@@ -436,14 +436,14 @@ struct XCrossSolver {
     return cur;
   }
 
-  // 更好�?setup 函数
+  // 更好�?setup 函数
   int setup_aux_pruners_struct(const std::vector<int> &target_pieces,
                                const std::vector<int> &alg, int slot_k,
                                AuxState *out_aux) {
     int count = 0;
     bool covered[8][8] = {false};
 
-    // 1. 优先检查所�?3-subset (Triples) - Corner3 AND Edge3
+    // 1. 优先检查所�?3-subset (Triples) - Corner3 AND Edge3
     // Need to check all combinations of 3 pieces
     if (target_pieces.size() >= 3) {
       for (size_t i = 0; i < target_pieces.size(); ++i) {
@@ -585,7 +585,7 @@ struct XCrossSolver {
       }
     }
 
-    // 2. 检查所�?2-subset
+    // 2. 检查所�?2-subset
     for (size_t i = 0; i < target_pieces.size(); ++i) {
       for (size_t j = i + 1; j < target_pieces.size(); ++j) {
         int p1 = target_pieces[i];
@@ -727,7 +727,7 @@ struct XCrossSolver {
       int n_i1 = p_multi[i1 + m];
       int n_i2 = p_corn[i2 + m];
       long long idx = (long long)(n_i1 + n_i2) * 24 + p_edge[i3 + m];
-      // ++s1_base_checked;  // NOTE: 统计已禁�?
+      // ++s1_base_checked;  // NOTE: 统计已禁�?
       if (get_prune_ptr(p_prune, idx) >= depth) {
         // ++s1_base_pruned;
         continue;
@@ -790,7 +790,7 @@ struct XCrossSolver {
           break;
         }
       }
-      // ++s2_aux_checked;  // NOTE: 统计已禁�?
+      // ++s2_aux_checked;  // NOTE: 统计已禁�?
       if (aux_pruned) {
         // ++s2_aux_pruned;
         continue;
@@ -819,7 +819,7 @@ struct XCrossSolver {
         }
       }
 
-      // ++s2_huge_checked;  // NOTE: 统计已禁�?
+      // ++s2_huge_checked;  // NOTE: 统计已禁�?
       if (huge_pruned) {
         // ++s2_huge_pruned;
         continue;
@@ -833,7 +833,7 @@ struct XCrossSolver {
 
       if (!p_huge_table) {
         long long idx1 = (long long)(n_i1a + n_i2a) * 24 + n_i3a;
-        // ++s2_baseA_checked;  // NOTE: 统计已禁�?
+        // ++s2_baseA_checked;  // NOTE: 统计已禁�?
         if (get_prune_ptr(p1, idx1) >= depth) {
           // ++s2_baseA_pruned;
           continue;
@@ -846,7 +846,7 @@ struct XCrossSolver {
       int n_i1b = p_multi[i1b + m_b];
       int n_i2b = p_corn[i2b + m_b];
       long long idx2 = (long long)(n_i1b + n_i2b) * 24 + p_edge[i3b + m_b];
-      // ++s2_baseB_checked;  // NOTE: 统计已禁�?
+      // ++s2_baseB_checked;  // NOTE: 统计已禁�?
       if (get_prune_ptr(p2, idx2) >= depth) {
         // ++s2_baseB_pruned;
         continue;
@@ -910,7 +910,7 @@ struct XCrossSolver {
           break;
         }
       }
-      // ++s3_aux_checked;  // NOTE: 统计已禁�?
+      // ++s3_aux_checked;  // NOTE: 统计已禁�?
       if (aux_pruned) {
         // ++s3_aux_pruned;
         continue;
@@ -918,7 +918,7 @@ struct XCrossSolver {
 
       int n_i2a = p_corn[i2a + m];
       long long idx1 = (long long)(n_i1a + n_i2a) * 24 + p_edge[i3a + m];
-      // ++s3_baseA_checked;  // NOTE: 统计已禁�?
+      // ++s3_baseA_checked;  // NOTE: 统计已禁�?
       if (get_prune_ptr(p1, idx1) >= depth) {
         // ++s3_baseA_pruned;
         continue;
@@ -928,7 +928,7 @@ struct XCrossSolver {
       int n_i1b = p_multi[i1b + m_b];
       int n_i2b = p_corn[i2b + m_b];
       long long idx2 = (long long)(n_i1b + n_i2b) * 24 + p_edge[i3b + m_b];
-      // ++s3_baseB_checked;  // NOTE: 统计已禁�?
+      // ++s3_baseB_checked;  // NOTE: 统计已禁�?
       if (get_prune_ptr(p2, idx2) >= depth) {
         // ++s3_baseB_pruned;
         continue;
@@ -938,7 +938,7 @@ struct XCrossSolver {
       int n_i1c = p_multi[i1c + m_c];
       int n_i2c = p_corn[i2c + m_c];
       long long idx3 = (long long)(n_i1c + n_i2c) * 24 + p_edge[i3c + m_c];
-      // ++s3_baseC_checked;  // NOTE: 统计已禁�?
+      // ++s3_baseC_checked;  // NOTE: 统计已禁�?
       if (get_prune_ptr(p3, idx3) >= depth) {
         // ++s3_baseC_pruned;
         continue;
@@ -1037,7 +1037,7 @@ struct XCrossSolver {
             int init_e6 = 0, init_c2 = 0;
 
             // Only for Neighbor Pairs (0,1) with Diff=0
-            // NOTE: Diff=1 �?Diff=3 的优化已弃用
+            // NOTE: Diff=1 �?Diff=3 的优化已弃用
             // (pt_cross_C4C5E0E1_diff1)
             if (cp.first == 0 && cp.second == 1 && d1 == d2 && d1 == 0) {
               selected_huge_table = p_cross_C4C5E0E1;
@@ -1274,7 +1274,7 @@ struct PseudoSolverWrapper {
     auto &ptm = PruneTableManager::getInstance();
 
     bool ok = true;
-    if (!mtm.loadMTCross())
+    if (!mtm.loadMTEdge4())
       ok = false;
     if (!mtm.loadMTCorn())
       ok = false;
@@ -1329,10 +1329,10 @@ struct PseudoSolverWrapper {
   }
 
   static void print_stats() {
-    // NOTE: 剪枝统计已禁�?(优化完成，顺序已最�?
+    // NOTE: 剪枝统计已禁�?(优化完成，顺序已最�?
     // Search 1: base 87%
-    // Search 2: Aux 88% �?Huge 0% �?baseA 30% �?baseB 27%
-    // Search 3: Aux 91% �?baseA 6% �?baseB 5% �?baseC 4%
+    // Search 2: Aux 88% �?Huge 0% �?baseA 30% �?baseB 27%
+    // Search 3: Aux 91% �?baseA 6% �?baseB 5% �?baseC 4%
   }
 };
 
