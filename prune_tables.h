@@ -79,7 +79,7 @@ private:
   // === PseudoPair 专用表 ===
   std::vector<unsigned char> pt_pscross_C[4];       // Cross + C{4-7}
   std::vector<unsigned char> pt_pscross_C_diff[16]; // XC: diff*4+corner_offset
-  std::vector<unsigned char> pt_pspair_ec[16];      // EC Pair: edge*4+corner
+  std::vector<unsigned char> pt_pspair_ce[16];      // EC Pair: edge*4+corner
 
   // === EOCross 专用表 ===
   // NOTE: eo_cross_c4使用不同生成函数，与pt_cross_C4不同
@@ -117,7 +117,7 @@ public:
   bool loadEOCrossTables();
 
   // 顺序生成所有表
-  void generateAllSequentially();
+  void genAllSequentially();
 
   // === 新 Getter (返回 vector 引用) ===
   const std::vector<unsigned char> &getCrossPT() const { return pt_cross; }
@@ -254,7 +254,7 @@ public:
     return pt_pscross_C_diff[idx].data();
   }
   const unsigned char *getPsPairECPTPtr(int idx) const {
-    return pt_pspair_ec[idx].data();
+    return pt_pspair_ce[idx].data();
   }
 
   // === EOCross Getters (新名) ===
@@ -283,55 +283,59 @@ public:
   }
 
   // 生成函数 (新名)
-  void generatePTCross();
-  void generatePTCrossC4();
-  void generatePTPairC4E0();
-  void generatePTCrossC4E0();
-  void generatePTCrossC4C5E0E1();
-  void generatePTCrossC4C6E0E2();
+  void genPTCross();
+  void genPTCrossC4();
+  void genPTPairC4E0();
+  void genPTCrossC4E0();
+  void genPTCrossC4C5E0E1();
+  void genPTCrossC4C6E0E2();
 
   // EOCross 专用生成函数
-  void generatePTEP4EO12(); // EP4 + EO12 联合剪枝表
+  void genPTEP4EO12(); // EP4 + EO12 联合剪枝表
   // EOCross Plus Edge 生成函数
-  void generatePTCrossC4E0E1(); // Plus Edge Right (E1)
-  void generatePTCrossC4E0E2(); // Plus Edge Diag (E2)
-  void generatePTCrossC4E0E3(); // Plus Edge Left (E3)
+  void genPTCrossC4E0E1(); // Plus Edge Right (E1)
+  void genPTCrossC4E0E2(); // Plus Edge Diag (E2)
+  void genPTCrossC4E0E3(); // Plus Edge Left (E3)
   // EOCross Plus Corner 生成函数
-  void generatePTCrossC4C5E0(); // Plus Corn Right (C5)
-  void generatePTCrossC4C6E0(); // Plus Corn Diag (C6)
-  void generatePTCrossC4C7E0(); // Plus Corn Left (C7)
+  void genPTCrossC4C5E0(); // Plus Corn Right (C5)
+  void genPTCrossC4C6E0(); // Plus Corn Diag (C6)
+  void genPTCrossC4C7E0(); // Plus Corn Left (C7)
   // EOCross 3-Corner 生成函数
-  void generatePTCrossC4C5C6(); // 3-Corner (C5+C6)
+  void genPTCrossC4C5C6(); // 3-Corner (C5+C6)
 
   // Pseudo 生成函数
-  void generatePTPsCross();
-  void generatePTPsCrossC4E(int offset_idx);
+  void genPTPsCross();
+  void genPTPsCrossC4E(int offset_idx);
   // 对棱表生成函数
-  void generatePTPsCrossE0E2();
-  void generatePTPsCrossE1E3();
+  void genPTPsCrossE0E2();
+  void genPTPsCrossE1E3();
   // 邻棱表生成函数
-  void generatePTPsCrossE0E1();
-  void generatePTPsCrossE0E3();
-  void generatePTPsCrossE1E2();
-  void generatePTPsCrossE2E3();
+  void genPTPsCrossE0E1();
+  void genPTPsCrossE0E3();
+  void genPTPsCrossE1E2();
+  void genPTPsCrossE2E3();
   // Edge3 Generators
-  void generatePTPsCrossE0E1E2();
-  void generatePTPsCrossE1E2E3();
-  void generatePTPsCrossE0E2E3();
-  void generatePTPsCrossE0E1E3();
+  void genPTPsCrossE0E1E2();
+  void genPTPsCrossE1E2E3();
+  void genPTPsCrossE0E2E3();
+  void genPTPsCrossE0E1E3();
   // 对角生成函数
-  void generatePTPsCrossC4C6();
-  void generatePTPsCrossC5C7();
+  void genPTPsCrossC4C6();
+  void genPTPsCrossC5C7();
   // 邻角生成函数
-  void generatePTPsCrossC4C5();
-  void generatePTPsCrossC4C7();
-  void generatePTPsCrossC5C6();
-  void generatePTPsCrossC6C7();
+  void genPTPsCrossC4C5();
+  void genPTPsCrossC4C7();
+  void genPTPsCrossC5C6();
+  void genPTPsCrossC6C7();
   // Corner3 Generators
-  void generatePTPsCrossC4C5C6();
-  void generatePTPsCrossC4C5C7();
-  void generatePTPsCrossC4C6C7();
-  void generatePTPsCrossC5C6C7();
+  void genPTPsCrossC4C5C6();
+  void genPTPsCrossC4C5C7();
+  void genPTPsCrossC4C6C7();
+  void genPTPsCrossC5C6C7();
+  // PseudoPair 变体生成函数
+  void genPTPsCrossC(int c); // Cross+Corner 变体 (c=0..3 → C4..C7)
+  void genPTPsCrossCDiff(int c, int e); // XCross 变体 (c=0..3, e=0..3)
+  void genPTPsPairCE(int c, int e);     // Pair 变体 (c=0..3, e=0..3)
 
 private:
   // 文件操作
