@@ -204,8 +204,8 @@ struct CrossSolver {
 };
 
 struct XCrossSolver {
-  const int *p_mt_edge4, *p_mt_corn, *p_mt_edge, *p_edges2, *p_corners2, *p_corners3,
-      *p_edge3;
+  const int *p_mt_edge4, *p_mt_corn, *p_mt_edge, *p_mt_edge2, *p_mt_corn2, *p_mt_corn3,
+      *p_mt_edge3;
   const int *p_edge6 = nullptr; // 增加 Edge6 引用
   const unsigned char *p_prune_base[4];
   const unsigned char *p_cross_C4C5E0E1 = nullptr;
@@ -214,26 +214,26 @@ struct XCrossSolver {
 
   // === 静态Aux 表指针===
   // Edge2: 邻棱 (E0E1) 和对棱 (E0E2)
-  const unsigned char *p_aux_e2_adj = nullptr; // 邻接: {0,1},{1,2},{2,3},{0,3}
-  const unsigned char *p_aux_e2_diag = nullptr; // 对角: {0,2},{1,3}
+  const unsigned char *p_pt_pscross_E0E1 = nullptr; // 邻接: {0,1},{1,2},{2,3},{0,3}
+  const unsigned char *p_pt_pscross_E0E2 = nullptr; // 对角: {0,2},{1,3}
 
   // Corner2: 邻角 (C4C5) 和对角 (C4C6)
-  const unsigned char *p_aux_c2_adj = nullptr; // 邻接: {4,5},{5,6},{6,7},{4,7}
-  const unsigned char *p_aux_c2_diag = nullptr; // 对角: {4,6},{5,7}
+  const unsigned char *p_pt_pscross_C4C5 = nullptr; // 邻接: {4,5},{5,6},{6,7},{4,7}
+  const unsigned char *p_pt_pscross_C4C6 = nullptr; // 对角: {4,6},{5,7}
 
   // Edge3: 规范表(E0E1E2)
-  const unsigned char *p_aux_e3 = nullptr; // 所有Edge3 组合映射到此
+  const unsigned char *p_pt_pscross_E0E1E2 = nullptr; // 所有Edge3 组合映射到此
 
   // Corner3: 规范表(C4C5C6)
-  const unsigned char *p_aux_c3 = nullptr; // 所有Corner3 组合映射到此
+  const unsigned char *p_pt_pscross_C4C5C6 = nullptr; // 所有Corner3 组合映射到此
 
   // === 静态AuxPrunerDef 对象 ===
-  AuxPrunerDef aux_def_e2_adj;  // Edge2 邻接
-  AuxPrunerDef aux_def_e2_diag; // Edge2 对角
-  AuxPrunerDef aux_def_c2_adj;  // Corner2 邻接
-  AuxPrunerDef aux_def_c2_diag; // Corner2 对角
-  AuxPrunerDef aux_def_e3;      // Edge3
-  AuxPrunerDef aux_def_c3;      // Corner3
+  AuxPrunerDef aux_def_pscross_E0E1;  // Edge2 邻接
+  AuxPrunerDef aux_def_pscross_E0E2; // Edge2 对角
+  AuxPrunerDef aux_def_pscross_C4C5;  // Corner2 邻接
+  AuxPrunerDef aux_def_pscross_C4C6; // Corner2 对角
+  AuxPrunerDef aux_def_pscross_E0E1E2;      // Edge3
+  AuxPrunerDef aux_def_pscross_C4C5C6;      // Corner3
 
   // === 索引映射辅助函数 ===
   // Edge2: 返回 0=邻接, 1=对角
@@ -256,20 +256,20 @@ struct XCrossSolver {
       if (keys[0] < 4) {
         // Edge2
         return (get_e2_type(keys[0], keys[1]) == 1)
-                   ? (p_aux_e2_diag ? &aux_def_e2_diag : nullptr)
-                   : (p_aux_e2_adj ? &aux_def_e2_adj : nullptr);
+                   ? (p_pt_pscross_E0E2 ? &aux_def_pscross_E0E2 : nullptr)
+                   : (p_pt_pscross_E0E1 ? &aux_def_pscross_E0E1 : nullptr);
       } else {
         // Corner2
         return (get_c2_type(keys[0], keys[1]) == 1)
-                   ? (p_aux_c2_diag ? &aux_def_c2_diag : nullptr)
-                   : (p_aux_c2_adj ? &aux_def_c2_adj : nullptr);
+                   ? (p_pt_pscross_C4C6 ? &aux_def_pscross_C4C6 : nullptr)
+                   : (p_pt_pscross_C4C5 ? &aux_def_pscross_C4C5 : nullptr);
       }
     } else if (keys.size() == 3) {
       // Edge3 和Corner3
       if (keys[0] < 4) {
-        return p_aux_e3 ? &aux_def_e3 : nullptr;
+        return p_pt_pscross_E0E1E2 ? &aux_def_pscross_E0E1E2 : nullptr;
       } else {
-        return p_aux_c3 ? &aux_def_c3 : nullptr;
+        return p_pt_pscross_C4C5C6 ? &aux_def_pscross_C4C5C6 : nullptr;
       }
     }
     return nullptr;
@@ -328,10 +328,10 @@ struct XCrossSolver {
     p_mt_edge4 = mtm.getEdge4MTPtr();
     p_mt_corn = mtm.getCornMTPtr();
     p_mt_edge = mtm.getEdgeMTPtr();
-    p_edges2 = mtm.getEdge2MTPtr();
-    p_corners2 = mtm.getCorn2MTPtr();
-    p_corners3 = mtm.getCorn3MTPtr();
-    p_edge3 = mtm.getEdge3MTPtr();
+    p_mt_edge2 = mtm.getEdge2MTPtr();
+    p_mt_corn2 = mtm.getCorn2MTPtr();
+    p_mt_corn3 = mtm.getCorn3MTPtr();
+    p_mt_edge3 = mtm.getEdge3MTPtr();
     p_edge6 = mtm.getEdge6MTPtr();
 
     // 使用 Ptr 方式获取 Huge Table (与 std_analyzer 一致，无日志输出)
@@ -344,36 +344,36 @@ struct XCrossSolver {
 
     // 初始化Edge2 对角表(E0E2)
     if (ptm.hasPsCrossE0E2PT()) {
-      p_aux_e2_diag = ptm.getPsCrossE0E2PTPtr();
-      aux_def_e2_diag = {p_aux_e2_diag, p_edges2, 528};
+      p_pt_pscross_E0E2 = ptm.getPsCrossE0E2PTPtr();
+      aux_def_pscross_E0E2 = {p_pt_pscross_E0E2, p_mt_edge2, 528};
     }
     // 初始化Edge2 邻接表(E0E1)
     if (ptm.hasPsCrossE0E1PT()) {
-      p_aux_e2_adj = ptm.getPsCrossE0E1PTPtr();
-      aux_def_e2_adj = {p_aux_e2_adj, p_edges2, 528};
+      p_pt_pscross_E0E1 = ptm.getPsCrossE0E1PTPtr();
+      aux_def_pscross_E0E1 = {p_pt_pscross_E0E1, p_mt_edge2, 528};
     }
 
     // 初始化Corner2 对角表(C4C6)
     if (ptm.hasPsCrossC4C6PT()) {
-      p_aux_c2_diag = ptm.getPsCrossC4C6PTPtr();
-      aux_def_c2_diag = {p_aux_c2_diag, p_corners2, 504};
+      p_pt_pscross_C4C6 = ptm.getPsCrossC4C6PTPtr();
+      aux_def_pscross_C4C6 = {p_pt_pscross_C4C6, p_mt_corn2, 504};
     }
     // 初始化Corner2 邻接表(C4C5)
     if (ptm.hasPsCrossC4C5PT()) {
-      p_aux_c2_adj = ptm.getPsCrossC4C5PTPtr();
-      aux_def_c2_adj = {p_aux_c2_adj, p_corners2, 504};
+      p_pt_pscross_C4C5 = ptm.getPsCrossC4C5PTPtr();
+      aux_def_pscross_C4C5 = {p_pt_pscross_C4C5, p_mt_corn2, 504};
     }
 
     // 初始化Corner3 规范表(C4C5C6，其他组合通过旋转映射)
     if (ptm.hasPsCrossC4C5C6PT()) {
-      p_aux_c3 = ptm.getPsCrossC4C5C6PTPtr();
-      aux_def_c3 = {p_aux_c3, p_corners3, 9072};
+      p_pt_pscross_C4C5C6 = ptm.getPsCrossC4C5C6PTPtr();
+      aux_def_pscross_C4C5C6 = {p_pt_pscross_C4C5C6, p_mt_corn3, 9072};
     }
 
     // 初始化Edge3 规范表(E0E1E2，其他组合通过旋转映射)
     if (ptm.hasPsCrossE0E1E2PT()) {
-      p_aux_e3 = ptm.getPsCrossE0E1E2PTPtr();
-      aux_def_e3 = {p_aux_e3, p_edge3, 10560};
+      p_pt_pscross_E0E1E2 = ptm.getPsCrossE0E1E2PTPtr();
+      aux_def_pscross_E0E1E2 = {p_pt_pscross_E0E1E2, p_mt_edge3, 10560};
     }
   }
 
@@ -401,7 +401,7 @@ struct XCrossSolver {
     int cur = idx_init;
     for (int m : alg) {
       int mc = conj_moves_flat[m][slot_k];
-      cur = p_edges2[cur * 18 + mc];
+      cur = p_mt_edge2[cur * 18 + mc];
     }
     return cur;
   }
@@ -411,7 +411,7 @@ struct XCrossSolver {
     int cur = idx_init;
     for (int m : alg) {
       int mc = conj_moves_flat[m][slot_k];
-      cur = p_corners2[cur * 18 + mc];
+      cur = p_mt_corn2[cur * 18 + mc];
     }
     return cur;
   }
@@ -421,7 +421,7 @@ struct XCrossSolver {
     int cur = idx_init;
     for (int m : alg) {
       int mc = conj_moves_flat[m][slot_k];
-      cur = p_corners3[cur * 18 + mc];
+      cur = p_mt_corn3[cur * 18 + mc];
     }
     return cur;
   }
@@ -431,7 +431,7 @@ struct XCrossSolver {
     int cur = idx_init;
     for (int m : alg) {
       int mc = conj_moves_flat[m][slot_k];
-      cur = p_edge3[cur * 18 + mc];
+      cur = p_mt_edge3[cur * 18 + mc];
     }
     return cur;
   }
@@ -526,7 +526,7 @@ struct XCrossSolver {
                 for (int m : alg) {
                   int m_pseudo = conj_moves_flat[m][slot_k];
                   int m_rot = mapper[m_pseudo];
-                  cur_c3 = p_corners3[cur_c3 * 18 + m_rot];
+                  cur_c3 = p_mt_corn3[cur_c3 * 18 + m_rot];
                   cur_cr = p_mt_edge4[cur_cr + m_rot];
                 }
                 conjugated_idx = cur_c3;
@@ -559,7 +559,7 @@ struct XCrossSolver {
                 for (int m : alg) {
                   int m_pseudo = conj_moves_flat[m][slot_k];
                   int m_rot = mapper[m_pseudo];
-                  cur_e3 = p_edge3[cur_e3 * 18 + m_rot];
+                  cur_e3 = p_mt_edge3[cur_e3 * 18 + m_rot];
                   cur_cr = p_mt_edge4[cur_cr + m_rot];
                 }
                 conjugated_idx = cur_e3;
@@ -644,7 +644,7 @@ struct XCrossSolver {
             for (int m : alg) {
               int m_p = conj_moves_flat[m][slot_k];
               int m_r = mapper[m_p];
-              cur_e2 = p_edges2[cur_e2 * 18 + m_r];
+              cur_e2 = p_mt_edge2[cur_e2 * 18 + m_r];
               cur_cr = p_mt_edge4[cur_cr + m_r];
             }
             conjugated_idx = cur_e2;
@@ -694,7 +694,7 @@ struct XCrossSolver {
             for (int m : alg) {
               int m_p = conj_moves_flat[m][slot_k];
               int m_r = mapper[m_p];
-              cur_c2 = p_corners2[cur_c2 * 18 + m_r];
+              cur_c2 = p_mt_corn2[cur_c2 * 18 + m_r];
               cur_cr = p_mt_edge4[cur_cr + m_r];
             }
             conjugated_idx = cur_c2;
@@ -801,7 +801,7 @@ struct XCrossSolver {
       bool huge_pruned = false;
       if (p_huge_table) {
         n_e6 = p_edge6[i_e6 + m];
-        n_c2 = p_corners2[i_c2 + m];
+        n_c2 = p_mt_corn2[i_c2 + m];
 
         long long huge_idx;
         if (mirror_huge) {
@@ -1056,7 +1056,7 @@ struct XCrossSolver {
 
               for (int m : alg) {
                 init_e6 = p_edge6[init_e6 * 18 + m];
-                init_c2 = p_corners2[init_c2 * 18 + m];
+                init_c2 = p_mt_corn2[init_c2 * 18 + m];
               }
 
               long long huge_idx;

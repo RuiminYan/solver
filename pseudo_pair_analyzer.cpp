@@ -55,25 +55,25 @@ struct xcross_analyzer2 {
   static const int *p_edge_move_ptr;
   static const int *p_corner_move_ptr;
   static const int *p_multi_move_ptr;
-  static const int *p_edge3_move_ptr;   // Edge3 移动表指针
-  static const int *p_corner3_move_ptr; // [新增] Corner3 移动表指针
-  static const int *p_corner2_move_ptr; // [新增] Corner2 移动表指针
-  static const int *p_edge2_move_ptr;   // [新增] Edge2 移动表指针
+  static const int *p_mt_edge3;   // Edge3 移动表指针
+  static const int *p_mt_corn3; // [新增] Corner3 移动表指针
+  static const int *p_mt_corn2; // [新增] Corner2 移动表指针
+  static const int *p_mt_edge2;   // [新增] Edge2 移动表指针
 
   // [重构] Aux 剪枝表指针(从 Manager 获取)
   // Edge3 剪枝表
-  static const unsigned char *p_aux_e3_prune; // E0E1E2 规范表
+  static const unsigned char *p_pt_pscross_E0E1E2; // E0E1E2 规范表
 
   // Corner3 剪枝表
-  static const unsigned char *p_aux_c3_prune; // C4C5C6 规范表
+  static const unsigned char *p_pt_pscross_C4C5C6; // C4C5C6 规范表
 
   // Corner2 剪枝表
-  static const unsigned char *p_aux_c2_adj_prune;  // C4C5 邻接
-  static const unsigned char *p_aux_c2_diag_prune; // C4C6 对角
+  static const unsigned char *p_pt_pscross_C4C5;  // C4C5 邻接
+  static const unsigned char *p_pt_pscross_C4C6; // C4C6 对角
 
   // Edge2 剪枝表
-  static const unsigned char *p_aux_e2_adj_prune;  // E0E1 邻接
-  static const unsigned char *p_aux_e2_diag_prune; // E0E2 对角
+  static const unsigned char *p_pt_pscross_E0E1;  // E0E1 邻接
+  static const unsigned char *p_pt_pscross_E0E2; // E0E2 对角
 
   // [新增] 辅助剪枝定义 (用于通用 AuxState 架构)
   struct AuxPrunerDef {
@@ -102,15 +102,15 @@ struct xcross_analyzer2 {
 
   // === 静态AuxPrunerDef 对象 (替代 aux_registry map) ===
   // Edge2: 邻接 (E0E1) 和对角 (E0E2)
-  static AuxPrunerDef aux_def_e2_adj;  // {0,1}: prune_e0e1
-  static AuxPrunerDef aux_def_e2_diag; // {0,2}: prune_e0e2
+  static AuxPrunerDef aux_def_pscross_E0E1;  // {0,1}: prune_e0e1
+  static AuxPrunerDef aux_def_pscross_E0E2; // {0,2}: prune_e0e2
   // Corner2: 邻接 (C4C5) 和对角 (C4C6)
-  static AuxPrunerDef aux_def_c2_adj;  // {4,5}: prune_c4c5
-  static AuxPrunerDef aux_def_c2_diag; // {4,6}: prune_c4c6
+  static AuxPrunerDef aux_def_pscross_C4C5;  // {4,5}: prune_c4c5
+  static AuxPrunerDef aux_def_pscross_C4C6; // {4,6}: prune_c4c6
   // Edge3: 规范表(E0E1E2)
-  static AuxPrunerDef aux_def_e3; // {0,1,2}: prune_e0e1e2
+  static AuxPrunerDef aux_def_pscross_E0E1E2; // {0,1,2}: prune_e0e1e2
   // Corner3: 规范表(C4C5C6)
-  static AuxPrunerDef aux_def_c3; // {4,5,6}: prune_c4c5c6
+  static AuxPrunerDef aux_def_pscross_C4C5C6; // {4,5,6}: prune_c4c5c6
 
   // === 索引类型判断辅助函数 ===
   // Edge2: 返回 0=邻接, 1=对角
@@ -130,18 +130,18 @@ struct xcross_analyzer2 {
     if (keys.size() == 2) {
       if (keys[0] < 4) {
         // Edge2
-        return (get_e2_type(keys[0], keys[1]) == 1) ? &aux_def_e2_diag
-                                                    : &aux_def_e2_adj;
+        return (get_e2_type(keys[0], keys[1]) == 1) ? &aux_def_pscross_E0E2
+                                                    : &aux_def_pscross_E0E1;
       } else {
         // Corner2
-        return (get_c2_type(keys[0], keys[1]) == 1) ? &aux_def_c2_diag
-                                                    : &aux_def_c2_adj;
+        return (get_c2_type(keys[0], keys[1]) == 1) ? &aux_def_pscross_C4C6
+                                                    : &aux_def_pscross_C4C5;
       }
     } else if (keys.size() == 3) {
       if (keys[0] < 4) {
-        return &aux_def_e3; // Edge3
+        return &aux_def_pscross_E0E1E2; // Edge3
       } else {
-        return &aux_def_c3; // Corner3
+        return &aux_def_pscross_C4C5C6; // Corner3
       }
     }
     return nullptr;
@@ -215,35 +215,35 @@ struct xcross_analyzer2 {
     // 5. 获取 Aux 表指针(从 Manager，已由loadPseudoPairTables 加载)
     // Edge3 移动表
     mtm.loadMTEdge3();
-    p_edge3_move_ptr = mtm.getEdge3MTPtr();
-    p_aux_e3_prune = ptm.getPsCrossE0E1E2PTPtr();
+    p_mt_edge3 = mtm.getEdge3MTPtr();
+    p_pt_pscross_E0E1E2 = ptm.getPsCrossE0E1E2PTPtr();
 
     // Corner3 移动表
     mtm.loadMTCorn3();
-    p_corner3_move_ptr = mtm.getCorn3MTPtr();
-    p_aux_c3_prune = ptm.getPsCrossC4C5C6PTPtr();
+    p_mt_corn3 = mtm.getCorn3MTPtr();
+    p_pt_pscross_C4C5C6 = ptm.getPsCrossC4C5C6PTPtr();
 
     // Corner2 移动表
     mtm.loadMTCorn2();
-    p_corner2_move_ptr = mtm.getCorn2MTPtr();
-    p_aux_c2_adj_prune = ptm.getPsCrossC4C5PTPtr();
-    p_aux_c2_diag_prune = ptm.getPsCrossC4C6PTPtr();
+    p_mt_corn2 = mtm.getCorn2MTPtr();
+    p_pt_pscross_C4C5 = ptm.getPsCrossC4C5PTPtr();
+    p_pt_pscross_C4C6 = ptm.getPsCrossC4C6PTPtr();
 
     // Edge2 移动表
     mtm.loadMTEdge2();
-    p_edge2_move_ptr = mtm.getEdge2MTPtr();
-    p_aux_e2_adj_prune = ptm.getPsCrossE0E1PTPtr();
-    p_aux_e2_diag_prune = ptm.getPsCrossE0E2PTPtr();
+    p_mt_edge2 = mtm.getEdge2MTPtr();
+    p_pt_pscross_E0E1 = ptm.getPsCrossE0E1PTPtr();
+    p_pt_pscross_E0E2 = ptm.getPsCrossE0E2PTPtr();
 
     // 6. 初始化静态AuxPrunerDef 对象
-    aux_def_c3 = {p_aux_c3_prune, p_corner3_move_ptr, 9072}; // Corner3
-    aux_def_e3 = {p_aux_e3_prune, p_edge3_move_ptr, 10560};  // Edge3
-    aux_def_c2_adj = {p_aux_c2_adj_prune, p_corner2_move_ptr,
+    aux_def_pscross_C4C5C6 = {p_pt_pscross_C4C5C6, p_mt_corn3, 9072}; // Corner3
+    aux_def_pscross_E0E1E2 = {p_pt_pscross_E0E1E2, p_mt_edge3, 10560};  // Edge3
+    aux_def_pscross_C4C5 = {p_pt_pscross_C4C5, p_mt_corn2,
                       504}; // Corner2 邻接
-    aux_def_c2_diag = {p_aux_c2_diag_prune, p_corner2_move_ptr,
+    aux_def_pscross_C4C6 = {p_pt_pscross_C4C6, p_mt_corn2,
                        504}; // Corner2 对角
-    aux_def_e2_adj = {p_aux_e2_adj_prune, p_edge2_move_ptr, 528}; // Edge2 邻接
-    aux_def_e2_diag = {p_aux_e2_diag_prune, p_edge2_move_ptr,
+    aux_def_pscross_E0E1 = {p_pt_pscross_E0E1, p_mt_edge2, 528}; // Edge2 邻接
+    aux_def_pscross_E0E2 = {p_pt_pscross_E0E2, p_mt_edge2,
                        528}; // Edge2 对角
 
     tables_initialized = true;
@@ -300,7 +300,7 @@ struct xcross_analyzer2 {
       std::sort(keys.begin(), keys.end());
 
       // 使用静态AuxPrunerDef 替代 aux_registry.find
-      const AuxPrunerDef *def_ptr = &aux_def_c3;
+      const AuxPrunerDef *def_ptr = &aux_def_pscross_C4C5C6;
       {
         int rot_idx = 0;
         // 确定旋转：将 keys 映射到{4, 5, 6}
@@ -324,7 +324,7 @@ struct xcross_analyzer2 {
         for (int m : alg) {
           int m_conj = conj_moves_flat[m][slot_k]; // 物理 -> slot_k 视角
           int m_rot = mapper[m_conj];              // slot_k -> 规范表
-          cur_c3 = p_corner3_move_ptr[cur_c3 * 18 + m_rot];
+          cur_c3 = p_mt_corn3[cur_c3 * 18 + m_rot];
           cur_cr = p_multi_move_ptr[cur_cr + m_rot];
         }
 
@@ -347,7 +347,7 @@ struct xcross_analyzer2 {
       std::sort(keys.begin(), keys.end());
 
       // 使用静态AuxPrunerDef 替代 aux_registry.find
-      const AuxPrunerDef *def_ptr = &aux_def_e3;
+      const AuxPrunerDef *def_ptr = &aux_def_pscross_E0E1E2;
       {
         int rot_idx = 0;
         // 确定旋转：将 keys 映射到{0, 1, 2}
@@ -371,7 +371,7 @@ struct xcross_analyzer2 {
         for (int m : alg) {
           int m_conj = conj_moves_flat[m][slot_k]; // 物理 -> slot_k 视角
           int m_rot = mapper[m_conj];              // slot_k -> 规范表
-          cur_e3 = p_edge3_move_ptr[cur_e3 * 18 + m_rot];
+          cur_e3 = p_mt_edge3[cur_e3 * 18 + m_rot];
           cur_cr = p_multi_move_ptr[cur_cr + m_rot];
         }
 
@@ -412,7 +412,7 @@ struct xcross_analyzer2 {
       bool is_diag = (k2 - k1) == 2;
       // 使用静态AuxPrunerDef 替代 aux_registry.find
       const AuxPrunerDef *def_ptr =
-          is_diag ? &aux_def_c2_diag : &aux_def_c2_adj;
+          is_diag ? &aux_def_pscross_C4C6 : &aux_def_pscross_C4C5;
 
       {
         int rot_idx = 0;
@@ -444,7 +444,7 @@ struct xcross_analyzer2 {
         for (int m : alg) {
           int m_conj = conj_moves_flat[m][slot_k]; // 物理 -> slot_k 视角
           int m_rot = mapper[m_conj];              // slot_k -> 规范表
-          cur_c2 = p_corner2_move_ptr[cur_c2 * 18 + m_rot];
+          cur_c2 = p_mt_corn2[cur_c2 * 18 + m_rot];
           cur_cr = p_multi_move_ptr[cur_cr + m_rot];
         }
 
@@ -469,7 +469,7 @@ struct xcross_analyzer2 {
       bool is_diag = (k2 - k1) == 2;
       // 使用静态AuxPrunerDef 替代 aux_registry.find
       const AuxPrunerDef *def_ptr =
-          is_diag ? &aux_def_e2_diag : &aux_def_e2_adj;
+          is_diag ? &aux_def_pscross_E0E2 : &aux_def_pscross_E0E1;
 
       {
         int rot_idx = 0;
@@ -501,7 +501,7 @@ struct xcross_analyzer2 {
         for (int m : alg) {
           int m_conj = conj_moves_flat[m][slot_k]; // 物理 -> slot_k 视角
           int m_rot = mapper[m_conj];              // slot_k -> 规范表
-          cur_e2 = p_edge2_move_ptr[cur_e2 * 18 + m_rot];
+          cur_e2 = p_mt_edge2[cur_e2 * 18 + m_rot];
           cur_cr = p_multi_move_ptr[cur_cr + m_rot];
         }
 
@@ -1491,26 +1491,26 @@ const unsigned char *xcross_analyzer2::p_pseudo_base_prune[4] = {nullptr};
 const int *xcross_analyzer2::p_edge_move_ptr = nullptr;
 const int *xcross_analyzer2::p_corner_move_ptr = nullptr;
 const int *xcross_analyzer2::p_multi_move_ptr = nullptr;
-const int *xcross_analyzer2::p_edge3_move_ptr = nullptr;
-const int *xcross_analyzer2::p_corner3_move_ptr = nullptr;
-const int *xcross_analyzer2::p_corner2_move_ptr = nullptr;
-const int *xcross_analyzer2::p_edge2_move_ptr = nullptr;
+const int *xcross_analyzer2::p_mt_edge3 = nullptr;
+const int *xcross_analyzer2::p_mt_corn3 = nullptr;
+const int *xcross_analyzer2::p_mt_corn2 = nullptr;
+const int *xcross_analyzer2::p_mt_edge2 = nullptr;
 
 // [重构] Aux 表指针静态定义
-const unsigned char *xcross_analyzer2::p_aux_e3_prune = nullptr;
-const unsigned char *xcross_analyzer2::p_aux_c3_prune = nullptr;
-const unsigned char *xcross_analyzer2::p_aux_c2_adj_prune = nullptr;
-const unsigned char *xcross_analyzer2::p_aux_c2_diag_prune = nullptr;
-const unsigned char *xcross_analyzer2::p_aux_e2_adj_prune = nullptr;
-const unsigned char *xcross_analyzer2::p_aux_e2_diag_prune = nullptr;
+const unsigned char *xcross_analyzer2::p_pt_pscross_E0E1E2 = nullptr;
+const unsigned char *xcross_analyzer2::p_pt_pscross_C4C5C6 = nullptr;
+const unsigned char *xcross_analyzer2::p_pt_pscross_C4C5 = nullptr;
+const unsigned char *xcross_analyzer2::p_pt_pscross_C4C6 = nullptr;
+const unsigned char *xcross_analyzer2::p_pt_pscross_E0E1 = nullptr;
+const unsigned char *xcross_analyzer2::p_pt_pscross_E0E2 = nullptr;
 
 // 静态AuxPrunerDef 成员定义
-xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_e2_adj;
-xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_e2_diag;
-xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_c2_adj;
-xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_c2_diag;
-xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_e3;
-xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_c3;
+xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_pscross_E0E1;
+xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_pscross_E0E2;
+xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_pscross_C4C5;
+xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_pscross_C4C6;
+xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_pscross_E0E1E2;
+xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_pscross_C4C5C6;
 
 std::string analyzer_compute(xcross_analyzer2 &xcs, std::string scramble,
                              std::string id) {
