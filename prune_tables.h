@@ -283,55 +283,55 @@ public:
   }
 
   // 生成函数 (新名)
-  void generateCrossPT();
-  void generateCrossC4PT();
-  void generatePairC4E0PT();
-  void generateCrossC4E0PT();
-  void generateCrossC4C5E0E1PT();
-  void generateCrossC4C6E0E2PT();
+  void generatePTCross();
+  void generatePTCrossC4();
+  void generatePTPairC4E0();
+  void generatePTCrossC4E0();
+  void generatePTCrossC4C5E0E1();
+  void generatePTCrossC4C6E0E2();
 
   // EOCross 专用生成函数
-  void generateEP4EO12PT(); // EP4 + EO12 联合剪枝表
+  void generatePTEP4EO12(); // EP4 + EO12 联合剪枝表
   // EOCross Plus Edge 生成函数
-  void generateCrossC4E0E1PT(); // Plus Edge Right (E1)
-  void generateCrossC4E0E2PT(); // Plus Edge Diag (E2)
-  void generateCrossC4E0E3PT(); // Plus Edge Left (E3)
+  void generatePTCrossC4E0E1(); // Plus Edge Right (E1)
+  void generatePTCrossC4E0E2(); // Plus Edge Diag (E2)
+  void generatePTCrossC4E0E3(); // Plus Edge Left (E3)
   // EOCross Plus Corner 生成函数
-  void generateCrossC4C5E0PT(); // Plus Corn Right (C5)
-  void generateCrossC4C6E0PT(); // Plus Corn Diag (C6)
-  void generateCrossC4C7E0PT(); // Plus Corn Left (C7)
+  void generatePTCrossC4C5E0(); // Plus Corn Right (C5)
+  void generatePTCrossC4C6E0(); // Plus Corn Diag (C6)
+  void generatePTCrossC4C7E0(); // Plus Corn Left (C7)
   // EOCross 3-Corner 生成函数
-  void generateCrossC4C5C6PT(); // 3-Corner (C5+C6)
+  void generatePTCrossC4C5C6(); // 3-Corner (C5+C6)
 
   // Pseudo 生成函数
-  void generatePsCrossPT();
-  void generatePsCrossC4EPT(int offset_idx);
+  void generatePTPsCross();
+  void generatePTPsCrossC4E(int offset_idx);
   // 对棱表生成函数
-  void generatePsCrossE0E2PT();
-  void generatePsCrossE1E3PT();
+  void generatePTPsCrossE0E2();
+  void generatePTPsCrossE1E3();
   // 邻棱表生成函数
-  void generatePsCrossE0E1PT();
-  void generatePsCrossE0E3PT();
-  void generatePsCrossE1E2PT();
-  void generatePsCrossE2E3PT();
+  void generatePTPsCrossE0E1();
+  void generatePTPsCrossE0E3();
+  void generatePTPsCrossE1E2();
+  void generatePTPsCrossE2E3();
   // Edge3 Generators
-  void generatePsCrossE0E1E2PT();
-  void generatePsCrossE1E2E3PT();
-  void generatePsCrossE0E2E3PT();
-  void generatePsCrossE0E1E3PT();
+  void generatePTPsCrossE0E1E2();
+  void generatePTPsCrossE1E2E3();
+  void generatePTPsCrossE0E2E3();
+  void generatePTPsCrossE0E1E3();
   // 对角生成函数
-  void generatePsCrossC4C6PT();
-  void generatePsCrossC5C7PT();
+  void generatePTPsCrossC4C6();
+  void generatePTPsCrossC5C7();
   // 邻角生成函数
-  void generatePsCrossC4C5PT();
-  void generatePsCrossC4C7PT();
-  void generatePsCrossC5C6PT();
-  void generatePsCrossC6C7PT();
+  void generatePTPsCrossC4C5();
+  void generatePTPsCrossC4C7();
+  void generatePTPsCrossC5C6();
+  void generatePTPsCrossC6C7();
   // Corner3 Generators
-  void generatePsCrossC4C5C6PT();
-  void generatePsCrossC4C5C7PT();
-  void generatePsCrossC4C6C7PT();
-  void generatePsCrossC5C6C7PT();
+  void generatePTPsCrossC4C5C6();
+  void generatePTPsCrossC4C5C7();
+  void generatePTPsCrossC4C6C7();
+  void generatePTPsCrossC5C6C7();
 
 private:
   // 文件操作

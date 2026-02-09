@@ -115,12 +115,12 @@ void PruneTableManager::initialize() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Initializing prune tables..." << std::endl;
 
-  generateCrossPT();
-  generateCrossC4PT();
-  generatePairC4E0PT();
-  generateCrossC4E0PT();
-  generateCrossC4C5E0E1PT();
-  generateCrossC4C6E0E2PT();
+  generatePTCross();
+  generatePTCrossC4();
+  generatePTPairC4E0();
+  generatePTCrossC4E0();
+  generatePTCrossC4C5E0E1();
+  generatePTCrossC4C6E0E2();
 }
 
 unsigned char *PruneTableManager::loadTableMMap(const std::string &filename) {
@@ -348,7 +348,7 @@ void PruneTableManager::generateAllSequentially() {
     std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
               << " Generating pt_cross.bin..." << std::endl;
     mtm.loadMTEdge2();
-    generateCrossPT();
+    generatePTCross();
     std::vector<unsigned char>().swap(pt_cross);
     mtm.releaseMTEdge2();
   }
@@ -357,7 +357,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_cross_C4.bin")) {
     mtm.loadMTCross();
     mtm.loadMTCorn();
-    generateCrossC4PT();
+    generatePTCrossC4();
     std::vector<unsigned char>().swap(pt_cross_C4);
     mtm.releaseMTCross();
     mtm.releaseMTCorn();
@@ -367,7 +367,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pair_C4E0.bin")) {
     mtm.loadMTEdge();
     mtm.loadMTCorn();
-    generatePairC4E0PT();
+    generatePTPairC4E0();
     std::vector<unsigned char>().swap(pt_pair_C4E0);
     mtm.releaseMTEdge();
     mtm.releaseMTCorn();
@@ -378,7 +378,7 @@ void PruneTableManager::generateAllSequentially() {
     mtm.loadMTCross();
     mtm.loadMTCorn();
     mtm.loadMTEdge();
-    generateCrossC4E0PT();
+    generatePTCrossC4E0();
     std::vector<unsigned char>().swap(pt_cross_C4E0);
     mtm.releaseMTCross();
     mtm.releaseMTCorn();
@@ -389,7 +389,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_cross_C4C5E0E1.bin")) {
     mtm.loadMTEdge6();
     mtm.loadMTCorn2();
-    generateCrossC4C5E0E1PT();
+    generatePTCrossC4C5E0E1();
     std::vector<unsigned char>().swap(pt_cross_C4C5E0E1);
     mtm.releaseMTEdge6();
     mtm.releaseMTCorn2();
@@ -401,7 +401,7 @@ void PruneTableManager::generateAllSequentially() {
     if (!fileExists("pt_cross_C4C6E0E2.bin")) {
       mtm.loadMTEdge6();
       mtm.loadMTCorn2();
-      generateCrossC4C6E0E2PT();
+      generatePTCrossC4C6E0E2();
       std::vector<unsigned char>().swap(pt_cross_C4C6E0E2);
       mtm.releaseMTEdge6();
       mtm.releaseMTCorn2();
@@ -411,7 +411,7 @@ void PruneTableManager::generateAllSequentially() {
   // 7. EO Dependency+EO Prune (Needs EOCross Move Tables: EP4 + EO_Alt)
   if (!fileExists("pt_ep4eo12.bin")) {
     mtm.loadMTEOCross();
-    generateEP4EO12PT();
+    generatePTEP4EO12();
     std::vector<unsigned char>().swap(pt_ep4eo12);
     // NOTE: EOCross 移动表较小，保持加载不释�?
   }
@@ -425,11 +425,11 @@ void PruneTableManager::generateAllSequentially() {
       mtm.loadMTCross();
       mtm.loadMTCorn();
       mtm.loadMTEdge();
-      generateCrossC4E0E1PT();
+      generatePTCrossC4E0E1();
       std::vector<unsigned char>().swap(pt_cross_C4E0E1_C4E0E2_C4E0E3[0]);
-      generateCrossC4E0E2PT();
+      generatePTCrossC4E0E2();
       std::vector<unsigned char>().swap(pt_cross_C4E0E1_C4E0E2_C4E0E3[1]);
-      generateCrossC4E0E3PT();
+      generatePTCrossC4E0E3();
       std::vector<unsigned char>().swap(pt_cross_C4E0E1_C4E0E2_C4E0E3[2]);
       mtm.releaseMTCross();
       mtm.releaseMTCorn();
@@ -446,11 +446,11 @@ void PruneTableManager::generateAllSequentially() {
       mtm.loadMTCross();
       mtm.loadMTCorn();
       mtm.loadMTEdge();
-      generateCrossC4C5E0PT();
+      generatePTCrossC4C5E0();
       std::vector<unsigned char>().swap(pt_cross_C4C5E0_C4C6E0_C4C7E0[0]);
-      generateCrossC4C6E0PT();
+      generatePTCrossC4C6E0();
       std::vector<unsigned char>().swap(pt_cross_C4C5E0_C4C6E0_C4C7E0[1]);
-      generateCrossC4C7E0PT();
+      generatePTCrossC4C7E0();
       std::vector<unsigned char>().swap(pt_cross_C4C5E0_C4C6E0_C4C7E0[2]);
       mtm.releaseMTCross();
       mtm.releaseMTCorn();
@@ -462,7 +462,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_cross_C4C5C6.bin")) {
     mtm.loadMTCross();
     mtm.loadMTCorn();
-    generateCrossC4C5C6PT();
+    generatePTCrossC4C5C6();
     std::vector<unsigned char>().swap(pt_cross_C4C5C6);
     mtm.releaseMTCross();
     mtm.releaseMTCorn();
@@ -471,7 +471,7 @@ void PruneTableManager::generateAllSequentially() {
   // 8. Pseudo Cross Prune
   if (!fileExists("pt_pscross.bin")) {
     mtm.loadMTEdge2();
-    generatePsCrossPT();
+    generatePTPsCross();
     std::vector<unsigned char>().swap(pt_pscross);
     mtm.releaseMTEdge2();
   }
@@ -483,7 +483,7 @@ void PruneTableManager::generateAllSequentially() {
       mtm.loadMTCross();
       mtm.loadMTCorn();
       mtm.loadMTEdge();
-      generatePsCrossC4EPT(i);
+      generatePTPsCrossC4E(i);
       std::vector<unsigned char>().swap(pt_pscross_C4E[i]);
       mtm.releaseMTCross();
       mtm.releaseMTCorn();
@@ -495,7 +495,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_E0E2.bin")) {
     mtm.loadMTCross();
     mtm.loadMTEdge2();
-    generatePsCrossE0E2PT();
+    generatePTPsCrossE0E2();
     std::vector<unsigned char>().swap(pt_pscross_E0E2);
     mtm.releaseMTCross();
     mtm.releaseMTEdge2();
@@ -505,7 +505,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_E0E1.bin")) {
     mtm.loadMTCross();
     mtm.loadMTEdge2();
-    generatePsCrossE0E1PT();
+    generatePTPsCrossE0E1();
     std::vector<unsigned char>().swap(pt_pscross_E0E1);
     mtm.releaseMTCross();
     mtm.releaseMTEdge2();
@@ -515,7 +515,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_E1E3.bin")) {
     mtm.loadMTCross();
     mtm.loadMTEdge2();
-    generatePsCrossE1E3PT();
+    generatePTPsCrossE1E3();
     std::vector<unsigned char>().swap(pt_pscross_E1E3);
     mtm.releaseMTCross();
     mtm.releaseMTEdge2();
@@ -525,7 +525,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_E0E3.bin")) {
     mtm.loadMTCross();
     mtm.loadMTEdge2();
-    generatePsCrossE0E3PT();
+    generatePTPsCrossE0E3();
     std::vector<unsigned char>().swap(pt_pscross_E0E3);
     mtm.releaseMTCross();
     mtm.releaseMTEdge2();
@@ -535,7 +535,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_E1E2.bin")) {
     mtm.loadMTCross();
     mtm.loadMTEdge2();
-    generatePsCrossE1E2PT();
+    generatePTPsCrossE1E2();
     std::vector<unsigned char>().swap(pt_pscross_E1E2);
     mtm.releaseMTCross();
     mtm.releaseMTEdge2();
@@ -545,7 +545,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_E2E3.bin")) {
     mtm.loadMTCross();
     mtm.loadMTEdge2();
-    generatePsCrossE2E3PT();
+    generatePTPsCrossE2E3();
     std::vector<unsigned char>().swap(pt_pscross_E2E3);
     mtm.releaseMTCross();
     mtm.releaseMTEdge2();
@@ -555,7 +555,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_E0E1E2.bin")) {
     mtm.loadMTCross();
     mtm.loadMTEdge3();
-    generatePsCrossE0E1E2PT();
+    generatePTPsCrossE0E1E2();
     std::vector<unsigned char>().swap(pt_pscross_E0E1E2);
     mtm.releaseMTCross();
     mtm.releaseMTEdge3();
@@ -565,7 +565,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_E1E2E3.bin")) {
     mtm.loadMTCross();
     mtm.loadMTEdge3();
-    generatePsCrossE1E2E3PT();
+    generatePTPsCrossE1E2E3();
     std::vector<unsigned char>().swap(pt_pscross_E1E2E3);
     mtm.releaseMTCross();
     mtm.releaseMTEdge3();
@@ -575,7 +575,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_E0E2E3.bin")) {
     mtm.loadMTCross();
     mtm.loadMTEdge3();
-    generatePsCrossE0E2E3PT();
+    generatePTPsCrossE0E2E3();
     std::vector<unsigned char>().swap(pt_pscross_E0E2E3);
     mtm.releaseMTCross();
     mtm.releaseMTEdge3();
@@ -585,7 +585,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_E0E1E3.bin")) {
     mtm.loadMTCross();
     mtm.loadMTEdge3();
-    generatePsCrossE0E1E3PT();
+    generatePTPsCrossE0E1E3();
     std::vector<unsigned char>().swap(pt_pscross_E0E1E3);
     mtm.releaseMTCross();
     mtm.releaseMTEdge3();
@@ -595,7 +595,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_C4C6.bin")) {
     mtm.loadMTCross();
     mtm.loadMTCorn2();
-    generatePsCrossC4C6PT();
+    generatePTPsCrossC4C6();
     std::vector<unsigned char>().swap(pt_pscross_C4C6);
     mtm.releaseMTCross();
     mtm.releaseMTCorn2();
@@ -605,7 +605,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_C4C5.bin")) {
     mtm.loadMTCross();
     mtm.loadMTCorn2();
-    generatePsCrossC4C5PT();
+    generatePTPsCrossC4C5();
     std::vector<unsigned char>().swap(pt_pscross_C4C5);
     mtm.releaseMTCross();
     mtm.releaseMTCorn2();
@@ -615,7 +615,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_C4C7.bin")) {
     mtm.loadMTCross();
     mtm.loadMTCorn2();
-    generatePsCrossC4C7PT();
+    generatePTPsCrossC4C7();
     std::vector<unsigned char>().swap(pt_pscross_C4C7);
     mtm.releaseMTCross();
     mtm.releaseMTCorn2();
@@ -625,7 +625,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_C5C6.bin")) {
     mtm.loadMTCross();
     mtm.loadMTCorn2();
-    generatePsCrossC5C6PT();
+    generatePTPsCrossC5C6();
     std::vector<unsigned char>().swap(pt_pscross_C5C6);
     mtm.releaseMTCross();
     mtm.releaseMTCorn2();
@@ -635,7 +635,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_C5C7.bin")) {
     mtm.loadMTCross();
     mtm.loadMTCorn2();
-    generatePsCrossC5C7PT();
+    generatePTPsCrossC5C7();
     std::vector<unsigned char>().swap(pt_pscross_C5C7);
     mtm.releaseMTCross();
     mtm.releaseMTCorn2();
@@ -645,7 +645,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_C6C7.bin")) {
     mtm.loadMTCross();
     mtm.loadMTCorn2();
-    generatePsCrossC6C7PT();
+    generatePTPsCrossC6C7();
     std::vector<unsigned char>().swap(pt_pscross_C6C7);
     mtm.releaseMTCross();
     mtm.releaseMTCorn2();
@@ -655,7 +655,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_C4C5C6.bin")) {
     mtm.loadMTCross();
     mtm.loadMTCorn3();
-    generatePsCrossC4C5C6PT();
+    generatePTPsCrossC4C5C6();
     std::vector<unsigned char>().swap(pt_pscross_C4C5C6);
     mtm.releaseMTCross();
     mtm.releaseMTCorn3();
@@ -665,7 +665,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_C4C5C7.bin")) {
     mtm.loadMTCross();
     mtm.loadMTCorn3();
-    generatePsCrossC4C5C7PT();
+    generatePTPsCrossC4C5C7();
     std::vector<unsigned char>().swap(pt_pscross_C4C5C7);
     mtm.releaseMTCross();
     mtm.releaseMTCorn3();
@@ -675,7 +675,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_C4C6C7.bin")) {
     mtm.loadMTCross();
     mtm.loadMTCorn3();
-    generatePsCrossC4C6C7PT();
+    generatePTPsCrossC4C6C7();
     std::vector<unsigned char>().swap(pt_pscross_C4C6C7);
     mtm.releaseMTCross();
     mtm.releaseMTCorn3();
@@ -685,7 +685,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("pt_pscross_C5C6C7.bin")) {
     mtm.loadMTCross();
     mtm.loadMTCorn3();
-    generatePsCrossC5C6C7PT();
+    generatePTPsCrossC5C6C7();
     std::vector<unsigned char>().swap(pt_pscross_C5C6C7);
     mtm.releaseMTCross();
     mtm.releaseMTCorn3();
@@ -796,7 +796,7 @@ void PruneTableManager::saveTable(const std::vector<unsigned char> &table,
   save_vector_chunked(table, filename);
 }
 
-void PruneTableManager::generateCrossPT() {
+void PruneTableManager::generatePTCross() {
   if (loadTable(pt_cross, "pt_cross.bin"))
     return;
   GenerationTimer timer;
@@ -841,7 +841,7 @@ void PruneTableManager::generateCrossPT() {
   timer.printElapsed("pt_cross.bin");
 }
 
-void PruneTableManager::generateCrossC4PT() {
+void PruneTableManager::generatePTCrossC4() {
   if (loadTable(pt_cross_C4, "pt_cross_C4.bin"))
     return;
   GenerationTimer timer;
@@ -855,7 +855,7 @@ void PruneTableManager::generateCrossC4PT() {
   timer.printElapsed("pt_cross_C4.bin");
 }
 
-void PruneTableManager::generatePairC4E0PT() {
+void PruneTableManager::generatePTPairC4E0() {
   if (loadTable(pt_pair_C4E0, "pt_pair_C4E0.bin"))
     return;
   GenerationTimer timer;
@@ -869,7 +869,7 @@ void PruneTableManager::generatePairC4E0PT() {
   timer.printElapsed("pt_pair_C4E0.bin");
 }
 
-void PruneTableManager::generateCrossC4E0PT() {
+void PruneTableManager::generatePTCrossC4E0() {
   if (loadTable(pt_cross_C4E0, "pt_cross_C4E0.bin"))
     return;
   GenerationTimer timer;
@@ -885,7 +885,7 @@ void PruneTableManager::generateCrossC4E0PT() {
   timer.printElapsed("pt_cross_C4E0.bin");
 }
 
-void PruneTableManager::generateCrossC4C5E0E1PT() {
+void PruneTableManager::generatePTCrossC4C5E0E1() {
   if (loadTable(pt_cross_C4C5E0E1, "pt_cross_C4C5E0E1.bin"))
     return;
   GenerationTimer timer;
@@ -898,7 +898,7 @@ void PruneTableManager::generateCrossC4C5E0E1PT() {
   timer.printElapsed("pt_cross_C4C5E0E1.bin");
 }
 
-void PruneTableManager::generateCrossC4C6E0E2PT() {
+void PruneTableManager::generatePTCrossC4C6E0E2() {
   if (!ENABLE_DIAGONAL_STD && !ENABLE_DIAGONAL_PAIR &&
       !ENABLE_DIAGONAL_EO_CROSS)
     return;
@@ -914,7 +914,7 @@ void PruneTableManager::generateCrossC4C6E0E2PT() {
   timer.printElapsed("pt_cross_C4C6E0E2.bin");
 }
 
-void PruneTableManager::generateEP4EO12PT() {
+void PruneTableManager::generatePTEP4EO12() {
   if (loadTable(pt_ep4eo12, "pt_ep4eo12.bin"))
     return;
   GenerationTimer timer;
@@ -934,7 +934,7 @@ void PruneTableManager::generateEP4EO12PT() {
 // NOTE: 状态空�?Cross(187560) × C4(24) × E0(24) × Extra(24)
 // 参数来源: eo_cross_analyzer_old.cpp:L278-L281
 
-void PruneTableManager::generateCrossC4E0E1PT() {
+void PruneTableManager::generatePTCrossC4E0E1() {
   if (loadTable(pt_cross_C4E0E1_C4E0E2_C4E0E3[0], "pt_cross_C4E0E1.bin"))
     return;
   GenerationTimer timer;
@@ -949,7 +949,7 @@ void PruneTableManager::generateCrossC4E0E1PT() {
   timer.printElapsed("pt_cross_C4E0E1.bin");
 }
 
-void PruneTableManager::generateCrossC4E0E2PT() {
+void PruneTableManager::generatePTCrossC4E0E2() {
   if (loadTable(pt_cross_C4E0E1_C4E0E2_C4E0E3[1], "pt_cross_C4E0E2.bin"))
     return;
   GenerationTimer timer;
@@ -964,7 +964,7 @@ void PruneTableManager::generateCrossC4E0E2PT() {
   timer.printElapsed("pt_cross_C4E0E2.bin");
 }
 
-void PruneTableManager::generateCrossC4E0E3PT() {
+void PruneTableManager::generatePTCrossC4E0E3() {
   if (loadTable(pt_cross_C4E0E1_C4E0E2_C4E0E3[2], "pt_cross_C4E0E3.bin"))
     return;
   GenerationTimer timer;
@@ -983,7 +983,7 @@ void PruneTableManager::generateCrossC4E0E3PT() {
 // NOTE: �?Plus Edge 结构相同，但 idx_extra 是角块初始状态，t4=CornMT
 // 参数来源: eo_cross_analyzer_old.cpp:L295-L298
 
-void PruneTableManager::generateCrossC4C5E0PT() {
+void PruneTableManager::generatePTCrossC4C5E0() {
   if (loadTable(pt_cross_C4C5E0_C4C6E0_C4C7E0[0], "pt_cross_C4C5E0.bin"))
     return;
   GenerationTimer timer;
@@ -998,7 +998,7 @@ void PruneTableManager::generateCrossC4C5E0PT() {
   timer.printElapsed("pt_cross_C4C5E0.bin");
 }
 
-void PruneTableManager::generateCrossC4C6E0PT() {
+void PruneTableManager::generatePTCrossC4C6E0() {
   if (loadTable(pt_cross_C4C5E0_C4C6E0_C4C7E0[1], "pt_cross_C4C6E0.bin"))
     return;
   GenerationTimer timer;
@@ -1013,7 +1013,7 @@ void PruneTableManager::generateCrossC4C6E0PT() {
   timer.printElapsed("pt_cross_C4C6E0.bin");
 }
 
-void PruneTableManager::generateCrossC4C7E0PT() {
+void PruneTableManager::generatePTCrossC4C7E0() {
   if (loadTable(pt_cross_C4C5E0_C4C6E0_C4C7E0[2], "pt_cross_C4C7E0.bin"))
     return;
   GenerationTimer timer;
@@ -1032,7 +1032,7 @@ void PruneTableManager::generateCrossC4C7E0PT() {
 // NOTE: 使用 create_pt_xcross_corn3，跟�?C4+C5+C6 三个角块
 // 参数来源: eo_cross_analyzer_old.cpp:L310-L313
 
-void PruneTableManager::generateCrossC4C5C6PT() {
+void PruneTableManager::generatePTCrossC4C5C6() {
   if (loadTable(pt_cross_C4C5C6, "pt_cross_C4C5C6.bin"))
     return;
   GenerationTimer timer;
@@ -1047,7 +1047,7 @@ void PruneTableManager::generateCrossC4C5C6PT() {
   timer.printElapsed("pt_cross_C4C5C6.bin");
 }
 
-void PruneTableManager::generatePsCrossPT() {
+void PruneTableManager::generatePTPsCross() {
   if (loadTable(pt_pscross, "pt_pscross.bin"))
     return;
   GenerationTimer timer;
@@ -1099,7 +1099,7 @@ void PruneTableManager::generatePsCrossPT() {
   timer.printElapsed("pt_pscross.bin");
 }
 
-void PruneTableManager::generatePsCrossC4EPT(int i) {
+void PruneTableManager::generatePTPsCrossC4E(int i) {
   std::string fn = "pt_pscross_C4E" + std::to_string(i) + ".bin";
   if (loadTable(pt_pscross_C4E[i], fn))
     return;
@@ -1117,7 +1117,7 @@ void PruneTableManager::generatePsCrossC4EPT(int i) {
   timer.printElapsed(fn);
 }
 
-void PruneTableManager::generatePsCrossE0E2PT() {
+void PruneTableManager::generatePTPsCrossE0E2() {
   if (loadTable(pt_pscross_E0E2, "pt_pscross_E0E2.bin"))
     return;
   GenerationTimer timer;
@@ -1133,7 +1133,7 @@ void PruneTableManager::generatePsCrossE0E2PT() {
   timer.printElapsed("pt_pscross_E0E2.bin");
 }
 
-void PruneTableManager::generatePsCrossE0E1PT() {
+void PruneTableManager::generatePTPsCrossE0E1() {
   if (loadTable(pt_pscross_E0E1, "pt_pscross_E0E1.bin"))
     return;
   GenerationTimer timer;
@@ -1149,7 +1149,7 @@ void PruneTableManager::generatePsCrossE0E1PT() {
   timer.printElapsed("pt_pscross_E0E1.bin");
 }
 
-void PruneTableManager::generatePsCrossE1E3PT() {
+void PruneTableManager::generatePTPsCrossE1E3() {
   if (loadTable(pt_pscross_E1E3, "pt_pscross_E1E3.bin"))
     return;
   GenerationTimer timer;
@@ -1165,7 +1165,7 @@ void PruneTableManager::generatePsCrossE1E3PT() {
   timer.printElapsed("pt_pscross_E1E3.bin");
 }
 
-void PruneTableManager::generatePsCrossE0E3PT() {
+void PruneTableManager::generatePTPsCrossE0E3() {
   if (loadTable(pt_pscross_E0E3, "pt_pscross_E0E3.bin"))
     return;
   GenerationTimer timer;
@@ -1181,7 +1181,7 @@ void PruneTableManager::generatePsCrossE0E3PT() {
   timer.printElapsed("pt_pscross_E0E3.bin");
 }
 
-void PruneTableManager::generatePsCrossE1E2PT() {
+void PruneTableManager::generatePTPsCrossE1E2() {
   if (loadTable(pt_pscross_E1E2, "pt_pscross_E1E2.bin"))
     return;
   GenerationTimer timer;
@@ -1197,7 +1197,7 @@ void PruneTableManager::generatePsCrossE1E2PT() {
   timer.printElapsed("pt_pscross_E1E2.bin");
 }
 
-void PruneTableManager::generatePsCrossE2E3PT() {
+void PruneTableManager::generatePTPsCrossE2E3() {
   if (loadTable(pt_pscross_E2E3, "pt_pscross_E2E3.bin"))
     return;
   GenerationTimer timer;
@@ -1213,7 +1213,7 @@ void PruneTableManager::generatePsCrossE2E3PT() {
   timer.printElapsed("pt_pscross_E2E3.bin");
 }
 
-void PruneTableManager::generatePsCrossE0E1E2PT() {
+void PruneTableManager::generatePTPsCrossE0E1E2() {
   if (loadTable(pt_pscross_E0E1E2, "pt_pscross_E0E1E2.bin"))
     return;
   GenerationTimer timer;
@@ -1230,7 +1230,7 @@ void PruneTableManager::generatePsCrossE0E1E2PT() {
   timer.printElapsed("pt_pscross_E0E1E2.bin");
 }
 
-void PruneTableManager::generatePsCrossE1E2E3PT() {
+void PruneTableManager::generatePTPsCrossE1E2E3() {
   if (loadTable(pt_pscross_E1E2E3, "pt_pscross_E1E2E3.bin"))
     return;
   GenerationTimer timer;
@@ -1247,7 +1247,7 @@ void PruneTableManager::generatePsCrossE1E2E3PT() {
   timer.printElapsed("pt_pscross_E1E2E3.bin");
 }
 
-void PruneTableManager::generatePsCrossE0E2E3PT() {
+void PruneTableManager::generatePTPsCrossE0E2E3() {
   if (loadTable(pt_pscross_E0E2E3, "pt_pscross_E0E2E3.bin"))
     return;
   GenerationTimer timer;
@@ -1264,7 +1264,7 @@ void PruneTableManager::generatePsCrossE0E2E3PT() {
   timer.printElapsed("pt_pscross_E0E2E3.bin");
 }
 
-void PruneTableManager::generatePsCrossE0E1E3PT() {
+void PruneTableManager::generatePTPsCrossE0E1E3() {
   if (loadTable(pt_pscross_E0E1E3, "pt_pscross_E0E1E3.bin"))
     return;
   GenerationTimer timer;
@@ -1281,7 +1281,7 @@ void PruneTableManager::generatePsCrossE0E1E3PT() {
   timer.printElapsed("pt_pscross_E0E1E3.bin");
 }
 
-void PruneTableManager::generatePsCrossC4C6PT() {
+void PruneTableManager::generatePTPsCrossC4C6() {
   if (loadTable(pt_pscross_C4C6, "pt_pscross_C4C6.bin"))
     return;
   GenerationTimer timer;
@@ -1298,7 +1298,7 @@ void PruneTableManager::generatePsCrossC4C6PT() {
   timer.printElapsed("pt_pscross_C4C6.bin");
 }
 
-void PruneTableManager::generatePsCrossC5C7PT() {
+void PruneTableManager::generatePTPsCrossC5C7() {
   if (loadTable(pt_pscross_C5C7, "pt_pscross_C5C7.bin"))
     return;
   GenerationTimer timer;
@@ -1315,7 +1315,7 @@ void PruneTableManager::generatePsCrossC5C7PT() {
   timer.printElapsed("pt_pscross_C5C7.bin");
 }
 
-void PruneTableManager::generatePsCrossC4C5PT() {
+void PruneTableManager::generatePTPsCrossC4C5() {
   if (loadTable(pt_pscross_C4C5, "pt_pscross_C4C5.bin"))
     return;
   GenerationTimer timer;
@@ -1332,7 +1332,7 @@ void PruneTableManager::generatePsCrossC4C5PT() {
   timer.printElapsed("pt_pscross_C4C5.bin");
 }
 
-void PruneTableManager::generatePsCrossC4C7PT() {
+void PruneTableManager::generatePTPsCrossC4C7() {
   if (loadTable(pt_pscross_C4C7, "pt_pscross_C4C7.bin"))
     return;
   GenerationTimer timer;
@@ -1349,7 +1349,7 @@ void PruneTableManager::generatePsCrossC4C7PT() {
   timer.printElapsed("pt_pscross_C4C7.bin");
 }
 
-void PruneTableManager::generatePsCrossC5C6PT() {
+void PruneTableManager::generatePTPsCrossC5C6() {
   if (loadTable(pt_pscross_C5C6, "pt_pscross_C5C6.bin"))
     return;
   GenerationTimer timer;
@@ -1366,7 +1366,7 @@ void PruneTableManager::generatePsCrossC5C6PT() {
   timer.printElapsed("pt_pscross_C5C6.bin");
 }
 
-void PruneTableManager::generatePsCrossC6C7PT() {
+void PruneTableManager::generatePTPsCrossC6C7() {
   if (loadTable(pt_pscross_C6C7, "pt_pscross_C6C7.bin"))
     return;
   GenerationTimer timer;
@@ -1383,7 +1383,7 @@ void PruneTableManager::generatePsCrossC6C7PT() {
   timer.printElapsed("pt_pscross_C6C7.bin");
 }
 
-void PruneTableManager::generatePsCrossC4C5C6PT() {
+void PruneTableManager::generatePTPsCrossC4C5C6() {
   if (loadTable(pt_pscross_C4C5C6, "pt_pscross_C4C5C6.bin"))
     return;
   GenerationTimer timer;
@@ -1400,7 +1400,7 @@ void PruneTableManager::generatePsCrossC4C5C6PT() {
   timer.printElapsed("pt_pscross_C4C5C6.bin");
 }
 
-void PruneTableManager::generatePsCrossC4C5C7PT() {
+void PruneTableManager::generatePTPsCrossC4C5C7() {
   if (loadTable(pt_pscross_C4C5C7, "pt_pscross_C4C5C7.bin"))
     return;
   GenerationTimer timer;
@@ -1417,7 +1417,7 @@ void PruneTableManager::generatePsCrossC4C5C7PT() {
   timer.printElapsed("pt_pscross_C4C5C7.bin");
 }
 
-void PruneTableManager::generatePsCrossC4C6C7PT() {
+void PruneTableManager::generatePTPsCrossC4C6C7() {
   if (loadTable(pt_pscross_C4C6C7, "pt_pscross_C4C6C7.bin"))
     return;
   GenerationTimer timer;
@@ -1434,7 +1434,7 @@ void PruneTableManager::generatePsCrossC4C6C7PT() {
   timer.printElapsed("pt_pscross_C4C6C7.bin");
 }
 
-void PruneTableManager::generatePsCrossC5C6C7PT() {
+void PruneTableManager::generatePTPsCrossC5C6C7() {
   if (loadTable(pt_pscross_C5C6C7, "pt_pscross_C5C6C7.bin"))
     return;
   GenerationTimer timer;
