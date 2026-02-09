@@ -5,6 +5,7 @@
 #include "prune_tables.h"
 #include "move_tables.h"
 #include <iomanip>
+#include <omp.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -81,6 +82,25 @@ struct DistributionPrinter {
               << formatWithCommas(accumulated) << "  100.000000%" << std::endl;
     std::cout << std::endl; // 空行分隔
   }
+
+  // 在并行 BFS 循环内部显示扫描进度
+  // 仅线程0报告，使用位掩码控制检查频率以最小化开销
+  void progress(long long i, long long loopTotal, int depth) {
+    if (omp_get_thread_num() != 0)
+      return;
+    // 每 ~100 万次迭代检查一次
+    if ((i & 0xFFFFF) != 0)
+      return;
+    int numThreads = omp_get_num_threads();
+    int pct = (int)(i * numThreads * 100 / loopTotal);
+    if (pct > 99)
+      pct = 99;
+    std::cout << "\r  Scanning depth " << depth << ": " << pct << "%  "
+              << std::flush;
+  }
+
+  // 在 dp.print() 前调用，清除进度行
+  void clearProgress() { std::cout << "\r\033[2K" << std::flush; }
 };
 
 PruneTableManager &PruneTableManager::getInstance() {
@@ -160,47 +180,40 @@ bool PruneTableManager::loadPseudoTables() {
   if (!loadTable(pt_pscross, "pt_pscross.bin"))
     return false;
   for (int i = 0; i < 4; ++i) {
-    std::string fn =
-        "pt_pscross_C4E" + std::to_string(i) + ".bin";
+    std::string fn = "pt_pscross_C4E" + std::to_string(i) + ".bin";
     if (!loadTable(pt_pscross_C4E[i], fn))
       return false;
   }
-  if (!loadTable(pt_pscross_E0E2,
-                 "pt_pscross_E0E2.bin")) {
+  if (!loadTable(pt_pscross_E0E2, "pt_pscross_E0E2.bin")) {
     std::cout << "Warning: prune_table_pseudo_cross_E0_E2.bin not found."
               << std::endl;
   }
   // 新增邻棱表加载
-  if (!loadTable(pt_pscross_E0E1,
-                 "pt_pscross_E0E1.bin")) {
+  if (!loadTable(pt_pscross_E0E1, "pt_pscross_E0E1.bin")) {
     std::cout << "Warning: prune_table_pseudo_cross_E0_E1.bin not found."
               << std::endl;
   }
 
   // Edge3 Tables Loading
-  if (!loadTable(pt_pscross_E0E1E2,
-                 "pt_pscross_E0E1E2.bin")) {
+  if (!loadTable(pt_pscross_E0E1E2, "pt_pscross_E0E1E2.bin")) {
     std::cout << "Warning: prune_table_pseudo_cross_E0_E1_E2.bin not found."
               << std::endl;
   }
   // NOTE: E1_E2_E3, E0_E2_E3, E0_E1_E3 通过 conj 复用 E0_E1_E2，不再加载
 
   // 对角表加载
-  if (!loadTable(pt_pscross_C4C6,
-                 "pt_pscross_C4C6.bin")) {
+  if (!loadTable(pt_pscross_C4C6, "pt_pscross_C4C6.bin")) {
     std::cout << "Warning: prune_table_pseudo_cross_C4_C6.bin not found."
               << std::endl;
   }
   // 邻角表加载
-  if (!loadTable(pt_pscross_C4C5,
-                 "pt_pscross_C4C5.bin")) {
+  if (!loadTable(pt_pscross_C4C5, "pt_pscross_C4C5.bin")) {
     std::cout << "Warning: prune_table_pseudo_cross_C4_C5.bin not found."
               << std::endl;
   }
 
   // Corner3 Tables Loading
-  if (!loadTable(pt_pscross_C4C5C6,
-                 "pt_pscross_C4C5C6.bin")) {
+  if (!loadTable(pt_pscross_C4C5C6, "pt_pscross_C4C5C6.bin")) {
     std::cout << "Warning: prune_table_pseudo_cross_C4_C5_C6.bin not found."
               << std::endl;
   }
@@ -212,8 +225,7 @@ bool PruneTableManager::loadPseudoTables() {
 bool PruneTableManager::loadPseudoPairTables() {
   // 1. 加载 Base 表 (Cross + C{4-7})
   for (int c = 0; c < 4; ++c) {
-    std::string fn =
-        "pt_pscross_C" + std::to_string(c + 4) + ".bin";
+    std::string fn = "pt_pscross_C" + std::to_string(c + 4) + ".bin";
     if (!loadTable(pt_pscross_C[c], fn))
       return false;
   }
@@ -222,8 +234,8 @@ bool PruneTableManager::loadPseudoPairTables() {
   for (int e = 0; e < 4; ++e) {
     for (int c = 0; c < 4; ++c) {
       int idx = e * 4 + c;
-      std::string fn = "pt_pscross_C" + std::to_string(c + 4) +
-                       "_into_slot" + std::to_string(e) + ".bin";
+      std::string fn = "pt_pscross_C" + std::to_string(c + 4) + "_into_slot" +
+                       std::to_string(e) + ".bin";
       if (!loadTable(pt_pscross_C_diff[idx], fn))
         return false;
     }
@@ -233,8 +245,8 @@ bool PruneTableManager::loadPseudoPairTables() {
   for (int e = 0; e < 4; ++e) {
     for (int c = 0; c < 4; ++c) {
       int idx = e * 4 + c;
-      std::string fn = "pt_pspair_C" + std::to_string(c + 4) +
-                       "_E" + std::to_string(e) + ".bin";
+      std::string fn = "pt_pspair_C" + std::to_string(c + 4) + "_E" +
+                       std::to_string(e) + ".bin";
       if (!loadTable(pt_pspair_ec[idx], fn))
         return false;
     }
@@ -243,8 +255,7 @@ bool PruneTableManager::loadPseudoPairTables() {
   // 4. 加载 Pseudo XCross Base (C4+E{0-3})
   // 这组表用于 Conj 优化，从 C4 视角追踪 XCross 状态
   for (int e = 0; e < 4; ++e) {
-    std::string fn =
-        "pt_pscross_C4E" + std::to_string(e) + ".bin";
+    std::string fn = "pt_pscross_C4E" + std::to_string(e) + ".bin";
     if (!loadTable(pt_pscross_C4E[e], fn))
       return false;
   }
@@ -252,43 +263,37 @@ bool PruneTableManager::loadPseudoPairTables() {
   // 5. 加载 Aux 表 (复用 Pseudo Analyzer 的 Aux 表)
   // E2/C2/E3/C3 表已由 loadPseudoTables 加载，此处确保已加载
   if (pt_pscross_E0E1.empty()) {
-    if (!loadTable(pt_pscross_E0E1,
-                   "pt_pscross_E0E1.bin")) {
+    if (!loadTable(pt_pscross_E0E1, "pt_pscross_E0E1.bin")) {
       std::cout << "Warning: prune_table_pseudo_cross_E0_E1.bin not found."
                 << std::endl;
     }
   }
   if (pt_pscross_E0E2.empty()) {
-    if (!loadTable(pt_pscross_E0E2,
-                   "pt_pscross_E0E2.bin")) {
+    if (!loadTable(pt_pscross_E0E2, "pt_pscross_E0E2.bin")) {
       std::cout << "Warning: prune_table_pseudo_cross_E0_E2.bin not found."
                 << std::endl;
     }
   }
   if (pt_pscross_C4C5.empty()) {
-    if (!loadTable(pt_pscross_C4C5,
-                   "pt_pscross_C4C5.bin")) {
+    if (!loadTable(pt_pscross_C4C5, "pt_pscross_C4C5.bin")) {
       std::cout << "Warning: prune_table_pseudo_cross_C4_C5.bin not found."
                 << std::endl;
     }
   }
   if (pt_pscross_C4C6.empty()) {
-    if (!loadTable(pt_pscross_C4C6,
-                   "pt_pscross_C4C6.bin")) {
+    if (!loadTable(pt_pscross_C4C6, "pt_pscross_C4C6.bin")) {
       std::cout << "Warning: prune_table_pseudo_cross_C4_C6.bin not found."
                 << std::endl;
     }
   }
   if (pt_pscross_E0E1E2.empty()) {
-    if (!loadTable(pt_pscross_E0E1E2,
-                   "pt_pscross_E0E1E2.bin")) {
+    if (!loadTable(pt_pscross_E0E1E2, "pt_pscross_E0E1E2.bin")) {
       std::cout << "Warning: prune_table_pseudo_cross_E0_E1_E2.bin not found."
                 << std::endl;
     }
   }
   if (pt_pscross_C4C5C6.empty()) {
-    if (!loadTable(pt_pscross_C4C5C6,
-                   "pt_pscross_C4C5C6.bin")) {
+    if (!loadTable(pt_pscross_C4C5C6, "pt_pscross_C4C5C6.bin")) {
       std::cout << "Warning: prune_table_pseudo_cross_C4_C5_C6.bin not found."
                 << std::endl;
     }
@@ -310,8 +315,7 @@ bool PruneTableManager::loadEOCrossTables() {
     return false;
 
   // 3. Plus Edge 表 (Right/Diag/Left)
-  const char *edge_files[] = {"pt_cross_C4E0E1.bin",
-                              "pt_cross_C4E0E2.bin",
+  const char *edge_files[] = {"pt_cross_C4E0E1.bin", "pt_cross_C4E0E2.bin",
                               "pt_cross_C4E0E3.bin"};
   for (int i = 0; i < 3; ++i) {
     if (!loadTable(pt_cross_C4E0E1_C4E0E2_C4E0E3[i], edge_files[i]))
@@ -319,8 +323,7 @@ bool PruneTableManager::loadEOCrossTables() {
   }
 
   // 4. Plus Corner 表 (Right/Diag/Left)
-  const char *corn_files[] = {"pt_cross_C4C5E0.bin",
-                              "pt_cross_C4C6E0.bin",
+  const char *corn_files[] = {"pt_cross_C4C5E0.bin", "pt_cross_C4C6E0.bin",
                               "pt_cross_C4C7E0.bin"};
   for (int i = 0; i < 3; ++i) {
     if (!loadTable(pt_cross_C4C5E0_C4C6E0_C4C7E0[i], corn_files[i]))
@@ -335,18 +338,18 @@ bool PruneTableManager::loadEOCrossTables() {
 }
 
 // --- 前向声明: Pseudo 表生成函数 ---
-void create_pt_pscross_corner(
-    int index2, int depth, const std::vector<int> &table1,
-    const std::vector<int> &table2, std::vector<unsigned char> &prune_table);
+void create_pt_pscross_corner(int index2, int depth,
+                              const std::vector<int> &table1,
+                              const std::vector<int> &table2,
+                              std::vector<unsigned char> &prune_table);
 void create_pt_pscross_xcross(int index3, int index2, int depth,
-                                      const std::vector<int> &table1,
-                                      const std::vector<int> &table2,
-                                      std::vector<unsigned char> &prune_table);
-void create_pt_pspair(int index1, int index2, int size1,
-                                    int size2, int depth,
-                                    const std::vector<int> &table1,
-                                    const std::vector<int> &table2,
-                                    std::vector<unsigned char> &prune_table);
+                              const std::vector<int> &table1,
+                              const std::vector<int> &table2,
+                              std::vector<unsigned char> &prune_table);
+void create_pt_pspair(int index1, int index2, int size1, int size2, int depth,
+                      const std::vector<int> &table1,
+                      const std::vector<int> &table2,
+                      std::vector<unsigned char> &prune_table);
 
 void PruneTableManager::generateAllSequentially() {
   auto &mtm = MoveTableManager::getInstance();
@@ -426,8 +429,7 @@ void PruneTableManager::generateAllSequentially() {
 
   // 8. Pseudo XCross Prunes
   for (int i = 0; i < 4; ++i) {
-    std::string fn =
-        "pt_pscross_C4E" + std::to_string(i) + ".bin";
+    std::string fn = "pt_pscross_C4E" + std::to_string(i) + ".bin";
     if (!fileExists(fn)) {
       mtm.loadCrossMT();
       mtm.loadCornMT();
@@ -627,23 +629,22 @@ void PruneTableManager::generateAllSequentially() {
   // 先检查是否有任何变体表需要生成
   bool need_variant_tables = false;
   for (int c = 0; c < 4 && !need_variant_tables; ++c) {
-    std::string fn =
-        "pt_pscross_C" + std::to_string(c + 4) + ".bin";
+    std::string fn = "pt_pscross_C" + std::to_string(c + 4) + ".bin";
     if (!fileExists(fn))
       need_variant_tables = true;
   }
   for (int c = 0; c < 4 && !need_variant_tables; ++c) {
     for (int e = 0; e < 4 && !need_variant_tables; ++e) {
-      std::string fn = "pt_pscross_C" + std::to_string(c + 4) +
-                       "_into_slot" + std::to_string(e) + ".bin";
+      std::string fn = "pt_pscross_C" + std::to_string(c + 4) + "_into_slot" +
+                       std::to_string(e) + ".bin";
       if (!fileExists(fn))
         need_variant_tables = true;
     }
   }
   for (int c = 0; c < 4 && !need_variant_tables; ++c) {
     for (int e = 0; e < 4 && !need_variant_tables; ++e) {
-      std::string fn = "pt_pspair_C" + std::to_string(c + 4) +
-                       "_E" + std::to_string(e) + ".bin";
+      std::string fn = "pt_pspair_C" + std::to_string(c + 4) + "_E" +
+                       std::to_string(e) + ".bin";
       if (!fileExists(fn))
         need_variant_tables = true;
     }
@@ -657,13 +658,11 @@ void PruneTableManager::generateAllSequentially() {
 
     // 22. Pseudo Cross + Corner 变体表 (4 个: C4, C5, C6, C7)
     for (int c = 0; c < 4; ++c) {
-      std::string fn =
-          "pt_pscross_C" + std::to_string(c + 4) + ".bin";
+      std::string fn = "pt_pscross_C" + std::to_string(c + 4) + ".bin";
       if (!fileExists(fn)) {
         std::cout << "  Generating " << fn << "..." << std::endl;
-        create_pt_pscross_corner(
-            corner_indices[c], 10, mtm.getCrossMT(), mtm.getCornMT(),
-            temp_table);
+        create_pt_pscross_corner(corner_indices[c], 10, mtm.getCrossMT(),
+                                 mtm.getCornMT(), temp_table);
         saveTable(temp_table, fn);
       }
     }
@@ -671,13 +670,13 @@ void PruneTableManager::generateAllSequentially() {
     // 23. Pseudo XCross 变体表 (16 个: C{4-7}_into_slot{0-3})
     for (int c = 0; c < 4; ++c) {
       for (int e = 0; e < 4; ++e) {
-        std::string fn = "pt_pscross_C" + std::to_string(c + 4) +
-                         "_into_slot" + std::to_string(e) + ".bin";
+        std::string fn = "pt_pscross_C" + std::to_string(c + 4) + "_into_slot" +
+                         std::to_string(e) + ".bin";
         if (!fileExists(fn)) {
           std::cout << "  Generating " << fn << "..." << std::endl;
-          create_pt_pscross_xcross(edge_indices[e], corner_indices[c],
-                                           10, mtm.getCrossMT(),
-                                           mtm.getCornMT(), temp_table);
+          create_pt_pscross_xcross(edge_indices[e], corner_indices[c], 10,
+                                   mtm.getCrossMT(), mtm.getCornMT(),
+                                   temp_table);
           saveTable(temp_table, fn);
         }
       }
@@ -686,13 +685,12 @@ void PruneTableManager::generateAllSequentially() {
     // 24. Pseudo Pair 变体表 (16 个: C{4-7}_E{0-3})
     for (int c = 0; c < 4; ++c) {
       for (int e = 0; e < 4; ++e) {
-        std::string fn = "pt_pspair_C" + std::to_string(c + 4) +
-                         "_E" + std::to_string(e) + ".bin";
+        std::string fn = "pt_pspair_C" + std::to_string(c + 4) + "_E" +
+                         std::to_string(e) + ".bin";
         if (!fileExists(fn)) {
           std::cout << "  Generating " << fn << "..." << std::endl;
-          create_pt_pspair(edge_indices[e], corner_indices[c], 24,
-                                         24, 8, mtm.getEdgeMT(),
-                                         mtm.getCornMT(), temp_table);
+          create_pt_pspair(edge_indices[e], corner_indices[c], 24, 24, 8,
+                           mtm.getEdgeMT(), mtm.getCornMT(), temp_table);
           saveTable(temp_table, fn);
         }
       }
@@ -738,12 +736,13 @@ void PruneTableManager::generateCrossPT() {
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < sz; ++i) {
+      dp.progress(i, sz, d);
       if (tmp[i] == d) {
         cnt++;
         int idx1 = (i / 528) * 18, idx2 = (i % 528) * 18;
         for (int j = 0; j < 18; ++j) {
-          long long ni = (long long)edge2_mt[idx1 + j] * 528 +
-                         edge2_mt[idx2 + j];
+          long long ni =
+              (long long)edge2_mt[idx1 + j] * 528 + edge2_mt[idx2 + j];
           // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected,
@@ -751,6 +750,7 @@ void PruneTableManager::generateCrossPT() {
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -770,9 +770,8 @@ void PruneTableManager::generateCrossC4PT() {
             << " Generating cross+c4 prune table..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   pt_cross_C4.resize((long long)24 * 22 * 20 * 18 * 24, 255);
-  create_pt_cross_c4(187520, 12, 24 * 22 * 20 * 18, 24, 10,
-                              mtm.getCrossMT(), mtm.getCornMT(),
-                              pt_cross_C4);
+  create_pt_cross_c4(187520, 12, 24 * 22 * 20 * 18, 24, 10, mtm.getCrossMT(),
+                     mtm.getCornMT(), pt_cross_C4);
   saveTable(pt_cross_C4, "pt_cross_C4.bin");
 }
 
@@ -783,8 +782,8 @@ void PruneTableManager::generatePairC4E0PT() {
             << " Generating pair c4+e0 prune table..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   pt_pair_C4E0.resize(24 * 24, 255);
-  create_pt_pair_base(0, 12, 24, 24, 8, mtm.getEdgeMT(),
-                               mtm.getCornMT(), pt_pair_C4E0);
+  create_pt_pair_base(0, 12, 24, 24, 8, mtm.getEdgeMT(), mtm.getCornMT(),
+                      pt_pair_C4E0);
   saveTable(pt_pair_C4E0, "pt_pair_C4E0.bin");
 }
 
@@ -797,8 +796,8 @@ void PruneTableManager::generateCrossC4E0PT() {
   long long c_sz = ((long long)24 * 22 * 20 * 18 * 24 * 24 + 1) / 2;
   pt_cross_C4E0.resize(c_sz, 0xFF);
   create_pt_xcross_full(187520, 12, 0, 24 * 22 * 20 * 18, 24, 24, 11,
-                                 mtm.getCrossMT(), mtm.getCornMT(),
-                                 mtm.getEdgeMT(), pt_cross_C4E0);
+                        mtm.getCrossMT(), mtm.getCornMT(), mtm.getEdgeMT(),
+                        pt_cross_C4E0);
   saveTable(pt_cross_C4E0, "pt_cross_C4E0.bin");
 }
 
@@ -809,8 +808,7 @@ void PruneTableManager::generateCrossC4C5E0E1PT() {
             << " Generating huge neighbor prune table..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   create_pt_huge(42577920, 504, 15, {0, 2, 16, 18, 20, 22}, {12, 15},
-                          mtm.getEdge6MT(), mtm.getCorn2MT(),
-                          pt_cross_C4C5E0E1);
+                 mtm.getEdge6MT(), mtm.getCorn2MT(), pt_cross_C4C5E0E1);
   saveTable(pt_cross_C4C5E0E1, "pt_cross_C4C5E0E1.bin");
 }
 
@@ -824,8 +822,7 @@ void PruneTableManager::generateCrossC4C6E0E2PT() {
             << " Generating huge diagonal prune table..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   create_pt_huge(42577920, 504, 15, {0, 4, 16, 18, 20, 22}, {12, 18},
-                          mtm.getEdge6MT(), mtm.getCorn2MT(),
-                          pt_cross_C4C6E0E2);
+                 mtm.getEdge6MT(), mtm.getCorn2MT(), pt_cross_C4C6E0E2);
   saveTable(pt_cross_C4C6E0E2, "pt_cross_C4C6E0E2.bin");
 }
 
@@ -839,9 +836,8 @@ void PruneTableManager::generateEP4EO12PT() {
   // 状态空间: EP4 (12*11*10*9 = 11880) x EO12 (2^11 = 2048)
   // 初始状态: EP4_SOLVED=11720, EO_SOLVED=0
   // 使用 MoveTableManager 中已加载的移动表
-  create_cascaded_pt3(
-      11720, 0, 12 * 11 * 10 * 9, 2048, 11, mtm.getEP4MT(),
-      mtm.getEOAltMT(), pt_ep4eo12);
+  create_cascaded_pt3(11720, 0, 12 * 11 * 10 * 9, 2048, 11, mtm.getEP4MT(),
+                      mtm.getEOAltMT(), pt_ep4eo12);
   saveTable(pt_ep4eo12, "pt_ep4eo12.bin");
 }
 
@@ -868,12 +864,13 @@ void PruneTableManager::generatePsCrossPT() {
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < sz; ++i) {
+      dp.progress(i, sz, d);
       if (tmp[i] == d) {
         cnt++;
         int idx1 = (i / 528) * 18, idx2 = (i % 528) * 18;
         for (int j = 0; j < 18; ++j) {
-          long long ni = (long long)edge2_mt[idx1 + j] * 528 +
-                         edge2_mt[idx2 + j];
+          long long ni =
+              (long long)edge2_mt[idx1 + j] * 528 + edge2_mt[idx2 + j];
           // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected,
@@ -881,6 +878,7 @@ void PruneTableManager::generatePsCrossPT() {
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -902,12 +900,11 @@ void PruneTableManager::generatePsCrossC4EPT(int i) {
             << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   int e_diffs[] = {0, 2, 4, 6};
-  pt_pscross_C4E[i].resize(
-      ((long long)24 * 22 * 20 * 18 * 24 * 24 + 1) / 2, 0xFF);
-  create_pt_xcross_full(187520, 12, e_diffs[i], 24 * 22 * 20 * 18, 24,
-                                 24, 11, mtm.getCrossMT(),
-                                 mtm.getCornMT(), mtm.getEdgeMT(),
-                                 pt_pscross_C4E[i], true);
+  pt_pscross_C4E[i].resize(((long long)24 * 22 * 20 * 18 * 24 * 24 + 1) / 2,
+                           0xFF);
+  create_pt_xcross_full(187520, 12, e_diffs[i], 24 * 22 * 20 * 18, 24, 24, 11,
+                        mtm.getCrossMT(), mtm.getCornMT(), mtm.getEdgeMT(),
+                        pt_pscross_C4E[i], true);
   saveTable(pt_pscross_C4E[i], fn);
 }
 
@@ -920,9 +917,8 @@ void PruneTableManager::generatePsCrossE0E2PT() {
   std::vector<int> target = {0, 4};
   int idx_e0_e2_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E0E2.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
-  create_pt_pscross_edges2(
-      187520, idx_e0_e2_solved, 190080, 528, 11, mtm.getCrossMT(),
-      mtm.getEdge2MT(), pt_pscross_E0E2);
+  create_pt_pscross_edges2(187520, idx_e0_e2_solved, 190080, 528, 11,
+                           mtm.getCrossMT(), mtm.getEdge2MT(), pt_pscross_E0E2);
   saveTable(pt_pscross_E0E2, "pt_pscross_E0E2.bin");
 }
 
@@ -935,9 +931,8 @@ void PruneTableManager::generatePsCrossE0E1PT() {
   std::vector<int> target = {0, 2}; // E0(0*2=0), E1(1*2=2) - 邻棱
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E0E1.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
-  create_pt_pscross_edges2(
-      187520, idx_solved, 190080, 528, 11, mtm.getCrossMT(),
-      mtm.getEdge2MT(), pt_pscross_E0E1);
+  create_pt_pscross_edges2(187520, idx_solved, 190080, 528, 11,
+                           mtm.getCrossMT(), mtm.getEdge2MT(), pt_pscross_E0E1);
   saveTable(pt_pscross_E0E1, "pt_pscross_E0E1.bin");
 }
 
@@ -950,9 +945,8 @@ void PruneTableManager::generatePsCrossE1E3PT() {
   std::vector<int> target = {2, 6}; // E1(1*2=2), E3(3*2=6) - 对棱
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E1E3.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
-  create_pt_pscross_edges2(
-      187520, idx_solved, 190080, 528, 11, mtm.getCrossMT(),
-      mtm.getEdge2MT(), pt_pscross_E1E3);
+  create_pt_pscross_edges2(187520, idx_solved, 190080, 528, 11,
+                           mtm.getCrossMT(), mtm.getEdge2MT(), pt_pscross_E1E3);
   saveTable(pt_pscross_E1E3, "pt_pscross_E1E3.bin");
 }
 
@@ -965,9 +959,8 @@ void PruneTableManager::generatePsCrossE0E3PT() {
   std::vector<int> target = {0, 6}; // E0(0*2=0), E3(3*2=6) - 邻棱
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E0E3.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
-  create_pt_pscross_edges2(
-      187520, idx_solved, 190080, 528, 11, mtm.getCrossMT(),
-      mtm.getEdge2MT(), pt_pscross_E0E3);
+  create_pt_pscross_edges2(187520, idx_solved, 190080, 528, 11,
+                           mtm.getCrossMT(), mtm.getEdge2MT(), pt_pscross_E0E3);
   saveTable(pt_pscross_E0E3, "pt_pscross_E0E3.bin");
 }
 
@@ -980,9 +973,8 @@ void PruneTableManager::generatePsCrossE1E2PT() {
   std::vector<int> target = {2, 4}; // E1(1*2=2), E2(2*2=4) - 邻棱
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E1E2.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
-  create_pt_pscross_edges2(
-      187520, idx_solved, 190080, 528, 11, mtm.getCrossMT(),
-      mtm.getEdge2MT(), pt_pscross_E1E2);
+  create_pt_pscross_edges2(187520, idx_solved, 190080, 528, 11,
+                           mtm.getCrossMT(), mtm.getEdge2MT(), pt_pscross_E1E2);
   saveTable(pt_pscross_E1E2, "pt_pscross_E1E2.bin");
 }
 
@@ -995,15 +987,13 @@ void PruneTableManager::generatePsCrossE2E3PT() {
   std::vector<int> target = {4, 6}; // E2(2*2=4), E3(3*2=6) - 邻棱
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E2E3.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
-  create_pt_pscross_edges2(
-      187520, idx_solved, 190080, 528, 11, mtm.getCrossMT(),
-      mtm.getEdge2MT(), pt_pscross_E2E3);
+  create_pt_pscross_edges2(187520, idx_solved, 190080, 528, 11,
+                           mtm.getCrossMT(), mtm.getEdge2MT(), pt_pscross_E2E3);
   saveTable(pt_pscross_E2E3, "pt_pscross_E2E3.bin");
 }
 
 void PruneTableManager::generatePsCrossE0E1E2PT() {
-  if (loadTable(pt_pscross_E0E1E2,
-                "pt_pscross_E0E1E2.bin"))
+  if (loadTable(pt_pscross_E0E1E2, "pt_pscross_E0E1E2.bin"))
     return;
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pseudo cross + E0,E1,E2 prune table..."
@@ -1012,16 +1002,14 @@ void PruneTableManager::generatePsCrossE0E1E2PT() {
   std::vector<int> target = {0, 2, 4}; // E0, E1, E2 (0, 2, 4)
   int idx_solved = array_to_index(target, 3, 2, 12);
   pt_pscross_E0E1E2.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
-  create_pt_pscross_edges3(
-      187520, idx_solved, 190080, 10560, 12, mtm.getCrossMT(),
-      mtm.getEdge3MT(), pt_pscross_E0E1E2);
-  saveTable(pt_pscross_E0E1E2,
-            "pt_pscross_E0E1E2.bin");
+  create_pt_pscross_edges3(187520, idx_solved, 190080, 10560, 12,
+                           mtm.getCrossMT(), mtm.getEdge3MT(),
+                           pt_pscross_E0E1E2);
+  saveTable(pt_pscross_E0E1E2, "pt_pscross_E0E1E2.bin");
 }
 
 void PruneTableManager::generatePsCrossE1E2E3PT() {
-  if (loadTable(pt_pscross_E1E2E3,
-                "pt_pscross_E1E2E3.bin"))
+  if (loadTable(pt_pscross_E1E2E3, "pt_pscross_E1E2E3.bin"))
     return;
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pseudo cross + E1,E2,E3 prune table..."
@@ -1030,16 +1018,14 @@ void PruneTableManager::generatePsCrossE1E2E3PT() {
   std::vector<int> target = {2, 4, 6}; // E1, E2, E3
   int idx_solved = array_to_index(target, 3, 2, 12);
   pt_pscross_E1E2E3.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
-  create_pt_pscross_edges3(
-      187520, idx_solved, 190080, 10560, 12, mtm.getCrossMT(),
-      mtm.getEdge3MT(), pt_pscross_E1E2E3);
-  saveTable(pt_pscross_E1E2E3,
-            "pt_pscross_E1E2E3.bin");
+  create_pt_pscross_edges3(187520, idx_solved, 190080, 10560, 12,
+                           mtm.getCrossMT(), mtm.getEdge3MT(),
+                           pt_pscross_E1E2E3);
+  saveTable(pt_pscross_E1E2E3, "pt_pscross_E1E2E3.bin");
 }
 
 void PruneTableManager::generatePsCrossE0E2E3PT() {
-  if (loadTable(pt_pscross_E0E2E3,
-                "pt_pscross_E0E2E3.bin"))
+  if (loadTable(pt_pscross_E0E2E3, "pt_pscross_E0E2E3.bin"))
     return;
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pseudo cross + E0,E2,E3 prune table..."
@@ -1048,16 +1034,14 @@ void PruneTableManager::generatePsCrossE0E2E3PT() {
   std::vector<int> target = {0, 4, 6}; // E0, E2, E3
   int idx_solved = array_to_index(target, 3, 2, 12);
   pt_pscross_E0E2E3.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
-  create_pt_pscross_edges3(
-      187520, idx_solved, 190080, 10560, 12, mtm.getCrossMT(),
-      mtm.getEdge3MT(), pt_pscross_E0E2E3);
-  saveTable(pt_pscross_E0E2E3,
-            "pt_pscross_E0E2E3.bin");
+  create_pt_pscross_edges3(187520, idx_solved, 190080, 10560, 12,
+                           mtm.getCrossMT(), mtm.getEdge3MT(),
+                           pt_pscross_E0E2E3);
+  saveTable(pt_pscross_E0E2E3, "pt_pscross_E0E2E3.bin");
 }
 
 void PruneTableManager::generatePsCrossE0E1E3PT() {
-  if (loadTable(pt_pscross_E0E1E3,
-                "pt_pscross_E0E1E3.bin"))
+  if (loadTable(pt_pscross_E0E1E3, "pt_pscross_E0E1E3.bin"))
     return;
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pseudo cross + E0,E1,E3 prune table..."
@@ -1066,11 +1050,10 @@ void PruneTableManager::generatePsCrossE0E1E3PT() {
   std::vector<int> target = {0, 2, 6}; // E0, E1, E3
   int idx_solved = array_to_index(target, 3, 2, 12);
   pt_pscross_E0E1E3.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
-  create_pt_pscross_edges3(
-      187520, idx_solved, 190080, 10560, 12, mtm.getCrossMT(),
-      mtm.getEdge3MT(), pt_pscross_E0E1E3);
-  saveTable(pt_pscross_E0E1E3,
-            "pt_pscross_E0E1E3.bin");
+  create_pt_pscross_edges3(187520, idx_solved, 190080, 10560, 12,
+                           mtm.getCrossMT(), mtm.getEdge3MT(),
+                           pt_pscross_E0E1E3);
+  saveTable(pt_pscross_E0E1E3, "pt_pscross_E0E1E3.bin");
 }
 
 void PruneTableManager::generatePsCrossC4C6PT() {
@@ -1082,9 +1065,9 @@ void PruneTableManager::generatePsCrossC4C6PT() {
   std::vector<int> target = {12, 18}; // C4(4*3=12), C6(6*3=18) - 对角
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C4C6.resize(((long long)190080 * 504 + 1) / 2, 0xFF);
-  create_pt_pscross_corners2(
-      187520, idx_solved, 190080, 504, 11, mtm.getCrossMT(),
-      mtm.getCorn2MT(), pt_pscross_C4C6);
+  create_pt_pscross_corners2(187520, idx_solved, 190080, 504, 11,
+                             mtm.getCrossMT(), mtm.getCorn2MT(),
+                             pt_pscross_C4C6);
   saveTable(pt_pscross_C4C6, "pt_pscross_C4C6.bin");
 }
 
@@ -1097,9 +1080,9 @@ void PruneTableManager::generatePsCrossC5C7PT() {
   std::vector<int> target = {15, 21}; // C5(5*3=15), C7(7*3=21) - 对角
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C5C7.resize(((long long)190080 * 504 + 1) / 2, 0xFF);
-  create_pt_pscross_corners2(
-      187520, idx_solved, 190080, 504, 11, mtm.getCrossMT(),
-      mtm.getCorn2MT(), pt_pscross_C5C7);
+  create_pt_pscross_corners2(187520, idx_solved, 190080, 504, 11,
+                             mtm.getCrossMT(), mtm.getCorn2MT(),
+                             pt_pscross_C5C7);
   saveTable(pt_pscross_C5C7, "pt_pscross_C5C7.bin");
 }
 
@@ -1112,9 +1095,9 @@ void PruneTableManager::generatePsCrossC4C5PT() {
   std::vector<int> target = {12, 15}; // C4(4*3=12), C5(5*3=15)
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C4C5.resize(((long long)190080 * 504 + 1) / 2, 0xFF);
-  create_pt_pscross_corners2(
-      187520, idx_solved, 190080, 504, 11, mtm.getCrossMT(),
-      mtm.getCorn2MT(), pt_pscross_C4C5);
+  create_pt_pscross_corners2(187520, idx_solved, 190080, 504, 11,
+                             mtm.getCrossMT(), mtm.getCorn2MT(),
+                             pt_pscross_C4C5);
   saveTable(pt_pscross_C4C5, "pt_pscross_C4C5.bin");
 }
 
@@ -1127,9 +1110,9 @@ void PruneTableManager::generatePsCrossC4C7PT() {
   std::vector<int> target = {12, 21}; // C4(4*3=12), C7(7*3=21)
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C4C7.resize(((long long)190080 * 504 + 1) / 2, 0xFF);
-  create_pt_pscross_corners2(
-      187520, idx_solved, 190080, 504, 11, mtm.getCrossMT(),
-      mtm.getCorn2MT(), pt_pscross_C4C7);
+  create_pt_pscross_corners2(187520, idx_solved, 190080, 504, 11,
+                             mtm.getCrossMT(), mtm.getCorn2MT(),
+                             pt_pscross_C4C7);
   saveTable(pt_pscross_C4C7, "pt_pscross_C4C7.bin");
 }
 
@@ -1142,9 +1125,9 @@ void PruneTableManager::generatePsCrossC5C6PT() {
   std::vector<int> target = {15, 18}; // C5(5*3=15), C6(6*3=18)
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C5C6.resize(((long long)190080 * 504 + 1) / 2, 0xFF);
-  create_pt_pscross_corners2(
-      187520, idx_solved, 190080, 504, 11, mtm.getCrossMT(),
-      mtm.getCorn2MT(), pt_pscross_C5C6);
+  create_pt_pscross_corners2(187520, idx_solved, 190080, 504, 11,
+                             mtm.getCrossMT(), mtm.getCorn2MT(),
+                             pt_pscross_C5C6);
   saveTable(pt_pscross_C5C6, "pt_pscross_C5C6.bin");
 }
 
@@ -1157,15 +1140,14 @@ void PruneTableManager::generatePsCrossC6C7PT() {
   std::vector<int> target = {18, 21}; // C6(6*3=18), C7(7*3=21)
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C6C7.resize(((long long)190080 * 504 + 1) / 2, 0xFF);
-  create_pt_pscross_corners2(
-      187520, idx_solved, 190080, 504, 11, mtm.getCrossMT(),
-      mtm.getCorn2MT(), pt_pscross_C6C7);
+  create_pt_pscross_corners2(187520, idx_solved, 190080, 504, 11,
+                             mtm.getCrossMT(), mtm.getCorn2MT(),
+                             pt_pscross_C6C7);
   saveTable(pt_pscross_C6C7, "pt_pscross_C6C7.bin");
 }
 
 void PruneTableManager::generatePsCrossC4C5C6PT() {
-  if (loadTable(pt_pscross_C4C5C6,
-                "pt_pscross_C4C5C6.bin"))
+  if (loadTable(pt_pscross_C4C5C6, "pt_pscross_C4C5C6.bin"))
     return;
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pseudo cross + C4,C5,C6 prune table..."
@@ -1174,16 +1156,14 @@ void PruneTableManager::generatePsCrossC4C5C6PT() {
   std::vector<int> target = {12, 15, 18}; // C4, C5, C6
   int idx_solved = array_to_index(target, 3, 3, 8);
   pt_pscross_C4C5C6.resize(((long long)190080 * 9072 + 1) / 2, 0xFF);
-  create_pt_pscross_corners3(
-      187520, idx_solved, 190080, 9072, 13, mtm.getCrossMT(),
-      mtm.getCorn3MT(), pt_pscross_C4C5C6);
-  saveTable(pt_pscross_C4C5C6,
-            "pt_pscross_C4C5C6.bin");
+  create_pt_pscross_corners3(187520, idx_solved, 190080, 9072, 13,
+                             mtm.getCrossMT(), mtm.getCorn3MT(),
+                             pt_pscross_C4C5C6);
+  saveTable(pt_pscross_C4C5C6, "pt_pscross_C4C5C6.bin");
 }
 
 void PruneTableManager::generatePsCrossC4C5C7PT() {
-  if (loadTable(pt_pscross_C4C5C7,
-                "pt_pscross_C4C5C7.bin"))
+  if (loadTable(pt_pscross_C4C5C7, "pt_pscross_C4C5C7.bin"))
     return;
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pseudo cross + C4,C5,C7 prune table..."
@@ -1192,16 +1172,14 @@ void PruneTableManager::generatePsCrossC4C5C7PT() {
   std::vector<int> target = {12, 15, 21}; // C4, C5, C7
   int idx_solved = array_to_index(target, 3, 3, 8);
   pt_pscross_C4C5C7.resize(((long long)190080 * 9072 + 1) / 2, 0xFF);
-  create_pt_pscross_corners3(
-      187520, idx_solved, 190080, 9072, 13, mtm.getCrossMT(),
-      mtm.getCorn3MT(), pt_pscross_C4C5C7);
-  saveTable(pt_pscross_C4C5C7,
-            "pt_pscross_C4C5C7.bin");
+  create_pt_pscross_corners3(187520, idx_solved, 190080, 9072, 13,
+                             mtm.getCrossMT(), mtm.getCorn3MT(),
+                             pt_pscross_C4C5C7);
+  saveTable(pt_pscross_C4C5C7, "pt_pscross_C4C5C7.bin");
 }
 
 void PruneTableManager::generatePsCrossC4C6C7PT() {
-  if (loadTable(pt_pscross_C4C6C7,
-                "pt_pscross_C4C6C7.bin"))
+  if (loadTable(pt_pscross_C4C6C7, "pt_pscross_C4C6C7.bin"))
     return;
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pseudo cross + C4,C6,C7 prune table..."
@@ -1210,16 +1188,14 @@ void PruneTableManager::generatePsCrossC4C6C7PT() {
   std::vector<int> target = {12, 18, 21}; // C4, C6, C7
   int idx_solved = array_to_index(target, 3, 3, 8);
   pt_pscross_C4C6C7.resize(((long long)190080 * 9072 + 1) / 2, 0xFF);
-  create_pt_pscross_corners3(
-      187520, idx_solved, 190080, 9072, 13, mtm.getCrossMT(),
-      mtm.getCorn3MT(), pt_pscross_C4C6C7);
-  saveTable(pt_pscross_C4C6C7,
-            "pt_pscross_C4C6C7.bin");
+  create_pt_pscross_corners3(187520, idx_solved, 190080, 9072, 13,
+                             mtm.getCrossMT(), mtm.getCorn3MT(),
+                             pt_pscross_C4C6C7);
+  saveTable(pt_pscross_C4C6C7, "pt_pscross_C4C6C7.bin");
 }
 
 void PruneTableManager::generatePsCrossC5C6C7PT() {
-  if (loadTable(pt_pscross_C5C6C7,
-                "pt_pscross_C5C6C7.bin"))
+  if (loadTable(pt_pscross_C5C6C7, "pt_pscross_C5C6C7.bin"))
     return;
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pseudo cross + C5,C6,C7 prune table..."
@@ -1228,20 +1204,18 @@ void PruneTableManager::generatePsCrossC5C6C7PT() {
   std::vector<int> target = {15, 18, 21}; // C5, C6, C7
   int idx_solved = array_to_index(target, 3, 3, 8);
   pt_pscross_C5C6C7.resize(((long long)190080 * 9072 + 1) / 2, 0xFF);
-  create_pt_pscross_corners3(
-      187520, idx_solved, 190080, 9072, 13, mtm.getCrossMT(),
-      mtm.getCorn3MT(), pt_pscross_C5C6C7);
-  saveTable(pt_pscross_C5C6C7,
-            "pt_pscross_C5C6C7.bin");
+  create_pt_pscross_corners3(187520, idx_solved, 190080, 9072, 13,
+                             mtm.getCrossMT(), mtm.getCorn3MT(),
+                             pt_pscross_C5C6C7);
+  saveTable(pt_pscross_C5C6C7, "pt_pscross_C5C6C7.bin");
 }
 
 // ... existing helper functions ...
 
-void create_pt_pscross_corners2(int idx_cr, int idx_c2, int sz_cr,
-                                              int sz_c2, int depth,
-                                              const std::vector<int> &t_cr,
-                                              const std::vector<int> &t_c2,
-                                              std::vector<unsigned char> &pt) {
+void create_pt_pscross_corners2(int idx_cr, int idx_c2, int sz_cr, int sz_c2,
+                                int depth, const std::vector<int> &t_cr,
+                                const std::vector<int> &t_c2,
+                                std::vector<unsigned char> &pt) {
   long long total = (long long)sz_cr * sz_c2;
   std::vector<unsigned char> tmp;
   try {
@@ -1271,6 +1245,7 @@ void create_pt_pscross_corners2(int idx_cr, int idx_c2, int sz_cr,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
+      dp.progress(i, total, d);
       if (tmp[i] == d) {
         cnt++;
         int cur_c2 = i % sz_c2;
@@ -1287,6 +1262,7 @@ void create_pt_pscross_corners2(int idx_cr, int idx_c2, int sz_cr,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -1299,11 +1275,10 @@ void create_pt_pscross_corners2(int idx_cr, int idx_c2, int sz_cr,
       set_prune(pt, i, tmp[i]);
 }
 
-void create_pt_pscross_corners3(int idx_cr, int idx_c3, int sz_cr,
-                                              int sz_c3, int depth,
-                                              const std::vector<int> &t_cr,
-                                              const std::vector<int> &t_c3,
-                                              std::vector<unsigned char> &pt) {
+void create_pt_pscross_corners3(int idx_cr, int idx_c3, int sz_cr, int sz_c3,
+                                int depth, const std::vector<int> &t_cr,
+                                const std::vector<int> &t_c3,
+                                std::vector<unsigned char> &pt) {
   long long total = (long long)sz_cr * sz_c3;
   std::cout << "Allocating Corner3 Prune Table: " << total / 1024 / 1024
             << " MB" << std::endl;
@@ -1335,6 +1310,7 @@ void create_pt_pscross_corners3(int idx_cr, int idx_c3, int sz_cr,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
+      dp.progress(i, total, d);
       if (tmp[i] == d) {
         cnt++;
         int cur_c3 = i % sz_c3;
@@ -1351,6 +1327,7 @@ void create_pt_pscross_corners3(int idx_cr, int idx_c3, int sz_cr,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -1363,11 +1340,10 @@ void create_pt_pscross_corners3(int idx_cr, int idx_c3, int sz_cr,
       set_prune(pt, i, tmp[i]);
 }
 
-void create_pt_pscross_edges3(int idx_cr, int idx_e3, int sz_cr,
-                                            int sz_e3, int depth,
-                                            const std::vector<int> &t_cr,
-                                            const std::vector<int> &t_e3,
-                                            std::vector<unsigned char> &pt) {
+void create_pt_pscross_edges3(int idx_cr, int idx_e3, int sz_cr, int sz_e3,
+                              int depth, const std::vector<int> &t_cr,
+                              const std::vector<int> &t_e3,
+                              std::vector<unsigned char> &pt) {
   long long total = (long long)sz_cr * sz_e3;
   std::cout << "Allocating Edge3 Prune Table: " << total / 1024 / 1024 << " MB"
             << std::endl;
@@ -1399,6 +1375,7 @@ void create_pt_pscross_edges3(int idx_cr, int idx_e3, int sz_cr,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
+      dp.progress(i, total, d);
       if (tmp[i] == d) {
         cnt++;
         int cur_e3 = i % sz_e3;
@@ -1415,6 +1392,7 @@ void create_pt_pscross_edges3(int idx_cr, int idx_e3, int sz_cr,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -1429,12 +1407,12 @@ void create_pt_pscross_edges3(int idx_cr, int idx_e3, int sz_cr,
 
 // --- 辅助生成函数实现 (移植自 pseudo_pair_analyzer.cpp) ---
 
-void create_pt_pscross_base(int idx_cr, int idx_cn, int idx_ed,
-                                    int sz_cr, int sz_cn, int sz_ed, int depth,
-                                    const std::vector<int> &t1,
-                                    const std::vector<int> &t2,
-                                    const std::vector<int> &t3,
-                                    std::vector<unsigned char> &pt) {
+void create_pt_pscross_base(int idx_cr, int idx_cn, int idx_ed, int sz_cr,
+                            int sz_cn, int sz_ed, int depth,
+                            const std::vector<int> &t1,
+                            const std::vector<int> &t2,
+                            const std::vector<int> &t3,
+                            std::vector<unsigned char> &pt) {
   long long total = (long long)sz_cr * sz_cn * sz_ed;
   std::vector<unsigned char> tmp;
   try {
@@ -1470,6 +1448,7 @@ void create_pt_pscross_base(int idx_cr, int idx_cn, int idx_ed,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
+      dp.progress(i, total, d);
       if (tmp[i] == d) {
         cnt++;
         long long comb = i / sz_ed;
@@ -1487,6 +1466,7 @@ void create_pt_pscross_base(int idx_cr, int idx_cn, int idx_ed,
         }
       }
     }
+    dp.clearProgress();
     dp.print(nd, cnt);
     if (cnt == 0)
       break;
@@ -1501,10 +1481,9 @@ void create_pt_pscross_base(int idx_cr, int idx_cn, int idx_ed,
 }
 
 // 1. Cross + C4 (Base)
-void create_pt_cross_c4(int idx1, int idx2, int sz1, int sz2,
-                                 int depth, const std::vector<int> &t1,
-                                 const std::vector<int> &t2,
-                                 std::vector<unsigned char> &pt) {
+void create_pt_cross_c4(int idx1, int idx2, int sz1, int sz2, int depth,
+                        const std::vector<int> &t1, const std::vector<int> &t2,
+                        std::vector<unsigned char> &pt) {
   long long total = (long long)sz1 * sz2;
   std::fill(pt.begin(), pt.end(), 255);
   std::vector<std::string> am = {"L U L'", "L U' L'", "B' U B", "B' U' B"};
@@ -1527,6 +1506,7 @@ void create_pt_cross_c4(int idx1, int idx2, int sz1, int sz2,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
+      dp.progress(i, total, d);
       if (pt[i] == d) {
         cnt++;
         int i1 = (i / sz2) * 24;
@@ -1538,6 +1518,7 @@ void create_pt_cross_c4(int idx1, int idx2, int sz1, int sz2,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -1546,10 +1527,10 @@ void create_pt_cross_c4(int idx1, int idx2, int sz1, int sz2,
 }
 
 // 2. Pair C4 + E0 (Base)
-void create_pt_pair_base(int idx_e, int idx_c, int sz_e, int sz_c,
-                                  int depth, const std::vector<int> &t_edge,
-                                  const std::vector<int> &t_corn,
-                                  std::vector<unsigned char> &pt) {
+void create_pt_pair_base(int idx_e, int idx_c, int sz_e, int sz_c, int depth,
+                         const std::vector<int> &t_edge,
+                         const std::vector<int> &t_corn,
+                         std::vector<unsigned char> &pt) {
   long long total = (long long)sz_e * sz_c;
   std::fill(pt.begin(), pt.end(), 255);
   std::vector<std::string> am = {"L U L'", "L U' L'", "B' U B", "B' U' B"};
@@ -1573,6 +1554,7 @@ void create_pt_pair_base(int idx_e, int idx_c, int sz_e, int sz_c,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
+      dp.progress(i, total, d);
       if (pt[i] == d) {
         cnt++;
         int i1 = (i / sz_c) * 18;
@@ -1584,6 +1566,7 @@ void create_pt_pair_base(int idx_e, int idx_c, int sz_e, int sz_c,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -1592,12 +1575,12 @@ void create_pt_pair_base(int idx_e, int idx_c, int sz_e, int sz_c,
 }
 
 // 3. XCross Base Generator
-void create_pt_xcross_base(int idx_cr, int idx_cn, int idx_ex,
-                                    int sz_cr, int sz_cn, int sz_ex, int depth,
-                                    const std::vector<int> &t1,
-                                    const std::vector<int> &t2,
-                                    const std::vector<int> &t3,
-                                    std::vector<unsigned char> &pt) {
+void create_pt_xcross_base(int idx_cr, int idx_cn, int idx_ex, int sz_cr,
+                           int sz_cn, int sz_ex, int depth,
+                           const std::vector<int> &t1,
+                           const std::vector<int> &t2,
+                           const std::vector<int> &t3,
+                           std::vector<unsigned char> &pt) {
   long long total = (long long)sz_cr * sz_cn * sz_ex;
   std::vector<unsigned char> tmp;
   try {
@@ -1617,6 +1600,7 @@ void create_pt_xcross_base(int idx_cr, int idx_cn, int idx_ex,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
+      dp.progress(i, total, d);
       if (tmp[i] == d) {
         cnt++;
         long long comb = i / sz_ex;
@@ -1634,6 +1618,7 @@ void create_pt_xcross_base(int idx_cr, int idx_cn, int idx_ex,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -1646,13 +1631,12 @@ void create_pt_xcross_base(int idx_cr, int idx_cn, int idx_ex,
       set_prune(pt, i, tmp[i]);
 }
 
-void create_pt_xcross_full(int idx_cr, int idx_cn, int idx_ed,
-                                    int sz_cr, int sz_cn, int sz_ed, int depth,
-                                    const std::vector<int> &t1,
-                                    const std::vector<int> &t2,
-                                    const std::vector<int> &t3,
-                                    std::vector<unsigned char> &pt,
-                                    bool is_pseudo) {
+void create_pt_xcross_full(int idx_cr, int idx_cn, int idx_ed, int sz_cr,
+                           int sz_cn, int sz_ed, int depth,
+                           const std::vector<int> &t1,
+                           const std::vector<int> &t2,
+                           const std::vector<int> &t3,
+                           std::vector<unsigned char> &pt, bool is_pseudo) {
   long long total = (long long)sz_cr * sz_cn * sz_ed;
   std::vector<unsigned char> tmp;
   try {
@@ -1688,6 +1672,7 @@ void create_pt_xcross_full(int idx_cr, int idx_cn, int idx_ed,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
+      dp.progress(i, total, d);
       if (tmp[i] == d) {
         cnt++;
         long long comb = i / sz_ed;
@@ -1705,6 +1690,7 @@ void create_pt_xcross_full(int idx_cr, int idx_cn, int idx_ed,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -1718,11 +1704,11 @@ void create_pt_xcross_full(int idx_cr, int idx_cn, int idx_ed,
 }
 
 void create_pt_huge(int sz_e6, int sz_c2, int depth,
-                             const std::vector<int> &target_e_ids,
-                             const std::vector<int> &target_c_ids,
-                             const std::vector<int> &mt_e6,
-                             const std::vector<int> &mt_c2,
-                             std::vector<unsigned char> &pt) {
+                    const std::vector<int> &target_e_ids,
+                    const std::vector<int> &target_c_ids,
+                    const std::vector<int> &mt_e6,
+                    const std::vector<int> &mt_c2,
+                    std::vector<unsigned char> &pt) {
   long long total = (long long)sz_e6 * sz_c2;
   std::cout << "  Allocating " << (total / 2 / 1024 / 1024)
             << " MB for Huge Table..." << std::endl;
@@ -1745,6 +1731,7 @@ void create_pt_huge(int sz_e6, int sz_c2, int depth,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
+      dp.progress(i, total, d);
       if (tmp[i] == d) {
         cnt++;
         int cur_c2 = i % sz_c2;
@@ -1761,6 +1748,7 @@ void create_pt_huge(int sz_e6, int sz_c2, int depth,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -1775,11 +1763,10 @@ void create_pt_huge(int sz_e6, int sz_c2, int depth,
   std::vector<unsigned char>().swap(tmp);
 }
 
-void create_pt_pscross_edges2(int idx_cr, int idx_e2, int sz_cr,
-                                            int sz_e2, int depth,
-                                            const std::vector<int> &t_cr,
-                                            const std::vector<int> &t_e2,
-                                            std::vector<unsigned char> &pt) {
+void create_pt_pscross_edges2(int idx_cr, int idx_e2, int sz_cr, int sz_e2,
+                              int depth, const std::vector<int> &t_cr,
+                              const std::vector<int> &t_e2,
+                              std::vector<unsigned char> &pt) {
   long long total = (long long)sz_cr * sz_e2;
   std::vector<unsigned char> tmp;
   try {
@@ -1809,6 +1796,7 @@ void create_pt_pscross_edges2(int idx_cr, int idx_e2, int sz_cr,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
+      dp.progress(i, total, d);
       if (tmp[i] == d) {
         cnt++;
         int cur_e2 = i % sz_e2;
@@ -1825,6 +1813,7 @@ void create_pt_pscross_edges2(int idx_cr, int idx_e2, int sz_cr,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -1840,9 +1829,8 @@ void create_pt_pscross_edges2(int idx_cr, int idx_e2, int sz_cr,
 // --- 级联剪枝表生成函数实现 (from eo_cross_analyzer) ---
 
 void create_cascaded_pt(int i1, int i2, int s1, int s2, int depth,
-                                 const std::vector<int> &t1,
-                                 const std::vector<int> &t2,
-                                 std::vector<unsigned char> &pt) {
+                        const std::vector<int> &t1, const std::vector<int> &t2,
+                        std::vector<unsigned char> &pt) {
   long long sz = (long long)s1 * s2;
   std::vector<unsigned char> tmp(sz, 255);
   tmp[(long long)i1 * s2 + i2] = 0;
@@ -1853,6 +1841,7 @@ void create_cascaded_pt(int i1, int i2, int s1, int s2, int depth,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < sz; ++i) {
+      dp.progress(i, sz, d);
       if (tmp[i] == d) {
         cnt++;
         int t1b = (i / s2) * 18, t2b = (i % s2) * 18;
@@ -1864,6 +1853,7 @@ void create_cascaded_pt(int i1, int i2, int s1, int s2, int depth,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -1876,9 +1866,8 @@ void create_cascaded_pt(int i1, int i2, int s1, int s2, int depth,
 }
 
 void create_cascaded_pt2(int i1, int i2, int s1, int s2, int depth,
-                                  const std::vector<int> &t1,
-                                  const std::vector<int> &t2,
-                                  std::vector<unsigned char> &pt) {
+                         const std::vector<int> &t1, const std::vector<int> &t2,
+                         std::vector<unsigned char> &pt) {
   long long sz = (long long)s1 * s2;
   std::vector<unsigned char> tmp(sz, 255);
   tmp[(long long)i1 * s2 + i2] = 0;
@@ -1889,6 +1878,7 @@ void create_cascaded_pt2(int i1, int i2, int s1, int s2, int depth,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < sz; ++i) {
+      dp.progress(i, sz, d);
       if (tmp[i] == d) {
         cnt++;
         int tb1 = (i / s2) * 24, tb2 = (i % s2) * 18;
@@ -1900,6 +1890,7 @@ void create_cascaded_pt2(int i1, int i2, int s1, int s2, int depth,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -1912,9 +1903,8 @@ void create_cascaded_pt2(int i1, int i2, int s1, int s2, int depth,
 }
 
 void create_cascaded_pt3(int i1, int i2, int s1, int s2, int depth,
-                                  const std::vector<int> &t1,
-                                  const std::vector<int> &t2,
-                                  std::vector<unsigned char> &pt) {
+                         const std::vector<int> &t1, const std::vector<int> &t2,
+                         std::vector<unsigned char> &pt) {
   long long sz = (long long)s1 * s2;
   std::vector<unsigned char> tmp(sz, 255);
   tmp[(long long)i1 * s2 + i2] = 0;
@@ -1925,6 +1915,7 @@ void create_cascaded_pt3(int i1, int i2, int s1, int s2, int depth,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < sz; ++i) {
+      dp.progress(i, sz, d);
       if (tmp[i] == d) {
         cnt++;
         int tb1 = (i / s2) * 18, tb2 = (i % s2) * 18;
@@ -1936,6 +1927,7 @@ void create_cascaded_pt3(int i1, int i2, int s1, int s2, int depth,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -1947,11 +1939,13 @@ void create_cascaded_pt3(int i1, int i2, int s1, int s2, int depth,
       set_prune(pt, i, tmp[i]);
 }
 
-void create_pt_xcross_plus(
-    int idx_cr, int idx_cn, int idx_ed, int idx_extra, int sz_cr, int sz_cn,
-    int sz_ed, int sz_ex, int depth, const std::vector<int> &t1,
-    const std::vector<int> &t2, const std::vector<int> &t3,
-    const std::vector<int> &t4, std::vector<unsigned char> &pt) {
+void create_pt_xcross_plus(int idx_cr, int idx_cn, int idx_ed, int idx_extra,
+                           int sz_cr, int sz_cn, int sz_ed, int sz_ex,
+                           int depth, const std::vector<int> &t1,
+                           const std::vector<int> &t2,
+                           const std::vector<int> &t3,
+                           const std::vector<int> &t4,
+                           std::vector<unsigned char> &pt) {
   long long total = (long long)sz_cr * sz_cn * sz_ed * sz_ex;
   std::cout << "  Allocating " << (total / 1024 / 1024)
             << " MB for Plus Table..." << std::endl;
@@ -1978,6 +1972,7 @@ void create_pt_xcross_plus(
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
+      dp.progress(i, total, d);
       if (tmp[i] == d) {
         cnt++;
         long long rem = i;
@@ -2007,6 +2002,7 @@ void create_pt_xcross_plus(
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -2020,11 +2016,13 @@ void create_pt_xcross_plus(
       set_prune(pt, i, tmp[i]);
 }
 
-void create_pt_xcross_corn3(
-    int idx_cr, int idx_cn, int idx_c5, int idx_c6, int sz_cr, int sz_cn,
-    int sz_c5, int sz_c6, int depth, const std::vector<int> &t1,
-    const std::vector<int> &t2, const std::vector<int> &t_c5,
-    const std::vector<int> &t_c6, std::vector<unsigned char> &pt) {
+void create_pt_xcross_corn3(int idx_cr, int idx_cn, int idx_c5, int idx_c6,
+                            int sz_cr, int sz_cn, int sz_c5, int sz_c6,
+                            int depth, const std::vector<int> &t1,
+                            const std::vector<int> &t2,
+                            const std::vector<int> &t_c5,
+                            const std::vector<int> &t_c6,
+                            std::vector<unsigned char> &pt) {
   long long total = (long long)sz_cr * sz_cn * sz_c5 * sz_c6;
   std::cout << "  Allocating " << (total / 1024 / 1024)
             << " MB for 3-Corner Table..." << std::endl;
@@ -2049,6 +2047,7 @@ void create_pt_xcross_corn3(
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
+      dp.progress(i, total, d);
       if (tmp[i] == d) {
         cnt++;
         long long rem = i;
@@ -2078,6 +2077,7 @@ void create_pt_xcross_corn3(
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -2096,9 +2096,10 @@ void create_pt_xcross_corn3(
 
 // 生成 Pseudo Cross + Corner 表 (例如: prune_table_pseudo_cross_C4.bin)
 // index2: corner 初始索引 (如 12=C4, 15=C5, 18=C6, 21=C7)
-void create_pt_pscross_corner(
-    int index2, int depth, const std::vector<int> &table1,
-    const std::vector<int> &table2, std::vector<unsigned char> &prune_table) {
+void create_pt_pscross_corner(int index2, int depth,
+                              const std::vector<int> &table1,
+                              const std::vector<int> &table2,
+                              std::vector<unsigned char> &prune_table) {
   long long size1 = 190080, size2 = 24, size = size1 * size2;
   std::vector<unsigned char> temp_table(size, 255);
   std::vector<int> a = {16, 18, 20, 22};
@@ -2114,6 +2115,7 @@ void create_pt_pscross_corner(
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < size; ++i) {
+      dp.progress(i, size, d);
       if (temp_table[i] == d) {
         cnt++;
         int index1_tmp = (i / size2) * 24;
@@ -2126,6 +2128,7 @@ void create_pt_pscross_corner(
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -2142,9 +2145,9 @@ void create_pt_pscross_corner(
 // index3: edge 初始索引 (0, 2, 4, 6 for E0-E3)
 // index2: corner 初始索引 (12, 15, 18, 21 for C4-C7)
 void create_pt_pscross_xcross(int index3, int index2, int depth,
-                                      const std::vector<int> &table1,
-                                      const std::vector<int> &table2,
-                                      std::vector<unsigned char> &prune_table) {
+                              const std::vector<int> &table1,
+                              const std::vector<int> &table2,
+                              std::vector<unsigned char> &prune_table) {
   long long size1 = 190080, size2 = 24, size = size1 * size2;
   std::vector<unsigned char> temp_table(size, 255);
 
@@ -2216,6 +2219,7 @@ void create_pt_pscross_xcross(int index3, int index2, int depth,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < size; ++i) {
+      dp.progress(i, size, d);
       if (temp_table[i] == d) {
         cnt++;
         int index1_tmp = (i / size2) * 24;
@@ -2228,6 +2232,7 @@ void create_pt_pscross_xcross(int index3, int index2, int depth,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
@@ -2243,11 +2248,10 @@ void create_pt_pscross_xcross(int index3, int index2, int depth,
 // 生成 Pseudo Pair 表 (例如: prune_table_pseudo_pair_C4_E0.bin)
 // index1: edge 初始索引 (0, 2, 4, 6)
 // index2: corner 初始索引 (12, 15, 18, 21)
-void create_pt_pspair(int index1, int index2, int size1,
-                                    int size2, int depth,
-                                    const std::vector<int> &table1,
-                                    const std::vector<int> &table2,
-                                    std::vector<unsigned char> &prune_table) {
+void create_pt_pspair(int index1, int index2, int size1, int size2, int depth,
+                      const std::vector<int> &table1,
+                      const std::vector<int> &table2,
+                      std::vector<unsigned char> &prune_table) {
   long long size = (long long)size1 * size2;
   std::vector<unsigned char> temp_table(size, 255);
   long long start = (long long)index1 * size2 + index2;
@@ -2322,6 +2326,7 @@ void create_pt_pspair(int index1, int index2, int size1,
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < size; ++i) {
+      dp.progress(i, size, d);
       if (temp_table[i] == d) {
         cnt++;
         int index1_tmp = (i / size2) * 18;
@@ -2334,6 +2339,7 @@ void create_pt_pspair(int index1, int index2, int size1,
         }
       }
     }
+    dp.clearProgress();
     dp.print(d, cnt);
     if (cnt == 0)
       break;
