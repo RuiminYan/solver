@@ -422,7 +422,7 @@ std::vector<int> create_multi_move_table(int n, int c, int pn, int size,
     }
   }
   if (showProgress)
-    std::cout << "\r  Progress: 100%    " << std::endl;
+    std::cout << "\r\033[2K" << std::flush;
   return mt;
 }
 
@@ -456,6 +456,6 @@ std::vector<int> create_multi_move_table2(int n, int c, int pn, int size,
     }
   }
   if (showProgress)
-    std::cout << "\r  Progress: 100%    " << std::endl;
+    std::cout << "\r\033[2K" << std::flush;
   return mt;
 }
