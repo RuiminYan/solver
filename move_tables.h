@@ -49,53 +49,53 @@ public:
   bool loadEdgeMT() {
     if (!mt_edge.empty())
       return true;
-    return loadTable(mt_edge, "move_table_edge.bin");
+    return loadTable(mt_edge, "mt_edge.bin");
   }
   void releaseEdgeMT() { std::vector<int>().swap(mt_edge); }
 
   bool loadCornMT() {
     if (!mt_corn.empty())
       return true;
-    return loadTable(mt_corn, "move_table_corner.bin");
+    return loadTable(mt_corn, "mt_corn.bin");
   }
   void releaseCornMT() { std::vector<int>().swap(mt_corn); }
 
   bool loadCrossMT() {
     if (!mt_cross.empty())
       return true;
-    return loadTable(mt_cross, "move_table_cross.bin");
+    return loadTable(mt_cross, "mt_cross.bin");
   }
   void releaseCrossMT() { std::vector<int>().swap(mt_cross); }
 
   bool loadEdge2MT() {
     if (!mt_edge2.empty())
       return true;
-    return loadTable(mt_edge2, "move_table_edges_2.bin");
+    return loadTable(mt_edge2, "mt_edge2.bin");
   }
   void releaseEdge2MT() { std::vector<int>().swap(mt_edge2); }
 
   bool loadEdge3MT() {
     if (!mt_edge3.empty())
       return true;
-    return loadTable(mt_edge3, "move_table_edges_3.bin");
+    return loadTable(mt_edge3, "mt_edge3.bin");
   }
   void releaseEdge3MT() { std::vector<int>().swap(mt_edge3); }
 
   // NOTE: Edge6 保持原有行为，按需加载+用完释放，因为它占用 ~3GB 内存
-  bool loadEdge6MT() { return loadTable(mt_edge6, "move_table_edges_6.bin"); }
+  bool loadEdge6MT() { return loadTable(mt_edge6, "mt_edge6.bin"); }
   void releaseEdge6MT() { std::vector<int>().swap(mt_edge6); }
 
   bool loadCorn2MT() {
     if (!mt_corn2.empty())
       return true;
-    return loadTable(mt_corn2, "move_table_corners_2.bin");
+    return loadTable(mt_corn2, "mt_corn2.bin");
   }
   void releaseCorn2MT() { std::vector<int>().swap(mt_corn2); }
 
   bool loadCorn3MT() {
     if (!mt_corn3.empty())
       return true;
-    return loadTable(mt_corn3, "move_table_corners_3.bin");
+    return loadTable(mt_corn3, "mt_corn3.bin");
   }
   void releaseCorn3MT() { std::vector<int>().swap(mt_corn3); }
 
