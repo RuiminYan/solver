@@ -83,12 +83,10 @@ private:
 
   // === EOCross 专用表 ===
   // NOTE: eo_cross_c4使用不同生成函数，与pt_cross_C4不同
-  std::vector<unsigned char> pt_eoc_C4;  // Cross+C4 (EOCross版)
-  std::vector<unsigned char> pt_ep4eo12; // Dependency+EO
-  std::vector<unsigned char>
-      pt_cross_C4E0E1_C4E0E2_C4E0E3[3]; // Plus Edge: Right/Diag/Left
-  std::vector<unsigned char>
-      pt_cross_C4C5E0_C4C6E0_C4C7E0[3];       // Plus Corner: Right/Diag/Left
+  std::vector<unsigned char> pt_eoc_C4;       // Cross+C4 (EOCross版)
+  std::vector<unsigned char> pt_ep4eo12;      // Dependency+EO
+  std::vector<unsigned char> pt_cross_CEE[3]; // Plus Edge: Right/Diag/Left
+  std::vector<unsigned char> pt_cross_CCE[3]; // Plus Corner: Right/Diag/Left
   std::vector<unsigned char> pt_cross_C4C5C6; // 3-Corner (C4+C5+C6)
 
   // 单例模式
@@ -260,23 +258,11 @@ public:
   // === EOCross Getters (新名) ===
   const unsigned char *getEOCC4PTPtr() const { return pt_eoc_C4.data(); }
   const unsigned char *getEP4EO12PTPtr() const { return pt_ep4eo12.data(); }
-  const unsigned char *getCrossC4E0E1PTPtr() const {
-    return pt_cross_C4E0E1_C4E0E2_C4E0E3[0].data();
+  const unsigned char *getCrossCEEPTPtr(int i) const {
+    return pt_cross_CEE[i].data();
   }
-  const unsigned char *getCrossC4E0E2PTPtr() const {
-    return pt_cross_C4E0E1_C4E0E2_C4E0E3[1].data();
-  }
-  const unsigned char *getCrossC4E0E3PTPtr() const {
-    return pt_cross_C4E0E1_C4E0E2_C4E0E3[2].data();
-  }
-  const unsigned char *getCrossC4C5E0PTPtr() const {
-    return pt_cross_C4C5E0_C4C6E0_C4C7E0[0].data();
-  }
-  const unsigned char *getCrossC4C6E0PTPtr() const {
-    return pt_cross_C4C5E0_C4C6E0_C4C7E0[1].data();
-  }
-  const unsigned char *getCrossC4C7E0PTPtr() const {
-    return pt_cross_C4C5E0_C4C6E0_C4C7E0[2].data();
+  const unsigned char *getCrossCCEPTPtr(int i) const {
+    return pt_cross_CCE[i].data();
   }
   const unsigned char *getCrossC4C5C6PTPtr() const {
     return pt_cross_C4C5C6.data();
@@ -292,14 +278,9 @@ public:
 
   // EOCross 专用生成函数
   void genPTEP4EO12(); // EP4 + EO12 联合剪枝表
-  // EOCross Plus Edge 生成函数
-  void genPTCrossC4E0E1(); // Plus Edge Right (E1)
-  void genPTCrossC4E0E2(); // Plus Edge Diag (E2)
-  void genPTCrossC4E0E3(); // Plus Edge Left (E3)
-  // EOCross Plus Corner 生成函数
-  void genPTCrossC4C5E0(); // Plus Corn Right (C5)
-  void genPTCrossC4C6E0(); // Plus Corn Diag (C6)
-  void genPTCrossC4C7E0(); // Plus Corn Left (C7)
+  // EOCross Plus 生成函数 (参数化: i=0 Right, 1 Diag, 2 Left)
+  void genPTCrossCEE(int i); // Plus Edge
+  void genPTCrossCCE(int i); // Plus Corner
   // EOCross 3-Corner 生成函数
   void genPTCrossC4C5C6(); // 3-Corner (C5+C6)
 

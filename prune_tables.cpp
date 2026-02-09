@@ -307,7 +307,7 @@ bool PruneTableManager::loadEOCrossTables() {
   const char *edge_files[] = {"pt_cross_C4E0E1.bin", "pt_cross_C4E0E2.bin",
                               "pt_cross_C4E0E3.bin"};
   for (int i = 0; i < 3; ++i) {
-    if (!loadTable(pt_cross_C4E0E1_C4E0E2_C4E0E3[i], edge_files[i]))
+    if (!loadTable(pt_cross_CEE[i], edge_files[i]))
       return false;
   }
 
@@ -315,7 +315,7 @@ bool PruneTableManager::loadEOCrossTables() {
   const char *corn_files[] = {"pt_cross_C4C5E0.bin", "pt_cross_C4C6E0.bin",
                               "pt_cross_C4C7E0.bin"};
   for (int i = 0; i < 3; ++i) {
-    if (!loadTable(pt_cross_C4C5E0_C4C6E0_C4C7E0[i], corn_files[i]))
+    if (!loadTable(pt_cross_CCE[i], corn_files[i]))
       return false;
   }
 
@@ -425,19 +425,17 @@ void PruneTableManager::genAllSequentially() {
       mtm.loadMTEdge4();
       mtm.loadMTCorn();
       mtm.loadMTEdge();
-      genPTCrossC4E0E1();
-      std::vector<unsigned char>().swap(pt_cross_C4E0E1_C4E0E2_C4E0E3[0]);
-      genPTCrossC4E0E2();
-      std::vector<unsigned char>().swap(pt_cross_C4E0E1_C4E0E2_C4E0E3[1]);
-      genPTCrossC4E0E3();
-      std::vector<unsigned char>().swap(pt_cross_C4E0E1_C4E0E2_C4E0E3[2]);
+      for (int i = 0; i < 3; ++i) {
+        genPTCrossCEE(i);
+        std::vector<unsigned char>().swap(pt_cross_CEE[i]);
+      }
       mtm.releaseMTEdge4();
       mtm.releaseMTCorn();
       mtm.releaseMTEdge();
     }
   }
 
-  // 7.2 EOCross Plus Corner (3 ? ?~1.22GB, Needs Cross, Corner, Edge)
+  // 7.2 EOCross Plus Corner (3 x ~1.22GB, Needs Cross, Corner, Edge)
   {
     bool need_plus = !fileExists("pt_cross_C4C5E0.bin") ||
                      !fileExists("pt_cross_C4C6E0.bin") ||
@@ -446,12 +444,10 @@ void PruneTableManager::genAllSequentially() {
       mtm.loadMTEdge4();
       mtm.loadMTCorn();
       mtm.loadMTEdge();
-      genPTCrossC4C5E0();
-      std::vector<unsigned char>().swap(pt_cross_C4C5E0_C4C6E0_C4C7E0[0]);
-      genPTCrossC4C6E0();
-      std::vector<unsigned char>().swap(pt_cross_C4C5E0_C4C6E0_C4C7E0[1]);
-      genPTCrossC4C7E0();
-      std::vector<unsigned char>().swap(pt_cross_C4C5E0_C4C6E0_C4C7E0[2]);
+      for (int i = 0; i < 3; ++i) {
+        genPTCrossCCE(i);
+        std::vector<unsigned char>().swap(pt_cross_CCE[i]);
+      }
       mtm.releaseMTEdge4();
       mtm.releaseMTCorn();
       mtm.releaseMTEdge();
@@ -927,102 +923,50 @@ void PruneTableManager::genPTEP4EO12() {
   timer.printElapsed("pt_ep4eo12.bin");
 }
 
-// === EOCross Plus Edge 生成函数 ===
-// NOTE: 状态空?Cross(187560) × C4(24) × E0(24) × Extra(24)
-// 参数来源: eo_cross_analyzer_old.cpp:L278-L281
-
-void PruneTableManager::genPTCrossC4E0E1() {
-  if (loadTable(pt_cross_C4E0E1_C4E0E2_C4E0E3[0], "pt_cross_C4E0E1.bin"))
+// === EOCross Plus Edge 生成函数 (参数化) ===
+// NOTE: 状态空间 Cross(187560) × C4(24) × E0(24) × Extra(24)
+// i=0: E1(Right), i=1: E2(Diag), i=2: E3(Left)
+void PruneTableManager::genPTCrossCEE(int i) {
+  // .bin 文件名映射: 0→E1, 1→E2, 2→E3
+  static const char *FILENAMES[] = {
+      "pt_cross_C4E0E1.bin", "pt_cross_C4E0E2.bin", "pt_cross_C4E0E3.bin"};
+  const char *fn = FILENAMES[i];
+  if (loadTable(pt_cross_CEE[i], fn))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_cross_C4E0E1.bin..." << std::endl;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating " << fn
+            << "..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  // Plus Edge Right: idx_extra=2 (E1 初始状态?, t4=EdgeMT
-  create_pt_xcross_plus(187520, 12, 0, 2, 24 * 22 * 20 * 18, 24, 24, 24, 14,
-                        mtm.getEdge4MT(), mtm.getCornMT(), mtm.getEdgeMT(),
-                        mtm.getEdgeMT(), pt_cross_C4E0E1_C4E0E2_C4E0E3[0]);
-  saveTable(pt_cross_C4E0E1_C4E0E2_C4E0E3[0], "pt_cross_C4E0E1.bin");
-  timer.printElapsed("pt_cross_C4E0E1.bin");
+  // idx_extra: E1=2, E2=4, E3=6 → EDGE_INDICES[i+1]
+  int idx_extra = EDGE_INDICES[i + 1];
+  create_pt_xcross_plus(187520, 12, 0, idx_extra, 24 * 22 * 20 * 18, 24, 24, 24,
+                        14, mtm.getEdge4MT(), mtm.getCornMT(), mtm.getEdgeMT(),
+                        mtm.getEdgeMT(), pt_cross_CEE[i]);
+  saveTable(pt_cross_CEE[i], fn);
+  timer.printElapsed(fn);
 }
 
-void PruneTableManager::genPTCrossC4E0E2() {
-  if (loadTable(pt_cross_C4E0E1_C4E0E2_C4E0E3[1], "pt_cross_C4E0E2.bin"))
+// === EOCross Plus Corner 生成函数 (参数化) ===
+// NOTE: 与 Plus Edge 结构相同，但 idx_extra 是角块初始状态，t4=CornMT
+// i=0: C5(Right), i=1: C6(Diag), i=2: C7(Left)
+void PruneTableManager::genPTCrossCCE(int i) {
+  // .bin 文件名映射: 0→C5, 1→C6, 2→C7
+  static const char *FILENAMES[] = {
+      "pt_cross_C4C5E0.bin", "pt_cross_C4C6E0.bin", "pt_cross_C4C7E0.bin"};
+  const char *fn = FILENAMES[i];
+  if (loadTable(pt_cross_CCE[i], fn))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_cross_C4E0E2.bin..." << std::endl;
+  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating " << fn
+            << "..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  // Plus Edge Diag: idx_extra=4 (E2 初始状态?, t4=EdgeMT
-  create_pt_xcross_plus(187520, 12, 0, 4, 24 * 22 * 20 * 18, 24, 24, 24, 14,
-                        mtm.getEdge4MT(), mtm.getCornMT(), mtm.getEdgeMT(),
-                        mtm.getEdgeMT(), pt_cross_C4E0E1_C4E0E2_C4E0E3[1]);
-  saveTable(pt_cross_C4E0E1_C4E0E2_C4E0E3[1], "pt_cross_C4E0E2.bin");
-  timer.printElapsed("pt_cross_C4E0E2.bin");
-}
-
-void PruneTableManager::genPTCrossC4E0E3() {
-  if (loadTable(pt_cross_C4E0E1_C4E0E2_C4E0E3[2], "pt_cross_C4E0E3.bin"))
-    return;
-  GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_cross_C4E0E3.bin..." << std::endl;
-  auto &mtm = MoveTableManager::getInstance();
-  // Plus Edge Left: idx_extra=6 (E3 初始状态?, t4=EdgeMT
-  create_pt_xcross_plus(187520, 12, 0, 6, 24 * 22 * 20 * 18, 24, 24, 24, 14,
-                        mtm.getEdge4MT(), mtm.getCornMT(), mtm.getEdgeMT(),
-                        mtm.getEdgeMT(), pt_cross_C4E0E1_C4E0E2_C4E0E3[2]);
-  saveTable(pt_cross_C4E0E1_C4E0E2_C4E0E3[2], "pt_cross_C4E0E3.bin");
-  timer.printElapsed("pt_cross_C4E0E3.bin");
-}
-
-// === EOCross Plus Corner 生成函数 ===
-// NOTE: ?Plus Edge 结构相同，但 idx_extra 是角块初始状态，t4=CornMT
-// 参数来源: eo_cross_analyzer_old.cpp:L295-L298
-
-void PruneTableManager::genPTCrossC4C5E0() {
-  if (loadTable(pt_cross_C4C5E0_C4C6E0_C4C7E0[0], "pt_cross_C4C5E0.bin"))
-    return;
-  GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_cross_C4C5E0.bin..." << std::endl;
-  auto &mtm = MoveTableManager::getInstance();
-  // Plus Corn Right: idx_extra=15 (C5 初始状态?, t4=CornMT
-  create_pt_xcross_plus(187520, 12, 0, 15, 24 * 22 * 20 * 18, 24, 24, 24, 14,
-                        mtm.getEdge4MT(), mtm.getCornMT(), mtm.getEdgeMT(),
-                        mtm.getCornMT(), pt_cross_C4C5E0_C4C6E0_C4C7E0[0]);
-  saveTable(pt_cross_C4C5E0_C4C6E0_C4C7E0[0], "pt_cross_C4C5E0.bin");
-  timer.printElapsed("pt_cross_C4C5E0.bin");
-}
-
-void PruneTableManager::genPTCrossC4C6E0() {
-  if (loadTable(pt_cross_C4C5E0_C4C6E0_C4C7E0[1], "pt_cross_C4C6E0.bin"))
-    return;
-  GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_cross_C4C6E0.bin..." << std::endl;
-  auto &mtm = MoveTableManager::getInstance();
-  // Plus Corn Diag: idx_extra=18 (C6 初始状态?, t4=CornMT
-  create_pt_xcross_plus(187520, 12, 0, 18, 24 * 22 * 20 * 18, 24, 24, 24, 14,
-                        mtm.getEdge4MT(), mtm.getCornMT(), mtm.getEdgeMT(),
-                        mtm.getCornMT(), pt_cross_C4C5E0_C4C6E0_C4C7E0[1]);
-  saveTable(pt_cross_C4C5E0_C4C6E0_C4C7E0[1], "pt_cross_C4C6E0.bin");
-  timer.printElapsed("pt_cross_C4C6E0.bin");
-}
-
-void PruneTableManager::genPTCrossC4C7E0() {
-  if (loadTable(pt_cross_C4C5E0_C4C6E0_C4C7E0[2], "pt_cross_C4C7E0.bin"))
-    return;
-  GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_cross_C4C7E0.bin..." << std::endl;
-  auto &mtm = MoveTableManager::getInstance();
-  // Plus Corn Left: idx_extra=21 (C7 初始状态?, t4=CornMT
-  create_pt_xcross_plus(187520, 12, 0, 21, 24 * 22 * 20 * 18, 24, 24, 24, 14,
-                        mtm.getEdge4MT(), mtm.getCornMT(), mtm.getEdgeMT(),
-                        mtm.getCornMT(), pt_cross_C4C5E0_C4C6E0_C4C7E0[2]);
-  saveTable(pt_cross_C4C5E0_C4C6E0_C4C7E0[2], "pt_cross_C4C7E0.bin");
-  timer.printElapsed("pt_cross_C4C7E0.bin");
+  // idx_extra: C5=15, C6=18, C7=21 → CORNER_INDICES[i+1]
+  int idx_extra = CORNER_INDICES[i + 1];
+  create_pt_xcross_plus(187520, 12, 0, idx_extra, 24 * 22 * 20 * 18, 24, 24, 24,
+                        14, mtm.getEdge4MT(), mtm.getCornMT(), mtm.getEdgeMT(),
+                        mtm.getCornMT(), pt_cross_CCE[i]);
+  saveTable(pt_cross_CCE[i], fn);
+  timer.printElapsed(fn);
 }
 
 // === EOCross 3-Corner 生成函数 ===
