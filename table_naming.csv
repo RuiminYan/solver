@@ -86,10 +86,10 @@ mt_edge3.bin,mt_edge3,genMTEdge3(),-,-,p_edge3,p_edge3_move_ptr,-,Canon,742KB,Ed
 mt_edge6.bin,mt_edge6,genMTEdge6(),p_edge6,p_edge6,p_edge6,-,p_edge6,Canon,2.85GB,Edge6移动表
 mt_corn2.bin,mt_corn2,genMTCorn2(),p_corn2,p_corn2,p_corners2,p_corner2_move_ptr,p_corn2,Canon,<100KB,Corner2移动表
 mt_corn3.bin,mt_corn3,genMTCorn3(),-,-,p_corners3,p_corner3_move_ptr,-,Canon,637KB,Corner3移动表
-mt_eo.bin,mt_eo,loadMTEO(),-,-,-,-,p_eo,Canon,144KB,EO移动表
-mt_eo_alt.bin,mt_eo_alt,loadMTEOCross(),-,-,-,-,p_eo,Canon,144KB,EO Alt移动表
-mt_ep1.bin,mt_ep1,loadMTEP1(),-,-,-,-,-,Canon,<100KB,EP1移动表
-mt_ep4.bin,mt_ep4,loadMTEOCross(),-,-,-,-,p_dep,Canon,835KB,EP4移动表
+mt_eo.bin,mt_eo,genMTEO(),-,-,-,-,p_eo,Canon,144KB,EO移动表
+mt_eo_alt.bin,mt_eo_alt,genMTEOAlt(),-,-,-,-,p_eo,Canon,144KB,EO Alt移动表
+mt_ep1.bin,mt_ep1,genMTEP1(),-,-,-,-,-,Canon,<100KB,EP1移动表
+mt_ep4.bin,mt_ep4,genMTEP4(),-,-,-,-,p_dep,Canon,835KB,EP4移动表
 
 ===== 加载状态说明 =====,,,,,,,,,0KB,
 Canon,"规范表,实际加载到内存",,,,,,,,

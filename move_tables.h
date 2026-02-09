@@ -143,6 +143,11 @@ private:
   void genMTEdge6();
   void genMTCorn2();
   void genMTCorn3();
+  // EOCross 专用生成函数
+  void genMTEO();
+  void genMTEOAlt();
+  void genMTEP1();
+  void genMTEP4();
 
   // 文件操作
   bool loadTable(std::vector<int> &table, const std::string &filename);

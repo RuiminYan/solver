@@ -135,6 +135,48 @@ void MoveTableManager::genAllSequentially() {
     releaseMTCorn3();
   }
 
+  // 9. EO 移动表 (无依赖, 144KB)
+  if (!fileExists("mt_eo.bin")) {
+    GenerationTimer timer;
+    std::cout << "Generating mt_eo.bin..." << std::endl;
+    mt_eo = create_eo_mt();
+    saveTable(mt_eo, "mt_eo.bin");
+    timer.printElapsed("mt_eo.bin");
+    std::vector<int>().swap(mt_eo);
+  }
+
+  // 10. EO Alt 移动表 (无依赖, 144KB)
+  if (!fileExists("mt_eo_alt.bin")) {
+    GenerationTimer timer;
+    std::cout << "Generating mt_eo_alt.bin..." << std::endl;
+    mt_eo_alt = create_eo_alt_mt();
+    saveTable(mt_eo_alt, "mt_eo_alt.bin");
+    timer.printElapsed("mt_eo_alt.bin");
+    std::vector<int>().swap(mt_eo_alt);
+  }
+
+  // 11. EP1 移动表 (无依赖, <100KB)
+  if (!fileExists("mt_ep1.bin")) {
+    GenerationTimer timer;
+    std::cout << "Generating mt_ep1.bin..." << std::endl;
+    mt_ep1 = create_ep_mt();
+    saveTable(mt_ep1, "mt_ep1.bin");
+    timer.printElapsed("mt_ep1.bin");
+    std::vector<int>().swap(mt_ep1);
+  }
+
+  // 12. EP4 移动表 (依赖 EP1, 835KB)
+  if (!fileExists("mt_ep4.bin")) {
+    loadMTEP1();
+    GenerationTimer timer;
+    std::cout << "Generating mt_ep4.bin..." << std::endl;
+    mt_ep4 = create_multi_move_table(4, 1, 12, 12 * 11 * 10 * 9, mt_ep1);
+    saveTable(mt_ep4, "mt_ep4.bin");
+    timer.printElapsed("mt_ep4.bin");
+    std::vector<int>().swap(mt_ep4);
+    std::vector<int>().swap(mt_ep1);
+  }
+
   // 释放基础依赖表
   releaseMTEdge();
   releaseMTCorn();
@@ -250,6 +292,40 @@ void MoveTableManager::genMTCorn3() {
   // 3个角块 (9072 states)
   mt_corn3 = create_multi_move_table(3, 3, 8, 9072, mt_corn);
   saveTable(mt_corn3, "mt_corn3.bin");
+}
+
+void MoveTableManager::genMTEO() {
+  if (loadTable(mt_eo, "mt_eo.bin"))
+    return;
+  std::cout << "Generating mt_eo.bin..." << std::endl;
+  mt_eo = create_eo_mt();
+  saveTable(mt_eo, "mt_eo.bin");
+}
+
+void MoveTableManager::genMTEOAlt() {
+  if (loadTable(mt_eo_alt, "mt_eo_alt.bin"))
+    return;
+  std::cout << "Generating mt_eo_alt.bin..." << std::endl;
+  mt_eo_alt = create_eo_alt_mt();
+  saveTable(mt_eo_alt, "mt_eo_alt.bin");
+}
+
+void MoveTableManager::genMTEP1() {
+  if (loadTable(mt_ep1, "mt_ep1.bin"))
+    return;
+  std::cout << "Generating mt_ep1.bin..." << std::endl;
+  mt_ep1 = create_ep_mt();
+  saveTable(mt_ep1, "mt_ep1.bin");
+}
+
+void MoveTableManager::genMTEP4() {
+  if (loadTable(mt_ep4, "mt_ep4.bin"))
+    return;
+  // NOTE: 依赖 EP1 表
+  loadMTEP1();
+  std::cout << "Generating mt_ep4.bin..." << std::endl;
+  mt_ep4 = create_multi_move_table(4, 1, 12, 12 * 11 * 10 * 9, mt_ep1);
+  saveTable(mt_ep4, "mt_ep4.bin");
 }
 
 // 加载 EOCross 专用移动表
