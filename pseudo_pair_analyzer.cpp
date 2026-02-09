@@ -46,8 +46,9 @@ struct xcross_analyzer2 {
   static bool tables_initialized;
   // [重构] 改用 Manager 统一管理的指针(方案A)
   static const unsigned char *p_pt_pscross_C[4]; // Cross + C{4-7}
-  static const unsigned char *p_pt_pscross_C_diff[16];  // XCross C{4-7} into slot{0-3}
-  static const unsigned char *p_pt_pspair_ce[16];  // Pair C{4-7}_E{0-3}
+  static const unsigned char
+      *p_pt_pscross_C_diff[16]; // XCross C{4-7} into slot{0-3}
+  static const unsigned char *p_pt_pspair_CE[16]; // Pair C{4-7}_E{0-3}
   static const unsigned char
       *p_pt_pscross_C4E[4]; // Pseudo XCross Base (C4+E{0-3})
 
@@ -55,10 +56,10 @@ struct xcross_analyzer2 {
   static const int *p_mt_edge;
   static const int *p_mt_corn;
   static const int *p_mt_edge4;
-  static const int *p_mt_edge3;   // Edge3 移动表指针
+  static const int *p_mt_edge3; // Edge3 移动表指针
   static const int *p_mt_corn3; // [新增] Corner3 移动表指针
   static const int *p_mt_corn2; // [新增] Corner2 移动表指针
-  static const int *p_mt_edge2;   // [新增] Edge2 移动表指针
+  static const int *p_mt_edge2; // [新增] Edge2 移动表指针
 
   // [重构] Aux 剪枝表指针(从 Manager 获取)
   // Edge3 剪枝表
@@ -68,11 +69,11 @@ struct xcross_analyzer2 {
   static const unsigned char *p_pt_pscross_C4C5C6; // C4C5C6 规范表
 
   // Corner2 剪枝表
-  static const unsigned char *p_pt_pscross_C4C5;  // C4C5 邻接
+  static const unsigned char *p_pt_pscross_C4C5; // C4C5 邻接
   static const unsigned char *p_pt_pscross_C4C6; // C4C6 对角
 
   // Edge2 剪枝表
-  static const unsigned char *p_pt_pscross_E0E1;  // E0E1 邻接
+  static const unsigned char *p_pt_pscross_E0E1; // E0E1 邻接
   static const unsigned char *p_pt_pscross_E0E2; // E0E2 对角
 
   // [新增] 辅助剪枝定义 (用于通用 AuxState 架构)
@@ -102,10 +103,10 @@ struct xcross_analyzer2 {
 
   // === 静态AuxPrunerDef 对象 (替代 aux_registry map) ===
   // Edge2: 邻接 (E0E1) 和对角 (E0E2)
-  static AuxPrunerDef aux_def_pscross_E0E1;  // {0,1}: prune_e0e1
+  static AuxPrunerDef aux_def_pscross_E0E1; // {0,1}: prune_e0e1
   static AuxPrunerDef aux_def_pscross_E0E2; // {0,2}: prune_e0e2
   // Corner2: 邻接 (C4C5) 和对角 (C4C6)
-  static AuxPrunerDef aux_def_pscross_C4C5;  // {4,5}: prune_c4c5
+  static AuxPrunerDef aux_def_pscross_C4C5; // {4,5}: prune_c4c5
   static AuxPrunerDef aux_def_pscross_C4C6; // {4,6}: prune_c4c6
   // Edge3: 规范表(E0E1E2)
   static AuxPrunerDef aux_def_pscross_E0E1E2; // {0,1,2}: prune_e0e1e2
@@ -203,7 +204,7 @@ struct xcross_analyzer2 {
 
     // 3. 获取 Pair Prune Tables 指针
     for (int idx = 0; idx < 16; ++idx) {
-      p_pt_pspair_ce[idx] = ptm.getPsPairECPTPtr(idx);
+      p_pt_pspair_CE[idx] = ptm.getPsPairECPTPtr(idx);
     }
 
     // 4. 获取 Pseudo Base Prune Tables 指针 (C4+E{0-3})
@@ -237,14 +238,11 @@ struct xcross_analyzer2 {
 
     // 6. 初始化静态AuxPrunerDef 对象
     aux_def_pscross_C4C5C6 = {p_pt_pscross_C4C5C6, p_mt_corn3, 9072}; // Corner3
-    aux_def_pscross_E0E1E2 = {p_pt_pscross_E0E1E2, p_mt_edge3, 10560};  // Edge3
-    aux_def_pscross_C4C5 = {p_pt_pscross_C4C5, p_mt_corn2,
-                      504}; // Corner2 邻接
-    aux_def_pscross_C4C6 = {p_pt_pscross_C4C6, p_mt_corn2,
-                       504}; // Corner2 对角
+    aux_def_pscross_E0E1E2 = {p_pt_pscross_E0E1E2, p_mt_edge3, 10560}; // Edge3
+    aux_def_pscross_C4C5 = {p_pt_pscross_C4C5, p_mt_corn2, 504}; // Corner2 邻接
+    aux_def_pscross_C4C6 = {p_pt_pscross_C4C6, p_mt_corn2, 504}; // Corner2 对角
     aux_def_pscross_E0E1 = {p_pt_pscross_E0E1, p_mt_edge2, 528}; // Edge2 邻接
-    aux_def_pscross_E0E2 = {p_pt_pscross_E0E2, p_mt_edge2,
-                       528}; // Edge2 对角
+    aux_def_pscross_E0E2 = {p_pt_pscross_E0E2, p_mt_edge2, 528}; // Edge2 对角
 
     tables_initialized = true;
   }
@@ -655,8 +653,8 @@ struct xcross_analyzer2 {
     for (int slot1_tmp = 0; slot1_tmp < 4; slot1_tmp++) {
       for (int pslot1_tmp = 0; pslot1_tmp < 4; pslot1_tmp++) {
         int idx = slot1_tmp * 4 + pslot1_tmp;
-        start_search_1(slot1_tmp, pslot1_tmp, p_pt_pscross_C_diff[idx], p_pt_pspair_ce[idx],
-                       rotations, base_alg);
+        start_search_1(slot1_tmp, pslot1_tmp, p_pt_pscross_C_diff[idx],
+                       p_pt_pspair_CE[idx], rotations, base_alg);
       }
     }
   }
@@ -871,8 +869,8 @@ struct xcross_analyzer2 {
             start_search_2(slot1_tmp, slot2_tmp, pslot1_tmp, pslot2_tmp,
                            p_pt_pscross_C_diff[slot1_tmp * 4 + pslot1_tmp],
                            p_pt_pscross_C[pslot2_tmp],
-                           p_pt_pspair_ce[slot1_tmp * 4 + pslot1_tmp], rotations,
-                           base_alg);
+                           p_pt_pspair_CE[slot1_tmp * 4 + pslot1_tmp],
+                           rotations, base_alg);
           }
         }
       }
@@ -1153,11 +1151,12 @@ struct xcross_analyzer2 {
                              a_pslot_tmps.end());
         for (int slot1_tmp : a_slot_tmps) {
           for (int pslot1_tmp : a_pslot_tmps) {
-            start_search_3(
-                slot1_tmp, slot_tmps_set[i][0], slot_tmps_set[i][1], pslot1_tmp,
-                pslot_tmps_set[j][0], pslot_tmps_set[j][1],
-                p_pt_pscross_C_diff[slot1_tmp * 4 + pslot1_tmp],
-                p_pt_pspair_ce[slot1_tmp * 4 + pslot1_tmp], rotations, base_alg);
+            start_search_3(slot1_tmp, slot_tmps_set[i][0], slot_tmps_set[i][1],
+                           pslot1_tmp, pslot_tmps_set[j][0],
+                           pslot_tmps_set[j][1],
+                           p_pt_pscross_C_diff[slot1_tmp * 4 + pslot1_tmp],
+                           p_pt_pspair_CE[slot1_tmp * 4 + pslot1_tmp],
+                           rotations, base_alg);
           }
         }
       }
@@ -1472,9 +1471,10 @@ struct xcross_analyzer2 {
           if (k != j)
             p_rem.push_back(k);
         start_search_4(i, s_rem[0], s_rem[1], s_rem[2], j, p_rem[0], p_rem[1],
-                       p_rem[2], p_pt_pscross_C_diff[i * 4 + j], p_pt_pscross_C[p_rem[0]],
-                       p_pt_pscross_C[p_rem[1]], p_pt_pscross_C[p_rem[2]],
-                       p_pt_pspair_ce[i * 4 + j], rotations, base_alg);
+                       p_rem[2], p_pt_pscross_C_diff[i * 4 + j],
+                       p_pt_pscross_C[p_rem[0]], p_pt_pscross_C[p_rem[1]],
+                       p_pt_pscross_C[p_rem[2]], p_pt_pspair_CE[i * 4 + j],
+                       rotations, base_alg);
       }
     }
   }
@@ -1485,7 +1485,7 @@ bool xcross_analyzer2::tables_initialized = false;
 // [重构] 指针数组静态定义(从 Manager 获取)
 const unsigned char *xcross_analyzer2::p_pt_pscross_C[4] = {nullptr};
 const unsigned char *xcross_analyzer2::p_pt_pscross_C_diff[16] = {nullptr};
-const unsigned char *xcross_analyzer2::p_pt_pspair_ce[16] = {nullptr};
+const unsigned char *xcross_analyzer2::p_pt_pspair_CE[16] = {nullptr};
 const unsigned char *xcross_analyzer2::p_pt_pscross_C4E[4] = {nullptr};
 
 const int *xcross_analyzer2::p_mt_edge = nullptr;

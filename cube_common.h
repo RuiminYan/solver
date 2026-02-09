@@ -112,10 +112,10 @@ int o_to_index(const std::vector<int> &o, int c, int pn);
 void index_to_o(std::vector<int> &o, int idx, int c, int pn);
 
 // 移动表创建函数
-std::vector<int> create_multi_move_table(int n, int c, int pn, int size,
-                                         const std::vector<int> &basic_t);
-std::vector<int> create_multi_move_table2(int n, int c, int pn, int size,
-                                          const std::vector<int> &basic_t);
+std::vector<int> createMultiMoveTable(int n, int c, int pn, int size,
+                                      const std::vector<int> &basic_table);
+std::vector<int> createMultiMoveTable2(int n, int c, int pn, int size,
+                                       const std::vector<int> &basic_t);
 
 // --- 文件读写辅助 (Template Implementation) ---
 // 移动到此处，使所有模块均可使用，消除模块间不必要的依赖

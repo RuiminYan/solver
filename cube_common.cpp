@@ -392,8 +392,22 @@ void index_to_array(std::vector<int> &p, int index, int n, int c, int pn) {
   }
 }
 
-std::vector<int> create_multi_move_table(int n, int c, int pn, int size,
-                                         const std::vector<int> &basic_t) {
+// 构建多块移动表（标准版，步长18）
+// 对状态空间中的每个状态，预计算 18 种操作后的目标状态索引。
+// 返回值语义：mt[index * 18 + move] = 目标状态的原始索引
+// 调用方查表时需要：next_index = mt[cur_index * 18 + move]
+//
+// 参数:
+//   n       - 参与编码的块数量
+//   c       - 方向基数（edge=2, corner=3）
+//   pn      - 块总数（edge=12, corner=8）
+//   size    - 状态空间大小
+//   basic_t - 单块基础移动表（由 genMTEdge/genMTCorn 等生成）
+//
+// NOTE: 利用逆操作对称性（inv[j]）双向填充，将计算量减半。
+//       被 mt_edge2, mt_edge3, mt_edge6, mt_corn2, mt_corn3, mt_ep4 使用。
+std::vector<int> createMultiMoveTable(int n, int c, int pn, int size,
+                                      const std::vector<int> &basic_t) {
   std::vector<int> mt(size * 18, -1);
   std::vector<int> a(n), b(n);
   std::vector<int> inv = {2,  1,  0, 5,  4,  3,  8,  7,  6,
@@ -426,8 +440,21 @@ std::vector<int> create_multi_move_table(int n, int c, int pn, int size,
   return mt;
 }
 
-std::vector<int> create_multi_move_table2(int n, int c, int pn, int size,
-                                          const std::vector<int> &basic_t) {
+// 构建多块移动表（预乘偏移版，步长24）
+// 与标准版的核心区别：表中存储的不是原始索引，而是预乘了步长的数组偏移量。
+// 返回值语义：mt[offset + move] = 目标状态的预乘偏移量（= index * 24）
+// 调用方查表时无需乘法：next_offset = mt[cur_offset + move]
+//
+// 为什么需要这个版本：
+//   mt_edge4 是搜索热路径上访问最频繁的表，在 IDA* 内层循环中被调用数十亿次。
+//   标准版每次查表后需要 result * 18 才能进行下一次查表（18 非 2
+//   的幂，无法位移优化）。 本版本通过预乘偏移量，将链式查表简化为 mt[offset +
+//   move]，省去内层循环的乘法开销。 代价是每个状态占 24 个槽位而非 18 个（额外
+//   ~4.3MB），属于空间换时间。
+//
+// 仅被 mt_edge4 使用。
+std::vector<int> createMultiMoveTable2(int n, int c, int pn, int size,
+                                       const std::vector<int> &basic_t) {
   std::vector<int> mt(size * 24, -1);
   std::vector<int> a(n), b(n);
   std::vector<int> inv = {2,  1,  0, 5,  4,  3,  8,  7,  6,

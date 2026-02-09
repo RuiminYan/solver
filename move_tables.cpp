@@ -73,7 +73,7 @@ void MoveTableManager::genAllSequentially() {
     loadMTEdge();
     GenerationTimer timer;
     std::cout << "Generating mt_edge4.bin..." << std::endl;
-    mt_edge4 = create_multi_move_table2(4, 2, 12, 24 * 22 * 20 * 18, mt_edge);
+    mt_edge4 = createMultiMoveTable2(4, 2, 12, 24 * 22 * 20 * 18, mt_edge);
     saveTable(mt_edge4, "mt_edge4.bin");
     timer.printElapsed("mt_edge4.bin");
     releaseMTEdge4();
@@ -84,7 +84,7 @@ void MoveTableManager::genAllSequentially() {
     loadMTEdge();
     GenerationTimer timer;
     std::cout << "Generating mt_edge2.bin..." << std::endl;
-    mt_edge2 = create_multi_move_table(2, 2, 12, 24 * 22, mt_edge);
+    mt_edge2 = createMultiMoveTable(2, 2, 12, 24 * 22, mt_edge);
     saveTable(mt_edge2, "mt_edge2.bin");
     timer.printElapsed("mt_edge2.bin");
     releaseMTEdge2();
@@ -95,7 +95,7 @@ void MoveTableManager::genAllSequentially() {
     loadMTEdge();
     GenerationTimer timer;
     std::cout << "Generating mt_edge3.bin..." << std::endl;
-    mt_edge3 = create_multi_move_table(3, 2, 12, 10560, mt_edge);
+    mt_edge3 = createMultiMoveTable(3, 2, 12, 10560, mt_edge);
     saveTable(mt_edge3, "mt_edge3.bin");
     timer.printElapsed("mt_edge3.bin");
     releaseMTEdge3();
@@ -106,7 +106,7 @@ void MoveTableManager::genAllSequentially() {
     loadMTEdge();
     GenerationTimer timer;
     std::cout << "Generating mt_edge6.bin..." << std::endl;
-    mt_edge6 = create_multi_move_table(6, 2, 12, 42577920, mt_edge);
+    mt_edge6 = createMultiMoveTable(6, 2, 12, 42577920, mt_edge);
     saveTable(mt_edge6, "mt_edge6.bin");
     timer.printElapsed("mt_edge6.bin");
     releaseMTEdge6();
@@ -117,7 +117,7 @@ void MoveTableManager::genAllSequentially() {
     loadMTCorn();
     GenerationTimer timer;
     std::cout << "Generating mt_corn2.bin..." << std::endl;
-    mt_corn2 = create_multi_move_table(2, 3, 8, 504, mt_corn);
+    mt_corn2 = createMultiMoveTable(2, 3, 8, 504, mt_corn);
     saveTable(mt_corn2, "mt_corn2.bin");
     timer.printElapsed("mt_corn2.bin");
     releaseMTCorn2();
@@ -129,7 +129,7 @@ void MoveTableManager::genAllSequentially() {
     GenerationTimer timer;
     std::cout << "Generating mt_corn3.bin..." << std::endl;
     // 3个角块 (8P3 * 3^3 = 9072)
-    mt_corn3 = create_multi_move_table(3, 3, 8, 9072, mt_corn);
+    mt_corn3 = createMultiMoveTable(3, 3, 8, 9072, mt_corn);
     saveTable(mt_corn3, "mt_corn3.bin");
     timer.printElapsed("mt_corn3.bin");
     releaseMTCorn3();
@@ -170,7 +170,7 @@ void MoveTableManager::genAllSequentially() {
     loadMTEP1();
     GenerationTimer timer;
     std::cout << "Generating mt_ep4.bin..." << std::endl;
-    mt_ep4 = create_multi_move_table(4, 1, 12, 12 * 11 * 10 * 9, mt_ep1);
+    mt_ep4 = createMultiMoveTable(4, 1, 12, 12 * 11 * 10 * 9, mt_ep1);
     saveTable(mt_ep4, "mt_ep4.bin");
     timer.printElapsed("mt_ep4.bin");
     std::vector<int>().swap(mt_ep4);
@@ -230,7 +230,7 @@ void MoveTableManager::genMTEdge4() {
 
   std::cout << "Generating mt_edge4.bin..." << std::endl;
   // Edge4表：4个棱块的组合 (24*22*20*18 states)
-  mt_edge4 = create_multi_move_table2(4, 2, 12, 24 * 22 * 20 * 18, mt_edge);
+  mt_edge4 = createMultiMoveTable2(4, 2, 12, 24 * 22 * 20 * 18, mt_edge);
   saveTable(mt_edge4, "mt_edge4.bin");
 }
 
@@ -242,7 +242,7 @@ void MoveTableManager::genMTEdge2() {
 
   std::cout << "Generating mt_edge2.bin..." << std::endl;
   // 2个棱块的组合 (24*22 states)
-  mt_edge2 = create_multi_move_table(2, 2, 12, 24 * 22, mt_edge);
+  mt_edge2 = createMultiMoveTable(2, 2, 12, 24 * 22, mt_edge);
   saveTable(mt_edge2, "mt_edge2.bin");
 }
 
@@ -254,7 +254,7 @@ void MoveTableManager::genMTEdge3() {
 
   std::cout << "Generating mt_edge3.bin..." << std::endl;
   // 3个棱块的组合 (10560 states)
-  mt_edge3 = create_multi_move_table(3, 2, 12, 10560, mt_edge);
+  mt_edge3 = createMultiMoveTable(3, 2, 12, 10560, mt_edge);
   saveTable(mt_edge3, "mt_edge3.bin");
 }
 
@@ -266,7 +266,7 @@ void MoveTableManager::genMTEdge6() {
 
   std::cout << "Generating mt_edge6.bin..." << std::endl;
   // 6个棱块的组合 (用于巨型剪枝表)
-  mt_edge6 = create_multi_move_table(6, 2, 12, 42577920, mt_edge);
+  mt_edge6 = createMultiMoveTable(6, 2, 12, 42577920, mt_edge);
   saveTable(mt_edge6, "mt_edge6.bin");
 }
 
@@ -278,7 +278,7 @@ void MoveTableManager::genMTCorn2() {
 
   std::cout << "Generating mt_corn2.bin..." << std::endl;
   // 2个角块的组合 (504 states)
-  mt_corn2 = create_multi_move_table(2, 3, 8, 504, mt_corn);
+  mt_corn2 = createMultiMoveTable(2, 3, 8, 504, mt_corn);
   saveTable(mt_corn2, "mt_corn2.bin");
 }
 
@@ -290,7 +290,7 @@ void MoveTableManager::genMTCorn3() {
 
   std::cout << "Generating mt_corn3.bin..." << std::endl;
   // 3个角块 (9072 states)
-  mt_corn3 = create_multi_move_table(3, 3, 8, 9072, mt_corn);
+  mt_corn3 = createMultiMoveTable(3, 3, 8, 9072, mt_corn);
   saveTable(mt_corn3, "mt_corn3.bin");
 }
 
@@ -324,7 +324,7 @@ void MoveTableManager::genMTEP4() {
   // NOTE: 依赖 EP1 表
   loadMTEP1();
   std::cout << "Generating mt_ep4.bin..." << std::endl;
-  mt_ep4 = create_multi_move_table(4, 1, 12, 12 * 11 * 10 * 9, mt_ep1);
+  mt_ep4 = createMultiMoveTable(4, 1, 12, 12 * 11 * 10 * 9, mt_ep1);
   saveTable(mt_ep4, "mt_ep4.bin");
 }
 
@@ -350,7 +350,7 @@ bool MoveTableManager::loadMTEOCross() {
       GenerationTimer timer;
       std::cout << "Generating mt_ep4.bin..." << std::endl;
       // 生成 EP4 表
-      mt_ep4 = create_multi_move_table(4, 1, 12, 12 * 11 * 10 * 9, mt_ep1);
+      mt_ep4 = createMultiMoveTable(4, 1, 12, 12 * 11 * 10 * 9, mt_ep1);
       saveTable(mt_ep4, "mt_ep4.bin");
       timer.printElapsed("mt_ep4.bin");
     }
