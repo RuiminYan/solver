@@ -133,49 +133,6 @@ public:
   const std::vector<int> &getEP4MT() const { return mt_ep4; }
   const std::vector<int> &getEOAltMT() const { return mt_eo_alt; }
 
-  // === 旧名别名 (Analyzer 层兼容, 后续迁移后删除) ===
-  bool loadEdgeTable() { return loadEdgeMT(); }
-  void releaseEdgeTable() { releaseEdgeMT(); }
-  bool loadCornerTable() { return loadCornMT(); }
-  void releaseCornerTable() { releaseCornMT(); }
-  bool loadCrossTable() { return loadCrossMT(); }
-  void releaseCrossTable() { releaseCrossMT(); }
-  bool loadEdges2Table() { return loadEdge2MT(); }
-  void releaseEdges2Table() { releaseEdge2MT(); }
-  bool loadEdge3Table() { return loadEdge3MT(); }
-  void releaseEdge3Table() { releaseEdge3MT(); }
-  bool loadEdge6Table() { return loadEdge6MT(); }
-  void releaseEdge6Table() { releaseEdge6MT(); }
-  bool loadCorner2Table() { return loadCorn2MT(); }
-  void releaseCorner2Table() { releaseCorn2MT(); }
-  bool loadCorner3Table() { return loadCorn3MT(); }
-  void releaseCorner3Table() { releaseCorn3MT(); }
-  bool loadEOCrossMoveTables() { return loadEOCrossMTs(); }
-  bool loadEOTable() { return loadEOMT(); }
-  bool loadEP1Table() { return loadEP1MT(); }
-  const std::vector<int> &getEdgeTable() const { return getEdgeMT(); }
-  const std::vector<int> &getCornerTable() const { return getCornMT(); }
-  const std::vector<int> &getCrossTable() const { return getCrossMT(); }
-  const std::vector<int> &getEdges2Table() const { return getEdge2MT(); }
-  const std::vector<int> &getEdge3Table() const { return getEdge3MT(); }
-  const std::vector<int> &getEdge6Table() const { return getEdge6MT(); }
-  const std::vector<int> &getCorner2Table() const { return getCorn2MT(); }
-  const std::vector<int> &getCorner3Table() const { return getCorn3MT(); }
-  const int *getEdgeTablePtr() const { return getEdgeMTPtr(); }
-  const int *getCornerTablePtr() const { return getCornMTPtr(); }
-  const int *getCrossTablePtr() const { return getCrossMTPtr(); }
-  const int *getEdges2TablePtr() const { return getEdge2MTPtr(); }
-  const int *getEdge3TablePtr() const { return getEdge3MTPtr(); }
-  const int *getEdge6TablePtr() const { return getEdge6MTPtr(); }
-  const int *getCorner2TablePtr() const { return getCorn2MTPtr(); }
-  const int *getCorner3TablePtr() const { return getCorn3MTPtr(); }
-  const int *getEOCrossEP4Ptr() const { return getEP4MTPtr(); }
-  const int *getEOCrossEOAltPtr() const { return getEOAltMTPtr(); }
-  const int *getEOTablePtr() const { return getEOMTPtr(); }
-  const int *getEP1TablePtr() const { return getEP1MTPtr(); }
-  const std::vector<int> &getEOCrossEP4Table() const { return getEP4MT(); }
-  const std::vector<int> &getEOCrossEOAltTable() const { return getEOAltMT(); }
-
 private:
   // 生成函数
   void generateEdgeTable();

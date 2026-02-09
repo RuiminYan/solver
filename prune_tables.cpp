@@ -94,12 +94,12 @@ void PruneTableManager::initialize() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Initializing prune tables..." << std::endl;
 
-  generateCrossPrune();
-  generateCrossC4Prune();
-  generatePairC4E0Prune();
-  generateXCrossC4E0Prune();
-  generateHugeNeighborPrune();
-  generateHugeDiagonalPrune();
+  generateCrossPT();
+  generateCrossC4PT();
+  generatePairC4E0PT();
+  generateCrossC4E0PT();
+  generateCrossC4C5E0E1PT();
+  generateCrossC4C6E0E2PT();
 }
 
 unsigned char *PruneTableManager::loadTableMMap(const std::string &filename) {
@@ -356,7 +356,7 @@ void PruneTableManager::generateAllSequentially() {
     std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
               << " Generating cross prune table..." << std::endl;
     mtm.loadEdge2MT();
-    generateCrossPrune();
+    generateCrossPT();
     mtm.releaseEdge2MT();
   }
 
@@ -364,7 +364,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_cross_C4.bin")) {
     mtm.loadCrossMT();
     mtm.loadCornMT();
-    generateCrossC4Prune();
+    generateCrossC4PT();
     mtm.releaseCrossMT();
     mtm.releaseCornMT();
   }
@@ -373,7 +373,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pair_C4_E0.bin")) {
     mtm.loadEdgeMT();
     mtm.loadCornMT();
-    generatePairC4E0Prune();
+    generatePairC4E0PT();
     mtm.releaseEdgeMT();
     mtm.releaseCornMT();
   }
@@ -383,7 +383,7 @@ void PruneTableManager::generateAllSequentially() {
     mtm.loadCrossMT();
     mtm.loadCornMT();
     mtm.loadEdgeMT();
-    generateXCrossC4E0Prune();
+    generateCrossC4E0PT();
     mtm.releaseCrossMT();
     mtm.releaseCornMT();
     mtm.releaseEdgeMT();
@@ -393,7 +393,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_cross_C4_E0_C5_E1.bin")) {
     mtm.loadEdge6MT();
     mtm.loadCorn2MT();
-    generateHugeNeighborPrune();
+    generateCrossC4C5E0E1PT();
     mtm.releaseEdge6MT();
     mtm.releaseCorn2MT();
   }
@@ -404,7 +404,7 @@ void PruneTableManager::generateAllSequentially() {
     if (!fileExists("prune_table_cross_C4_E0_C6_E2.bin")) {
       mtm.loadEdge6MT();
       mtm.loadCorn2MT();
-      generateHugeDiagonalPrune();
+      generateCrossC4C6E0E2PT();
       mtm.releaseEdge6MT();
       mtm.releaseCorn2MT();
     }
@@ -413,14 +413,14 @@ void PruneTableManager::generateAllSequentially() {
   // 7. EO Dependency+EO Prune (Needs EOCross Move Tables: EP4 + EO_Alt)
   if (!fileExists("prune_table_ep_4_eo_12.bin")) {
     mtm.loadEOCrossMTs();
-    generateEODepEOPrune();
+    generateEP4EO12PT();
     // NOTE: EOCross 移动表较小，保持加载不释放
   }
 
   // 8. Pseudo Cross Prune
   if (!fileExists("prune_table_pseudo_cross.bin")) {
     mtm.loadEdge2MT();
-    generatePseudoCrossPrune();
+    generatePsCrossPT();
     mtm.releaseEdge2MT();
   }
 
@@ -432,7 +432,7 @@ void PruneTableManager::generateAllSequentially() {
       mtm.loadCrossMT();
       mtm.loadCornMT();
       mtm.loadEdgeMT();
-      generatePseudoCrossBasePrune(i);
+      generatePsCrossC4EPT(i);
       mtm.releaseCrossMT();
       mtm.releaseCornMT();
       mtm.releaseEdgeMT();
@@ -443,7 +443,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_E0_E2.bin")) {
     mtm.loadCrossMT();
     mtm.loadEdge2MT();
-    generatePseudoCrossE0E2Prune();
+    generatePsCrossE0E2PT();
     mtm.releaseCrossMT();
     mtm.releaseEdge2MT();
   }
@@ -452,7 +452,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_E0_E1.bin")) {
     mtm.loadCrossMT();
     mtm.loadEdge2MT();
-    generatePseudoCrossE0E1Prune();
+    generatePsCrossE0E1PT();
     mtm.releaseCrossMT();
     mtm.releaseEdge2MT();
   }
@@ -461,7 +461,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_E1_E3.bin")) {
     mtm.loadCrossMT();
     mtm.loadEdge2MT();
-    generatePseudoCrossE1E3Prune();
+    generatePsCrossE1E3PT();
     mtm.releaseCrossMT();
     mtm.releaseEdge2MT();
   }
@@ -470,7 +470,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_E0_E3.bin")) {
     mtm.loadCrossMT();
     mtm.loadEdge2MT();
-    generatePseudoCrossE0E3Prune();
+    generatePsCrossE0E3PT();
     mtm.releaseCrossMT();
     mtm.releaseEdge2MT();
   }
@@ -479,7 +479,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_E1_E2.bin")) {
     mtm.loadCrossMT();
     mtm.loadEdge2MT();
-    generatePseudoCrossE1E2Prune();
+    generatePsCrossE1E2PT();
     mtm.releaseCrossMT();
     mtm.releaseEdge2MT();
   }
@@ -488,7 +488,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_E2_E3.bin")) {
     mtm.loadCrossMT();
     mtm.loadEdge2MT();
-    generatePseudoCrossE2E3Prune();
+    generatePsCrossE2E3PT();
     mtm.releaseCrossMT();
     mtm.releaseEdge2MT();
   }
@@ -497,7 +497,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_E0_E1_E2.bin")) {
     mtm.loadCrossMT();
     mtm.loadEdge3MT();
-    generatePseudoCrossE0E1E2Prune();
+    generatePsCrossE0E1E2PT();
     mtm.releaseCrossMT();
     mtm.releaseEdge3MT();
   }
@@ -506,7 +506,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_E1_E2_E3.bin")) {
     mtm.loadCrossMT();
     mtm.loadEdge3MT();
-    generatePseudoCrossE1E2E3Prune();
+    generatePsCrossE1E2E3PT();
     mtm.releaseCrossMT();
     mtm.releaseEdge3MT();
   }
@@ -515,7 +515,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_E0_E2_E3.bin")) {
     mtm.loadCrossMT();
     mtm.loadEdge3MT();
-    generatePseudoCrossE0E2E3Prune();
+    generatePsCrossE0E2E3PT();
     mtm.releaseCrossMT();
     mtm.releaseEdge3MT();
   }
@@ -524,7 +524,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_E0_E1_E3.bin")) {
     mtm.loadCrossMT();
     mtm.loadEdge3MT();
-    generatePseudoCrossE0E1E3Prune();
+    generatePsCrossE0E1E3PT();
     mtm.releaseCrossMT();
     mtm.releaseEdge3MT();
   }
@@ -533,7 +533,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_C4_C6.bin")) {
     mtm.loadCrossMT();
     mtm.loadCorn2MT();
-    generatePseudoCrossC4C6Prune();
+    generatePsCrossC4C6PT();
     mtm.releaseCrossMT();
     mtm.releaseCorn2MT();
   }
@@ -542,7 +542,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_C4_C5.bin")) {
     mtm.loadCrossMT();
     mtm.loadCorn2MT();
-    generatePseudoCrossC4C5Prune();
+    generatePsCrossC4C5PT();
     mtm.releaseCrossMT();
     mtm.releaseCorn2MT();
   }
@@ -551,7 +551,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_C4_C7.bin")) {
     mtm.loadCrossMT();
     mtm.loadCorn2MT();
-    generatePseudoCrossC4C7Prune();
+    generatePsCrossC4C7PT();
     mtm.releaseCrossMT();
     mtm.releaseCorn2MT();
   }
@@ -560,7 +560,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_C5_C6.bin")) {
     mtm.loadCrossMT();
     mtm.loadCorn2MT();
-    generatePseudoCrossC5C6Prune();
+    generatePsCrossC5C6PT();
     mtm.releaseCrossMT();
     mtm.releaseCorn2MT();
   }
@@ -569,7 +569,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_C5_C7.bin")) {
     mtm.loadCrossMT();
     mtm.loadCorn2MT();
-    generatePseudoCrossC5C7Prune();
+    generatePsCrossC5C7PT();
     mtm.releaseCrossMT();
     mtm.releaseCorn2MT();
   }
@@ -578,7 +578,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_C6_C7.bin")) {
     mtm.loadCrossMT();
     mtm.loadCorn2MT();
-    generatePseudoCrossC6C7Prune();
+    generatePsCrossC6C7PT();
     mtm.releaseCrossMT();
     mtm.releaseCorn2MT();
   }
@@ -587,7 +587,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_C4_C5_C6.bin")) {
     mtm.loadCrossMT();
     mtm.loadCorn3MT();
-    generatePseudoCrossC4C5C6Prune();
+    generatePsCrossC4C5C6PT();
     mtm.releaseCrossMT();
     mtm.releaseCorn3MT();
   }
@@ -596,7 +596,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_C4_C5_C7.bin")) {
     mtm.loadCrossMT();
     mtm.loadCorn3MT();
-    generatePseudoCrossC4C5C7Prune();
+    generatePsCrossC4C5C7PT();
     mtm.releaseCrossMT();
     mtm.releaseCorn3MT();
   }
@@ -605,7 +605,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_C4_C6_C7.bin")) {
     mtm.loadCrossMT();
     mtm.loadCorn3MT();
-    generatePseudoCrossC4C6C7Prune();
+    generatePsCrossC4C6C7PT();
     mtm.releaseCrossMT();
     mtm.releaseCorn3MT();
   }
@@ -614,7 +614,7 @@ void PruneTableManager::generateAllSequentially() {
   if (!fileExists("prune_table_pseudo_cross_C5_C6_C7.bin")) {
     mtm.loadCrossMT();
     mtm.loadCorn3MT();
-    generatePseudoCrossC5C6C7Prune();
+    generatePsCrossC5C6C7PT();
     mtm.releaseCrossMT();
     mtm.releaseCorn3MT();
   }
