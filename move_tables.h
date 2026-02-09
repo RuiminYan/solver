@@ -150,10 +150,10 @@ private:
 };
 
 // --- 基础移动表生成函数 ---
-std::vector<int> create_edge_move_table();
-std::vector<int> create_corner_move_table();
-std::vector<int> create_ep_move_table();
-std::vector<int> create_eo_move_table();
-std::vector<int> create_eo_move_table2();
+std::vector<int> create_edge_mt();
+std::vector<int> create_corn_mt();
+std::vector<int> create_ep_mt();
+std::vector<int> create_eo_mt();
+std::vector<int> create_eo_alt_mt();
 
 #endif // MOVE_TABLES_H

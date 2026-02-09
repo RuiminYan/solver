@@ -770,7 +770,7 @@ void PruneTableManager::generateCrossC4PT() {
             << " Generating cross+c4 prune table..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   pt_cross_C4.resize((long long)24 * 22 * 20 * 18 * 24, 255);
-  create_prune_table_cross_c4(187520, 12, 24 * 22 * 20 * 18, 24, 10,
+  create_pt_cross_c4(187520, 12, 24 * 22 * 20 * 18, 24, 10,
                               mtm.getCrossMT(), mtm.getCornMT(),
                               pt_cross_C4);
   saveTable(pt_cross_C4, "pt_cross_C4.bin");
@@ -783,7 +783,7 @@ void PruneTableManager::generatePairC4E0PT() {
             << " Generating pair c4+e0 prune table..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   pt_pair_C4E0.resize(24 * 24, 255);
-  create_prune_table_pair_base(0, 12, 24, 24, 8, mtm.getEdgeMT(),
+  create_pt_pair_base(0, 12, 24, 24, 8, mtm.getEdgeMT(),
                                mtm.getCornMT(), pt_pair_C4E0);
   saveTable(pt_pair_C4E0, "pt_pair_C4E0.bin");
 }
@@ -796,7 +796,7 @@ void PruneTableManager::generateCrossC4E0PT() {
   auto &mtm = MoveTableManager::getInstance();
   long long c_sz = ((long long)24 * 22 * 20 * 18 * 24 * 24 + 1) / 2;
   pt_cross_C4E0.resize(c_sz, 0xFF);
-  create_prune_table_xcross_full(187520, 12, 0, 24 * 22 * 20 * 18, 24, 24, 11,
+  create_pt_xcross_full(187520, 12, 0, 24 * 22 * 20 * 18, 24, 24, 11,
                                  mtm.getCrossMT(), mtm.getCornMT(),
                                  mtm.getEdgeMT(), pt_cross_C4E0);
   saveTable(pt_cross_C4E0, "pt_cross_C4E0.bin");
@@ -808,7 +808,7 @@ void PruneTableManager::generateCrossC4C5E0E1PT() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating huge neighbor prune table..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  create_prune_table_huge(42577920, 504, 15, {0, 2, 16, 18, 20, 22}, {12, 15},
+  create_pt_huge(42577920, 504, 15, {0, 2, 16, 18, 20, 22}, {12, 15},
                           mtm.getEdge6MT(), mtm.getCorn2MT(),
                           pt_cross_C4C5E0E1);
   saveTable(pt_cross_C4C5E0E1, "pt_cross_C4C5E0E1.bin");
@@ -823,7 +823,7 @@ void PruneTableManager::generateCrossC4C6E0E2PT() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating huge diagonal prune table..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  create_prune_table_huge(42577920, 504, 15, {0, 4, 16, 18, 20, 22}, {12, 18},
+  create_pt_huge(42577920, 504, 15, {0, 4, 16, 18, 20, 22}, {12, 18},
                           mtm.getEdge6MT(), mtm.getCorn2MT(),
                           pt_cross_C4C6E0E2);
   saveTable(pt_cross_C4C6E0E2, "pt_cross_C4C6E0E2.bin");
@@ -839,7 +839,7 @@ void PruneTableManager::generateEP4EO12PT() {
   // 状态空间: EP4 (12*11*10*9 = 11880) x EO12 (2^11 = 2048)
   // 初始状态: EP4_SOLVED=11720, EO_SOLVED=0
   // 使用 MoveTableManager 中已加载的移动表
-  create_cascaded_prune_table3(
+  create_cascaded_pt3(
       11720, 0, 12 * 11 * 10 * 9, 2048, 11, mtm.getEP4MT(),
       mtm.getEOAltMT(), pt_ep4eo12);
   saveTable(pt_ep4eo12, "pt_ep4eo12.bin");
@@ -904,7 +904,7 @@ void PruneTableManager::generatePsCrossC4EPT(int i) {
   int e_diffs[] = {0, 2, 4, 6};
   pt_pscross_C4E[i].resize(
       ((long long)24 * 22 * 20 * 18 * 24 * 24 + 1) / 2, 0xFF);
-  create_prune_table_xcross_full(187520, 12, e_diffs[i], 24 * 22 * 20 * 18, 24,
+  create_pt_xcross_full(187520, 12, e_diffs[i], 24 * 22 * 20 * 18, 24,
                                  24, 11, mtm.getCrossMT(),
                                  mtm.getCornMT(), mtm.getEdgeMT(),
                                  pt_pscross_C4E[i], true);
@@ -920,7 +920,7 @@ void PruneTableManager::generatePsCrossE0E2PT() {
   std::vector<int> target = {0, 4};
   int idx_e0_e2_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E0E2.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_edges2(
+  create_pt_pscross_edges2(
       187520, idx_e0_e2_solved, 190080, 528, 11, mtm.getCrossMT(),
       mtm.getEdge2MT(), pt_pscross_E0E2);
   saveTable(pt_pscross_E0E2, "pt_pscross_E0E2.bin");
@@ -935,7 +935,7 @@ void PruneTableManager::generatePsCrossE0E1PT() {
   std::vector<int> target = {0, 2}; // E0(0*2=0), E1(1*2=2) - 邻棱
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E0E1.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_edges2(
+  create_pt_pscross_edges2(
       187520, idx_solved, 190080, 528, 11, mtm.getCrossMT(),
       mtm.getEdge2MT(), pt_pscross_E0E1);
   saveTable(pt_pscross_E0E1, "pt_pscross_E0E1.bin");
@@ -950,7 +950,7 @@ void PruneTableManager::generatePsCrossE1E3PT() {
   std::vector<int> target = {2, 6}; // E1(1*2=2), E3(3*2=6) - 对棱
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E1E3.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_edges2(
+  create_pt_pscross_edges2(
       187520, idx_solved, 190080, 528, 11, mtm.getCrossMT(),
       mtm.getEdge2MT(), pt_pscross_E1E3);
   saveTable(pt_pscross_E1E3, "pt_pscross_E1E3.bin");
@@ -965,7 +965,7 @@ void PruneTableManager::generatePsCrossE0E3PT() {
   std::vector<int> target = {0, 6}; // E0(0*2=0), E3(3*2=6) - 邻棱
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E0E3.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_edges2(
+  create_pt_pscross_edges2(
       187520, idx_solved, 190080, 528, 11, mtm.getCrossMT(),
       mtm.getEdge2MT(), pt_pscross_E0E3);
   saveTable(pt_pscross_E0E3, "pt_pscross_E0E3.bin");
@@ -980,7 +980,7 @@ void PruneTableManager::generatePsCrossE1E2PT() {
   std::vector<int> target = {2, 4}; // E1(1*2=2), E2(2*2=4) - 邻棱
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E1E2.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_edges2(
+  create_pt_pscross_edges2(
       187520, idx_solved, 190080, 528, 11, mtm.getCrossMT(),
       mtm.getEdge2MT(), pt_pscross_E1E2);
   saveTable(pt_pscross_E1E2, "pt_pscross_E1E2.bin");
@@ -995,7 +995,7 @@ void PruneTableManager::generatePsCrossE2E3PT() {
   std::vector<int> target = {4, 6}; // E2(2*2=4), E3(3*2=6) - 邻棱
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E2E3.resize(((long long)190080 * 528 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_edges2(
+  create_pt_pscross_edges2(
       187520, idx_solved, 190080, 528, 11, mtm.getCrossMT(),
       mtm.getEdge2MT(), pt_pscross_E2E3);
   saveTable(pt_pscross_E2E3, "pt_pscross_E2E3.bin");
@@ -1012,7 +1012,7 @@ void PruneTableManager::generatePsCrossE0E1E2PT() {
   std::vector<int> target = {0, 2, 4}; // E0, E1, E2 (0, 2, 4)
   int idx_solved = array_to_index(target, 3, 2, 12);
   pt_pscross_E0E1E2.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_edges3(
+  create_pt_pscross_edges3(
       187520, idx_solved, 190080, 10560, 12, mtm.getCrossMT(),
       mtm.getEdge3MT(), pt_pscross_E0E1E2);
   saveTable(pt_pscross_E0E1E2,
@@ -1030,7 +1030,7 @@ void PruneTableManager::generatePsCrossE1E2E3PT() {
   std::vector<int> target = {2, 4, 6}; // E1, E2, E3
   int idx_solved = array_to_index(target, 3, 2, 12);
   pt_pscross_E1E2E3.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_edges3(
+  create_pt_pscross_edges3(
       187520, idx_solved, 190080, 10560, 12, mtm.getCrossMT(),
       mtm.getEdge3MT(), pt_pscross_E1E2E3);
   saveTable(pt_pscross_E1E2E3,
@@ -1048,7 +1048,7 @@ void PruneTableManager::generatePsCrossE0E2E3PT() {
   std::vector<int> target = {0, 4, 6}; // E0, E2, E3
   int idx_solved = array_to_index(target, 3, 2, 12);
   pt_pscross_E0E2E3.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_edges3(
+  create_pt_pscross_edges3(
       187520, idx_solved, 190080, 10560, 12, mtm.getCrossMT(),
       mtm.getEdge3MT(), pt_pscross_E0E2E3);
   saveTable(pt_pscross_E0E2E3,
@@ -1066,7 +1066,7 @@ void PruneTableManager::generatePsCrossE0E1E3PT() {
   std::vector<int> target = {0, 2, 6}; // E0, E1, E3
   int idx_solved = array_to_index(target, 3, 2, 12);
   pt_pscross_E0E1E3.resize(((long long)190080 * 10560 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_edges3(
+  create_pt_pscross_edges3(
       187520, idx_solved, 190080, 10560, 12, mtm.getCrossMT(),
       mtm.getEdge3MT(), pt_pscross_E0E1E3);
   saveTable(pt_pscross_E0E1E3,
@@ -1082,7 +1082,7 @@ void PruneTableManager::generatePsCrossC4C6PT() {
   std::vector<int> target = {12, 18}; // C4(4*3=12), C6(6*3=18) - 对角
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C4C6.resize(((long long)190080 * 504 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_corners2(
+  create_pt_pscross_corners2(
       187520, idx_solved, 190080, 504, 11, mtm.getCrossMT(),
       mtm.getCorn2MT(), pt_pscross_C4C6);
   saveTable(pt_pscross_C4C6, "pt_pscross_C4C6.bin");
@@ -1097,7 +1097,7 @@ void PruneTableManager::generatePsCrossC5C7PT() {
   std::vector<int> target = {15, 21}; // C5(5*3=15), C7(7*3=21) - 对角
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C5C7.resize(((long long)190080 * 504 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_corners2(
+  create_pt_pscross_corners2(
       187520, idx_solved, 190080, 504, 11, mtm.getCrossMT(),
       mtm.getCorn2MT(), pt_pscross_C5C7);
   saveTable(pt_pscross_C5C7, "pt_pscross_C5C7.bin");
@@ -1112,7 +1112,7 @@ void PruneTableManager::generatePsCrossC4C5PT() {
   std::vector<int> target = {12, 15}; // C4(4*3=12), C5(5*3=15)
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C4C5.resize(((long long)190080 * 504 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_corners2(
+  create_pt_pscross_corners2(
       187520, idx_solved, 190080, 504, 11, mtm.getCrossMT(),
       mtm.getCorn2MT(), pt_pscross_C4C5);
   saveTable(pt_pscross_C4C5, "pt_pscross_C4C5.bin");
@@ -1127,7 +1127,7 @@ void PruneTableManager::generatePsCrossC4C7PT() {
   std::vector<int> target = {12, 21}; // C4(4*3=12), C7(7*3=21)
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C4C7.resize(((long long)190080 * 504 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_corners2(
+  create_pt_pscross_corners2(
       187520, idx_solved, 190080, 504, 11, mtm.getCrossMT(),
       mtm.getCorn2MT(), pt_pscross_C4C7);
   saveTable(pt_pscross_C4C7, "pt_pscross_C4C7.bin");
@@ -1142,7 +1142,7 @@ void PruneTableManager::generatePsCrossC5C6PT() {
   std::vector<int> target = {15, 18}; // C5(5*3=15), C6(6*3=18)
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C5C6.resize(((long long)190080 * 504 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_corners2(
+  create_pt_pscross_corners2(
       187520, idx_solved, 190080, 504, 11, mtm.getCrossMT(),
       mtm.getCorn2MT(), pt_pscross_C5C6);
   saveTable(pt_pscross_C5C6, "pt_pscross_C5C6.bin");
@@ -1157,7 +1157,7 @@ void PruneTableManager::generatePsCrossC6C7PT() {
   std::vector<int> target = {18, 21}; // C6(6*3=18), C7(7*3=21)
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C6C7.resize(((long long)190080 * 504 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_corners2(
+  create_pt_pscross_corners2(
       187520, idx_solved, 190080, 504, 11, mtm.getCrossMT(),
       mtm.getCorn2MT(), pt_pscross_C6C7);
   saveTable(pt_pscross_C6C7, "pt_pscross_C6C7.bin");
@@ -1174,7 +1174,7 @@ void PruneTableManager::generatePsCrossC4C5C6PT() {
   std::vector<int> target = {12, 15, 18}; // C4, C5, C6
   int idx_solved = array_to_index(target, 3, 3, 8);
   pt_pscross_C4C5C6.resize(((long long)190080 * 9072 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_corners3(
+  create_pt_pscross_corners3(
       187520, idx_solved, 190080, 9072, 13, mtm.getCrossMT(),
       mtm.getCorn3MT(), pt_pscross_C4C5C6);
   saveTable(pt_pscross_C4C5C6,
@@ -1192,7 +1192,7 @@ void PruneTableManager::generatePsCrossC4C5C7PT() {
   std::vector<int> target = {12, 15, 21}; // C4, C5, C7
   int idx_solved = array_to_index(target, 3, 3, 8);
   pt_pscross_C4C5C7.resize(((long long)190080 * 9072 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_corners3(
+  create_pt_pscross_corners3(
       187520, idx_solved, 190080, 9072, 13, mtm.getCrossMT(),
       mtm.getCorn3MT(), pt_pscross_C4C5C7);
   saveTable(pt_pscross_C4C5C7,
@@ -1210,7 +1210,7 @@ void PruneTableManager::generatePsCrossC4C6C7PT() {
   std::vector<int> target = {12, 18, 21}; // C4, C6, C7
   int idx_solved = array_to_index(target, 3, 3, 8);
   pt_pscross_C4C6C7.resize(((long long)190080 * 9072 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_corners3(
+  create_pt_pscross_corners3(
       187520, idx_solved, 190080, 9072, 13, mtm.getCrossMT(),
       mtm.getCorn3MT(), pt_pscross_C4C6C7);
   saveTable(pt_pscross_C4C6C7,
@@ -1228,7 +1228,7 @@ void PruneTableManager::generatePsCrossC5C6C7PT() {
   std::vector<int> target = {15, 18, 21}; // C5, C6, C7
   int idx_solved = array_to_index(target, 3, 3, 8);
   pt_pscross_C5C6C7.resize(((long long)190080 * 9072 + 1) / 2, 0xFF);
-  create_prune_table_pseudo_cross_corners3(
+  create_pt_pscross_corners3(
       187520, idx_solved, 190080, 9072, 13, mtm.getCrossMT(),
       mtm.getCorn3MT(), pt_pscross_C5C6C7);
   saveTable(pt_pscross_C5C6C7,
@@ -1237,7 +1237,7 @@ void PruneTableManager::generatePsCrossC5C6C7PT() {
 
 // ... existing helper functions ...
 
-void create_prune_table_pseudo_cross_corners2(int idx_cr, int idx_c2, int sz_cr,
+void create_pt_pscross_corners2(int idx_cr, int idx_c2, int sz_cr,
                                               int sz_c2, int depth,
                                               const std::vector<int> &t_cr,
                                               const std::vector<int> &t_c2,
@@ -1299,7 +1299,7 @@ void create_prune_table_pseudo_cross_corners2(int idx_cr, int idx_c2, int sz_cr,
       set_prune(pt, i, tmp[i]);
 }
 
-void create_prune_table_pseudo_cross_corners3(int idx_cr, int idx_c3, int sz_cr,
+void create_pt_pscross_corners3(int idx_cr, int idx_c3, int sz_cr,
                                               int sz_c3, int depth,
                                               const std::vector<int> &t_cr,
                                               const std::vector<int> &t_c3,
@@ -1363,7 +1363,7 @@ void create_prune_table_pseudo_cross_corners3(int idx_cr, int idx_c3, int sz_cr,
       set_prune(pt, i, tmp[i]);
 }
 
-void create_prune_table_pseudo_cross_edges3(int idx_cr, int idx_e3, int sz_cr,
+void create_pt_pscross_edges3(int idx_cr, int idx_e3, int sz_cr,
                                             int sz_e3, int depth,
                                             const std::vector<int> &t_cr,
                                             const std::vector<int> &t_e3,
@@ -1501,7 +1501,7 @@ void create_prune_table_pseudo_base(int idx_cr, int idx_cn, int idx_ed,
 }
 
 // 1. Cross + C4 (Base)
-void create_prune_table_cross_c4(int idx1, int idx2, int sz1, int sz2,
+void create_pt_cross_c4(int idx1, int idx2, int sz1, int sz2,
                                  int depth, const std::vector<int> &t1,
                                  const std::vector<int> &t2,
                                  std::vector<unsigned char> &pt) {
@@ -1546,7 +1546,7 @@ void create_prune_table_cross_c4(int idx1, int idx2, int sz1, int sz2,
 }
 
 // 2. Pair C4 + E0 (Base)
-void create_prune_table_pair_base(int idx_e, int idx_c, int sz_e, int sz_c,
+void create_pt_pair_base(int idx_e, int idx_c, int sz_e, int sz_c,
                                   int depth, const std::vector<int> &t_edge,
                                   const std::vector<int> &t_corn,
                                   std::vector<unsigned char> &pt) {
@@ -1592,7 +1592,7 @@ void create_prune_table_pair_base(int idx_e, int idx_c, int sz_e, int sz_c,
 }
 
 // 3. XCross Base Generator
-void create_prune_table_xcross_base(int idx_cr, int idx_cn, int idx_ex,
+void create_pt_xcross_base(int idx_cr, int idx_cn, int idx_ex,
                                     int sz_cr, int sz_cn, int sz_ex, int depth,
                                     const std::vector<int> &t1,
                                     const std::vector<int> &t2,
@@ -1646,7 +1646,7 @@ void create_prune_table_xcross_base(int idx_cr, int idx_cn, int idx_ex,
       set_prune(pt, i, tmp[i]);
 }
 
-void create_prune_table_xcross_full(int idx_cr, int idx_cn, int idx_ed,
+void create_pt_xcross_full(int idx_cr, int idx_cn, int idx_ed,
                                     int sz_cr, int sz_cn, int sz_ed, int depth,
                                     const std::vector<int> &t1,
                                     const std::vector<int> &t2,
@@ -1717,7 +1717,7 @@ void create_prune_table_xcross_full(int idx_cr, int idx_cn, int idx_ed,
       set_prune(pt, i, tmp[i]);
 }
 
-void create_prune_table_huge(int sz_e6, int sz_c2, int depth,
+void create_pt_huge(int sz_e6, int sz_c2, int depth,
                              const std::vector<int> &target_e_ids,
                              const std::vector<int> &target_c_ids,
                              const std::vector<int> &mt_e6,
@@ -1775,7 +1775,7 @@ void create_prune_table_huge(int sz_e6, int sz_c2, int depth,
   std::vector<unsigned char>().swap(tmp);
 }
 
-void create_prune_table_pseudo_cross_edges2(int idx_cr, int idx_e2, int sz_cr,
+void create_pt_pscross_edges2(int idx_cr, int idx_e2, int sz_cr,
                                             int sz_e2, int depth,
                                             const std::vector<int> &t_cr,
                                             const std::vector<int> &t_e2,
@@ -1839,7 +1839,7 @@ void create_prune_table_pseudo_cross_edges2(int idx_cr, int idx_e2, int sz_cr,
 
 // --- 级联剪枝表生成函数实现 (from eo_cross_analyzer) ---
 
-void create_cascaded_prune_table(int i1, int i2, int s1, int s2, int depth,
+void create_cascaded_pt(int i1, int i2, int s1, int s2, int depth,
                                  const std::vector<int> &t1,
                                  const std::vector<int> &t2,
                                  std::vector<unsigned char> &pt) {
@@ -1875,7 +1875,7 @@ void create_cascaded_prune_table(int i1, int i2, int s1, int s2, int depth,
       set_prune(pt, i, tmp[i]);
 }
 
-void create_cascaded_prune_table2(int i1, int i2, int s1, int s2, int depth,
+void create_cascaded_pt2(int i1, int i2, int s1, int s2, int depth,
                                   const std::vector<int> &t1,
                                   const std::vector<int> &t2,
                                   std::vector<unsigned char> &pt) {
@@ -1911,7 +1911,7 @@ void create_cascaded_prune_table2(int i1, int i2, int s1, int s2, int depth,
       set_prune(pt, i, tmp[i]);
 }
 
-void create_cascaded_prune_table3(int i1, int i2, int s1, int s2, int depth,
+void create_cascaded_pt3(int i1, int i2, int s1, int s2, int depth,
                                   const std::vector<int> &t1,
                                   const std::vector<int> &t2,
                                   std::vector<unsigned char> &pt) {
@@ -1947,7 +1947,7 @@ void create_cascaded_prune_table3(int i1, int i2, int s1, int s2, int depth,
       set_prune(pt, i, tmp[i]);
 }
 
-void create_prune_table_xcross_plus(
+void create_pt_xcross_plus(
     int idx_cr, int idx_cn, int idx_ed, int idx_extra, int sz_cr, int sz_cn,
     int sz_ed, int sz_ex, int depth, const std::vector<int> &t1,
     const std::vector<int> &t2, const std::vector<int> &t3,
@@ -2020,7 +2020,7 @@ void create_prune_table_xcross_plus(
       set_prune(pt, i, tmp[i]);
 }
 
-void create_prune_table_xcross_corn3(
+void create_pt_xcross_corn3(
     int idx_cr, int idx_cn, int idx_c5, int idx_c6, int sz_cr, int sz_cn,
     int sz_c5, int sz_c6, int depth, const std::vector<int> &t1,
     const std::vector<int> &t2, const std::vector<int> &t_c5,

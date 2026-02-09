@@ -52,14 +52,14 @@ void MoveTableManager::generateAllSequentially() {
   if (!fileExists("mt_edge.bin")) {
     std::cout << TAG_COLOR << "[MOVE]" << ANSI_RESET
               << " Generating edge table..." << std::endl;
-    mt_edge = create_edge_move_table();
+    mt_edge = create_edge_mt();
     saveTable(mt_edge, "mt_edge.bin");
   }
 
   // 2. Corner Table (Base for others)
   if (!fileExists("mt_corn.bin")) {
     std::cout << "[MoveTable] Generating corner table..." << std::endl;
-    mt_corn = create_corner_move_table();
+    mt_corn = create_corn_mt();
     saveTable(mt_corn, "mt_corn.bin");
   }
 
@@ -140,7 +140,7 @@ void MoveTableManager::generateEdgeMT() {
   }
 
   std::cout << "[MoveTable] Generating edge table..." << std::endl;
-  mt_edge = create_edge_move_table();
+  mt_edge = create_edge_mt();
   saveTable(mt_edge, "mt_edge.bin");
 }
 
@@ -151,7 +151,7 @@ void MoveTableManager::generateCornMT() {
   }
 
   std::cout << "[MoveTable] Generating corner table..." << std::endl;
-  mt_corn = create_corner_move_table();
+  mt_corn = create_corn_mt();
   saveTable(mt_corn, "mt_corn.bin");
 }
 
@@ -234,7 +234,7 @@ bool MoveTableManager::loadEOCrossMTs() {
   if (mt_eo_alt.empty()) {
     if (!loadTable(mt_eo_alt, "mt_eo_alt.bin")) {
       std::cout << "[MoveTable] Generating EO Alt table..." << std::endl;
-      mt_eo_alt = create_eo_move_table2();
+      mt_eo_alt = create_eo_alt_mt();
       saveTable(mt_eo_alt, "mt_eo_alt.bin");
     }
   }
@@ -260,7 +260,7 @@ bool MoveTableManager::loadEOMT() {
     return true;
   if (!loadTable(mt_eo, "mt_eo.bin")) {
     std::cout << "[MoveTable] Generating EO table..." << std::endl;
-    mt_eo = create_eo_move_table();
+    mt_eo = create_eo_mt();
     saveTable(mt_eo, "mt_eo.bin");
   }
   return true;
@@ -272,14 +272,14 @@ bool MoveTableManager::loadEP1MT() {
     return true;
   if (!loadTable(mt_ep1, "mt_ep1.bin")) {
     std::cout << "[MoveTable] Generating EP1 table..." << std::endl;
-    mt_ep1 = create_ep_move_table();
+    mt_ep1 = create_ep_mt();
     saveTable(mt_ep1, "mt_ep1.bin");
   }
   return true;
 }
 
 // --- 基础移动表生成函数 ---
-std::vector<int> create_edge_move_table() {
+std::vector<int> create_edge_mt() {
   std::vector<int> mt(24 * 18, -1);
   for (int i = 0; i < 24; ++i) {
     State s;
@@ -297,7 +297,7 @@ std::vector<int> create_edge_move_table() {
   return mt;
 }
 
-std::vector<int> create_corner_move_table() {
+std::vector<int> create_corn_mt() {
   std::vector<int> mt(24 * 18, -1);
   for (int i = 0; i < 24; ++i) {
     State s;
@@ -315,7 +315,7 @@ std::vector<int> create_corner_move_table() {
   return mt;
 }
 
-std::vector<int> create_ep_move_table() {
+std::vector<int> create_ep_mt() {
   std::vector<int> mt(12 * 18, -1);
   for (int i = 0; i < 12; ++i) {
     State s;
@@ -332,7 +332,7 @@ std::vector<int> create_ep_move_table() {
   return mt;
 }
 
-std::vector<int> create_eo_move_table() {
+std::vector<int> create_eo_mt() {
   std::vector<int> mt(2048 * 18, -1);
   for (int i = 0; i < 2048; ++i) {
     std::vector<int> eo(12, 0);
@@ -347,7 +347,7 @@ std::vector<int> create_eo_move_table() {
   return mt;
 }
 
-std::vector<int> create_eo_move_table2() {
+std::vector<int> create_eo_alt_mt() {
   std::vector<int> mt(2048 * 18, -1);
   for (int i = 0; i < 2048; ++i) {
     std::vector<int> eo(12, 0);

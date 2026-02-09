@@ -332,24 +332,24 @@ private:
 };
 
 // --- 剪枝表生成函数 ---
-void create_prune_table_cross_c4(int idx1, int idx2, int sz1, int sz2,
+void create_pt_cross_c4(int idx1, int idx2, int sz1, int sz2,
                                  int depth, const std::vector<int> &t1,
                                  const std::vector<int> &t2,
                                  std::vector<unsigned char> &pt);
 
-void create_prune_table_pair_base(int idx_e, int idx_c, int sz_e, int sz_c,
+void create_pt_pair_base(int idx_e, int idx_c, int sz_e, int sz_c,
                                   int depth, const std::vector<int> &t_edge,
                                   const std::vector<int> &t_corn,
                                   std::vector<unsigned char> &pt);
 
-void create_prune_table_xcross_base(int idx_cr, int idx_cn, int idx_ex,
+void create_pt_xcross_base(int idx_cr, int idx_cn, int idx_ex,
                                     int sz_cr, int sz_cn, int sz_ex, int depth,
                                     const std::vector<int> &t1,
                                     const std::vector<int> &t2,
                                     const std::vector<int> &t3,
                                     std::vector<unsigned char> &pt);
 
-void create_prune_table_xcross_full(int idx_cr, int idx_cn, int idx_ed,
+void create_pt_xcross_full(int idx_cr, int idx_cn, int idx_ed,
                                     int sz_cr, int sz_cn, int sz_ed, int depth,
                                     const std::vector<int> &t1,
                                     const std::vector<int> &t2,
@@ -357,32 +357,32 @@ void create_prune_table_xcross_full(int idx_cr, int idx_cn, int idx_ed,
                                     std::vector<unsigned char> &pt,
                                     bool is_pseudo = false);
 
-void create_prune_table_pseudo_cross_edges2(int idx_cr, int idx_e2, int sz_cr,
+void create_pt_pscross_edges2(int idx_cr, int idx_e2, int sz_cr,
                                             int sz_e2, int depth,
                                             const std::vector<int> &t_cr,
                                             const std::vector<int> &t_e2,
                                             std::vector<unsigned char> &pt);
 
 // 新增 helper: 针对角块对
-void create_prune_table_pseudo_cross_corners2(int idx_cr, int idx_c2, int sz_cr,
+void create_pt_pscross_corners2(int idx_cr, int idx_c2, int sz_cr,
                                               int sz_c2, int depth,
                                               const std::vector<int> &t_cr,
                                               const std::vector<int> &t_c2,
                                               std::vector<unsigned char> &pt);
 
-void create_prune_table_pseudo_cross_corners3(int idx_cr, int idx_c3, int sz_cr,
+void create_pt_pscross_corners3(int idx_cr, int idx_c3, int sz_cr,
                                               int sz_c3, int depth,
                                               const std::vector<int> &t_cr,
                                               const std::vector<int> &t_c3,
                                               std::vector<unsigned char> &pt);
 
-void create_prune_table_pseudo_cross_edges3(int idx_cr, int idx_e3, int sz_cr,
+void create_pt_pscross_edges3(int idx_cr, int idx_e3, int sz_cr,
                                             int sz_e3, int depth,
                                             const std::vector<int> &t_cr,
                                             const std::vector<int> &t_e3,
                                             std::vector<unsigned char> &pt);
 
-void create_prune_table_huge(int sz_e6, int sz_c2, int depth,
+void create_pt_huge(int sz_e6, int sz_c2, int depth,
                              const std::vector<int> &target_e_ids,
                              const std::vector<int> &target_c_ids,
                              const std::vector<int> &mt_e6,
@@ -390,24 +390,24 @@ void create_prune_table_huge(int sz_e6, int sz_c2, int depth,
                              std::vector<unsigned char> &pt);
 
 // --- 级联剪枝表生成函数 (from eo_cross_analyzer) ---
-void create_cascaded_prune_table(int i1, int i2, int s1, int s2, int depth,
+void create_cascaded_pt(int i1, int i2, int s1, int s2, int depth,
                                  const std::vector<int> &t1,
                                  const std::vector<int> &t2,
                                  std::vector<unsigned char> &pt);
-void create_cascaded_prune_table2(int i1, int i2, int s1, int s2, int depth,
+void create_cascaded_pt2(int i1, int i2, int s1, int s2, int depth,
                                   const std::vector<int> &t1,
                                   const std::vector<int> &t2,
                                   std::vector<unsigned char> &pt);
-void create_cascaded_prune_table3(int i1, int i2, int s1, int s2, int depth,
+void create_cascaded_pt3(int i1, int i2, int s1, int s2, int depth,
                                   const std::vector<int> &t1,
                                   const std::vector<int> &t2,
                                   std::vector<unsigned char> &pt);
-void create_prune_table_xcross_plus(
+void create_pt_xcross_plus(
     int idx_cr, int idx_cn, int idx_ed, int idx_extra, int sz_cr, int sz_cn,
     int sz_ed, int sz_ex, int depth, const std::vector<int> &t1,
     const std::vector<int> &t2, const std::vector<int> &t3,
     const std::vector<int> &t4, std::vector<unsigned char> &pt);
-void create_prune_table_xcross_corn3(
+void create_pt_xcross_corn3(
     int idx_cr, int idx_cn, int idx_c5, int idx_c6, int sz_cr, int sz_cn,
     int sz_c5, int sz_c6, int depth, const std::vector<int> &t1,
     const std::vector<int> &t2, const std::vector<int> &t_c5,
