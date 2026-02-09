@@ -51,15 +51,15 @@ struct SearchContext {
 };
 
 struct CrossSolver {
-  const int *p_multi;
-  const unsigned char *p_prune;
+  const int *p_mt_edge2;
+  const unsigned char *p_pt_cross;
 
   CrossSolver() {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
 
-    p_multi = mtm.getEdge2MTPtr();
-    p_prune = ptm.getCrossPTPtr();
+    p_mt_edge2 = mtm.getEdge2MTPtr();
+    p_pt_cross = ptm.getCrossPTPtr();
   }
 
   bool search(SearchContext &ctx, int i1, int i2, int depth, int prev) {
@@ -68,10 +68,10 @@ struct CrossSolver {
     for (int k = 0; k < count; ++k) {
       int m = moves[k];
       COUNT_NODE
-      int n_i1 = p_multi[i1 + m];
-      int n_i2 = p_multi[i2 + m];
+      int n_i1 = p_mt_edge2[i1 + m];
+      int n_i2 = p_mt_edge2[i2 + m];
       long long idx = (long long)n_i1 * 528 + n_i2;
-      if (get_prune_ptr(p_prune, idx) >= depth)
+      if (get_prune_ptr(p_pt_cross, idx) >= depth)
         continue;
       if (depth == 1) {
         ctx.sol_len.push_back(ctx.current_max_depth);
@@ -90,11 +90,11 @@ struct CrossSolver {
       std::vector<int> alg = alg_rotation(base_alg, rots[i]);
       int i1 = 416, i2 = 520;
       for (int m : alg) {
-        i1 = p_multi[i1 * 18 + m];
-        i2 = p_multi[i2 * 18 + m];
+        i1 = p_mt_edge2[i1 * 18 + m];
+        i2 = p_mt_edge2[i2 * 18 + m];
       }
       long long idx = (long long)i1 * 528 + i2;
-      int d_min = get_prune_ptr(p_prune, idx);
+      int d_min = get_prune_ptr(p_pt_cross, idx);
       if (d_min == 0)
         continue;
       SearchContext ctx;
@@ -111,9 +111,9 @@ struct CrossSolver {
 };
 
 struct XCrossSolver {
-  const int *p_multi, *p_corn, *p_edge, *p_edge6, *p_corn2;
-  const unsigned char *p_prune_neighbor = nullptr, *p_prune_diagonal = nullptr;
-  const unsigned char *p_prune_base;
+  const int *p_mt_edge4, *p_mt_corn, *p_mt_edge, *p_mt_edge6, *p_mt_corn2;
+  const unsigned char *p_pt_cross_C4C5E0E1 = nullptr, *p_pt_cross_C4C6E0E2 = nullptr;
+  const unsigned char *p_pt_cross_C4E0;
 
   struct Task1 {
     int id;
@@ -134,16 +134,16 @@ struct XCrossSolver {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
 
-    p_multi = mtm.getEdge4MTPtr();
-    p_corn = mtm.getCornMTPtr();
-    p_edge = mtm.getEdgeMTPtr();
-    p_edge6 = mtm.getEdge6MTPtr();
-    p_corn2 = mtm.getCorn2MTPtr();
+    p_mt_edge4 = mtm.getEdge4MTPtr();
+    p_mt_corn = mtm.getCornMTPtr();
+    p_mt_edge = mtm.getEdgeMTPtr();
+    p_mt_edge6 = mtm.getEdge6MTPtr();
+    p_mt_corn2 = mtm.getCorn2MTPtr();
 
-    p_prune_base = ptm.getCrossC4E0PTPtr();
-    p_prune_neighbor = ptm.getCrossC4C5E0E1PTPtr();
+    p_pt_cross_C4E0 = ptm.getCrossC4E0PTPtr();
+    p_pt_cross_C4C5E0E1 = ptm.getCrossC4C5E0E1PTPtr();
 #if ENABLE_DIAGONAL_STD
-    p_prune_diagonal = ptm.getCrossC4C6E0E2PTPtr();
+    p_pt_cross_C4C6E0E2 = ptm.getCrossC4C6E0E2PTPtr();
 #endif
   }
 
@@ -221,19 +221,19 @@ struct XCrossSolver {
 
     for (int m : alg) {
       int mc = conj_moves_flat[m][slot_k];
-      cur_mul = p_multi[cur_mul + mc];
-      cur_cn = p_corn[cur_cn + mc] * 18;
-      cur_e0 = p_edge[cur_e0 * 18 + mc];
-      cur_e2 = p_edge[cur_e2 * 18 + mc];
-      cur_e4 = p_edge[cur_e4 * 18 + mc];
-      cur_e6 = p_edge[cur_e6 * 18 + mc];
-      cur_c5 = p_corn[cur_c5 * 18 + mc];
-      cur_c6 = p_corn[cur_c6 * 18 + mc];
-      cur_c7 = p_corn[cur_c7 * 18 + mc];
-      cur_e6_n = p_edge6[cur_e6_n + mc] * 18;
-      cur_c2_n = p_corn2[cur_c2_n + mc] * 18;
-      cur_e6_d = p_edge6[cur_e6_d + mc] * 18;
-      cur_c2_d = p_corn2[cur_c2_d + mc] * 18;
+      cur_mul = p_mt_edge4[cur_mul + mc];
+      cur_cn = p_mt_corn[cur_cn + mc] * 18;
+      cur_e0 = p_mt_edge[cur_e0 * 18 + mc];
+      cur_e2 = p_mt_edge[cur_e2 * 18 + mc];
+      cur_e4 = p_mt_edge[cur_e4 * 18 + mc];
+      cur_e6 = p_mt_edge[cur_e6 * 18 + mc];
+      cur_c5 = p_mt_corn[cur_c5 * 18 + mc];
+      cur_c6 = p_mt_corn[cur_c6 * 18 + mc];
+      cur_c7 = p_mt_corn[cur_c7 * 18 + mc];
+      cur_e6_n = p_mt_edge6[cur_e6_n + mc] * 18;
+      cur_c2_n = p_mt_corn2[cur_c2_n + mc] * 18;
+      cur_e6_d = p_mt_edge6[cur_e6_d + mc] * 18;
+      cur_c2_d = p_mt_corn2[cur_c2_d + mc] * 18;
     }
     i_mul = cur_mul;
     i_cn = cur_cn / 18;
@@ -258,12 +258,12 @@ struct XCrossSolver {
       int m = moves[k];
       COUNT_NODE
       int m1 = conj_moves_flat[m][s1];
-      int n_i1 = p_multi[i1 + m1];
-      int n_i2 = p_corn[i2 + m1];
-      int n_i3 = p_edge[i3 + m1];
+      int n_i1 = p_mt_edge4[i1 + m1];
+      int n_i2 = p_mt_corn[i2 + m1];
+      int n_i3 = p_mt_edge[i3 + m1];
       long long idx = (long long)(n_i1 + n_i2) * 24 + n_i3;
       S1_CHECK(s1_xcross);
-      if (get_prune_ptr(p_prune_base, idx) >= depth) {
+      if (get_prune_ptr(p_pt_cross_C4E0, idx) >= depth) {
         S1_HIT(s1_xcross);
         continue;
       }
@@ -288,24 +288,24 @@ struct XCrossSolver {
       COUNT_NODE
       if (v_adj != -1 && p_prune_active) {
         int mv = conj_moves_flat[m][v_adj];
-        int n_ie6 = p_edge6[i_e6 * 18 + mv];
-        int n_ic2 = p_corn2[i_c2 * 18 + mv];
+        int n_ie6 = p_mt_edge6[i_e6 * 18 + mv];
+        int n_ic2 = p_mt_corn2[i_c2 * 18 + mv];
         if (get_prune_ptr(p_prune_active, (long long)n_ie6 * 504 + n_ic2) >=
             depth)
           continue;
       }
       int m1 = conj_moves_flat[m][s1];
-      int n_i1a = p_multi[i1a + m1];
-      int n_i2a = p_corn[i2a + m1];
-      int n_i3a = p_edge[i3a + m1];
-      int n_i4a = p_edge[i4a + m1];
-      int n_i5a = p_corn[i5a + m1];
+      int n_i1a = p_mt_edge4[i1a + m1];
+      int n_i2a = p_mt_corn[i2a + m1];
+      int n_i3a = p_mt_edge[i3a + m1];
+      int n_i4a = p_mt_edge[i4a + m1];
+      int n_i5a = p_mt_corn[i5a + m1];
       int m2 = conj_moves_flat[m][s2];
-      int n_i1b = p_multi[i1b + m2];
-      int n_i2b = p_corn[i2b + m2];
-      int n_i3b = p_edge[i3b + m2];
-      int n_i4b = p_edge[i4b + m2];
-      int n_i5b = p_corn[i5b + m2];
+      int n_i1b = p_mt_edge4[i1b + m2];
+      int n_i2b = p_mt_corn[i2b + m2];
+      int n_i3b = p_mt_edge[i3b + m2];
+      int n_i4b = p_mt_edge[i4b + m2];
+      int n_i5b = p_mt_corn[i5b + m2];
       if (depth == 1) {
         ctx.sol_len.push_back(ctx.current_max_depth);
         return true;
@@ -314,9 +314,9 @@ struct XCrossSolver {
               ctx, n_i1a, n_i2a * 18, n_i3a * 18, n_i4a * 18, n_i5a * 18, s1,
               n_i1b, n_i2b * 18, n_i3b * 18, n_i4b * 18, n_i5b * 18, s2, t_idx1,
               t_idx2,
-              (v_adj != -1) ? p_edge6[i_e6 * 18 + conj_moves_flat[m][v_adj]]
+              (v_adj != -1) ? p_mt_edge6[i_e6 * 18 + conj_moves_flat[m][v_adj]]
                             : -1,
-              (v_adj != -1) ? p_corn2[i_c2 * 18 + conj_moves_flat[m][v_adj]]
+              (v_adj != -1) ? p_mt_corn2[i_c2 * 18 + conj_moves_flat[m][v_adj]]
                             : -1,
               v_adj, p_prune_active, depth - 1, m))
         return true;
@@ -342,52 +342,52 @@ struct XCrossSolver {
       if (v12 != -1 && p_table_12) {
         int mx = conj_moves_flat[m][v12];
         if (get_prune_ptr(p_table_12,
-                          (long long)p_edge6[i_e6_12 * 18 + mx] * 504 +
-                              p_corn2[i_c2_12 * 18 + mx]) >= depth)
+                          (long long)p_mt_edge6[i_e6_12 * 18 + mx] * 504 +
+                              p_mt_corn2[i_c2_12 * 18 + mx]) >= depth)
           continue;
       }
       if (v23 != -1 && p_table_23) {
         int mx = conj_moves_flat[m][v23];
         if (get_prune_ptr(p_table_23,
-                          (long long)p_edge6[i_e6_23 * 18 + mx] * 504 +
-                              p_corn2[i_c2_23 * 18 + mx]) >= depth)
+                          (long long)p_mt_edge6[i_e6_23 * 18 + mx] * 504 +
+                              p_mt_corn2[i_c2_23 * 18 + mx]) >= depth)
           continue;
       }
       if (v31 != -1 && p_table_31) {
         int mx = conj_moves_flat[m][v31];
         if (get_prune_ptr(p_table_31,
-                          (long long)p_edge6[i_e6_31 * 18 + mx] * 504 +
-                              p_corn2[i_c2_31 * 18 + mx]) >= depth)
+                          (long long)p_mt_edge6[i_e6_31 * 18 + mx] * 504 +
+                              p_mt_corn2[i_c2_31 * 18 + mx]) >= depth)
           continue;
       }
 
       int m1 = conj_moves_flat[m][s1];
-      int n_i1a = p_multi[i1a + m1];
-      int n_i2a = p_corn[i2a + m1];
-      int n_i3a = p_edge[i3a + m1];
-      int n_i5a_1 = p_corn[i5a_1 + m1];
-      int n_i6a = p_corn[i6a + m1];
-      int n_i4a_1 = p_edge[i4a_1 + m1];
-      int n_i4a_2 = p_edge[i4a_2 + m1];
-      int n_i5a_2 = p_corn[i5a_2 + m1];
+      int n_i1a = p_mt_edge4[i1a + m1];
+      int n_i2a = p_mt_corn[i2a + m1];
+      int n_i3a = p_mt_edge[i3a + m1];
+      int n_i5a_1 = p_mt_corn[i5a_1 + m1];
+      int n_i6a = p_mt_corn[i6a + m1];
+      int n_i4a_1 = p_mt_edge[i4a_1 + m1];
+      int n_i4a_2 = p_mt_edge[i4a_2 + m1];
+      int n_i5a_2 = p_mt_corn[i5a_2 + m1];
       int m2 = conj_moves_flat[m][s2];
-      int n_i1b = p_multi[i1b + m2];
-      int n_i2b = p_corn[i2b + m2];
-      int n_i3b = p_edge[i3b + m2];
-      int n_i6b = p_corn[i6b + m2];
-      int n_i4b_1 = p_edge[i4b_1 + m2];
-      int n_i5b_1 = p_corn[i5b_1 + m2];
-      int n_i4b_2 = p_edge[i4b_2 + m2];
-      int n_i5b_2 = p_corn[i5b_2 + m2];
+      int n_i1b = p_mt_edge4[i1b + m2];
+      int n_i2b = p_mt_corn[i2b + m2];
+      int n_i3b = p_mt_edge[i3b + m2];
+      int n_i6b = p_mt_corn[i6b + m2];
+      int n_i4b_1 = p_mt_edge[i4b_1 + m2];
+      int n_i5b_1 = p_mt_corn[i5b_1 + m2];
+      int n_i4b_2 = p_mt_edge[i4b_2 + m2];
+      int n_i5b_2 = p_mt_corn[i5b_2 + m2];
       int m3 = conj_moves_flat[m][s3];
-      int n_i1c = p_multi[i1c + m3];
-      int n_i2c = p_corn[i2c + m3];
-      int n_i3c = p_edge[i3c + m3];
-      int n_i6c = p_corn[i6c + m3];
-      int n_i4c_1 = p_edge[i4c_1 + m3];
-      int n_i5c_1 = p_corn[i5c_1 + m3];
-      int n_i4c_2 = p_edge[i4c_2 + m3];
-      int n_i5c_2 = p_corn[i5c_2 + m3];
+      int n_i1c = p_mt_edge4[i1c + m3];
+      int n_i2c = p_mt_corn[i2c + m3];
+      int n_i3c = p_mt_edge[i3c + m3];
+      int n_i6c = p_mt_corn[i6c + m3];
+      int n_i4c_1 = p_mt_edge[i4c_1 + m3];
+      int n_i5c_1 = p_mt_corn[i5c_1 + m3];
+      int n_i4c_2 = p_mt_edge[i4c_2 + m3];
+      int n_i5c_2 = p_mt_corn[i5c_2 + m3];
 
       if (depth == 1) {
         ctx.sol_len.push_back(ctx.current_max_depth);
@@ -400,19 +400,19 @@ struct XCrossSolver {
                    n_i2c * 18, n_i3c * 18, n_i4c_1 * 18, n_i5c_1 * 18,
                    n_i6c * 18, n_i4c_2 * 18, n_i5c_2 * 18, s3, t12, t21, t23,
                    t32,
-                   (v12 != -1) ? p_edge6[i_e6_12 * 18 + conj_moves_flat[m][v12]]
+                   (v12 != -1) ? p_mt_edge6[i_e6_12 * 18 + conj_moves_flat[m][v12]]
                                : -1,
-                   (v12 != -1) ? p_corn2[i_c2_12 * 18 + conj_moves_flat[m][v12]]
+                   (v12 != -1) ? p_mt_corn2[i_c2_12 * 18 + conj_moves_flat[m][v12]]
                                : -1,
                    v12, p_table_12,
-                   (v23 != -1) ? p_edge6[i_e6_23 * 18 + conj_moves_flat[m][v23]]
+                   (v23 != -1) ? p_mt_edge6[i_e6_23 * 18 + conj_moves_flat[m][v23]]
                                : -1,
-                   (v23 != -1) ? p_corn2[i_c2_23 * 18 + conj_moves_flat[m][v23]]
+                   (v23 != -1) ? p_mt_corn2[i_c2_23 * 18 + conj_moves_flat[m][v23]]
                                : -1,
                    v23, p_table_23,
-                   (v31 != -1) ? p_edge6[i_e6_31 * 18 + conj_moves_flat[m][v31]]
+                   (v31 != -1) ? p_mt_edge6[i_e6_31 * 18 + conj_moves_flat[m][v31]]
                                : -1,
-                   (v31 != -1) ? p_corn2[i_c2_31 * 18 + conj_moves_flat[m][v31]]
+                   (v31 != -1) ? p_mt_corn2[i_c2_31 * 18 + conj_moves_flat[m][v31]]
                                : -1,
                    v31, p_table_31, depth - 1, m))
         return true;
@@ -434,69 +434,69 @@ struct XCrossSolver {
       COUNT_NODE
 
       int m0 = conj_moves_flat[m][0];
-      int n_nb01_e = p_edge6[nb01_e * 18 + m0];
-      int n_nb01_c = p_corn2[nb01_c * 18 + m0];
-      if (get_prune_ptr(p_prune_neighbor,
+      int n_nb01_e = p_mt_edge6[nb01_e * 18 + m0];
+      int n_nb01_c = p_mt_corn2[nb01_c * 18 + m0];
+      if (get_prune_ptr(p_pt_cross_C4C5E0E1,
                         (long long)n_nb01_e * 504 + n_nb01_c) >= depth)
         continue;
       int m1 = conj_moves_flat[m][1];
-      int n_nb12_e = p_edge6[nb12_e * 18 + m1];
-      int n_nb12_c = p_corn2[nb12_c * 18 + m1];
-      if (get_prune_ptr(p_prune_neighbor,
+      int n_nb12_e = p_mt_edge6[nb12_e * 18 + m1];
+      int n_nb12_c = p_mt_corn2[nb12_c * 18 + m1];
+      if (get_prune_ptr(p_pt_cross_C4C5E0E1,
                         (long long)n_nb12_e * 504 + n_nb12_c) >= depth)
         continue;
       int m2 = conj_moves_flat[m][2];
-      int n_nb23_e = p_edge6[nb23_e * 18 + m2];
-      int n_nb23_c = p_corn2[nb23_c * 18 + m2];
-      if (get_prune_ptr(p_prune_neighbor,
+      int n_nb23_e = p_mt_edge6[nb23_e * 18 + m2];
+      int n_nb23_c = p_mt_corn2[nb23_c * 18 + m2];
+      if (get_prune_ptr(p_pt_cross_C4C5E0E1,
                         (long long)n_nb23_e * 504 + n_nb23_c) >= depth)
         continue;
       int m3 = conj_moves_flat[m][3];
-      int n_nb30_e = p_edge6[nb30_e * 18 + m3];
-      int n_nb30_c = p_corn2[nb30_c * 18 + m3];
-      if (get_prune_ptr(p_prune_neighbor,
+      int n_nb30_e = p_mt_edge6[nb30_e * 18 + m3];
+      int n_nb30_c = p_mt_corn2[nb30_c * 18 + m3];
+      if (get_prune_ptr(p_pt_cross_C4C5E0E1,
                         (long long)n_nb30_e * 504 + n_nb30_c) >= depth)
         continue;
 
-      int n_dg02_e = p_edge6[dg02_e * 18 + m0];
-      int n_dg02_c = p_corn2[dg02_c * 18 + m0];
-      if (p_prune_diagonal) {
-        if (get_prune_ptr(p_prune_diagonal,
+      int n_dg02_e = p_mt_edge6[dg02_e * 18 + m0];
+      int n_dg02_c = p_mt_corn2[dg02_c * 18 + m0];
+      if (p_pt_cross_C4C6E0E2) {
+        if (get_prune_ptr(p_pt_cross_C4C6E0E2,
                           (long long)n_dg02_e * 504 + n_dg02_c) >= depth)
           continue;
       }
-      int n_dg13_e = p_edge6[dg13_e * 18 + m1];
-      int n_dg13_c = p_corn2[dg13_c * 18 + m1];
-      if (p_prune_diagonal) {
-        if (get_prune_ptr(p_prune_diagonal,
+      int n_dg13_e = p_mt_edge6[dg13_e * 18 + m1];
+      int n_dg13_c = p_mt_corn2[dg13_c * 18 + m1];
+      if (p_pt_cross_C4C6E0E2) {
+        if (get_prune_ptr(p_pt_cross_C4C6E0E2,
                           (long long)n_dg13_e * 504 + n_dg13_c) >= depth)
           continue;
       }
 
-      int n_i1a = p_multi[i1a + m0];
-      int n_i2a = p_corn[i2a + m0];
-      int n_i3a = p_edge[i3a + m0];
-      int n_i4a = p_edge[i4a + m0];
-      int n_i5a = p_corn[i5a + m0];
-      int n_i6a = p_corn[i6a + m0];
-      int n_i1b = p_multi[i1b + m1];
-      int n_i2b = p_corn[i2b + m1];
-      int n_i3b = p_edge[i3b + m1];
-      int n_i4b = p_edge[i4b + m1];
-      int n_i5b = p_corn[i5b + m1];
-      int n_i6b = p_corn[i6b + m1];
-      int n_i1c = p_multi[i1c + m2];
-      int n_i2c = p_corn[i2c + m2];
-      int n_i3c = p_edge[i3c + m2];
-      int n_i4c = p_edge[i4c + m2];
-      int n_i5c = p_corn[i5c + m2];
-      int n_i6c = p_corn[i6c + m2];
-      int n_i1d = p_multi[i1d + m3];
-      int n_i2d = p_corn[i2d + m3];
-      int n_i3d = p_edge[i3d + m3];
-      int n_i4d = p_edge[i4d + m3];
-      int n_i5d = p_corn[i5d + m3];
-      int n_i6d = p_corn[i6d + m3];
+      int n_i1a = p_mt_edge4[i1a + m0];
+      int n_i2a = p_mt_corn[i2a + m0];
+      int n_i3a = p_mt_edge[i3a + m0];
+      int n_i4a = p_mt_edge[i4a + m0];
+      int n_i5a = p_mt_corn[i5a + m0];
+      int n_i6a = p_mt_corn[i6a + m0];
+      int n_i1b = p_mt_edge4[i1b + m1];
+      int n_i2b = p_mt_corn[i2b + m1];
+      int n_i3b = p_mt_edge[i3b + m1];
+      int n_i4b = p_mt_edge[i4b + m1];
+      int n_i5b = p_mt_corn[i5b + m1];
+      int n_i6b = p_mt_corn[i6b + m1];
+      int n_i1c = p_mt_edge4[i1c + m2];
+      int n_i2c = p_mt_corn[i2c + m2];
+      int n_i3c = p_mt_edge[i3c + m2];
+      int n_i4c = p_mt_edge[i4c + m2];
+      int n_i5c = p_mt_corn[i5c + m2];
+      int n_i6c = p_mt_corn[i6c + m2];
+      int n_i1d = p_mt_edge4[i1d + m3];
+      int n_i2d = p_mt_corn[i2d + m3];
+      int n_i3d = p_mt_edge[i3d + m3];
+      int n_i4d = p_mt_edge[i4d + m3];
+      int n_i5d = p_mt_corn[i5d + m3];
+      int n_i6d = p_mt_corn[i6d + m3];
 
       if (depth == 1) {
         ctx.sol_len.push_back(ctx.current_max_depth);
@@ -545,7 +545,7 @@ struct XCrossSolver {
           long long idx =
               (long long)(initial_states[k].im + initial_states[k].ic) * 24 +
               initial_states[k].ie;
-          int h = get_prune_ptr(p_prune_base, idx);
+          int h = get_prune_ptr(p_pt_cross_C4E0, idx);
           tasks.push_back({k, h});
         }
         std::sort(tasks.begin(), tasks.end(),
@@ -616,12 +616,12 @@ struct XCrossSolver {
           int h_val = 0;
           int view_used = -1;
           if (v_nb != -1) {
-            h_val = get_prune_ptr(p_prune_neighbor,
+            h_val = get_prune_ptr(p_pt_cross_C4C5E0E1,
                                   (long long)st[v_nb].ie6_nb * 504 +
                                       st[v_nb].ic2_nb);
             view_used = v_nb;
-          } else if (v_dg != -1 && p_prune_diagonal) {
-            h_val = get_prune_ptr(p_prune_diagonal,
+          } else if (v_dg != -1 && p_pt_cross_C4C6E0E2) {
+            h_val = get_prune_ptr(p_pt_cross_C4C6E0E2,
                                   (long long)st[v_dg].ie6_dg * 504 +
                                       st[v_dg].ic2_dg);
             view_used = v_dg;
@@ -653,11 +653,11 @@ struct XCrossSolver {
             if (get_neighbor_view(t.a, t.b) != -1) {
               ie6_use = st[t.v].ie6_nb;
               ic2_use = st[t.v].ic2_nb;
-              p_table_use = p_prune_neighbor;
-            } else if (p_prune_diagonal) {
+              p_table_use = p_pt_cross_C4C5E0E1;
+            } else if (p_pt_cross_C4C6E0E2) {
               ie6_use = st[t.v].ie6_dg;
               ic2_use = st[t.v].ic2_dg;
-              p_table_use = p_prune_diagonal;
+              p_table_use = p_pt_cross_C4C6E0E2;
             }
             if (p_table_use) {
               for (int d = t.h; d <= max_search; ++d) {
@@ -719,31 +719,31 @@ struct XCrossSolver {
           int v1 = get_neighbor_view(t.a, t.b);
           int d1 = 0;
           if (v1 != -1)
-            d1 = get_prune_ptr(p_prune_neighbor,
+            d1 = get_prune_ptr(p_pt_cross_C4C5E0E1,
                                (long long)st[v1].ie6_nb * 504 + st[v1].ic2_nb);
-          else if (p_prune_diagonal) {
+          else if (p_pt_cross_C4C6E0E2) {
             v1 = get_diagonal_view(t.a, t.b);
-            d1 = get_prune_ptr(p_prune_diagonal,
+            d1 = get_prune_ptr(p_pt_cross_C4C6E0E2,
                                (long long)st[v1].ie6_dg * 504 + st[v1].ic2_dg);
           }
           int v2 = get_neighbor_view(t.b, t.c);
           int d2 = 0;
           if (v2 != -1)
-            d2 = get_prune_ptr(p_prune_neighbor,
+            d2 = get_prune_ptr(p_pt_cross_C4C5E0E1,
                                (long long)st[v2].ie6_nb * 504 + st[v2].ic2_nb);
-          else if (p_prune_diagonal) {
+          else if (p_pt_cross_C4C6E0E2) {
             v2 = get_diagonal_view(t.b, t.c);
-            d2 = get_prune_ptr(p_prune_diagonal,
+            d2 = get_prune_ptr(p_pt_cross_C4C6E0E2,
                                (long long)st[v2].ie6_dg * 504 + st[v2].ic2_dg);
           }
           int v3 = get_neighbor_view(t.c, t.a);
           int d3 = 0;
           if (v3 != -1)
-            d3 = get_prune_ptr(p_prune_neighbor,
+            d3 = get_prune_ptr(p_pt_cross_C4C5E0E1,
                                (long long)st[v3].ie6_nb * 504 + st[v3].ic2_nb);
-          else if (p_prune_diagonal) {
+          else if (p_pt_cross_C4C6E0E2) {
             v3 = get_diagonal_view(t.c, t.a);
-            d3 = get_prune_ptr(p_prune_diagonal,
+            d3 = get_prune_ptr(p_pt_cross_C4C6E0E2,
                                (long long)st[v3].ie6_dg * 504 + st[v3].ic2_dg);
           }
           h_max = std::max({d1, d2, d3});
@@ -795,33 +795,33 @@ struct XCrossSolver {
             if (get_neighbor_view(t.a, t.b) != -1) {
               i_e6_1 = st[t.v12].ie6_nb;
               i_c2_1 = st[t.v12].ic2_nb;
-              p_1 = p_prune_neighbor;
-            } else if (p_prune_diagonal) {
+              p_1 = p_pt_cross_C4C5E0E1;
+            } else if (p_pt_cross_C4C6E0E2) {
               i_e6_1 = st[t.v12].ie6_dg;
               i_c2_1 = st[t.v12].ic2_dg;
-              p_1 = p_prune_diagonal;
+              p_1 = p_pt_cross_C4C6E0E2;
             }
             int i_e6_2 = -1, i_c2_2 = -1;
             const unsigned char *p_2 = nullptr;
             if (get_neighbor_view(t.b, t.c) != -1) {
               i_e6_2 = st[t.v23].ie6_nb;
               i_c2_2 = st[t.v23].ic2_nb;
-              p_2 = p_prune_neighbor;
-            } else if (p_prune_diagonal) {
+              p_2 = p_pt_cross_C4C5E0E1;
+            } else if (p_pt_cross_C4C6E0E2) {
               i_e6_2 = st[t.v23].ie6_dg;
               i_c2_2 = st[t.v23].ic2_dg;
-              p_2 = p_prune_diagonal;
+              p_2 = p_pt_cross_C4C6E0E2;
             }
             int i_e6_3 = -1, i_c2_3 = -1;
             const unsigned char *p_3 = nullptr;
             if (get_neighbor_view(t.c, t.a) != -1) {
               i_e6_3 = st[t.v31].ie6_nb;
               i_c2_3 = st[t.v31].ic2_nb;
-              p_3 = p_prune_neighbor;
-            } else if (p_prune_diagonal) {
+              p_3 = p_pt_cross_C4C5E0E1;
+            } else if (p_pt_cross_C4C6E0E2) {
               i_e6_3 = st[t.v31].ie6_dg;
               i_c2_3 = st[t.v31].ic2_dg;
-              p_3 = p_prune_diagonal;
+              p_3 = p_pt_cross_C4C6E0E2;
             }
 
             for (int d = t.h; d <= max_search; ++d) {
@@ -876,22 +876,22 @@ struct XCrossSolver {
                                      st[k].e2, st[k].e4, st[k].e6, st[k].c5,
                                      st[k].c6, st[k].c7, st[k].ie6_nb,
                                      st[k].ic2_nb, st[k].ie6_dg, st[k].ic2_dg);
-        int d_nb0 = get_prune_ptr(p_prune_neighbor,
+        int d_nb0 = get_prune_ptr(p_pt_cross_C4C5E0E1,
                                   (long long)st[0].ie6_nb * 504 + st[0].ic2_nb);
-        int d_nb1 = get_prune_ptr(p_prune_neighbor,
+        int d_nb1 = get_prune_ptr(p_pt_cross_C4C5E0E1,
                                   (long long)st[1].ie6_nb * 504 + st[1].ic2_nb);
-        int d_nb2 = get_prune_ptr(p_prune_neighbor,
+        int d_nb2 = get_prune_ptr(p_pt_cross_C4C5E0E1,
                                   (long long)st[2].ie6_nb * 504 + st[2].ic2_nb);
-        int d_nb3 = get_prune_ptr(p_prune_neighbor,
+        int d_nb3 = get_prune_ptr(p_pt_cross_C4C5E0E1,
                                   (long long)st[3].ie6_nb * 504 + st[3].ic2_nb);
         int d_dg0 =
-            p_prune_diagonal
-                ? get_prune_ptr(p_prune_diagonal,
+            p_pt_cross_C4C6E0E2
+                ? get_prune_ptr(p_pt_cross_C4C6E0E2,
                                 (long long)st[0].ie6_dg * 504 + st[0].ic2_dg)
                 : 0;
         int d_dg1 =
-            p_prune_diagonal
-                ? get_prune_ptr(p_prune_diagonal,
+            p_pt_cross_C4C6E0E2
+                ? get_prune_ptr(p_pt_cross_C4C6E0E2,
                                 (long long)st[1].ie6_dg * 504 + st[1].ic2_dg)
                 : 0;
         int max_h = std::max({d_nb0, d_nb1, d_nb2, d_nb3, d_dg0, d_dg1});
