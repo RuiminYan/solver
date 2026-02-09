@@ -152,8 +152,8 @@ struct CrossSolver {
   CrossSolver() {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
-    p_multi = mtm.getEdges2TablePtr();
-    p_prune = ptm.getPseudoCrossPrunePtr();
+    p_multi = mtm.getEdge2MTPtr();
+    p_prune = ptm.getPsCrossPTPtr();
   }
 
   bool search(SearchContext &ctx, int i1, int i2, int depth, int prev) {
@@ -325,54 +325,54 @@ struct XCrossSolver {
   XCrossSolver() {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
-    p_multi = mtm.getCrossTablePtr();
-    p_corn = mtm.getCornerTablePtr();
-    p_edge = mtm.getEdgeTablePtr();
-    p_edges2 = mtm.getEdges2TablePtr();
-    p_corners2 = mtm.getCorner2TablePtr();
-    p_corners3 = mtm.getCorner3TablePtr();
-    p_edge3 = mtm.getEdge3TablePtr();
-    p_edge6 = mtm.getEdge6TablePtr();
+    p_multi = mtm.getCrossMTPtr();
+    p_corn = mtm.getCornMTPtr();
+    p_edge = mtm.getEdgeMTPtr();
+    p_edges2 = mtm.getEdge2MTPtr();
+    p_corners2 = mtm.getCorn2MTPtr();
+    p_corners3 = mtm.getCorn3MTPtr();
+    p_edge3 = mtm.getEdge3MTPtr();
+    p_edge6 = mtm.getEdge6MTPtr();
 
     // 使用 Ptr 方式获取 Huge Table (与 std_analyzer 一致，无日志输出)
-    p_huge_neighbor = ptm.getHugeNeighborPrunePtr();
+    p_huge_neighbor = ptm.getCrossC4C5E0E1PTPtr();
 
-    // p_huge_diagonal = ptm.getHugeDiagonalPrunePtr(); // Disabled
+    // p_huge_diagonal = ptm.getCrossC4C6E0E2PTPtr(); // Disabled
 
     for (int i = 0; i < 4; ++i)
-      p_prune_base[i] = ptm.getPseudoCrossBasePrunePtr(i);
+      p_prune_base[i] = ptm.getPsCrossC4EPTPtr(i);
 
     // 初始化 Edge2 对角表 (E0E2)
-    if (ptm.hasPseudoCrossE0E2Prune()) {
-      p_aux_e2_diag = ptm.getPseudoCrossE0E2PrunePtr();
+    if (ptm.hasPsCrossE0E2PT()) {
+      p_aux_e2_diag = ptm.getPsCrossE0E2PTPtr();
       aux_def_e2_diag = {p_aux_e2_diag, p_edges2, 528};
     }
     // 初始化 Edge2 邻接表 (E0E1)
-    if (ptm.hasPseudoCrossE0E1Prune()) {
-      p_aux_e2_adj = ptm.getPseudoCrossE0E1PrunePtr();
+    if (ptm.hasPsCrossE0E1PT()) {
+      p_aux_e2_adj = ptm.getPsCrossE0E1PTPtr();
       aux_def_e2_adj = {p_aux_e2_adj, p_edges2, 528};
     }
 
     // 初始化 Corner2 对角表 (C4C6)
-    if (ptm.hasPseudoCrossC4C6Prune()) {
-      p_aux_c2_diag = ptm.getPseudoCrossC4C6PrunePtr();
+    if (ptm.hasPsCrossC4C6PT()) {
+      p_aux_c2_diag = ptm.getPsCrossC4C6PTPtr();
       aux_def_c2_diag = {p_aux_c2_diag, p_corners2, 504};
     }
     // 初始化 Corner2 邻接表 (C4C5)
-    if (ptm.hasPseudoCrossC4C5Prune()) {
-      p_aux_c2_adj = ptm.getPseudoCrossC4C5PrunePtr();
+    if (ptm.hasPsCrossC4C5PT()) {
+      p_aux_c2_adj = ptm.getPsCrossC4C5PTPtr();
       aux_def_c2_adj = {p_aux_c2_adj, p_corners2, 504};
     }
 
     // 初始化 Corner3 规范表 (C4C5C6，其他组合通过旋转映射)
-    if (ptm.hasPseudoCrossC4C5C6Prune()) {
-      p_aux_c3 = ptm.getPseudoCrossC4C5C6PrunePtr();
+    if (ptm.hasPsCrossC4C5C6PT()) {
+      p_aux_c3 = ptm.getPsCrossC4C5C6PTPtr();
       aux_def_c3 = {p_aux_c3, p_corners3, 9072};
     }
 
     // 初始化 Edge3 规范表 (E0E1E2，其他组合通过旋转映射)
-    if (ptm.hasPseudoCrossE0E1E2Prune()) {
-      p_aux_e3 = ptm.getPseudoCrossE0E1E2PrunePtr();
+    if (ptm.hasPsCrossE0E1E2PT()) {
+      p_aux_e3 = ptm.getPsCrossE0E1E2PTPtr();
       aux_def_e3 = {p_aux_e3, p_edge3, 10560};
     }
   }
@@ -1274,18 +1274,18 @@ struct PseudoSolverWrapper {
     auto &ptm = PruneTableManager::getInstance();
 
     bool ok = true;
-    if (!mtm.loadCrossTable())
+    if (!mtm.loadCrossMT())
       ok = false;
-    if (!mtm.loadCornerTable())
+    if (!mtm.loadCornMT())
       ok = false;
-    if (!mtm.loadEdgeTable())
+    if (!mtm.loadEdgeMT())
       ok = false;
-    if (!mtm.loadEdges2Table())
+    if (!mtm.loadEdge2MT())
       ok = false;
-    mtm.loadCorner2Table();
-    mtm.loadEdge6Table();
-    mtm.loadCorner3Table();
-    mtm.loadEdge3Table();
+    mtm.loadCorn2MT();
+    mtm.loadEdge6MT();
+    mtm.loadCorn3MT();
+    mtm.loadEdge3MT();
 
     if (!ok) {
       std::cerr << ANSI_RED

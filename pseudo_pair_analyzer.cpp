@@ -176,9 +176,9 @@ struct xcross_analyzer2 {
     }
 
     // Assign pointers
-    p_edge_move_ptr = mtm.getEdgeTablePtr();
-    p_corner_move_ptr = mtm.getCornerTablePtr();
-    p_multi_move_ptr = mtm.getCrossTablePtr();
+    p_edge_move_ptr = mtm.getEdgeMTPtr();
+    p_corner_move_ptr = mtm.getCornMTPtr();
+    p_multi_move_ptr = mtm.getCrossMTPtr();
 
     init_matrix();
 
@@ -193,47 +193,47 @@ struct xcross_analyzer2 {
 
     // 1. 获取 Base Prune Tables 指针 (Cross + C{4-7})
     for (int c = 0; c < 4; ++c) {
-      p_base_prune[c] = ptm.getPseudoPairBasePrunePtr(c);
+      p_base_prune[c] = ptm.getPsCrossCPTPtr(c);
     }
 
     // 2. 获取 XCross Prune Tables 指针
     for (int idx = 0; idx < 16; ++idx) {
-      p_xc_prune[idx] = ptm.getPseudoPairXCPrunePtr(idx);
+      p_xc_prune[idx] = ptm.getPsCrossCDiffPTPtr(idx);
     }
 
     // 3. 获取 Pair Prune Tables 指针
     for (int idx = 0; idx < 16; ++idx) {
-      p_ec_prune[idx] = ptm.getPseudoPairECPrunePtr(idx);
+      p_ec_prune[idx] = ptm.getPsPairECPTPtr(idx);
     }
 
     // 4. 获取 Pseudo Base Prune Tables 指针 (C4+E{0-3})
     // 复用 Pseudo Analyzer 的 pseudo_cross_base_prune
     for (int e = 0; e < 4; ++e) {
-      p_pseudo_base_prune[e] = ptm.getPseudoCrossBasePrunePtr(e);
+      p_pseudo_base_prune[e] = ptm.getPsCrossC4EPTPtr(e);
     }
 
     // 5. 获取 Aux 表指针 (从 Manager，已由 loadPseudoPairTables 加载)
     // Edge3 移动表
-    mtm.loadEdge3Table();
-    p_edge3_move_ptr = mtm.getEdge3TablePtr();
-    p_aux_e3_prune = ptm.getPseudoCrossE0E1E2PrunePtr();
+    mtm.loadEdge3MT();
+    p_edge3_move_ptr = mtm.getEdge3MTPtr();
+    p_aux_e3_prune = ptm.getPsCrossE0E1E2PTPtr();
 
     // Corner3 移动表
-    mtm.loadCorner3Table();
-    p_corner3_move_ptr = mtm.getCorner3TablePtr();
-    p_aux_c3_prune = ptm.getPseudoCrossC4C5C6PrunePtr();
+    mtm.loadCorn3MT();
+    p_corner3_move_ptr = mtm.getCorn3MTPtr();
+    p_aux_c3_prune = ptm.getPsCrossC4C5C6PTPtr();
 
     // Corner2 移动表
-    mtm.loadCorner2Table();
-    p_corner2_move_ptr = mtm.getCorner2TablePtr();
-    p_aux_c2_adj_prune = ptm.getPseudoCrossC4C5PrunePtr();
-    p_aux_c2_diag_prune = ptm.getPseudoCrossC4C6PrunePtr();
+    mtm.loadCorn2MT();
+    p_corner2_move_ptr = mtm.getCorn2MTPtr();
+    p_aux_c2_adj_prune = ptm.getPsCrossC4C5PTPtr();
+    p_aux_c2_diag_prune = ptm.getPsCrossC4C6PTPtr();
 
     // Edge2 移动表
-    mtm.loadEdges2Table();
-    p_edge2_move_ptr = mtm.getEdges2TablePtr();
-    p_aux_e2_adj_prune = ptm.getPseudoCrossE0E1PrunePtr();
-    p_aux_e2_diag_prune = ptm.getPseudoCrossE0E2PrunePtr();
+    mtm.loadEdge2MT();
+    p_edge2_move_ptr = mtm.getEdge2MTPtr();
+    p_aux_e2_adj_prune = ptm.getPsCrossE0E1PTPtr();
+    p_aux_e2_diag_prune = ptm.getPsCrossE0E2PTPtr();
 
     // 6. 初始化静态 AuxPrunerDef 对象
     aux_def_c3 = {p_aux_c3_prune, p_corner3_move_ptr, 9072}; // Corner3

@@ -59,13 +59,13 @@ struct cross_analyzer {
       return;
     auto &mm = MoveTableManager::getInstance();
     auto &pm = PruneTableManager::getInstance();
-    mm.loadEdgeTable();
-    mm.loadEdges2Table();
-    mm.loadEOTable(); // 使用 MoveTableManager 加载 EO 表
-    pm.generateCrossPrune();
-    s_p_multi = mm.getEdges2TablePtr();
-    s_p_eo = mm.getEOTablePtr();
-    s_p_prune = pm.getCrossPrunePtr();
+    mm.loadEdgeMT();
+    mm.loadEdge2MT();
+    mm.loadEOMT(); // 使用 MoveTableManager 加载 EO 表
+    pm.generateCrossPT();
+    s_p_multi = mm.getEdge2MTPtr();
+    s_p_eo = mm.getEOMTPtr();
+    s_p_prune = pm.getCrossPTPtr();
     s_initialized = true;
   }
 
@@ -198,52 +198,55 @@ struct xcross_analyzer {
       return;
 
     MoveTableManager &mm = MoveTableManager::getInstance();
-    mm.loadEdgeTable();
-    mm.loadCornerTable();
-    mm.loadCrossTable();
-    mm.loadEdge6Table();   // 用于 Huge 表状态追踪
-    mm.loadCorner2Table(); // 用于 Huge 表状态追踪
+    mm.loadEdgeMT();
+    mm.loadCornMT();
+    mm.loadCrossMT();
+    mm.loadEdge6MT(); // 用于 Huge 表状态追踪
+    mm.loadCorn2MT(); // 用于 Huge 表状态追踪
 
     // 加载 EOCross 专用移动表
-    mm.loadEOCrossMoveTables();
+    mm.loadEOCrossMTs();
 
     // 设置移动表指针
-    s_p_multi = mm.getCrossTablePtr();
-    s_p_corner = mm.getCornerTablePtr();
-    s_p_edge = mm.getEdgeTablePtr();
-    s_p_edge6 = mm.getEdge6TablePtr();   // Edge6 Move Table
-    s_p_corn2 = mm.getCorner2TablePtr(); // Corner2 Move Table
-    s_p_dep = mm.getEOCrossEP4Ptr();     // EP4 Move Table
-    s_p_eo = mm.getEOCrossEOAltPtr();    // EO Alt Move Table
+    s_p_multi = mm.getCrossMTPtr();
+    s_p_corner = mm.getCornMTPtr();
+    s_p_edge = mm.getEdgeMTPtr();
+    s_p_edge6 = mm.getEdge6MTPtr(); // Edge6 Move Table
+    s_p_corn2 = mm.getCorn2MTPtr(); // Corner2 Move Table
+    s_p_dep = mm.getEP4MTPtr();     // EP4 Move Table
+    s_p_eo = mm.getEOAltMTPtr();    // EO Alt Move Table
 
     // === 剪枝表：使用 PruneTableManager ===
     auto &ptm = PruneTableManager::getInstance();
 
     // 先加载复用的xcross_c4_e0表（与std_analyzer/pair_analyzer共享）
-    ptm.generateXCrossC4E0Prune();
+    ptm.generateCrossC4E0PT();
 
     // 加载 EOCross 专用剪枝表
     ptm.loadEOCrossTables();
 
     // 获取剪枝表指针
-    s_p_prune = ptm.getEOCrossC4PrunePtr();
-    s_p_prune_dep_eo = ptm.getEODepEOPrunePtr();
-    s_p_prune_base = ptm.getXCrossC4E0PrunePtr(); // 复用已有表
+    s_p_prune = ptm.getEOCC4PTPtr();
+    s_p_prune_dep_eo = ptm.getEP4EO12PTPtr();
+    s_p_prune_base = ptm.getCrossC4E0PTPtr(); // 复用已有表
 
     s_p_plus_edge.resize(3);
     s_p_plus_corn.resize(3);
-    for (int i = 0; i < 3; ++i) {
-      s_p_plus_edge[i] = ptm.getEOPlusEdgePrunePtr(i);
-      s_p_plus_corn[i] = ptm.getEOPlusCornerPrunePtr(i);
-    }
-    s_p_prune_3c = ptm.getEO3CornerPrunePtr();
+    // 0=Right, 1=Diag, 2=Left
+    s_p_plus_edge[0] = ptm.getCrossC4E0E1PTPtr();
+    s_p_plus_edge[1] = ptm.getCrossC4E0E2PTPtr();
+    s_p_plus_edge[2] = ptm.getCrossC4E0E3PTPtr();
+    s_p_plus_corn[0] = ptm.getCrossC4C5E0PTPtr();
+    s_p_plus_corn[1] = ptm.getCrossC4C6E0PTPtr();
+    s_p_plus_corn[2] = ptm.getCrossC4C7E0PTPtr();
+    s_p_prune_3c = ptm.getCrossC4C5C6PTPtr();
 
     // 加载 Huge Neighbor/Diagonal Prune Tables
-    ptm.generateHugeNeighborPrune();
-    s_p_huge_neighbor = ptm.getHugeNeighborPrunePtr();
+    ptm.generateCrossC4C5E0E1PT();
+    s_p_huge_neighbor = ptm.getCrossC4C5E0E1PTPtr();
     if (ENABLE_DIAGONAL_EO_CROSS) {
-      ptm.generateHugeDiagonalPrune();
-      s_p_huge_diagonal = ptm.getHugeDiagonalPrunePtr();
+      ptm.generateCrossC4C6E0E2PT();
+      s_p_huge_diagonal = ptm.getCrossC4C6E0E2PTPtr();
     }
 
     s_initialized = true;

@@ -104,19 +104,19 @@ struct PairSolver {
     auto &ptm = PruneTableManager::getInstance();
 
     // 获取移动表指针
-    s_p_multi = mtm.getCrossTablePtr();
-    s_p_corn = mtm.getCornerTablePtr();
-    s_p_edge = mtm.getEdgeTablePtr();
-    s_p_edge6 = mtm.getEdge6TablePtr();
-    s_p_corn2 = mtm.getCorner2TablePtr();
+    s_p_multi = mtm.getCrossMTPtr();
+    s_p_corn = mtm.getCornMTPtr();
+    s_p_edge = mtm.getEdgeMTPtr();
+    s_p_edge6 = mtm.getEdge6MTPtr();
+    s_p_corn2 = mtm.getCorn2MTPtr();
 
     // 获取剪枝表指针
-    s_p_cross = ptm.getCrossC4PrunePtr();
-    s_p_pair = ptm.getPairC4E0PrunePtr();
-    s_p_xcross = ptm.getXCrossC4E0PrunePtr();
-    s_p_prune_neighbor = ptm.getHugeNeighborPrunePtr();
+    s_p_cross = ptm.getCrossC4PTPtr();
+    s_p_pair = ptm.getPairC4E0PTPtr();
+    s_p_xcross = ptm.getCrossC4E0PTPtr();
+    s_p_prune_neighbor = ptm.getCrossC4C5E0E1PTPtr();
 #if ENABLE_DIAGONAL_PAIR
-    s_p_prune_diagonal = ptm.getHugeDiagonalPrunePtr();
+    s_p_prune_diagonal = ptm.getCrossC4C6E0E2PTPtr();
 #endif
 
     // 计算解决状态索引

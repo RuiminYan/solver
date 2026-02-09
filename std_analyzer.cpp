@@ -58,8 +58,8 @@ struct CrossSolver {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
 
-    p_multi = mtm.getEdges2TablePtr();
-    p_prune = ptm.getCrossPrunePtr();
+    p_multi = mtm.getEdge2MTPtr();
+    p_prune = ptm.getCrossPTPtr();
   }
 
   bool search(SearchContext &ctx, int i1, int i2, int depth, int prev) {
@@ -134,16 +134,16 @@ struct XCrossSolver {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
 
-    p_multi = mtm.getCrossTablePtr();
-    p_corn = mtm.getCornerTablePtr();
-    p_edge = mtm.getEdgeTablePtr();
-    p_edge6 = mtm.getEdge6TablePtr();
-    p_corn2 = mtm.getCorner2TablePtr();
+    p_multi = mtm.getCrossMTPtr();
+    p_corn = mtm.getCornMTPtr();
+    p_edge = mtm.getEdgeMTPtr();
+    p_edge6 = mtm.getEdge6MTPtr();
+    p_corn2 = mtm.getCorn2MTPtr();
 
-    p_prune_base = ptm.getXCrossC4E0PrunePtr();
-    p_prune_neighbor = ptm.getHugeNeighborPrunePtr();
+    p_prune_base = ptm.getCrossC4E0PTPtr();
+    p_prune_neighbor = ptm.getCrossC4C5E0E1PTPtr();
 #if ENABLE_DIAGONAL_STD
-    p_prune_diagonal = ptm.getHugeDiagonalPrunePtr();
+    p_prune_diagonal = ptm.getCrossC4C6E0E2PTPtr();
 #endif
   }
 
