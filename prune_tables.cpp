@@ -96,12 +96,12 @@ struct DistributionPrinter {
     int pct = (int)(i * numThreads * 100 / loopTotal);
     if (pct > 99)
       pct = 99;
-    std::cout << "\r  Scanning depth " << depth << ": " << pct << "%  "
+    std::cout << "\033[?25l\r  Scanning depth " << depth << ": " << pct << "%  "
               << std::flush;
   }
 
   // 在 dp.print() 前调用，清除进度行
-  void clearProgress() { std::cout << "\r\033[2K" << std::flush; }
+  void clearProgress() { std::cout << "\r\033[2K\033[?25h" << std::flush; }
 };
 
 PruneTableManager &PruneTableManager::getInstance() {
