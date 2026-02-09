@@ -17,14 +17,14 @@ void MoveTableManager::initialize() {
   std::cout << TAG_COLOR << "[MOVE]" << ANSI_RESET
             << " Initializing move tables..." << std::endl;
 
-  generateEdgeTable();
-  generateCornerTable();
-  generateCrossTable();
-  generateEdges2Table();
-  generateEdge3Table();
-  generateEdge6Table();
-  generateCorner2Table();
-  generateCorner3Table();
+  generateEdgeMT();
+  generateCornMT();
+  generateCrossMT();
+  generateEdge2MT();
+  generateEdge3MT();
+  generateEdge6MT();
+  generateCorn2MT();
+  generateCorn3MT();
 }
 
 bool MoveTableManager::loadAll() {
@@ -133,7 +133,7 @@ void MoveTableManager::saveTable(const std::vector<int> &table,
   save_vector_chunked(table, filename);
 }
 
-void MoveTableManager::generateEdgeTable() {
+void MoveTableManager::generateEdgeMT() {
   if (loadTable(mt_edge, "move_table_edge.bin")) {
     std::cout << "[MoveTable] Loaded edge table from file." << std::endl;
     return;
@@ -144,7 +144,7 @@ void MoveTableManager::generateEdgeTable() {
   saveTable(mt_edge, "move_table_edge.bin");
 }
 
-void MoveTableManager::generateCornerTable() {
+void MoveTableManager::generateCornMT() {
   if (loadTable(mt_corn, "move_table_corner.bin")) {
     std::cout << "[MoveTable] Loaded corner table from file." << std::endl;
     return;
@@ -155,7 +155,7 @@ void MoveTableManager::generateCornerTable() {
   saveTable(mt_corn, "move_table_corner.bin");
 }
 
-void MoveTableManager::generateCrossTable() {
+void MoveTableManager::generateCrossMT() {
   if (loadTable(mt_cross, "move_table_cross.bin")) {
     std::cout << "[MoveTable] Loaded cross table from file." << std::endl;
     return;
@@ -167,7 +167,7 @@ void MoveTableManager::generateCrossTable() {
   saveTable(mt_cross, "move_table_cross.bin");
 }
 
-void MoveTableManager::generateEdges2Table() {
+void MoveTableManager::generateEdge2MT() {
   if (loadTable(mt_edge2, "move_table_edges_2.bin")) {
     std::cout << "[MoveTable] Loaded edges_2 table from file." << std::endl;
     return;
@@ -179,7 +179,7 @@ void MoveTableManager::generateEdges2Table() {
   saveTable(mt_edge2, "move_table_edges_2.bin");
 }
 
-void MoveTableManager::generateEdge3Table() {
+void MoveTableManager::generateEdge3MT() {
   if (loadTable(mt_edge3, "move_table_edges_3.bin")) {
     std::cout << "[MoveTable] Loaded edge3 table from file." << std::endl;
     return;
@@ -191,7 +191,7 @@ void MoveTableManager::generateEdge3Table() {
   saveTable(mt_edge3, "move_table_edges_3.bin");
 }
 
-void MoveTableManager::generateEdge6Table() {
+void MoveTableManager::generateEdge6MT() {
   if (loadTable(mt_edge6, "move_table_edges_6.bin")) {
     std::cout << "[MoveTable] Loaded edge6 table from file." << std::endl;
     return;
@@ -203,7 +203,7 @@ void MoveTableManager::generateEdge6Table() {
   saveTable(mt_edge6, "move_table_edges_6.bin");
 }
 
-void MoveTableManager::generateCorner2Table() {
+void MoveTableManager::generateCorn2MT() {
   if (loadTable(mt_corn2, "move_table_corners_2.bin")) {
     std::cout << "[MoveTable] Loaded corner2 table from file." << std::endl;
     return;
@@ -215,7 +215,7 @@ void MoveTableManager::generateCorner2Table() {
   saveTable(mt_corn2, "move_table_corners_2.bin");
 }
 
-void MoveTableManager::generateCorner3Table() {
+void MoveTableManager::generateCorn3MT() {
   if (loadTable(mt_corn3, "move_table_corners_3.bin")) {
     std::cout << "[MoveTable] Loaded corner3 table from file." << std::endl;
     return;

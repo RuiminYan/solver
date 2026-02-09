@@ -135,14 +135,14 @@ public:
 
 private:
   // 生成函数
-  void generateEdgeTable();
-  void generateCornerTable();
-  void generateCrossTable();
-  void generateEdges2Table();
-  void generateEdge3Table();
-  void generateEdge6Table();
-  void generateCorner2Table();
-  void generateCorner3Table();
+  void generateEdgeMT();
+  void generateCornMT();
+  void generateCrossMT();
+  void generateEdge2MT();
+  void generateEdge3MT();
+  void generateEdge6MT();
+  void generateCorn2MT();
+  void generateCorn3MT();
 
   // 文件操作
   bool loadTable(std::vector<int> &table, const std::string &filename);
