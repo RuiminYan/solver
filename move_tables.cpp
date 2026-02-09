@@ -48,6 +48,9 @@ bool MoveTableManager::loadAll() {
 }
 
 void MoveTableManager::generateAllSequentially() {
+  // NOTE: 每张表生成+保存后立即释放，避免内存累积导致 OOM
+  // mt_edge/mt_corn 是基础依赖表且极小(<100KB)，在最后释放
+
   // 1. Edge Table (Base for others)
   if (!fileExists("mt_edge.bin")) {
     std::cout << TAG_COLOR << "[MOVE]" << ANSI_RESET
@@ -63,56 +66,64 @@ void MoveTableManager::generateAllSequentially() {
     saveTable(mt_corn, "mt_corn.bin");
   }
 
-  // 3. Cross Table (depends on edge_table)
+  // 3. Cross Table (depends on edge_table, 17.4MB)
   if (!fileExists("mt_cross.bin")) {
-    loadEdgeMT(); // 确保依赖表已加载
+    loadEdgeMT();
     std::cout << "[MoveTable] Generating cross table..." << std::endl;
     mt_cross = create_multi_move_table2(4, 2, 12, 24 * 22 * 20 * 18, mt_edge);
     saveTable(mt_cross, "mt_cross.bin");
+    releaseCrossMT();
   }
 
-  // 4. Edges2 Table (depends on edge_table)
+  // 4. Edges2 Table (depends on edge_table, <100KB)
   if (!fileExists("mt_edge2.bin")) {
-    loadEdgeMT(); // 确保依赖表已加载
+    loadEdgeMT();
     std::cout << "[MoveTable] Generating edges_2 table..." << std::endl;
     mt_edge2 = create_multi_move_table(2, 2, 12, 24 * 22, mt_edge);
     saveTable(mt_edge2, "mt_edge2.bin");
+    releaseEdge2MT();
   }
 
-  // 5. Edge3 Table (depends on edge_table)
+  // 5. Edge3 Table (depends on edge_table, 742KB)
   if (!fileExists("mt_edge3.bin")) {
-    loadEdgeMT(); // 确保依赖表已加载
+    loadEdgeMT();
     std::cout << "[MoveTable] Generating edges_3 table..." << std::endl;
     mt_edge3 = create_multi_move_table(3, 2, 12, 10560, mt_edge);
     saveTable(mt_edge3, "mt_edge3.bin");
+    releaseEdge3MT();
   }
 
-  // 6. Edge6 Table (depends on edge_table)
+  // 6. Edge6 Table (depends on edge_table, 2.85GB)
   if (!fileExists("mt_edge6.bin")) {
-    loadEdgeMT(); // 确保依赖表已加载
+    loadEdgeMT();
     std::cout << "[MoveTable] Generating edge6 table..." << std::endl;
     mt_edge6 = create_multi_move_table(6, 2, 12, 42577920, mt_edge);
     saveTable(mt_edge6, "mt_edge6.bin");
+    releaseEdge6MT();
   }
 
-  // 7. Corner2 Table (depends on corner_table)
+  // 7. Corner2 Table (depends on corner_table, <100KB)
   if (!fileExists("mt_corn2.bin")) {
-    loadCornMT(); // 确保依赖表已加载
+    loadCornMT();
     std::cout << "[MoveTable] Generating corner2 table..." << std::endl;
     mt_corn2 = create_multi_move_table(2, 3, 8, 504, mt_corn);
     saveTable(mt_corn2, "mt_corn2.bin");
+    releaseCorn2MT();
   }
 
-  // 8. Corner3 Table (depends on corner_table)
+  // 8. Corner3 Table (depends on corner_table, 637KB)
   if (!fileExists("mt_corn3.bin")) {
-    loadCornMT(); // 确保依赖表已加载
+    loadCornMT();
     std::cout << "[MoveTable] Generating corner3 table..." << std::endl;
     // 3个角块 (8P3 * 3^3 = 9072)
     mt_corn3 = create_multi_move_table(3, 3, 8, 9072, mt_corn);
     saveTable(mt_corn3, "mt_corn3.bin");
+    releaseCorn3MT();
   }
 
-  // NOTE: 不释放任何表，保持在内存中供后续 PruneTableManager 使用
+  // 释放基础依赖表
+  releaseEdgeMT();
+  releaseCornMT();
 }
 
 bool MoveTableManager::loadTable(std::vector<int> &table,
