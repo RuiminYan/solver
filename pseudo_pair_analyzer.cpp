@@ -46,15 +46,15 @@ struct xcross_analyzer2 {
   static bool tables_initialized;
   // [重构] 改用 Manager 统一管理的指针(方案A)
   static const unsigned char *p_pt_pscross_C[4]; // Cross + C{4-7}
-  static const unsigned char *p_xc_prune[16];  // XCross C{4-7} into slot{0-3}
-  static const unsigned char *p_ec_prune[16];  // Pair C{4-7}_E{0-3}
+  static const unsigned char *p_pt_pscross_C_diff[16];  // XCross C{4-7} into slot{0-3}
+  static const unsigned char *p_pt_pspair_ce[16];  // Pair C{4-7}_E{0-3}
   static const unsigned char
       *p_pt_pscross_C4E[4]; // Pseudo XCross Base (C4+E{0-3})
 
   // 静态指针成员，指向 static vector 数据，供搜索函数使用
-  static const int *p_edge_move_ptr;
-  static const int *p_corner_move_ptr;
-  static const int *p_multi_move_ptr;
+  static const int *p_mt_edge;
+  static const int *p_mt_corn;
+  static const int *p_mt_edge4;
   static const int *p_mt_edge3;   // Edge3 移动表指针
   static const int *p_mt_corn3; // [新增] Corner3 移动表指针
   static const int *p_mt_corn2; // [新增] Corner2 移动表指针
@@ -176,9 +176,9 @@ struct xcross_analyzer2 {
     }
 
     // Assign pointers
-    p_edge_move_ptr = mtm.getEdgeMTPtr();
-    p_corner_move_ptr = mtm.getCornMTPtr();
-    p_multi_move_ptr = mtm.getEdge4MTPtr();
+    p_mt_edge = mtm.getEdgeMTPtr();
+    p_mt_corn = mtm.getCornMTPtr();
+    p_mt_edge4 = mtm.getEdge4MTPtr();
 
     init_matrix();
 
@@ -198,12 +198,12 @@ struct xcross_analyzer2 {
 
     // 2. 获取 XCross Prune Tables 指针
     for (int idx = 0; idx < 16; ++idx) {
-      p_xc_prune[idx] = ptm.getPsCrossCDiffPTPtr(idx);
+      p_pt_pscross_C_diff[idx] = ptm.getPsCrossCDiffPTPtr(idx);
     }
 
     // 3. 获取 Pair Prune Tables 指针
     for (int idx = 0; idx < 16; ++idx) {
-      p_ec_prune[idx] = ptm.getPsPairECPTPtr(idx);
+      p_pt_pspair_ce[idx] = ptm.getPsPairECPTPtr(idx);
     }
 
     // 4. 获取 Pseudo Base Prune Tables 指针 (C4+E{0-3})
@@ -265,10 +265,10 @@ struct xcross_analyzer2 {
 
     for (int m : alg) {
       int mc = conj_moves_flat[m][pslot];
-      cur_mul = p_multi_move_ptr[cur_mul + mc];
-      cur_cn = p_corner_move_ptr[cur_cn * 18 + mc];
+      cur_mul = p_mt_edge4[cur_mul + mc];
+      cur_cn = p_mt_corn[cur_cn * 18 + mc];
       for (int k = 0; k < 4; ++k)
-        cur_e[k] = p_edge_move_ptr[cur_e[k] * 18 + mc];
+        cur_e[k] = p_mt_edge[cur_e[k] * 18 + mc];
     }
 
     out.cross = cur_mul;
@@ -325,7 +325,7 @@ struct xcross_analyzer2 {
           int m_conj = conj_moves_flat[m][slot_k]; // 物理 -> slot_k 视角
           int m_rot = mapper[m_conj];              // slot_k -> 规范表
           cur_c3 = p_mt_corn3[cur_c3 * 18 + m_rot];
-          cur_cr = p_multi_move_ptr[cur_cr + m_rot];
+          cur_cr = p_mt_edge4[cur_cr + m_rot];
         }
 
         out_aux[count].def = def_ptr;
@@ -372,7 +372,7 @@ struct xcross_analyzer2 {
           int m_conj = conj_moves_flat[m][slot_k]; // 物理 -> slot_k 视角
           int m_rot = mapper[m_conj];              // slot_k -> 规范表
           cur_e3 = p_mt_edge3[cur_e3 * 18 + m_rot];
-          cur_cr = p_multi_move_ptr[cur_cr + m_rot];
+          cur_cr = p_mt_edge4[cur_cr + m_rot];
         }
 
         out_aux[count].def = def_ptr;
@@ -445,7 +445,7 @@ struct xcross_analyzer2 {
           int m_conj = conj_moves_flat[m][slot_k]; // 物理 -> slot_k 视角
           int m_rot = mapper[m_conj];              // slot_k -> 规范表
           cur_c2 = p_mt_corn2[cur_c2 * 18 + m_rot];
-          cur_cr = p_multi_move_ptr[cur_cr + m_rot];
+          cur_cr = p_mt_edge4[cur_cr + m_rot];
         }
 
         out_aux[count].def = def_ptr;
@@ -502,7 +502,7 @@ struct xcross_analyzer2 {
           int m_conj = conj_moves_flat[m][slot_k]; // 物理 -> slot_k 视角
           int m_rot = mapper[m_conj];              // slot_k -> 规范表
           cur_e2 = p_mt_edge2[cur_e2 * 18 + m_rot];
-          cur_cr = p_multi_move_ptr[cur_cr + m_rot];
+          cur_cr = p_mt_edge4[cur_cr + m_rot];
         }
 
         out_aux[count].def = def_ptr;
@@ -527,8 +527,8 @@ struct xcross_analyzer2 {
       COUNT_NODE
       int i = moves[k];
 
-      int index1_tmp = p_multi_move_ptr[arg_index1 + i];
-      int index2_tmp = p_corner_move_ptr[arg_index2 + i];
+      int index1_tmp = p_mt_edge4[arg_index1 + i];
+      int index2_tmp = p_mt_corn[arg_index2 + i];
 
       int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
       // ++s1_prune1_checked;  // NOTE: S1统计已禁用
@@ -537,7 +537,7 @@ struct xcross_analyzer2 {
         continue;
       }
 
-      int index3_tmp = p_edge_move_ptr[arg_index3 + i];
+      int index3_tmp = p_mt_edge[arg_index3 + i];
       int edge_prune1_tmp =
           get_prune_ptr(edge_prune, index3_tmp * 24 + index2_tmp);
       // ++s1_edge_checked;  // NOTE: S1统计已禁用
@@ -571,9 +571,9 @@ struct xcross_analyzer2 {
     // 仍然需要转换算法，但这是为了计算状态
     std::vector<int> alg = alg_rotation(base_alg, rot);
     for (int m : alg) {
-      idx1 = p_multi_move_ptr[idx1 + m];
-      idx2 = p_corner_move_ptr[idx2 * 18 + m];
-      idx3 = p_edge_move_ptr[idx3 * 18 + m];
+      idx1 = p_mt_edge4[idx1 + m];
+      idx2 = p_mt_corn[idx2 * 18 + m];
+      idx3 = p_mt_edge[idx3 * 18 + m];
     }
   }
 
@@ -655,7 +655,7 @@ struct xcross_analyzer2 {
     for (int slot1_tmp = 0; slot1_tmp < 4; slot1_tmp++) {
       for (int pslot1_tmp = 0; pslot1_tmp < 4; pslot1_tmp++) {
         int idx = slot1_tmp * 4 + pslot1_tmp;
-        start_search_1(slot1_tmp, pslot1_tmp, p_xc_prune[idx], p_ec_prune[idx],
+        start_search_1(slot1_tmp, pslot1_tmp, p_pt_pscross_C_diff[idx], p_pt_pspair_ce[idx],
                        rotations, base_alg);
       }
     }
@@ -678,12 +678,12 @@ struct xcross_analyzer2 {
 
       // 1. [Conj] prune_xc2 剪枝 (77.57% 剪枝率，最高优先)
       int mc = conj_moves_flat[i][pslot2];
-      int xc2_cr_n = p_multi_move_ptr[xc2_cr + mc];
-      int xc2_cn_n = p_corner_move_ptr[xc2_cn + mc];
-      int xc2_e0_n = p_edge_move_ptr[xc2_e0 + mc];
-      int xc2_e1_n = p_edge_move_ptr[xc2_e1 + mc];
-      int xc2_e2_n = p_edge_move_ptr[xc2_e2 + mc];
-      int xc2_e3_n = p_edge_move_ptr[xc2_e3 + mc];
+      int xc2_cr_n = p_mt_edge4[xc2_cr + mc];
+      int xc2_cn_n = p_mt_corn[xc2_cn + mc];
+      int xc2_e0_n = p_mt_edge[xc2_e0 + mc];
+      int xc2_e1_n = p_mt_edge[xc2_e1 + mc];
+      int xc2_e2_n = p_mt_edge[xc2_e2 + mc];
+      int xc2_e3_n = p_mt_edge[xc2_e3 + mc];
       int xc2_e_sel = (diff2 == 0)   ? xc2_e0_n
                       : (diff2 == 1) ? xc2_e1_n
                       : (diff2 == 2) ? xc2_e2_n
@@ -698,8 +698,8 @@ struct xcross_analyzer2 {
       }
 
       // 2. prune1 剪枝 (61.45% 剪枝表
-      int index1_tmp = p_multi_move_ptr[arg_index1 + i];
-      int index2_tmp = p_corner_move_ptr[arg_index2 + i];
+      int index1_tmp = p_mt_edge4[arg_index1 + i];
+      int index2_tmp = p_mt_corn[arg_index2 + i];
       int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
       // ++s2_prune1_checked;  // NOTE: S2统计已禁用
       if (prune1_tmp >= depth) {
@@ -708,10 +708,10 @@ struct xcross_analyzer2 {
       }
 
       // NOTE: prune2 已移除(剪枝表0%，被 Conj 完全覆盖)
-      int index4_tmp = p_corner_move_ptr[arg_index4 + i];
+      int index4_tmp = p_mt_corn[arg_index4 + i];
 
       // 3. edge_prune1 剪枝 (11% 剪枝表
-      int index5_tmp = p_edge_move_ptr[arg_index5 + i];
+      int index5_tmp = p_mt_edge[arg_index5 + i];
       int edge_prune1_tmp =
           get_prune_ptr(edge_prune1, index5_tmp * 24 + index2_tmp);
       // ++s2_edge_checked;  // NOTE: S2统计已禁用
@@ -720,7 +720,7 @@ struct xcross_analyzer2 {
         continue;
       }
 
-      int index6_tmp = p_edge_move_ptr[arg_index6 + i];
+      int index6_tmp = p_mt_edge[arg_index6 + i];
 
       if (depth == 1) {
         if (prune1_tmp == 0 && edge_prune1_tmp == 0 && prune_xc2_tmp == 0 &&
@@ -869,9 +869,9 @@ struct xcross_analyzer2 {
             if (pslot1_tmp == pslot2_tmp)
               continue;
             start_search_2(slot1_tmp, slot2_tmp, pslot1_tmp, pslot2_tmp,
-                           p_xc_prune[slot1_tmp * 4 + pslot1_tmp],
+                           p_pt_pscross_C_diff[slot1_tmp * 4 + pslot1_tmp],
                            p_pt_pscross_C[pslot2_tmp],
-                           p_ec_prune[slot1_tmp * 4 + pslot1_tmp], rotations,
+                           p_pt_pspair_ce[slot1_tmp * 4 + pslot1_tmp], rotations,
                            base_alg);
           }
         }
@@ -895,7 +895,7 @@ struct xcross_analyzer2 {
       int i = moves[k];
 
       // 1. 首先计算 Cross 状态索引(用于 Aux 剪枝)
-      int index1_tmp = p_multi_move_ptr[arg_index1 + i];
+      int index1_tmp = p_mt_edge4[arg_index1 + i];
       int cross_state_idx = index1_tmp / 24;
 
       // 2. Aux Pruning (最强, Corner2 表Edge2)
@@ -917,7 +917,7 @@ struct xcross_analyzer2 {
           next_aux[a].current_idx =
               cur.def->p_move[cur.current_idx * 18 + m_rot];
           next_aux[a].current_cross_scaled =
-              p_multi_move_ptr[cur.current_cross_scaled + m_rot];
+              p_mt_edge4[cur.current_cross_scaled + m_rot];
           lookup_cross_idx = next_aux[a].current_cross_scaled / 24;
         } else {
           // 标准逻辑 (用 mapper)
@@ -940,12 +940,12 @@ struct xcross_analyzer2 {
 
       // 2. [Conj] prune_xc3 剪枝 (26.16% 剪枝率，优先级高于prune1)
       int mc = conj_moves_flat[i][pslot3];
-      int xc3_cr_n = p_multi_move_ptr[xc3_cr + mc];
-      int xc3_cn_n = p_corner_move_ptr[xc3_cn + mc];
-      int xc3_e0_n = p_edge_move_ptr[xc3_e0 + mc];
-      int xc3_e1_n = p_edge_move_ptr[xc3_e1 + mc];
-      int xc3_e2_n = p_edge_move_ptr[xc3_e2 + mc];
-      int xc3_e3_n = p_edge_move_ptr[xc3_e3 + mc];
+      int xc3_cr_n = p_mt_edge4[xc3_cr + mc];
+      int xc3_cn_n = p_mt_corn[xc3_cn + mc];
+      int xc3_e0_n = p_mt_edge[xc3_e0 + mc];
+      int xc3_e1_n = p_mt_edge[xc3_e1 + mc];
+      int xc3_e2_n = p_mt_edge[xc3_e2 + mc];
+      int xc3_e3_n = p_mt_edge[xc3_e3 + mc];
       int xc3_e_sel = (diff3 == 0)   ? xc3_e0_n
                       : (diff3 == 1) ? xc3_e1_n
                       : (diff3 == 2) ? xc3_e2_n
@@ -960,7 +960,7 @@ struct xcross_analyzer2 {
       }
 
       // 3. prune1 剪枝 (1.12% 剪枝表
-      int index2_tmp = p_corner_move_ptr[arg_index2 + i];
+      int index2_tmp = p_mt_corn[arg_index2 + i];
       int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
       // ++s3_prune1_checked;  // NOTE: S3统计已禁用
       if (prune1_tmp >= depth) {
@@ -969,7 +969,7 @@ struct xcross_analyzer2 {
       }
 
       // 4. edge_prune1 剪枝 (0.43% 剪枝表
-      int index7_tmp = p_edge_move_ptr[arg_index7 + i];
+      int index7_tmp = p_mt_edge[arg_index7 + i];
       int edge_prune1_tmp =
           get_prune_ptr(edge_prune1, index7_tmp * 24 + index2_tmp);
       // ++s3_edge_checked;  // NOTE: S3统计已禁用
@@ -978,8 +978,8 @@ struct xcross_analyzer2 {
         continue;
       }
 
-      int index8_tmp = p_edge_move_ptr[arg_index8 + i];
-      int index9_tmp = p_edge_move_ptr[arg_index9 + i];
+      int index8_tmp = p_mt_edge[arg_index8 + i];
+      int index9_tmp = p_mt_edge[arg_index9 + i];
 
       if (depth == 1) {
         if (prune1_tmp == 0 && edge_prune1_tmp == 0 && prune_xc3_tmp == 0 &&
@@ -1156,8 +1156,8 @@ struct xcross_analyzer2 {
             start_search_3(
                 slot1_tmp, slot_tmps_set[i][0], slot_tmps_set[i][1], pslot1_tmp,
                 pslot_tmps_set[j][0], pslot_tmps_set[j][1],
-                p_xc_prune[slot1_tmp * 4 + pslot1_tmp],
-                p_ec_prune[slot1_tmp * 4 + pslot1_tmp], rotations, base_alg);
+                p_pt_pscross_C_diff[slot1_tmp * 4 + pslot1_tmp],
+                p_pt_pspair_ce[slot1_tmp * 4 + pslot1_tmp], rotations, base_alg);
           }
         }
       }
@@ -1183,7 +1183,7 @@ struct xcross_analyzer2 {
       COUNT_NODE
       int i = moves[k];
 
-      int index1_tmp = p_multi_move_ptr[arg_index1 + i];
+      int index1_tmp = p_mt_edge4[arg_index1 + i];
       int cross_state_idx = index1_tmp / 24; // Cross State for AuxState pruning
 
       // [重构] AuxState 剪枝 (Corner3 + Edge3, 优先于其他剪枝))
@@ -1206,7 +1206,7 @@ struct xcross_analyzer2 {
           next_aux[a].current_idx =
               cur.def->p_move[cur.current_idx * 18 + m_rot];
           next_aux[a].current_cross_scaled =
-              p_multi_move_ptr[cur.current_cross_scaled + m_rot];
+              p_mt_edge4[cur.current_cross_scaled + m_rot];
           lookup_cross_idx = next_aux[a].current_cross_scaled / 24;
         } else {
           // 标准逻辑 (用 mapper)
@@ -1226,16 +1226,16 @@ struct xcross_analyzer2 {
         continue;
       }
 
-      int index2_tmp = p_corner_move_ptr[arg_index2 + i];
+      int index2_tmp = p_mt_corn[arg_index2 + i];
 
       // [优化顺序] 先检查prune_xc4 (Conj) - 6.10% 剪枝表
       int mc = conj_moves_flat[i][pslot4];
-      int xc4_cr_n = p_multi_move_ptr[xc4_cr + mc];
-      int xc4_cn_n = p_corner_move_ptr[xc4_cn + mc];
-      int xc4_e0_n = p_edge_move_ptr[xc4_e0 + mc];
-      int xc4_e1_n = p_edge_move_ptr[xc4_e1 + mc];
-      int xc4_e2_n = p_edge_move_ptr[xc4_e2 + mc];
-      int xc4_e3_n = p_edge_move_ptr[xc4_e3 + mc];
+      int xc4_cr_n = p_mt_edge4[xc4_cr + mc];
+      int xc4_cn_n = p_mt_corn[xc4_cn + mc];
+      int xc4_e0_n = p_mt_edge[xc4_e0 + mc];
+      int xc4_e1_n = p_mt_edge[xc4_e1 + mc];
+      int xc4_e2_n = p_mt_edge[xc4_e2 + mc];
+      int xc4_e3_n = p_mt_edge[xc4_e3 + mc];
       int xc4_e_sel = (diff4 == 0)   ? xc4_e0_n
                       : (diff4 == 1) ? xc4_e1_n
                       : (diff4 == 2) ? xc4_e2_n
@@ -1251,19 +1251,19 @@ struct xcross_analyzer2 {
 
       // NOTE: Search 4 不再使用 edge_prune1 (EC) 和 prune1 (XC slot1) 做剪枝
       // 但仍需计算它们用于 depth==1 时验证解决状态
-      int index9_tmp = p_edge_move_ptr[arg_index9 + i];
+      int index9_tmp = p_mt_edge[arg_index9 + i];
       int edge_prune1_tmp =
           get_prune_ptr(edge_prune1, index9_tmp * 24 + index2_tmp);
       int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
 
       // NOTE: prune2/3/4 (Base 表) 已移除，因为被AuxState (Corner3) 完全覆盖
-      int index4_tmp = p_corner_move_ptr[arg_index4 + i];
-      int index6_tmp = p_corner_move_ptr[arg_index6 + i];
-      int index8_tmp = p_corner_move_ptr[arg_index8 + i];
+      int index4_tmp = p_mt_corn[arg_index4 + i];
+      int index6_tmp = p_mt_corn[arg_index6 + i];
+      int index8_tmp = p_mt_corn[arg_index8 + i];
 
-      int index10_tmp = p_edge_move_ptr[arg_index10 + i];
-      int index11_tmp = p_edge_move_ptr[arg_index11 + i];
-      int index12_tmp = p_edge_move_ptr[arg_index12 + i];
+      int index10_tmp = p_mt_edge[arg_index10 + i];
+      int index11_tmp = p_mt_edge[arg_index11 + i];
+      int index12_tmp = p_mt_edge[arg_index12 + i];
 
       if (depth == 1) {
         // 验证解决状态：所有剪枝值必须为 0，且边块在正确位置
@@ -1472,9 +1472,9 @@ struct xcross_analyzer2 {
           if (k != j)
             p_rem.push_back(k);
         start_search_4(i, s_rem[0], s_rem[1], s_rem[2], j, p_rem[0], p_rem[1],
-                       p_rem[2], p_xc_prune[i * 4 + j], p_pt_pscross_C[p_rem[0]],
+                       p_rem[2], p_pt_pscross_C_diff[i * 4 + j], p_pt_pscross_C[p_rem[0]],
                        p_pt_pscross_C[p_rem[1]], p_pt_pscross_C[p_rem[2]],
-                       p_ec_prune[i * 4 + j], rotations, base_alg);
+                       p_pt_pspair_ce[i * 4 + j], rotations, base_alg);
       }
     }
   }
@@ -1484,13 +1484,13 @@ bool xcross_analyzer2::tables_initialized = false;
 
 // [重构] 指针数组静态定义(从 Manager 获取)
 const unsigned char *xcross_analyzer2::p_pt_pscross_C[4] = {nullptr};
-const unsigned char *xcross_analyzer2::p_xc_prune[16] = {nullptr};
-const unsigned char *xcross_analyzer2::p_ec_prune[16] = {nullptr};
+const unsigned char *xcross_analyzer2::p_pt_pscross_C_diff[16] = {nullptr};
+const unsigned char *xcross_analyzer2::p_pt_pspair_ce[16] = {nullptr};
 const unsigned char *xcross_analyzer2::p_pt_pscross_C4E[4] = {nullptr};
 
-const int *xcross_analyzer2::p_edge_move_ptr = nullptr;
-const int *xcross_analyzer2::p_corner_move_ptr = nullptr;
-const int *xcross_analyzer2::p_multi_move_ptr = nullptr;
+const int *xcross_analyzer2::p_mt_edge = nullptr;
+const int *xcross_analyzer2::p_mt_corn = nullptr;
+const int *xcross_analyzer2::p_mt_edge4 = nullptr;
 const int *xcross_analyzer2::p_mt_edge3 = nullptr;
 const int *xcross_analyzer2::p_mt_corn3 = nullptr;
 const int *xcross_analyzer2::p_mt_corn2 = nullptr;
