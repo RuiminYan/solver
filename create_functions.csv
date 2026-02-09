@@ -5,23 +5,23 @@ createMultiMoveTable,cube_common.cpp,-,-,-,-,basic_t,-,-,-,mt_edge2/3/6 mt_corn2
 createMultiMoveTable2,cube_common.cpp,-,-,-,-,basic_t,-,-,-,mt_edge4,预乘偏移移动表(步长24 空间换时间)
 
 --- 标准剪枝表引擎 ---,,,,,,,,,,
-createPTCrossC4,prune_tables.cpp,Cross×Corner,sz1×sz2,20,10,Edge4MT(24),CornMT(18),-,-,genPTCrossC4,Cross+1Corner(初始化含U系列插入操作)
-createPTPairBase,prune_tables.cpp,Edge×Corner,sz_e×sz_c,20,8,EdgeMT(18),CornMT(18),-,-,genPTPairC4E0,Pair(初始化含U系列插入操作)
-createPTXCrossFull,prune_tables.cpp,Cross×Corner×Edge,sz_cr×sz_cn×sz_ed,1或4,11,Edge4MT(24),CornMT(18),EdgeMT(18),-,genPTCrossC4E0 genPTPsCrossC4E,XCross核心引擎(is_pseudo区分标准/伪模式)
-createPTHuge,prune_tables.cpp,Edge6×Corner2,sz_e6×sz_c2,1,15,Edge6MT(18),Corn2MT(18),-,-,genPTCrossC4C5E0E1 genPTCrossC4C6E0E2,超大表(~20GB RAM)
-createPTXCrossPlus,prune_tables.cpp,Cross×Corner×Edge×Extra,sz_cr×sz_cn×sz_ed×sz_ex,1,14,Edge4MT(24),CornMT(18),EdgeMT(18),EdgeMT或CornMT(18),genPTCrossCEE(×3) genPTCrossCCE(×3),4维XCross扩展(Plus Edge/Plus Corner)
-createPTXCrossCorn3,prune_tables.cpp,Cross×C4×C5×C6,sz_cr×sz_cn×sz_c5×sz_c6,1,14,Edge4MT(24),CornMT(18),CornMT(18),CornMT(18),genPTCrossC4C5C6,4维3-Corner表
+createPTCrossC4,prune_tables.cpp,Cross×Corner,sz1×sz2,20,10,MTEdge4(24),MTCorn(18),-,-,genPTCrossC4,Cross+1Corner(初始化含U系列插入操作)
+createPTPairBase,prune_tables.cpp,Edge×Corner,sz_e×sz_c,20,8,MTEdge(18),MTCorn(18),-,-,genPTPairC4E0,Pair(初始化含U系列插入操作)
+createPTXCrossFull,prune_tables.cpp,Cross×Corner×Edge,sz_cr×sz_cn×sz_ed,1或4,11,MTEdge4(24),MTCorn(18),MTEdge(18),-,genPTCrossC4E0 genPTPsCrossC4E,XCross核心引擎(is_pseudo区分标准/伪模式)
+createPTHuge,prune_tables.cpp,Edge6×Corner2,sz_e6×sz_c2,1,15,MTEdge6(18),MTCorn2(18),-,-,genPTCrossC4C5E0E1 genPTCrossC4C6E0E2,超大表(~20GB RAM)
+createPTXCrossPlus,prune_tables.cpp,Cross×Corner×Edge×Extra,sz_cr×sz_cn×sz_ed×sz_ex,1,14,MTEdge4(24),MTCorn(18),MTEdge(18),MTEdge或MTCorn(18),genPTCrossCEE(×3) genPTCrossCCE(×3),4维XCross扩展(Plus Edge/Plus Corner)
+createPTXCrossCorn3,prune_tables.cpp,Cross×C4×C5×C6,sz_cr×sz_cn×sz_c5×sz_c6,1,14,MTEdge4(24),MTCorn(18),MTCorn(18),MTCorn(18),genPTCrossC4C5C6,4维3-Corner表
 
 --- 级联剪枝表引擎 ---,,,,,,,,,,
-createCascadedPT3,prune_tables.cpp,Dim1×Dim2,s1×s2,1,11,EP4MT(18),EOAltMT(18),-,-,genPTEP4EO12,级联BFS(步长18+18)
+createCascadedPT3,prune_tables.cpp,Dim1×Dim2,s1×s2,1,11,MTEP4(18),MTEOAlt(18),-,-,genPTEP4EO12,级联BFS(步长18+18)
 
 --- Pseudo Cross/XCross 引擎 ---,,,,,,,,,,
-createPTPsCrossCorner,prune_tables.cpp,Cross×Corner,190080×24,4,10,Edge4MT(24),CornMT(18),-,-,genPTPsCrossC(×4),Pseudo Cross+1Corner(4个D偏移初始化)
-createPTPsCrossXCross,prune_tables.cpp,Cross×Corner,190080×24,4×4=16,10,Edge4MT(24),CornMT(18),-,-,genPTPsCrossCDiff(×16),Pseudo XCross(含U插入+D偏移+边块展开)
-createPTPsPair,prune_tables.cpp,Edge×Corner,size1×size2,4×4=16,8,EdgeMT(18),CornMT(18),-,-,genPTPsPairCE(×16),Pseudo Pair(含U插入+D偏移+边块展开)
+createPTPsCrossCorner,prune_tables.cpp,Cross×Corner,190080×24,4,10,MTEdge4(24),MTCorn(18),-,-,genPTPsCrossC(×4),Pseudo Cross+1Corner(4个D偏移初始化)
+createPTPsCrossXCross,prune_tables.cpp,Cross×Corner,190080×24,4×4=16,10,MTEdge4(24),MTCorn(18),-,-,genPTPsCrossCDiff(×16),Pseudo XCross(含U插入+D偏移+边块展开)
+createPTPsPair,prune_tables.cpp,Edge×Corner,size1×size2,4×4=16,8,MTEdge(18),MTCorn(18),-,-,genPTPsPairCE(×16),Pseudo Pair(含U插入+D偏移+边块展开)
 
 --- Pseudo Aux 表引擎 ---,,,,,,,,,,
-createPTPsCrossEdges2,prune_tables.cpp,Cross×Edge2,190080×528,4,11,Edge4MT(24),Edge2MT(18),-,-,genPTPsCrossE0E1等(×6),Pseudo Cross+2Edge(4个D偏移)
-createPTPsCrossEdges3,prune_tables.cpp,Cross×Edge3,190080×10560,4,12,Edge4MT(24),Edge3MT(18),-,-,genPTPsCrossE0E1E2等(×4),Pseudo Cross+3Edge(4个D偏移)
-createPTPsCrossCorners2,prune_tables.cpp,Cross×Corner2,190080×504,4,11,Edge4MT(24),Corn2MT(18),-,-,genPTPsCrossC4C5等(×6),Pseudo Cross+2Corner(4个D偏移)
-createPTPsCrossCorners3,prune_tables.cpp,Cross×Corner3,190080×9072,4,13,Edge4MT(24),Corn3MT(18),-,-,genPTPsCrossC4C5C6等(×4),Pseudo Cross+3Corner(4个D偏移)
+createPTPsCrossEdges2,prune_tables.cpp,Cross×Edge2,190080×528,4,11,MTEdge4(24),MTEdge2(18),-,-,genPTPsCrossE0E1等(×6),Pseudo Cross+2Edge(4个D偏移)
+createPTPsCrossEdges3,prune_tables.cpp,Cross×Edge3,190080×10560,4,12,MTEdge4(24),MTEdge3(18),-,-,genPTPsCrossE0E1E2等(×4),Pseudo Cross+3Edge(4个D偏移)
+createPTPsCrossCorners2,prune_tables.cpp,Cross×Corner2,190080×504,4,11,MTEdge4(24),MTCorn2(18),-,-,genPTPsCrossC4C5等(×6),Pseudo Cross+2Corner(4个D偏移)
+createPTPsCrossCorners3,prune_tables.cpp,Cross×Corner3,190080×9072,4,13,MTEdge4(24),MTCorn3(18),-,-,genPTPsCrossC4C5C6等(×4),Pseudo Cross+3Corner(4个D偏移)
