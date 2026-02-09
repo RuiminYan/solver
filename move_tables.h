@@ -24,8 +24,8 @@ private:
 
   // EOCross 专用移动表
   std::vector<int> mt_ep4;    // EP4移动表 (mt_ep4.bin)
-  std::vector<int> mt_eo_alt; // EO Alt移动表 (mt_eo_alt.bin)
-  std::vector<int> mt_eo;     // EO移动表 (mt_eo.bin)
+  std::vector<int> mt_eo12_alt; // EO Alt移动表 (mt_eo12_alt.bin)
+  std::vector<int> mt_eo12;     // EO移动表 (mt_eo12.bin)
   std::vector<int> mt_ep1;    // EP1移动表 (mt_ep1.bin)
 
   // 单例模式
@@ -101,7 +101,7 @@ public:
 
   // 加载 EOCross 专用移动表
   bool loadMTEOCross();
-  bool loadMTEO();  // 加载 EO 移动表 (mt_eo.bin)
+  bool loadMTEO();  // 加载 EO 移动表 (mt_eo12.bin)
   bool loadMTEP1(); // 加载 EP1 移动表 (mt_ep1.bin)
 
   // 获取移动表的只读访问
@@ -126,12 +126,12 @@ public:
 
   // EOCross 专用移动表 Getter
   const int *getEP4MTPtr() const { return mt_ep4.data(); }
-  const int *getEOAltMTPtr() const { return mt_eo_alt.data(); }
-  const int *getEOMTPtr() const { return mt_eo.data(); }
+  const int *getEOAltMTPtr() const { return mt_eo12_alt.data(); }
+  const int *getEOMTPtr() const { return mt_eo12.data(); }
   const int *getEP1MTPtr() const { return mt_ep1.data(); }
   // EOCross 专用移动表 Vector Getter (用于剪枝表生成)
   const std::vector<int> &getEP4MT() const { return mt_ep4; }
-  const std::vector<int> &getEOAltMT() const { return mt_eo_alt; }
+  const std::vector<int> &getEOAltMT() const { return mt_eo12_alt; }
 
 private:
   // 生成函数

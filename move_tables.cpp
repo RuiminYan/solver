@@ -136,23 +136,23 @@ void MoveTableManager::genAllSequentially() {
   }
 
   // 9. EO 移动表 (无依赖, 144KB)
-  if (!fileExists("mt_eo.bin")) {
+  if (!fileExists("mt_eo12.bin")) {
     GenerationTimer timer;
-    std::cout << "Generating mt_eo.bin..." << std::endl;
-    mt_eo = create_eo_mt();
-    saveTable(mt_eo, "mt_eo.bin");
-    timer.printElapsed("mt_eo.bin");
-    std::vector<int>().swap(mt_eo);
+    std::cout << "Generating mt_eo12.bin..." << std::endl;
+    mt_eo12 = create_eo_mt();
+    saveTable(mt_eo12, "mt_eo12.bin");
+    timer.printElapsed("mt_eo12.bin");
+    std::vector<int>().swap(mt_eo12);
   }
 
   // 10. EO Alt 移动表 (无依赖, 144KB)
-  if (!fileExists("mt_eo_alt.bin")) {
+  if (!fileExists("mt_eo12_alt.bin")) {
     GenerationTimer timer;
-    std::cout << "Generating mt_eo_alt.bin..." << std::endl;
-    mt_eo_alt = create_eo_alt_mt();
-    saveTable(mt_eo_alt, "mt_eo_alt.bin");
-    timer.printElapsed("mt_eo_alt.bin");
-    std::vector<int>().swap(mt_eo_alt);
+    std::cout << "Generating mt_eo12_alt.bin..." << std::endl;
+    mt_eo12_alt = create_eo_alt_mt();
+    saveTable(mt_eo12_alt, "mt_eo12_alt.bin");
+    timer.printElapsed("mt_eo12_alt.bin");
+    std::vector<int>().swap(mt_eo12_alt);
   }
 
   // 11. EP1 移动表 (无依赖, <100KB)
@@ -295,19 +295,19 @@ void MoveTableManager::genMTCorn3() {
 }
 
 void MoveTableManager::genMTEO() {
-  if (loadTable(mt_eo, "mt_eo.bin"))
+  if (loadTable(mt_eo12, "mt_eo12.bin"))
     return;
-  std::cout << "Generating mt_eo.bin..." << std::endl;
-  mt_eo = create_eo_mt();
-  saveTable(mt_eo, "mt_eo.bin");
+  std::cout << "Generating mt_eo12.bin..." << std::endl;
+  mt_eo12 = create_eo_mt();
+  saveTable(mt_eo12, "mt_eo12.bin");
 }
 
 void MoveTableManager::genMTEOAlt() {
-  if (loadTable(mt_eo_alt, "mt_eo_alt.bin"))
+  if (loadTable(mt_eo12_alt, "mt_eo12_alt.bin"))
     return;
-  std::cout << "Generating mt_eo_alt.bin..." << std::endl;
-  mt_eo_alt = create_eo_alt_mt();
-  saveTable(mt_eo_alt, "mt_eo_alt.bin");
+  std::cout << "Generating mt_eo12_alt.bin..." << std::endl;
+  mt_eo12_alt = create_eo_alt_mt();
+  saveTable(mt_eo12_alt, "mt_eo12_alt.bin");
 }
 
 void MoveTableManager::genMTEP1() {
@@ -332,13 +332,13 @@ void MoveTableManager::genMTEP4() {
 // NOTE: 这两个表仅被 eo_cross_analyzer 使用
 bool MoveTableManager::loadMTEOCross() {
   // 1. EO Alt 移动表
-  if (mt_eo_alt.empty()) {
-    if (!loadTable(mt_eo_alt, "mt_eo_alt.bin")) {
+  if (mt_eo12_alt.empty()) {
+    if (!loadTable(mt_eo12_alt, "mt_eo12_alt.bin")) {
       GenerationTimer timer;
-      std::cout << "Generating mt_eo_alt.bin..." << std::endl;
-      mt_eo_alt = create_eo_alt_mt();
-      saveTable(mt_eo_alt, "mt_eo_alt.bin");
-      timer.printElapsed("mt_eo_alt.bin");
+      std::cout << "Generating mt_eo12_alt.bin..." << std::endl;
+      mt_eo12_alt = create_eo_alt_mt();
+      saveTable(mt_eo12_alt, "mt_eo12_alt.bin");
+      timer.printElapsed("mt_eo12_alt.bin");
     }
   }
 
@@ -359,16 +359,16 @@ bool MoveTableManager::loadMTEOCross() {
   return true;
 }
 
-// 加载 EO 移动表 (mt_eo.bin)
+// 加载 EO 移动表 (mt_eo12.bin)
 bool MoveTableManager::loadMTEO() {
-  if (!mt_eo.empty())
+  if (!mt_eo12.empty())
     return true;
-  if (!loadTable(mt_eo, "mt_eo.bin")) {
+  if (!loadTable(mt_eo12, "mt_eo12.bin")) {
     GenerationTimer timer;
-    std::cout << "Generating mt_eo.bin..." << std::endl;
-    mt_eo = create_eo_mt();
-    saveTable(mt_eo, "mt_eo.bin");
-    timer.printElapsed("mt_eo.bin");
+    std::cout << "Generating mt_eo12.bin..." << std::endl;
+    mt_eo12 = create_eo_mt();
+    saveTable(mt_eo12, "mt_eo12.bin");
+    timer.printElapsed("mt_eo12.bin");
   }
   return true;
 }
