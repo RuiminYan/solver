@@ -105,33 +105,33 @@ public:
   bool loadMTEP1(); // 加载 EP1 移动表 (mt_ep1.bin)
 
   // 获取移动表的只读访问
-  const std::vector<int> &getEdgeMT() const { return mt_edge; }
-  const std::vector<int> &getCornMT() const { return mt_corn; }
-  const std::vector<int> &getEdge4MT() const { return mt_edge4; }
-  const std::vector<int> &getEdge2MT() const { return mt_edge2; }
-  const std::vector<int> &getEdge3MT() const { return mt_edge3; }
-  const std::vector<int> &getEdge6MT() const { return mt_edge6; }
-  const std::vector<int> &getCorn2MT() const { return mt_corn2; }
-  const std::vector<int> &getCorn3MT() const { return mt_corn3; }
+  const std::vector<int> &getMTEdge() const { return mt_edge; }
+  const std::vector<int> &getMTCorn() const { return mt_corn; }
+  const std::vector<int> &getMTEdge4() const { return mt_edge4; }
+  const std::vector<int> &getMTEdge2() const { return mt_edge2; }
+  const std::vector<int> &getMTEdge3() const { return mt_edge3; }
+  const std::vector<int> &getMTEdge6() const { return mt_edge6; }
+  const std::vector<int> &getMTCorn2() const { return mt_corn2; }
+  const std::vector<int> &getMTCorn3() const { return mt_corn3; }
 
   // 获取指针（用于性能关键的代码）
-  const int *getEdgeMTPtr() const { return mt_edge.data(); }
-  const int *getCornMTPtr() const { return mt_corn.data(); }
-  const int *getEdge4MTPtr() const { return mt_edge4.data(); }
-  const int *getEdge2MTPtr() const { return mt_edge2.data(); }
-  const int *getEdge3MTPtr() const { return mt_edge3.data(); }
-  const int *getEdge6MTPtr() const { return mt_edge6.data(); }
-  const int *getCorn2MTPtr() const { return mt_corn2.data(); }
-  const int *getCorn3MTPtr() const { return mt_corn3.data(); }
+  const int *getMTEdgePtr() const { return mt_edge.data(); }
+  const int *getMTCornPtr() const { return mt_corn.data(); }
+  const int *getMTEdge4Ptr() const { return mt_edge4.data(); }
+  const int *getMTEdge2Ptr() const { return mt_edge2.data(); }
+  const int *getMTEdge3Ptr() const { return mt_edge3.data(); }
+  const int *getMTEdge6Ptr() const { return mt_edge6.data(); }
+  const int *getMTCorn2Ptr() const { return mt_corn2.data(); }
+  const int *getMTCorn3Ptr() const { return mt_corn3.data(); }
 
   // EOCross 专用移动表 Getter
-  const int *getEP4MTPtr() const { return mt_ep4.data(); }
-  const int *getEOAltMTPtr() const { return mt_eo12_alt.data(); }
-  const int *getEOMTPtr() const { return mt_eo12.data(); }
-  const int *getEP1MTPtr() const { return mt_ep1.data(); }
+  const int *getMTEP4Ptr() const { return mt_ep4.data(); }
+  const int *getMTEOAltPtr() const { return mt_eo12_alt.data(); }
+  const int *getMTEOPtr() const { return mt_eo12.data(); }
+  const int *getMTEP1Ptr() const { return mt_ep1.data(); }
   // EOCross 专用移动表 Vector Getter (用于剪枝表生成)
-  const std::vector<int> &getEP4MT() const { return mt_ep4; }
-  const std::vector<int> &getEOAltMT() const { return mt_eo12_alt; }
+  const std::vector<int> &getMTEP4() const { return mt_ep4; }
+  const std::vector<int> &getMTEOAlt() const { return mt_eo12_alt; }
 
 private:
   // 生成函数
@@ -155,10 +155,10 @@ private:
 };
 
 // --- 基础移动表生成函数 ---
-std::vector<int> create_edge_mt();
-std::vector<int> create_corn_mt();
-std::vector<int> create_ep_mt();
-std::vector<int> create_eo_mt();
-std::vector<int> create_eo_alt_mt();
+std::vector<int> createMTEdge();
+std::vector<int> createMTCorn();
+std::vector<int> createMTEP();
+std::vector<int> createMTEO();
+std::vector<int> createMTEOAlt();
 
 #endif // MOVE_TABLES_H

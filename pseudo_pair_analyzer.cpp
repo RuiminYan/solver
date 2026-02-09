@@ -177,9 +177,9 @@ struct xcross_analyzer2 {
     }
 
     // Assign pointers
-    p_mt_edge = mtm.getEdgeMTPtr();
-    p_mt_corn = mtm.getCornMTPtr();
-    p_mt_edge4 = mtm.getEdge4MTPtr();
+    p_mt_edge = mtm.getMTEdgePtr();
+    p_mt_corn = mtm.getMTCornPtr();
+    p_mt_edge4 = mtm.getMTEdge4Ptr();
 
     init_matrix();
 
@@ -216,23 +216,23 @@ struct xcross_analyzer2 {
     // 5. 获取 Aux 表指针(从 Manager，已由loadPseudoPairTables 加载)
     // Edge3 移动表
     mtm.loadMTEdge3();
-    p_mt_edge3 = mtm.getEdge3MTPtr();
+    p_mt_edge3 = mtm.getMTEdge3Ptr();
     p_pt_pscross_E0E1E2 = ptm.getPsCrossE0E1E2PTPtr();
 
     // Corner3 移动表
     mtm.loadMTCorn3();
-    p_mt_corn3 = mtm.getCorn3MTPtr();
+    p_mt_corn3 = mtm.getMTCorn3Ptr();
     p_pt_pscross_C4C5C6 = ptm.getPsCrossC4C5C6PTPtr();
 
     // Corner2 移动表
     mtm.loadMTCorn2();
-    p_mt_corn2 = mtm.getCorn2MTPtr();
+    p_mt_corn2 = mtm.getMTCorn2Ptr();
     p_pt_pscross_C4C5 = ptm.getPsCrossC4C5PTPtr();
     p_pt_pscross_C4C6 = ptm.getPsCrossC4C6PTPtr();
 
     // Edge2 移动表
     mtm.loadMTEdge2();
-    p_mt_edge2 = mtm.getEdge2MTPtr();
+    p_mt_edge2 = mtm.getMTEdge2Ptr();
     p_pt_pscross_E0E1 = ptm.getPsCrossE0E1PTPtr();
     p_pt_pscross_E0E2 = ptm.getPsCrossE0E2PTPtr();
 

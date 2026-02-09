@@ -63,8 +63,8 @@ struct cross_analyzer {
     mm.loadMTEdge2();
     mm.loadMTEO(); // 使用 MoveTableManager 加载 EO 表
     pm.genPTCross();
-    s_p_mt_edge2 = mm.getEdge2MTPtr();
-    s_p_mt_eo12 = mm.getEOMTPtr();
+    s_p_mt_edge2 = mm.getMTEdge2Ptr();
+    s_p_mt_eo12 = mm.getMTEOPtr();
     s_p_pt_cross = pm.getCrossPTPtr();
     s_initialized = true;
   }
@@ -209,13 +209,13 @@ struct xcross_analyzer {
     mm.loadMTEOCross();
 
     // 设置移动表指针
-    s_p_mt_edge4 = mm.getEdge4MTPtr();
-    s_p_mt_corn = mm.getCornMTPtr();
-    s_p_mt_edge = mm.getEdgeMTPtr();
-    s_p_mt_edge6 = mm.getEdge6MTPtr();    // Edge6 Move Table
-    s_p_mt_corn2 = mm.getCorn2MTPtr();    // Corner2 Move Table
-    s_p_mt_ep4 = mm.getEP4MTPtr();        // EP4 Move Table
-    s_p_mt_eo12_alt = mm.getEOAltMTPtr(); // EO Alt Move Table
+    s_p_mt_edge4 = mm.getMTEdge4Ptr();
+    s_p_mt_corn = mm.getMTCornPtr();
+    s_p_mt_edge = mm.getMTEdgePtr();
+    s_p_mt_edge6 = mm.getMTEdge6Ptr();    // Edge6 Move Table
+    s_p_mt_corn2 = mm.getMTCorn2Ptr();    // Corner2 Move Table
+    s_p_mt_ep4 = mm.getMTEP4Ptr();        // EP4 Move Table
+    s_p_mt_eo12_alt = mm.getMTEOAltPtr(); // EO Alt Move Table
 
     // === 剪枝表：使用 PruneTableManager ===
     auto &ptm = PruneTableManager::getInstance();

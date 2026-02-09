@@ -58,7 +58,7 @@ struct CrossSolver {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
 
-    p_mt_edge2 = mtm.getEdge2MTPtr();
+    p_mt_edge2 = mtm.getMTEdge2Ptr();
     p_pt_cross = ptm.getCrossPTPtr();
   }
 
@@ -134,11 +134,11 @@ struct XCrossSolver {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
 
-    p_mt_edge4 = mtm.getEdge4MTPtr();
-    p_mt_corn = mtm.getCornMTPtr();
-    p_mt_edge = mtm.getEdgeMTPtr();
-    p_mt_edge6 = mtm.getEdge6MTPtr();
-    p_mt_corn2 = mtm.getCorn2MTPtr();
+    p_mt_edge4 = mtm.getMTEdge4Ptr();
+    p_mt_corn = mtm.getMTCornPtr();
+    p_mt_edge = mtm.getMTEdgePtr();
+    p_mt_edge6 = mtm.getMTEdge6Ptr();
+    p_mt_corn2 = mtm.getMTCorn2Ptr();
 
     p_pt_cross_C4E0 = ptm.getCrossC4E0PTPtr();
     p_pt_cross_C4C5E0E1 = ptm.getCrossC4C5E0E1PTPtr();

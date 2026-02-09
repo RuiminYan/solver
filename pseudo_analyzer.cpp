@@ -152,7 +152,7 @@ struct CrossSolver {
   CrossSolver() {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
-    p_mt_edge2 = mtm.getEdge2MTPtr();
+    p_mt_edge2 = mtm.getMTEdge2Ptr();
     p_pt_pscross = ptm.getPsCrossPTPtr();
   }
 
@@ -325,14 +325,14 @@ struct XCrossSolver {
   XCrossSolver() {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
-    p_mt_edge4 = mtm.getEdge4MTPtr();
-    p_mt_corn = mtm.getCornMTPtr();
-    p_mt_edge = mtm.getEdgeMTPtr();
-    p_mt_edge2 = mtm.getEdge2MTPtr();
-    p_mt_corn2 = mtm.getCorn2MTPtr();
-    p_mt_corn3 = mtm.getCorn3MTPtr();
-    p_mt_edge3 = mtm.getEdge3MTPtr();
-    p_edge6 = mtm.getEdge6MTPtr();
+    p_mt_edge4 = mtm.getMTEdge4Ptr();
+    p_mt_corn = mtm.getMTCornPtr();
+    p_mt_edge = mtm.getMTEdgePtr();
+    p_mt_edge2 = mtm.getMTEdge2Ptr();
+    p_mt_corn2 = mtm.getMTCorn2Ptr();
+    p_mt_corn3 = mtm.getMTCorn3Ptr();
+    p_mt_edge3 = mtm.getMTEdge3Ptr();
+    p_edge6 = mtm.getMTEdge6Ptr();
 
     // 使用 Ptr 方式获取 Huge Table (与 std_analyzer 一致，无日志输出)
     p_cross_C4C5E0E1 = ptm.getCrossC4C5E0E1PTPtr();

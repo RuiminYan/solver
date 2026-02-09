@@ -54,7 +54,7 @@ void MoveTableManager::genAllSequentially() {
   if (!fileExists("mt_edge.bin")) {
     GenerationTimer timer;
     std::cout << "Generating mt_edge.bin..." << std::endl;
-    mt_edge = create_edge_mt();
+    mt_edge = createMTEdge();
     saveTable(mt_edge, "mt_edge.bin");
     timer.printElapsed("mt_edge.bin");
   }
@@ -63,7 +63,7 @@ void MoveTableManager::genAllSequentially() {
   if (!fileExists("mt_corn.bin")) {
     GenerationTimer timer;
     std::cout << "Generating mt_corn.bin..." << std::endl;
-    mt_corn = create_corn_mt();
+    mt_corn = createMTCorn();
     saveTable(mt_corn, "mt_corn.bin");
     timer.printElapsed("mt_corn.bin");
   }
@@ -139,7 +139,7 @@ void MoveTableManager::genAllSequentially() {
   if (!fileExists("mt_eo12.bin")) {
     GenerationTimer timer;
     std::cout << "Generating mt_eo12.bin..." << std::endl;
-    mt_eo12 = create_eo_mt();
+    mt_eo12 = createMTEO();
     saveTable(mt_eo12, "mt_eo12.bin");
     timer.printElapsed("mt_eo12.bin");
     std::vector<int>().swap(mt_eo12);
@@ -149,7 +149,7 @@ void MoveTableManager::genAllSequentially() {
   if (!fileExists("mt_eo12_alt.bin")) {
     GenerationTimer timer;
     std::cout << "Generating mt_eo12_alt.bin..." << std::endl;
-    mt_eo12_alt = create_eo_alt_mt();
+    mt_eo12_alt = createMTEOAlt();
     saveTable(mt_eo12_alt, "mt_eo12_alt.bin");
     timer.printElapsed("mt_eo12_alt.bin");
     std::vector<int>().swap(mt_eo12_alt);
@@ -159,7 +159,7 @@ void MoveTableManager::genAllSequentially() {
   if (!fileExists("mt_ep1.bin")) {
     GenerationTimer timer;
     std::cout << "Generating mt_ep1.bin..." << std::endl;
-    mt_ep1 = create_ep_mt();
+    mt_ep1 = createMTEP();
     saveTable(mt_ep1, "mt_ep1.bin");
     timer.printElapsed("mt_ep1.bin");
     std::vector<int>().swap(mt_ep1);
@@ -207,7 +207,7 @@ void MoveTableManager::genMTEdge() {
   }
 
   std::cout << "Generating mt_edge.bin..." << std::endl;
-  mt_edge = create_edge_mt();
+  mt_edge = createMTEdge();
   saveTable(mt_edge, "mt_edge.bin");
 }
 
@@ -218,7 +218,7 @@ void MoveTableManager::genMTCorn() {
   }
 
   std::cout << "Generating mt_corn.bin..." << std::endl;
-  mt_corn = create_corn_mt();
+  mt_corn = createMTCorn();
   saveTable(mt_corn, "mt_corn.bin");
 }
 
@@ -298,7 +298,7 @@ void MoveTableManager::genMTEO() {
   if (loadTable(mt_eo12, "mt_eo12.bin"))
     return;
   std::cout << "Generating mt_eo12.bin..." << std::endl;
-  mt_eo12 = create_eo_mt();
+  mt_eo12 = createMTEO();
   saveTable(mt_eo12, "mt_eo12.bin");
 }
 
@@ -306,7 +306,7 @@ void MoveTableManager::genMTEOAlt() {
   if (loadTable(mt_eo12_alt, "mt_eo12_alt.bin"))
     return;
   std::cout << "Generating mt_eo12_alt.bin..." << std::endl;
-  mt_eo12_alt = create_eo_alt_mt();
+  mt_eo12_alt = createMTEOAlt();
   saveTable(mt_eo12_alt, "mt_eo12_alt.bin");
 }
 
@@ -314,7 +314,7 @@ void MoveTableManager::genMTEP1() {
   if (loadTable(mt_ep1, "mt_ep1.bin"))
     return;
   std::cout << "Generating mt_ep1.bin..." << std::endl;
-  mt_ep1 = create_ep_mt();
+  mt_ep1 = createMTEP();
   saveTable(mt_ep1, "mt_ep1.bin");
 }
 
@@ -336,7 +336,7 @@ bool MoveTableManager::loadMTEOCross() {
     if (!loadTable(mt_eo12_alt, "mt_eo12_alt.bin")) {
       GenerationTimer timer;
       std::cout << "Generating mt_eo12_alt.bin..." << std::endl;
-      mt_eo12_alt = create_eo_alt_mt();
+      mt_eo12_alt = createMTEOAlt();
       saveTable(mt_eo12_alt, "mt_eo12_alt.bin");
       timer.printElapsed("mt_eo12_alt.bin");
     }
@@ -366,7 +366,7 @@ bool MoveTableManager::loadMTEO() {
   if (!loadTable(mt_eo12, "mt_eo12.bin")) {
     GenerationTimer timer;
     std::cout << "Generating mt_eo12.bin..." << std::endl;
-    mt_eo12 = create_eo_mt();
+    mt_eo12 = createMTEO();
     saveTable(mt_eo12, "mt_eo12.bin");
     timer.printElapsed("mt_eo12.bin");
   }
@@ -380,7 +380,7 @@ bool MoveTableManager::loadMTEP1() {
   if (!loadTable(mt_ep1, "mt_ep1.bin")) {
     GenerationTimer timer;
     std::cout << "Generating mt_ep1.bin..." << std::endl;
-    mt_ep1 = create_ep_mt();
+    mt_ep1 = createMTEP();
     saveTable(mt_ep1, "mt_ep1.bin");
     timer.printElapsed("mt_ep1.bin");
   }
@@ -388,7 +388,7 @@ bool MoveTableManager::loadMTEP1() {
 }
 
 // --- 基础移动表生成函数 ---
-std::vector<int> create_edge_mt() {
+std::vector<int> createMTEdge() {
   std::vector<int> mt(24 * 18, -1);
   for (int i = 0; i < 24; ++i) {
     State s;
@@ -406,7 +406,7 @@ std::vector<int> create_edge_mt() {
   return mt;
 }
 
-std::vector<int> create_corn_mt() {
+std::vector<int> createMTCorn() {
   std::vector<int> mt(24 * 18, -1);
   for (int i = 0; i < 24; ++i) {
     State s;
@@ -424,7 +424,7 @@ std::vector<int> create_corn_mt() {
   return mt;
 }
 
-std::vector<int> create_ep_mt() {
+std::vector<int> createMTEP() {
   std::vector<int> mt(12 * 18, -1);
   for (int i = 0; i < 12; ++i) {
     State s;
@@ -441,7 +441,7 @@ std::vector<int> create_ep_mt() {
   return mt;
 }
 
-std::vector<int> create_eo_mt() {
+std::vector<int> createMTEO() {
   std::vector<int> mt(2048 * 18, -1);
   for (int i = 0; i < 2048; ++i) {
     std::vector<int> eo(12, 0);
@@ -456,7 +456,7 @@ std::vector<int> create_eo_mt() {
   return mt;
 }
 
-std::vector<int> create_eo_alt_mt() {
+std::vector<int> createMTEOAlt() {
   std::vector<int> mt(2048 * 18, -1);
   for (int i = 0; i < 2048; ++i) {
     std::vector<int> eo(12, 0);
