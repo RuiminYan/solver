@@ -222,8 +222,16 @@ struct xcross_analyzer {
     // 先加载复用的xcross_c4_e0表（与std_analyzer/pair_analyzer共享）
     ptm.generateCrossC4E0PT();
 
-    // 加载 EOCross 专用剪枝表
-    ptm.loadEOCrossTables();
+    // 生成/加载 EOCross 专用剪枝表
+    ptm.generateCrossC4PT();     // Cross+C4 (EOCross 版)
+    ptm.generateEP4EO12PT();     // Dependency+EO
+    ptm.generateCrossC4E0E1PT(); // Plus Edge Right
+    ptm.generateCrossC4E0E2PT(); // Plus Edge Diag
+    ptm.generateCrossC4E0E3PT(); // Plus Edge Left
+    ptm.generateCrossC4C5E0PT(); // Plus Corn Right
+    ptm.generateCrossC4C6E0PT(); // Plus Corn Diag
+    ptm.generateCrossC4C7E0PT(); // Plus Corn Left
+    ptm.generateCrossC4C5C6PT(); // 3-Corner
 
     // 获取剪枝表指针
     s_p_prune = ptm.getEOCC4PTPtr();
