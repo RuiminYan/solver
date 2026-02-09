@@ -65,24 +65,26 @@ inline std::string formatWithCommas(long long value) {
 }
 
 // --- 辅助函数：智能时间格式化 ---
+// NOTE: 格式规则：< 60s 保留1位小数，>= 1d 省略秒（精度无意义），h/m/s 零填充
 inline std::string formatDuration(double seconds) {
+  char buf[64];
   if (seconds < 60) {
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(1) << seconds << "s";
-    return oss.str();
-  }
-  int totalSeconds = static_cast<int>(seconds);
-  int hours = totalSeconds / 3600;
-  int minutes = (totalSeconds % 3600) / 60;
-  int secs = totalSeconds % 60;
-
-  std::ostringstream oss;
-  if (hours > 0) {
-    oss << hours << "h " << minutes << "m " << secs << "s";
+    snprintf(buf, sizeof(buf), "%.1fs", seconds);
   } else {
-    oss << minutes << "m " << secs << "s";
+    int totalSec = static_cast<int>(seconds);
+    int d = totalSec / 86400;
+    int h = (totalSec % 86400) / 3600;
+    int m = (totalSec % 3600) / 60;
+    int s = totalSec % 60;
+    if (d > 0) {
+      snprintf(buf, sizeof(buf), "%dd %02dh %02dm", d, h, m);
+    } else if (h > 0) {
+      snprintf(buf, sizeof(buf), "%02dh %02dm %02ds", h, m, s);
+    } else {
+      snprintf(buf, sizeof(buf), "%02dm %02ds", m, s);
+    }
   }
-  return oss.str();
+  return std::string(buf);
 }
 
 // --- 辅助函数：光标控制 ---
@@ -306,14 +308,17 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
           if (etaSec < 60) {
             snprintf(etaBuf, sizeof(etaBuf), "%.1fs", etaSec);
           } else {
-            int totalSec = static_cast<int>(etaSec);
-            int h = totalSec / 3600;
-            int m = (totalSec % 3600) / 60;
-            int s = totalSec % 60;
-            if (h > 0) {
-              snprintf(etaBuf, sizeof(etaBuf), "%dh %dm %ds", h, m, s);
+            int ts = static_cast<int>(etaSec);
+            int d = ts / 86400;
+            int h = (ts % 86400) / 3600;
+            int m = (ts % 3600) / 60;
+            int s = ts % 60;
+            if (d > 0) {
+              snprintf(etaBuf, sizeof(etaBuf), "%dd %02dh %02dm", d, h, m);
+            } else if (h > 0) {
+              snprintf(etaBuf, sizeof(etaBuf), "%02dh %02dm %02ds", h, m, s);
             } else {
-              snprintf(etaBuf, sizeof(etaBuf), "%dm %ds", m, s);
+              snprintf(etaBuf, sizeof(etaBuf), "%02dm %02ds", m, s);
             }
           }
         } else {
@@ -325,9 +330,8 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
         snprintf(line1, sizeof(line1), "%s[PROG] [%s] %.1f%% (%d/%d)%s",
                  ANSI_YELLOW, bar.c_str(), progress, completed, total,
                  ANSI_RESET);
-        snprintf(line2, sizeof(line2),
-                 "%s       Performance: %.2f M/s | ETA: %-12s%s", ANSI_MAGENTA,
-                 nps, etaBuf, ANSI_RESET);
+        snprintf(line2, sizeof(line2), "%s       NPS: %.2f M/s | ETA: %-12s%s",
+                 ANSI_MAGENTA, nps, etaBuf, ANSI_RESET);
         //                                    ^^^^^ ETA
         //                                    固定12字符宽度，不足用空格填充
         std::cout << line1 << "\n" << line2 << "\r\033[A" << std::flush;

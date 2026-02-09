@@ -31,65 +31,65 @@ inline int get_prune_ptr(const unsigned char *table, long long index) {
 class PruneTableManager {
 private:
   // Cross相关剪枝表
-  std::vector<unsigned char> cross_prune;        // Cross基础剪枝表
-  std::vector<unsigned char> cross_c4_prune;     // Cross + C4剪枝表
-  std::vector<unsigned char> pair_c4_e0_prune;   // Pair C4+E0剪枝表
-  std::vector<unsigned char> xcross_c4_e0_prune; // XCross C4+E0剪枝表
+  std::vector<unsigned char> pt_cross;      // Cross基础剪枝表
+  std::vector<unsigned char> pt_cross_C4;   // Cross + C4剪枝表
+  std::vector<unsigned char> pt_pair_C4E0;  // Pair C4+E0剪枝表
+  std::vector<unsigned char> pt_cross_C4E0; // XCross C4+E0剪枝表
 
   // 巨型剪枝表
-  std::vector<unsigned char> huge_neighbor_prune; // 相邻槽剪枝表
-  std::vector<unsigned char> huge_diagonal_prune; // 对角槽剪枝表
+  std::vector<unsigned char> pt_cross_C4C5E0E1; // 相邻槽剪枝表
+  std::vector<unsigned char> pt_cross_C4C6E0E2; // 对角槽剪枝表
 
   // Pseudo 相关剪枝表
-  std::vector<unsigned char> pseudo_cross_prune; // Pseudo Cross 剪枝表
+  std::vector<unsigned char> pt_pscross; // Pseudo Cross 剪枝表
   std::vector<unsigned char>
-      pseudo_cross_base_prune[4]; // Pseudo Cross 基础表 (Offset 0,1,2,3)
+      pt_pscross_C4E[4]; // Pseudo Cross 基础表 (C4+E0..E3)
   std::vector<unsigned char>
-      pseudo_cross_E0_E2_prune; // Pseudo Cross + E0,E2 对棱表 (已有)
-  std::vector<unsigned char> pseudo_cross_E1_E3_prune; // 对棱表 (新增)
+      pt_pscross_E0E2; // Pseudo Cross + E0,E2 对棱表 (已有)
+  std::vector<unsigned char> pt_pscross_E1E3; // 对棱表 (新增)
 
   // 邻棱表
-  std::vector<unsigned char> pseudo_cross_E0_E1_prune; // 邻棱 (已有)
-  std::vector<unsigned char> pseudo_cross_E0_E3_prune; // 邻棱 (新增)
-  std::vector<unsigned char> pseudo_cross_E1_E2_prune; // 邻棱 (新增)
-  std::vector<unsigned char> pseudo_cross_E2_E3_prune; // 邻棱 (新增)
+  std::vector<unsigned char> pt_pscross_E0E1; // 邻棱 (已有)
+  std::vector<unsigned char> pt_pscross_E0E3; // 邻棱 (新增)
+  std::vector<unsigned char> pt_pscross_E1E2; // 邻棱 (新增)
+  std::vector<unsigned char> pt_pscross_E2E3; // 邻棱 (新增)
 
   // Edge3 Triples
-  std::vector<unsigned char> pseudo_cross_E0_E1_E2_prune; // 基准
-  std::vector<unsigned char> pseudo_cross_E0_E1_E3_prune; // Newly Added
-  std::vector<unsigned char> pseudo_cross_E0_E2_E3_prune; // Newly Added
-  std::vector<unsigned char> pseudo_cross_E1_E2_E3_prune; // Newly Added
+  std::vector<unsigned char> pt_pscross_E0E1E2; // 基准
+  std::vector<unsigned char> pt_pscross_E0E1E3; // Newly Added
+  std::vector<unsigned char> pt_pscross_E0E2E3; // Newly Added
+  std::vector<unsigned char> pt_pscross_E1E2E3; // Newly Added
 
   // 新增对角表 (F2L Corner Pairs)
-  std::vector<unsigned char> pseudo_cross_C4_C6_prune; // 对角 (已有)
-  std::vector<unsigned char> pseudo_cross_C5_C7_prune; // 对角 (新增)
+  std::vector<unsigned char> pt_pscross_C4C6; // 对角 (已有)
+  std::vector<unsigned char> pt_pscross_C5C7; // 对角 (新增)
 
   // 新增邻角表
-  std::vector<unsigned char> pseudo_cross_C4_C5_prune; // 邻角 (已有)
-  std::vector<unsigned char> pseudo_cross_C4_C7_prune; // 邻角 (新增)
-  std::vector<unsigned char> pseudo_cross_C5_C6_prune; // 邻角 (新增)
-  std::vector<unsigned char> pseudo_cross_C6_C7_prune; // 邻角 (新增)
+  std::vector<unsigned char> pt_pscross_C4C5; // 邻角 (已有)
+  std::vector<unsigned char> pt_pscross_C4C7; // 邻角 (新增)
+  std::vector<unsigned char> pt_pscross_C5C6; // 邻角 (新增)
+  std::vector<unsigned char> pt_pscross_C6C7; // 邻角 (新增)
 
   // Corner3 Triples
-  std::vector<unsigned char> pseudo_cross_C4_C5_C6_prune; // 基准
-  std::vector<unsigned char> pseudo_cross_C4_C5_C7_prune; // Newly Added
-  std::vector<unsigned char> pseudo_cross_C4_C6_C7_prune; // Newly Added
-  std::vector<unsigned char> pseudo_cross_C5_C6_C7_prune; // Newly Added
+  std::vector<unsigned char> pt_pscross_C4C5C6; // 基准
+  std::vector<unsigned char> pt_pscross_C4C5C7; // Newly Added
+  std::vector<unsigned char> pt_pscross_C4C6C7; // Newly Added
+  std::vector<unsigned char> pt_pscross_C5C6C7; // Newly Added
 
   // === PseudoPair 专用表 ===
-  std::vector<unsigned char> pseudo_pair_base_prune[4]; // Cross + C{4-7}
-  std::vector<unsigned char> pseudo_pair_xc_prune[16];  // XC: slot*4+corner
-  std::vector<unsigned char> pseudo_pair_ec_prune[16]; // EC Pair: edge*4+corner
+  std::vector<unsigned char> pt_pscross_C[4];       // Cross + C{4-7}
+  std::vector<unsigned char> pt_pscross_C_diff[16]; // XC: diff*4+corner_offset
+  std::vector<unsigned char> pt_pspair_ec[16];      // EC Pair: edge*4+corner
 
   // === EOCross 专用表 ===
-  // NOTE: eo_cross_c4使用不同生成函数，与cross_c4_prune不同
-  std::vector<unsigned char> eo_cross_c4_prune;     // Cross+C4 (EOCross版)
-  std::vector<unsigned char> eo_cross_dep_eo_prune; // Dependency+EO
+  // NOTE: eo_cross_c4使用不同生成函数，与pt_cross_C4不同
+  std::vector<unsigned char> pt_eoc_C4;  // Cross+C4 (EOCross版)
+  std::vector<unsigned char> pt_ep4eo12; // Dependency+EO
   std::vector<unsigned char>
-      eo_cross_plus_edge_prune[3]; // Plus Edge: Right/Diag/Left
+      pt_cross_C4E0E1_C4E0E2_C4E0E3[3]; // Plus Edge: Right/Diag/Left
   std::vector<unsigned char>
-      eo_cross_plus_corn_prune[3]; // Plus Corner: Right/Diag/Left
-  std::vector<unsigned char> eo_cross_3corner_prune; // 3-Corner (C4+C5+C6)
+      pt_cross_C4C5E0_C4C6E0_C4C7E0[3];       // Plus Corner: Right/Diag/Left
+  std::vector<unsigned char> pt_cross_C4C5C6; // 3-Corner (C4+C5+C6)
 
   // 单例模式
   static PruneTableManager *instance;
@@ -119,256 +119,387 @@ public:
   // 顺序生成所有表
   void generateAllSequentially();
 
-  // 获取剪枝表的只读访问
-  const std::vector<unsigned char> &getCrossPrune() const {
-    return cross_prune;
+  // === 新 Getter (返回 vector 引用) ===
+  const std::vector<unsigned char> &getCrossPT() const { return pt_cross; }
+  const std::vector<unsigned char> &getCrossC4PT() const { return pt_cross_C4; }
+  const std::vector<unsigned char> &getPairC4E0PT() const {
+    return pt_pair_C4E0;
   }
-  const std::vector<unsigned char> &getCrossC4Prune() const {
-    return cross_c4_prune;
+  const std::vector<unsigned char> &getCrossC4E0PT() const {
+    return pt_cross_C4E0;
   }
-  const std::vector<unsigned char> &getPairC4E0Prune() const {
-    return pair_c4_e0_prune;
+  const std::vector<unsigned char> &getCrossC4C5E0E1PT() const {
+    return pt_cross_C4C5E0E1;
   }
-  const std::vector<unsigned char> &getXCrossC4E0Prune() const {
-    return xcross_c4_e0_prune;
-  }
-  const std::vector<unsigned char> &getHugeNeighborPrune() const {
-    return huge_neighbor_prune;
-  }
-  const std::vector<unsigned char> &getHugeDiagonalPrune() const {
-    return huge_diagonal_prune;
+  const std::vector<unsigned char> &getCrossC4C6E0E2PT() const {
+    return pt_cross_C4C6E0E2;
   }
 
-  // 获取 Pseudo 剪枝表
-  const unsigned char *getPseudoCrossPrunePtr() const {
-    return pseudo_cross_prune.data();
+  // === 新 Ptr Getter ===
+  const unsigned char *getCrossPTPtr() const { return pt_cross.data(); }
+  const unsigned char *getCrossC4PTPtr() const { return pt_cross_C4.data(); }
+  const unsigned char *getPairC4E0PTPtr() const { return pt_pair_C4E0.data(); }
+  const unsigned char *getCrossC4E0PTPtr() const {
+    return pt_cross_C4E0.data();
   }
-  const unsigned char *getPseudoCrossBasePrunePtr(int i) const {
-    return pseudo_cross_base_prune[i].data();
+  const unsigned char *getCrossC4C5E0E1PTPtr() const {
+    return pt_cross_C4C5E0E1.data();
   }
-  const unsigned char *getPseudoCrossE0E2PrunePtr() const {
-    return pseudo_cross_E0_E2_prune.data();
+  const unsigned char *getCrossC4C6E0E2PTPtr() const {
+    return pt_cross_C4C6E0E2.data();
   }
-  const unsigned char *getPseudoCrossE1E3PrunePtr() const {
-    return pseudo_cross_E1_E3_prune.data();
+
+  // === 新 Pseudo Getter (Ptr) ===
+  const unsigned char *getPsCrossPTPtr() const { return pt_pscross.data(); }
+  const unsigned char *getPsCrossC4EPTPtr(int i) const {
+    return pt_pscross_C4E[i].data();
+  }
+  const unsigned char *getPsCrossE0E2PTPtr() const {
+    return pt_pscross_E0E2.data();
+  }
+  const unsigned char *getPsCrossE1E3PTPtr() const {
+    return pt_pscross_E1E3.data();
   }
 
   // 邻棱表 Getters
-  const unsigned char *getPseudoCrossE0E1PrunePtr() const {
-    return pseudo_cross_E0_E1_prune.data();
+  const unsigned char *getPsCrossE0E1PTPtr() const {
+    return pt_pscross_E0E1.data();
   }
-  const unsigned char *getPseudoCrossE0E3PrunePtr() const {
-    return pseudo_cross_E0_E3_prune.data();
+  const unsigned char *getPsCrossE0E3PTPtr() const {
+    return pt_pscross_E0E3.data();
   }
-  const unsigned char *getPseudoCrossE1E2PrunePtr() const {
-    return pseudo_cross_E1_E2_prune.data();
+  const unsigned char *getPsCrossE1E2PTPtr() const {
+    return pt_pscross_E1E2.data();
   }
-  const unsigned char *getPseudoCrossE2E3PrunePtr() const {
-    return pseudo_cross_E2_E3_prune.data();
+  const unsigned char *getPsCrossE2E3PTPtr() const {
+    return pt_pscross_E2E3.data();
   }
 
   // Edge3 Getters
-  const unsigned char *getPseudoCrossE0E1E2PrunePtr() const {
-    return pseudo_cross_E0_E1_E2_prune.data();
+  const unsigned char *getPsCrossE0E1E2PTPtr() const {
+    return pt_pscross_E0E1E2.data();
   }
-  const unsigned char *getPseudoCrossE1E2E3PrunePtr() const {
-    return pseudo_cross_E1_E2_E3_prune.data();
+  const unsigned char *getPsCrossE1E2E3PTPtr() const {
+    return pt_pscross_E1E2E3.data();
   }
-  const unsigned char *getPseudoCrossE0E2E3PrunePtr() const {
-    return pseudo_cross_E0_E2_E3_prune.data();
+  const unsigned char *getPsCrossE0E2E3PTPtr() const {
+    return pt_pscross_E0E2E3.data();
   }
-  const unsigned char *getPseudoCrossE0E1E3PrunePtr() const {
-    return pseudo_cross_E0_E1_E3_prune.data();
+  const unsigned char *getPsCrossE0E1E3PTPtr() const {
+    return pt_pscross_E0E1E3.data();
   }
 
   // 对角表 Getters
-  const unsigned char *getPseudoCrossC4C6PrunePtr() const {
-    return pseudo_cross_C4_C6_prune.data();
+  const unsigned char *getPsCrossC4C6PTPtr() const {
+    return pt_pscross_C4C6.data();
   }
-  const unsigned char *getPseudoCrossC5C7PrunePtr() const {
-    return pseudo_cross_C5_C7_prune.data();
+  const unsigned char *getPsCrossC5C7PTPtr() const {
+    return pt_pscross_C5C7.data();
   }
   // 邻角表 Getters
-  const unsigned char *getPseudoCrossC4C5PrunePtr() const {
-    return pseudo_cross_C4_C5_prune.data();
+  const unsigned char *getPsCrossC4C5PTPtr() const {
+    return pt_pscross_C4C5.data();
   }
-  const unsigned char *getPseudoCrossC4C7PrunePtr() const {
-    return pseudo_cross_C4_C7_prune.data();
+  const unsigned char *getPsCrossC4C7PTPtr() const {
+    return pt_pscross_C4C7.data();
   }
-  const unsigned char *getPseudoCrossC5C6PrunePtr() const {
-    return pseudo_cross_C5_C6_prune.data();
+  const unsigned char *getPsCrossC5C6PTPtr() const {
+    return pt_pscross_C5C6.data();
   }
-  const unsigned char *getPseudoCrossC6C7PrunePtr() const {
-    return pseudo_cross_C6_C7_prune.data();
+  const unsigned char *getPsCrossC6C7PTPtr() const {
+    return pt_pscross_C6C7.data();
   }
 
   // Corner3 Getters
-  const unsigned char *getPseudoCrossC4C5C6PrunePtr() const {
-    return pseudo_cross_C4_C5_C6_prune.data();
+  const unsigned char *getPsCrossC4C5C6PTPtr() const {
+    return pt_pscross_C4C5C6.data();
   }
-  const unsigned char *getPseudoCrossC4C5C7PrunePtr() const {
-    return pseudo_cross_C4_C5_C7_prune.data();
+  const unsigned char *getPsCrossC4C5C7PTPtr() const {
+    return pt_pscross_C4C5C7.data();
   }
-  const unsigned char *getPseudoCrossC4C6C7PrunePtr() const {
-    return pseudo_cross_C4_C6_C7_prune.data();
+  const unsigned char *getPsCrossC4C6C7PTPtr() const {
+    return pt_pscross_C4C6C7.data();
   }
-  const unsigned char *getPseudoCrossC5C6C7PrunePtr() const {
-    return pseudo_cross_C5_C6_C7_prune.data();
-  }
-
-  bool hasPseudoCrossE0E2Prune() const {
-    return !pseudo_cross_E0_E2_prune.empty();
-  }
-  bool hasPseudoCrossE1E3Prune() const {
-    return !pseudo_cross_E1_E3_prune.empty();
-  }
-  // 邻棱表 HasChecks
-  bool hasPseudoCrossE0E1Prune() const {
-    return !pseudo_cross_E0_E1_prune.empty();
-  }
-  bool hasPseudoCrossE0E3Prune() const {
-    return !pseudo_cross_E0_E3_prune.empty();
-  }
-  bool hasPseudoCrossE1E2Prune() const {
-    return !pseudo_cross_E1_E2_prune.empty();
-  }
-  bool hasPseudoCrossE2E3Prune() const {
-    return !pseudo_cross_E2_E3_prune.empty();
-  }
-  // Edge3 HasChecks
-  bool hasPseudoCrossE0E1E2Prune() const {
-    return !pseudo_cross_E0_E1_E2_prune.empty();
-  }
-  bool hasPseudoCrossE1E2E3Prune() const {
-    return !pseudo_cross_E1_E2_E3_prune.empty();
-  }
-  bool hasPseudoCrossE0E2E3Prune() const {
-    return !pseudo_cross_E0_E2_E3_prune.empty();
-  }
-  bool hasPseudoCrossE0E1E3Prune() const {
-    return !pseudo_cross_E0_E1_E3_prune.empty();
-  }
-  // 对角表 HasChecks
-  bool hasPseudoCrossC4C6Prune() const {
-    return !pseudo_cross_C4_C6_prune.empty();
-  }
-  bool hasPseudoCrossC5C7Prune() const {
-    return !pseudo_cross_C5_C7_prune.empty();
-  }
-  // 邻角表 HasChecks
-  bool hasPseudoCrossC4C5Prune() const {
-    return !pseudo_cross_C4_C5_prune.empty();
-  }
-  bool hasPseudoCrossC4C7Prune() const {
-    return !pseudo_cross_C4_C7_prune.empty();
-  }
-  bool hasPseudoCrossC5C6Prune() const {
-    return !pseudo_cross_C5_C6_prune.empty();
-  }
-  bool hasPseudoCrossC6C7Prune() const {
-    return !pseudo_cross_C6_C7_prune.empty();
-  }
-  // Corner3 HasChecks
-  bool hasPseudoCrossC4C5C6Prune() const {
-    return !pseudo_cross_C4_C5_C6_prune.empty();
-  }
-  bool hasPseudoCrossC4C5C7Prune() const {
-    return !pseudo_cross_C4_C5_C7_prune.empty();
-  }
-  bool hasPseudoCrossC4C6C7Prune() const {
-    return !pseudo_cross_C4_C6_C7_prune.empty();
-  }
-  bool hasPseudoCrossC5C6C7Prune() const {
-    return !pseudo_cross_C5_C6_C7_prune.empty();
+  const unsigned char *getPsCrossC5C6C7PTPtr() const {
+    return pt_pscross_C5C6C7.data();
   }
 
-  // 获取指针
-  const unsigned char *getCrossPrunePtr() const { return cross_prune.data(); }
-  const unsigned char *getCrossC4PrunePtr() const {
-    return cross_c4_prune.data();
+  // HasChecks (新名)
+  bool hasPsCrossE0E2PT() const { return !pt_pscross_E0E2.empty(); }
+  bool hasPsCrossE1E3PT() const { return !pt_pscross_E1E3.empty(); }
+  bool hasPsCrossE0E1PT() const { return !pt_pscross_E0E1.empty(); }
+  bool hasPsCrossE0E3PT() const { return !pt_pscross_E0E3.empty(); }
+  bool hasPsCrossE1E2PT() const { return !pt_pscross_E1E2.empty(); }
+  bool hasPsCrossE2E3PT() const { return !pt_pscross_E2E3.empty(); }
+  bool hasPsCrossE0E1E2PT() const { return !pt_pscross_E0E1E2.empty(); }
+  bool hasPsCrossE1E2E3PT() const { return !pt_pscross_E1E2E3.empty(); }
+  bool hasPsCrossE0E2E3PT() const { return !pt_pscross_E0E2E3.empty(); }
+  bool hasPsCrossE0E1E3PT() const { return !pt_pscross_E0E1E3.empty(); }
+  bool hasPsCrossC4C6PT() const { return !pt_pscross_C4C6.empty(); }
+  bool hasPsCrossC5C7PT() const { return !pt_pscross_C5C7.empty(); }
+  bool hasPsCrossC4C5PT() const { return !pt_pscross_C4C5.empty(); }
+  bool hasPsCrossC4C7PT() const { return !pt_pscross_C4C7.empty(); }
+  bool hasPsCrossC5C6PT() const { return !pt_pscross_C5C6.empty(); }
+  bool hasPsCrossC6C7PT() const { return !pt_pscross_C6C7.empty(); }
+  bool hasPsCrossC4C5C6PT() const { return !pt_pscross_C4C5C6.empty(); }
+  bool hasPsCrossC4C5C7PT() const { return !pt_pscross_C4C5C7.empty(); }
+  bool hasPsCrossC4C6C7PT() const { return !pt_pscross_C4C6C7.empty(); }
+  bool hasPsCrossC5C6C7PT() const { return !pt_pscross_C5C6C7.empty(); }
+
+  // === PseudoPair Getters (新名) ===
+  const unsigned char *getPsCrossCPTPtr(int c) const {
+    return pt_pscross_C[c].data();
   }
+  const unsigned char *getPsCrossCDiffPTPtr(int idx) const {
+    return pt_pscross_C_diff[idx].data();
+  }
+  const unsigned char *getPsPairECPTPtr(int idx) const {
+    return pt_pspair_ec[idx].data();
+  }
+
+  // === EOCross Getters (新名) ===
+  const unsigned char *getEOCC4PTPtr() const { return pt_eoc_C4.data(); }
+  const unsigned char *getEP4EO12PTPtr() const { return pt_ep4eo12.data(); }
+  const unsigned char *getCrossC4E0E1PTPtr() const {
+    return pt_cross_C4E0E1_C4E0E2_C4E0E3[0].data();
+  }
+  const unsigned char *getCrossC4E0E2PTPtr() const {
+    return pt_cross_C4E0E1_C4E0E2_C4E0E3[1].data();
+  }
+  const unsigned char *getCrossC4E0E3PTPtr() const {
+    return pt_cross_C4E0E1_C4E0E2_C4E0E3[2].data();
+  }
+  const unsigned char *getCrossC4C5E0PTPtr() const {
+    return pt_cross_C4C5E0_C4C6E0_C4C7E0[0].data();
+  }
+  const unsigned char *getCrossC4C6E0PTPtr() const {
+    return pt_cross_C4C5E0_C4C6E0_C4C7E0[1].data();
+  }
+  const unsigned char *getCrossC4C7E0PTPtr() const {
+    return pt_cross_C4C5E0_C4C6E0_C4C7E0[2].data();
+  }
+  const unsigned char *getCrossC4C5C6PTPtr() const {
+    return pt_cross_C4C5C6.data();
+  }
+
+  // === 旧名别名 (Analyzer 层兼容, 后续迁移后删除) ===
+  const std::vector<unsigned char> &getCrossPrune() const {
+    return getCrossPT();
+  }
+  const std::vector<unsigned char> &getCrossC4Prune() const {
+    return getCrossC4PT();
+  }
+  const std::vector<unsigned char> &getPairC4E0Prune() const {
+    return getPairC4E0PT();
+  }
+  const std::vector<unsigned char> &getXCrossC4E0Prune() const {
+    return getCrossC4E0PT();
+  }
+  const std::vector<unsigned char> &getHugeNeighborPrune() const {
+    return getCrossC4C5E0E1PT();
+  }
+  const std::vector<unsigned char> &getHugeDiagonalPrune() const {
+    return getCrossC4C6E0E2PT();
+  }
+  const unsigned char *getCrossPrunePtr() const { return getCrossPTPtr(); }
+  const unsigned char *getCrossC4PrunePtr() const { return getCrossC4PTPtr(); }
   const unsigned char *getPairC4E0PrunePtr() const {
-    return pair_c4_e0_prune.data();
+    return getPairC4E0PTPtr();
   }
   const unsigned char *getXCrossC4E0PrunePtr() const {
-    return xcross_c4_e0_prune.data();
+    return getCrossC4E0PTPtr();
   }
   const unsigned char *getHugeNeighborPrunePtr() const {
-    return huge_neighbor_prune.data();
+    return getCrossC4C5E0E1PTPtr();
   }
   const unsigned char *getHugeDiagonalPrunePtr() const {
-    return huge_diagonal_prune.data();
+    return getCrossC4C6E0E2PTPtr();
   }
-
-  // === PseudoPair Getters ===
+  const unsigned char *getPseudoCrossPrunePtr() const {
+    return getPsCrossPTPtr();
+  }
+  const unsigned char *getPseudoCrossBasePrunePtr(int i) const {
+    return getPsCrossC4EPTPtr(i);
+  }
+  const unsigned char *getPseudoCrossC4EPrunePtr(int i) const {
+    return getPsCrossC4EPTPtr(i);
+  }
+  const unsigned char *getPseudoCrossE0E2PrunePtr() const {
+    return getPsCrossE0E2PTPtr();
+  }
+  const unsigned char *getPseudoCrossE1E3PrunePtr() const {
+    return getPsCrossE1E3PTPtr();
+  }
+  const unsigned char *getPseudoCrossE0E1PrunePtr() const {
+    return getPsCrossE0E1PTPtr();
+  }
+  const unsigned char *getPseudoCrossE0E3PrunePtr() const {
+    return getPsCrossE0E3PTPtr();
+  }
+  const unsigned char *getPseudoCrossE1E2PrunePtr() const {
+    return getPsCrossE1E2PTPtr();
+  }
+  const unsigned char *getPseudoCrossE2E3PrunePtr() const {
+    return getPsCrossE2E3PTPtr();
+  }
+  const unsigned char *getPseudoCrossE0E1E2PrunePtr() const {
+    return getPsCrossE0E1E2PTPtr();
+  }
+  const unsigned char *getPseudoCrossE1E2E3PrunePtr() const {
+    return getPsCrossE1E2E3PTPtr();
+  }
+  const unsigned char *getPseudoCrossE0E2E3PrunePtr() const {
+    return getPsCrossE0E2E3PTPtr();
+  }
+  const unsigned char *getPseudoCrossE0E1E3PrunePtr() const {
+    return getPsCrossE0E1E3PTPtr();
+  }
+  const unsigned char *getPseudoCrossC4C6PrunePtr() const {
+    return getPsCrossC4C6PTPtr();
+  }
+  const unsigned char *getPseudoCrossC5C7PrunePtr() const {
+    return getPsCrossC5C7PTPtr();
+  }
+  const unsigned char *getPseudoCrossC4C5PrunePtr() const {
+    return getPsCrossC4C5PTPtr();
+  }
+  const unsigned char *getPseudoCrossC4C7PrunePtr() const {
+    return getPsCrossC4C7PTPtr();
+  }
+  const unsigned char *getPseudoCrossC5C6PrunePtr() const {
+    return getPsCrossC5C6PTPtr();
+  }
+  const unsigned char *getPseudoCrossC6C7PrunePtr() const {
+    return getPsCrossC6C7PTPtr();
+  }
+  const unsigned char *getPseudoCrossC4C5C6PrunePtr() const {
+    return getPsCrossC4C5C6PTPtr();
+  }
+  const unsigned char *getPseudoCrossC4C5C7PrunePtr() const {
+    return getPsCrossC4C5C7PTPtr();
+  }
+  const unsigned char *getPseudoCrossC4C6C7PrunePtr() const {
+    return getPsCrossC4C6C7PTPtr();
+  }
+  const unsigned char *getPseudoCrossC5C6C7PrunePtr() const {
+    return getPsCrossC5C6C7PTPtr();
+  }
+  bool hasPseudoCrossE0E2Prune() const { return hasPsCrossE0E2PT(); }
+  bool hasPseudoCrossE1E3Prune() const { return hasPsCrossE1E3PT(); }
+  bool hasPseudoCrossE0E1Prune() const { return hasPsCrossE0E1PT(); }
+  bool hasPseudoCrossE0E3Prune() const { return hasPsCrossE0E3PT(); }
+  bool hasPseudoCrossE1E2Prune() const { return hasPsCrossE1E2PT(); }
+  bool hasPseudoCrossE2E3Prune() const { return hasPsCrossE2E3PT(); }
+  bool hasPseudoCrossE0E1E2Prune() const { return hasPsCrossE0E1E2PT(); }
+  bool hasPseudoCrossE1E2E3Prune() const { return hasPsCrossE1E2E3PT(); }
+  bool hasPseudoCrossE0E2E3Prune() const { return hasPsCrossE0E2E3PT(); }
+  bool hasPseudoCrossE0E1E3Prune() const { return hasPsCrossE0E1E3PT(); }
+  bool hasPseudoCrossC4C6Prune() const { return hasPsCrossC4C6PT(); }
+  bool hasPseudoCrossC5C7Prune() const { return hasPsCrossC5C7PT(); }
+  bool hasPseudoCrossC4C5Prune() const { return hasPsCrossC4C5PT(); }
+  bool hasPseudoCrossC4C7Prune() const { return hasPsCrossC4C7PT(); }
+  bool hasPseudoCrossC5C6Prune() const { return hasPsCrossC5C6PT(); }
+  bool hasPseudoCrossC6C7Prune() const { return hasPsCrossC6C7PT(); }
+  bool hasPseudoCrossC4C5C6Prune() const { return hasPsCrossC4C5C6PT(); }
+  bool hasPseudoCrossC4C5C7Prune() const { return hasPsCrossC4C5C7PT(); }
+  bool hasPseudoCrossC4C6C7Prune() const { return hasPsCrossC4C6C7PT(); }
+  bool hasPseudoCrossC5C6C7Prune() const { return hasPsCrossC5C6C7PT(); }
   const unsigned char *getPseudoPairBasePrunePtr(int c) const {
-    return pseudo_pair_base_prune[c].data();
+    return getPsCrossCPTPtr(c);
+  }
+  const unsigned char *getPseudoPairCPrunePtr(int c) const {
+    return getPsCrossCPTPtr(c);
   }
   const unsigned char *getPseudoPairXCPrunePtr(int idx) const {
-    return pseudo_pair_xc_prune[idx].data();
+    return getPsCrossCDiffPTPtr(idx);
   }
   const unsigned char *getPseudoPairECPrunePtr(int idx) const {
-    return pseudo_pair_ec_prune[idx].data();
+    return getPsPairECPTPtr(idx);
   }
-
-  // === EOCross Getters ===
-  const unsigned char *getEOCrossC4PrunePtr() const {
-    return eo_cross_c4_prune.data();
-  }
-  const unsigned char *getEODepEOPrunePtr() const {
-    return eo_cross_dep_eo_prune.data();
-  }
+  const unsigned char *getEOCrossC4PrunePtr() const { return getEOCC4PTPtr(); }
+  const unsigned char *getEODepEOPrunePtr() const { return getEP4EO12PTPtr(); }
   const unsigned char *getEOPlusEdgePrunePtr(int idx) const {
-    return eo_cross_plus_edge_prune[idx].data();
+    return pt_cross_C4E0E1_C4E0E2_C4E0E3[idx].data();
   }
   const unsigned char *getEOPlusCornerPrunePtr(int idx) const {
-    return eo_cross_plus_corn_prune[idx].data();
+    return pt_cross_C4C5E0_C4C6E0_C4C7E0[idx].data();
   }
   const unsigned char *getEO3CornerPrunePtr() const {
-    return eo_cross_3corner_prune.data();
+    return getCrossC4C5C6PTPtr();
   }
 
-  // 生成函数
-  void generateCrossPrune();
-  void generateCrossC4Prune();
-  void generatePairC4E0Prune();
-  void generateXCrossC4E0Prune();
-  void generateHugeNeighborPrune();
-  void generateHugeDiagonalPrune();
+  // 生成函数 (新名)
+  void generateCrossPT();
+  void generateCrossC4PT();
+  void generatePairC4E0PT();
+  void generateCrossC4E0PT();
+  void generateCrossC4C5E0E1PT();
+  void generateCrossC4C6E0E2PT();
 
   // EOCross 专用生成函数
-  void generateEODepEOPrune(); // EP4 + EO12 联合剪枝表
+  void generateEP4EO12PT(); // EP4 + EO12 联合剪枝表
 
   // Pseudo 生成函数
-  void generatePseudoCrossPrune();
-  void generatePseudoCrossBasePrune(int offset_idx);
+  void generatePsCrossPT();
+  void generatePsCrossC4EPT(int offset_idx);
   // 对棱表生成函数
-  void generatePseudoCrossE0E2Prune();
-  void generatePseudoCrossE1E3Prune(); // 新增
+  void generatePsCrossE0E2PT();
+  void generatePsCrossE1E3PT();
   // 邻棱表生成函数
-  void generatePseudoCrossE0E1Prune();
-  void generatePseudoCrossE0E3Prune(); // 新增
-  void generatePseudoCrossE1E2Prune(); // 新增
-  void generatePseudoCrossE2E3Prune(); // 新增
+  void generatePsCrossE0E1PT();
+  void generatePsCrossE0E3PT();
+  void generatePsCrossE1E2PT();
+  void generatePsCrossE2E3PT();
   // Edge3 Generators
-  void generatePseudoCrossE0E1E2Prune();
-  void generatePseudoCrossE1E2E3Prune(); // New
-  void generatePseudoCrossE0E2E3Prune(); // New
-  void generatePseudoCrossE0E1E3Prune(); // New
-  // 新增对角生成函数
-  void generatePseudoCrossC4C6Prune();
-  void generatePseudoCrossC5C7Prune(); // 新增
-  // 新增邻角生成函数
-  void generatePseudoCrossC4C5Prune();
-  void generatePseudoCrossC4C7Prune(); // 新增
-  void generatePseudoCrossC5C6Prune(); // 新增
-  void generatePseudoCrossC6C7Prune(); // 新增
-
+  void generatePsCrossE0E1E2PT();
+  void generatePsCrossE1E2E3PT();
+  void generatePsCrossE0E2E3PT();
+  void generatePsCrossE0E1E3PT();
+  // 对角生成函数
+  void generatePsCrossC4C6PT();
+  void generatePsCrossC5C7PT();
+  // 邻角生成函数
+  void generatePsCrossC4C5PT();
+  void generatePsCrossC4C7PT();
+  void generatePsCrossC5C6PT();
+  void generatePsCrossC6C7PT();
   // Corner3 Generators
-  void generatePseudoCrossC4C5C6Prune();
-  void generatePseudoCrossC4C5C7Prune(); // New
-  void generatePseudoCrossC4C6C7Prune(); // New
-  void generatePseudoCrossC5C6C7Prune(); // New
+  void generatePsCrossC4C5C6PT();
+  void generatePsCrossC4C5C7PT();
+  void generatePsCrossC4C6C7PT();
+  void generatePsCrossC5C6C7PT();
+
+  // === 旧生成函数别名 ===
+  void generateCrossPrune() { generateCrossPT(); }
+  void generateCrossC4Prune() { generateCrossC4PT(); }
+  void generatePairC4E0Prune() { generatePairC4E0PT(); }
+  void generateXCrossC4E0Prune() { generateCrossC4E0PT(); }
+  void generateHugeNeighborPrune() { generateCrossC4C5E0E1PT(); }
+  void generateHugeDiagonalPrune() { generateCrossC4C6E0E2PT(); }
+  void generateEODepEOPrune() { generateEP4EO12PT(); }
+  void generatePseudoCrossPrune() { generatePsCrossPT(); }
+  void generatePseudoCrossBasePrune(int i) { generatePsCrossC4EPT(i); }
+  void generatePseudoCrossC4EPrune(int i) { generatePsCrossC4EPT(i); }
+  void generatePseudoCrossE0E2Prune() { generatePsCrossE0E2PT(); }
+  void generatePseudoCrossE1E3Prune() { generatePsCrossE1E3PT(); }
+  void generatePseudoCrossE0E1Prune() { generatePsCrossE0E1PT(); }
+  void generatePseudoCrossE0E3Prune() { generatePsCrossE0E3PT(); }
+  void generatePseudoCrossE1E2Prune() { generatePsCrossE1E2PT(); }
+  void generatePseudoCrossE2E3Prune() { generatePsCrossE2E3PT(); }
+  void generatePseudoCrossE0E1E2Prune() { generatePsCrossE0E1E2PT(); }
+  void generatePseudoCrossE1E2E3Prune() { generatePsCrossE1E2E3PT(); }
+  void generatePseudoCrossE0E2E3Prune() { generatePsCrossE0E2E3PT(); }
+  void generatePseudoCrossE0E1E3Prune() { generatePsCrossE0E1E3PT(); }
+  void generatePseudoCrossC4C6Prune() { generatePsCrossC4C6PT(); }
+  void generatePseudoCrossC5C7Prune() { generatePsCrossC5C7PT(); }
+  void generatePseudoCrossC4C5Prune() { generatePsCrossC4C5PT(); }
+  void generatePseudoCrossC4C7Prune() { generatePsCrossC4C7PT(); }
+  void generatePseudoCrossC5C6Prune() { generatePsCrossC5C6PT(); }
+  void generatePseudoCrossC6C7Prune() { generatePsCrossC6C7PT(); }
+  void generatePseudoCrossC4C5C6Prune() { generatePsCrossC4C5C6PT(); }
+  void generatePseudoCrossC4C5C7Prune() { generatePsCrossC4C5C7PT(); }
+  void generatePseudoCrossC4C6C7Prune() { generatePsCrossC4C6C7PT(); }
+  void generatePseudoCrossC5C6C7Prune() { generatePsCrossC5C6C7PT(); }
 
 private:
   // 文件操作

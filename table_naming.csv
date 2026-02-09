@@ -15,10 +15,22 @@ prune_table_pseudo_cross_C4_E0.bin,pseudo_cross_base_prune[0],-,-,p_prune_base[0
 prune_table_pseudo_cross_C4_E1.bin,pseudo_cross_base_prune[1],-,-,p_prune_base[1],p_pseudo_base_prune[1],-,Canon,52.2MB,Pseudo Base(diff=1)
 prune_table_pseudo_cross_C4_E2.bin,pseudo_cross_base_prune[2],-,-,p_prune_base[2],p_pseudo_base_prune[2],-,Canon,52.2MB,Pseudo Base(diff=2)
 prune_table_pseudo_cross_C4_E3.bin,pseudo_cross_base_prune[3],-,-,p_prune_base[3],p_pseudo_base_prune[3],-,Canon,52.2MB,Pseudo Base(diff=3)
-prune_table_pseudo_cross_C4_into_slot0.bin,pseudo_pair_xc_prune[0*4+0],-,-,-,p_xc_prune[*4+0],-,Canon,2.17MB,Pseudo XC Slot0
-prune_table_pseudo_cross_C4_into_slot1.bin,pseudo_pair_xc_prune[1*4+0],-,-,-,p_xc_prune[*4+1],-,Canon,2.17MB,Pseudo XC Slot1
-prune_table_pseudo_cross_C4_into_slot2.bin,pseudo_pair_xc_prune[2*4+0],-,-,-,p_xc_prune[*4+2],-,Canon,2.17MB,Pseudo XC Slot2
-prune_table_pseudo_cross_C4_into_slot3.bin,pseudo_pair_xc_prune[3*4+0],-,-,-,p_xc_prune[*4+3],-,Canon,2.17MB,Pseudo XC Slot3
+prune_table_pseudo_cross_C4_into_slot0.bin,pseudo_pair_xc_prune[0*4+0],-,-,-,p_xc_prune[0*4+0],-,Canon,2.17MB,Pseudo XC C4 Diff0
+prune_table_pseudo_cross_C4_into_slot1.bin,pseudo_pair_xc_prune[1*4+0],-,-,-,p_xc_prune[1*4+0],-,Canon,2.17MB,Pseudo XC C4 Diff1
+prune_table_pseudo_cross_C4_into_slot2.bin,pseudo_pair_xc_prune[2*4+0],-,-,-,p_xc_prune[2*4+0],-,Canon,2.17MB,Pseudo XC C4 Diff2
+prune_table_pseudo_cross_C4_into_slot3.bin,pseudo_pair_xc_prune[3*4+0],-,-,-,p_xc_prune[3*4+0],-,Canon,2.17MB,Pseudo XC C4 Diff3
+prune_table_pseudo_cross_C5_into_slot0.bin,pseudo_pair_xc_prune[0*4+1],-,-,-,p_xc_prune[0*4+1],-,Canon,2.17MB,Pseudo XC C5 Diff0
+prune_table_pseudo_cross_C5_into_slot1.bin,pseudo_pair_xc_prune[1*4+1],-,-,-,p_xc_prune[1*4+1],-,Canon,2.17MB,Pseudo XC C5 Diff1
+prune_table_pseudo_cross_C5_into_slot2.bin,pseudo_pair_xc_prune[2*4+1],-,-,-,p_xc_prune[2*4+1],-,Canon,2.17MB,Pseudo XC C5 Diff2
+prune_table_pseudo_cross_C5_into_slot3.bin,pseudo_pair_xc_prune[3*4+1],-,-,-,p_xc_prune[3*4+1],-,Canon,2.17MB,Pseudo XC C5 Diff3
+prune_table_pseudo_cross_C6_into_slot0.bin,pseudo_pair_xc_prune[0*4+2],-,-,-,p_xc_prune[0*4+2],-,Canon,2.17MB,Pseudo XC C6 Diff0
+prune_table_pseudo_cross_C6_into_slot1.bin,pseudo_pair_xc_prune[1*4+2],-,-,-,p_xc_prune[1*4+2],-,Canon,2.17MB,Pseudo XC C6 Diff1
+prune_table_pseudo_cross_C6_into_slot2.bin,pseudo_pair_xc_prune[2*4+2],-,-,-,p_xc_prune[2*4+2],-,Canon,2.17MB,Pseudo XC C6 Diff2
+prune_table_pseudo_cross_C6_into_slot3.bin,pseudo_pair_xc_prune[3*4+2],-,-,-,p_xc_prune[3*4+2],-,Canon,2.17MB,Pseudo XC C6 Diff3
+prune_table_pseudo_cross_C7_into_slot0.bin,pseudo_pair_xc_prune[0*4+3],-,-,-,p_xc_prune[0*4+3],-,Canon,2.17MB,Pseudo XC C7 Diff0
+prune_table_pseudo_cross_C7_into_slot1.bin,pseudo_pair_xc_prune[1*4+3],-,-,-,p_xc_prune[1*4+3],-,Canon,2.17MB,Pseudo XC C7 Diff1
+prune_table_pseudo_cross_C7_into_slot2.bin,pseudo_pair_xc_prune[2*4+3],-,-,-,p_xc_prune[2*4+3],-,Canon,2.17MB,Pseudo XC C7 Diff2
+prune_table_pseudo_cross_C7_into_slot3.bin,pseudo_pair_xc_prune[3*4+3],-,-,-,p_xc_prune[3*4+3],-,Canon,2.17MB,Pseudo XC C7 Diff3
 prune_table_pseudo_cross_E0_E1.bin,pseudo_cross_E0_E1_prune,-,-,p_aux_e2_adj,p_aux_e2_adj_prune,-,Canon,47.8MB,Edge2邻接规范表
 prune_table_pseudo_cross_E0_E2.bin,pseudo_cross_E0_E2_prune,-,-,p_aux_e2_diag,p_aux_e2_diag_prune,-,Canon,47.8MB,Edge2对角规范表
 prune_table_pseudo_cross_E0_E3.bin,pseudo_cross_E0_E3_prune,-,-,→p_aux_e2_adj via rot,-,-,Conj,47.8MB,复用E0E1

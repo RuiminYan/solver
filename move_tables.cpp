@@ -28,21 +28,21 @@ void MoveTableManager::initialize() {
 }
 
 bool MoveTableManager::loadAll() {
-  if (!loadTable(edge_table, "move_table_edge.bin"))
+  if (!loadTable(mt_edge, "move_table_edge.bin"))
     return false;
-  if (!loadTable(corner_table, "move_table_corner.bin"))
+  if (!loadTable(mt_corn, "move_table_corner.bin"))
     return false;
-  if (!loadTable(cross_table, "move_table_cross.bin"))
+  if (!loadTable(mt_cross, "move_table_cross.bin"))
     return false;
-  if (!loadTable(edges_2_table, "move_table_edges_2.bin"))
+  if (!loadTable(mt_edge2, "move_table_edges_2.bin"))
     return false;
-  if (!loadTable(edge3_table, "move_table_edges_3.bin"))
+  if (!loadTable(mt_edge3, "move_table_edges_3.bin"))
     return false;
-  if (!loadTable(edge6_table, "move_table_edges_6.bin"))
+  if (!loadTable(mt_edge6, "move_table_edges_6.bin"))
     return false;
-  if (!loadTable(corner2_table, "move_table_corners_2.bin"))
+  if (!loadTable(mt_corn2, "move_table_corners_2.bin"))
     return false;
-  if (!loadTable(corner3_table, "move_table_corners_3.bin"))
+  if (!loadTable(mt_corn3, "move_table_corners_3.bin"))
     return false;
   return true;
 }
@@ -52,65 +52,64 @@ void MoveTableManager::generateAllSequentially() {
   if (!fileExists("move_table_edge.bin")) {
     std::cout << TAG_COLOR << "[MOVE]" << ANSI_RESET
               << " Generating edge table..." << std::endl;
-    edge_table = create_edge_move_table();
-    saveTable(edge_table, "move_table_edge.bin");
+    mt_edge = create_edge_move_table();
+    saveTable(mt_edge, "move_table_edge.bin");
   }
 
   // 2. Corner Table (Base for others)
   if (!fileExists("move_table_corner.bin")) {
     std::cout << "[MoveTable] Generating corner table..." << std::endl;
-    corner_table = create_corner_move_table();
-    saveTable(corner_table, "move_table_corner.bin");
+    mt_corn = create_corner_move_table();
+    saveTable(mt_corn, "move_table_corner.bin");
   }
 
   // 3. Cross Table (depends on edge_table)
   if (!fileExists("move_table_cross.bin")) {
-    loadEdgeTable(); // 确保依赖表已加载
+    loadEdgeMT(); // 确保依赖表已加载
     std::cout << "[MoveTable] Generating cross table..." << std::endl;
-    cross_table =
-        create_multi_move_table2(4, 2, 12, 24 * 22 * 20 * 18, edge_table);
-    saveTable(cross_table, "move_table_cross.bin");
+    mt_cross = create_multi_move_table2(4, 2, 12, 24 * 22 * 20 * 18, mt_edge);
+    saveTable(mt_cross, "move_table_cross.bin");
   }
 
   // 4. Edges2 Table (depends on edge_table)
   if (!fileExists("move_table_edges_2.bin")) {
-    loadEdgeTable(); // 确保依赖表已加载
+    loadEdgeMT(); // 确保依赖表已加载
     std::cout << "[MoveTable] Generating edges_2 table..." << std::endl;
-    edges_2_table = create_multi_move_table(2, 2, 12, 24 * 22, edge_table);
-    saveTable(edges_2_table, "move_table_edges_2.bin");
+    mt_edge2 = create_multi_move_table(2, 2, 12, 24 * 22, mt_edge);
+    saveTable(mt_edge2, "move_table_edges_2.bin");
   }
 
   // 5. Edge3 Table (depends on edge_table)
   if (!fileExists("move_table_edges_3.bin")) {
-    loadEdgeTable(); // 确保依赖表已加载
+    loadEdgeMT(); // 确保依赖表已加载
     std::cout << "[MoveTable] Generating edges_3 table..." << std::endl;
-    edge3_table = create_multi_move_table(3, 2, 12, 10560, edge_table);
-    saveTable(edge3_table, "move_table_edges_3.bin");
+    mt_edge3 = create_multi_move_table(3, 2, 12, 10560, mt_edge);
+    saveTable(mt_edge3, "move_table_edges_3.bin");
   }
 
   // 6. Edge6 Table (depends on edge_table)
   if (!fileExists("move_table_edges_6.bin")) {
-    loadEdgeTable(); // 确保依赖表已加载
+    loadEdgeMT(); // 确保依赖表已加载
     std::cout << "[MoveTable] Generating edge6 table..." << std::endl;
-    edge6_table = create_multi_move_table(6, 2, 12, 42577920, edge_table);
-    saveTable(edge6_table, "move_table_edges_6.bin");
+    mt_edge6 = create_multi_move_table(6, 2, 12, 42577920, mt_edge);
+    saveTable(mt_edge6, "move_table_edges_6.bin");
   }
 
   // 7. Corner2 Table (depends on corner_table)
   if (!fileExists("move_table_corners_2.bin")) {
-    loadCornerTable(); // 确保依赖表已加载
+    loadCornMT(); // 确保依赖表已加载
     std::cout << "[MoveTable] Generating corner2 table..." << std::endl;
-    corner2_table = create_multi_move_table(2, 3, 8, 504, corner_table);
-    saveTable(corner2_table, "move_table_corners_2.bin");
+    mt_corn2 = create_multi_move_table(2, 3, 8, 504, mt_corn);
+    saveTable(mt_corn2, "move_table_corners_2.bin");
   }
 
   // 8. Corner3 Table (depends on corner_table)
   if (!fileExists("move_table_corners_3.bin")) {
-    loadCornerTable(); // 确保依赖表已加载
+    loadCornMT(); // 确保依赖表已加载
     std::cout << "[MoveTable] Generating corner3 table..." << std::endl;
     // 3个角块 (8P3 * 3^3 = 9072)
-    corner3_table = create_multi_move_table(3, 3, 8, 9072, corner_table);
-    saveTable(corner3_table, "move_table_corners_3.bin");
+    mt_corn3 = create_multi_move_table(3, 3, 8, 9072, mt_corn);
+    saveTable(mt_corn3, "move_table_corners_3.bin");
   }
 
   // NOTE: 不释放任何表，保持在内存中供后续 PruneTableManager 使用
@@ -135,122 +134,120 @@ void MoveTableManager::saveTable(const std::vector<int> &table,
 }
 
 void MoveTableManager::generateEdgeTable() {
-  if (loadTable(edge_table, "move_table_edge.bin")) {
+  if (loadTable(mt_edge, "move_table_edge.bin")) {
     std::cout << "[MoveTable] Loaded edge table from file." << std::endl;
     return;
   }
 
   std::cout << "[MoveTable] Generating edge table..." << std::endl;
-  edge_table = create_edge_move_table();
-  saveTable(edge_table, "move_table_edge.bin");
+  mt_edge = create_edge_move_table();
+  saveTable(mt_edge, "move_table_edge.bin");
 }
 
 void MoveTableManager::generateCornerTable() {
-  if (loadTable(corner_table, "move_table_corner.bin")) {
+  if (loadTable(mt_corn, "move_table_corner.bin")) {
     std::cout << "[MoveTable] Loaded corner table from file." << std::endl;
     return;
   }
 
   std::cout << "[MoveTable] Generating corner table..." << std::endl;
-  corner_table = create_corner_move_table();
-  saveTable(corner_table, "move_table_corner.bin");
+  mt_corn = create_corner_move_table();
+  saveTable(mt_corn, "move_table_corner.bin");
 }
 
 void MoveTableManager::generateCrossTable() {
-  if (loadTable(cross_table, "move_table_cross.bin")) {
+  if (loadTable(mt_cross, "move_table_cross.bin")) {
     std::cout << "[MoveTable] Loaded cross table from file." << std::endl;
     return;
   }
 
   std::cout << "[MoveTable] Generating cross table..." << std::endl;
   // Cross表：4个棱块的组合 (24*22*20*18 states)
-  cross_table =
-      create_multi_move_table2(4, 2, 12, 24 * 22 * 20 * 18, edge_table);
-  saveTable(cross_table, "move_table_cross.bin");
+  mt_cross = create_multi_move_table2(4, 2, 12, 24 * 22 * 20 * 18, mt_edge);
+  saveTable(mt_cross, "move_table_cross.bin");
 }
 
 void MoveTableManager::generateEdges2Table() {
-  if (loadTable(edges_2_table, "move_table_edges_2.bin")) {
+  if (loadTable(mt_edge2, "move_table_edges_2.bin")) {
     std::cout << "[MoveTable] Loaded edges_2 table from file." << std::endl;
     return;
   }
 
   std::cout << "[MoveTable] Generating edges_2 table..." << std::endl;
   // 2个棱块的组合 (24*22 states)
-  edges_2_table = create_multi_move_table(2, 2, 12, 24 * 22, edge_table);
-  saveTable(edges_2_table, "move_table_edges_2.bin");
+  mt_edge2 = create_multi_move_table(2, 2, 12, 24 * 22, mt_edge);
+  saveTable(mt_edge2, "move_table_edges_2.bin");
 }
 
 void MoveTableManager::generateEdge3Table() {
-  if (loadTable(edge3_table, "move_table_edges_3.bin")) {
+  if (loadTable(mt_edge3, "move_table_edges_3.bin")) {
     std::cout << "[MoveTable] Loaded edge3 table from file." << std::endl;
     return;
   }
 
   std::cout << "[MoveTable] Generating edge3 table..." << std::endl;
   // 3个棱块的组合 (10560 states)
-  edge3_table = create_multi_move_table(3, 2, 12, 10560, edge_table);
-  saveTable(edge3_table, "move_table_edges_3.bin");
+  mt_edge3 = create_multi_move_table(3, 2, 12, 10560, mt_edge);
+  saveTable(mt_edge3, "move_table_edges_3.bin");
 }
 
 void MoveTableManager::generateEdge6Table() {
-  if (loadTable(edge6_table, "move_table_edges_6.bin")) {
+  if (loadTable(mt_edge6, "move_table_edges_6.bin")) {
     std::cout << "[MoveTable] Loaded edge6 table from file." << std::endl;
     return;
   }
 
   std::cout << "[MoveTable] Generating edge6 table..." << std::endl;
   // 6个棱块的组合 (用于巨型剪枝表)
-  edge6_table = create_multi_move_table(6, 2, 12, 42577920, edge_table);
-  saveTable(edge6_table, "move_table_edges_6.bin");
+  mt_edge6 = create_multi_move_table(6, 2, 12, 42577920, mt_edge);
+  saveTable(mt_edge6, "move_table_edges_6.bin");
 }
 
 void MoveTableManager::generateCorner2Table() {
-  if (loadTable(corner2_table, "move_table_corners_2.bin")) {
+  if (loadTable(mt_corn2, "move_table_corners_2.bin")) {
     std::cout << "[MoveTable] Loaded corner2 table from file." << std::endl;
     return;
   }
 
   std::cout << "[MoveTable] Generating corner2 table..." << std::endl;
   // 2个角块的组合 (504 states)
-  corner2_table = create_multi_move_table(2, 3, 8, 504, corner_table);
-  saveTable(corner2_table, "move_table_corners_2.bin");
+  mt_corn2 = create_multi_move_table(2, 3, 8, 504, mt_corn);
+  saveTable(mt_corn2, "move_table_corners_2.bin");
 }
 
 void MoveTableManager::generateCorner3Table() {
-  if (loadTable(corner3_table, "move_table_corners_3.bin")) {
+  if (loadTable(mt_corn3, "move_table_corners_3.bin")) {
     std::cout << "[MoveTable] Loaded corner3 table from file." << std::endl;
     return;
   }
 
   std::cout << "[MoveTable] Generating corner3 table..." << std::endl;
   // 3个角块 (9072 states)
-  corner3_table = create_multi_move_table(3, 3, 8, 9072, corner_table);
-  saveTable(corner3_table, "move_table_corners_3.bin");
+  mt_corn3 = create_multi_move_table(3, 3, 8, 9072, mt_corn);
+  saveTable(mt_corn3, "move_table_corners_3.bin");
 }
 
 // 加载 EOCross 专用移动表
 // NOTE: 这两个表仅被 eo_cross_analyzer 使用
-bool MoveTableManager::loadEOCrossMoveTables() {
+bool MoveTableManager::loadEOCrossMTs() {
   // 1. EO Alt 移动表
-  if (eo_cross_eo_alt_mt.empty()) {
-    if (!loadTable(eo_cross_eo_alt_mt, "move_table_eo_12_alt.bin")) {
+  if (mt_eo_alt.empty()) {
+    if (!loadTable(mt_eo_alt, "move_table_eo_12_alt.bin")) {
       std::cout << "[MoveTable] Generating EO Alt table..." << std::endl;
-      eo_cross_eo_alt_mt = create_eo_move_table2();
-      saveTable(eo_cross_eo_alt_mt, "move_table_eo_12_alt.bin");
+      mt_eo_alt = create_eo_move_table2();
+      saveTable(mt_eo_alt, "move_table_eo_12_alt.bin");
     }
   }
 
   // 2. EP4 移动表（需要先加载 EP1 作为基础）
-  if (eo_cross_ep4_mt.empty()) {
-    if (!loadTable(eo_cross_ep4_mt, "move_table_ep_4.bin")) {
+  if (mt_ep4.empty()) {
+    if (!loadTable(mt_ep4, "move_table_ep_4.bin")) {
       std::cout << "[MoveTable] Generating EP4 table..." << std::endl;
       // 使用Manager加载的EP1表
-      loadEP1Table();
+      loadEP1MT();
       // 生成 EP4 表
-      eo_cross_ep4_mt =
-          create_multi_move_table(4, 1, 12, 12 * 11 * 10 * 9, ep1_mt);
-      saveTable(eo_cross_ep4_mt, "move_table_ep_4.bin");
+      mt_ep4 = create_multi_move_table(4, 1, 12, 12 * 11 * 10 * 9, mt_ep1);
+      saveTable(mt_ep4, "move_table_ep_4.bin");
     }
   }
 
@@ -258,25 +255,25 @@ bool MoveTableManager::loadEOCrossMoveTables() {
 }
 
 // 加载 EO 移动表 (move_table_eo_12.bin)
-bool MoveTableManager::loadEOTable() {
-  if (!eo_mt.empty())
+bool MoveTableManager::loadEOMT() {
+  if (!mt_eo.empty())
     return true;
-  if (!loadTable(eo_mt, "move_table_eo_12.bin")) {
+  if (!loadTable(mt_eo, "move_table_eo_12.bin")) {
     std::cout << "[MoveTable] Generating EO table..." << std::endl;
-    eo_mt = create_eo_move_table();
-    saveTable(eo_mt, "move_table_eo_12.bin");
+    mt_eo = create_eo_move_table();
+    saveTable(mt_eo, "move_table_eo_12.bin");
   }
   return true;
 }
 
 // 加载 EP1 移动表 (move_table_ep_1.bin)
-bool MoveTableManager::loadEP1Table() {
-  if (!ep1_mt.empty())
+bool MoveTableManager::loadEP1MT() {
+  if (!mt_ep1.empty())
     return true;
-  if (!loadTable(ep1_mt, "move_table_ep_1.bin")) {
+  if (!loadTable(mt_ep1, "move_table_ep_1.bin")) {
     std::cout << "[MoveTable] Generating EP1 table..." << std::endl;
-    ep1_mt = create_ep_move_table();
-    saveTable(ep1_mt, "move_table_ep_1.bin");
+    mt_ep1 = create_ep_move_table();
+    saveTable(mt_ep1, "move_table_ep_1.bin");
   }
   return true;
 }

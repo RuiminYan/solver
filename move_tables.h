@@ -11,23 +11,22 @@
 class MoveTableManager {
 private:
   // 基础移动表
-  std::vector<int> edge_table;
-  std::vector<int> corner_table;
+  std::vector<int> mt_edge;
+  std::vector<int> mt_corn;
 
   // 复合移动表
-  std::vector<int> cross_table;   // 4个棱块的Cross表
-  std::vector<int> edges_2_table; // 2个棱块组合表
-  std::vector<int> edge6_table;   // 6个棱块组合表 (E0+E1)
-  std::vector<int> corner2_table; // 2个角块组合表 (C4+C5)
-  std::vector<int> corner3_table; // 3个角块组合表 (C4+C5+C6)
-  std::vector<int> edge3_table;   // 3个棱块组合表 (E0+E1+E2)
+  std::vector<int> mt_cross; // 4个棱块的Cross表
+  std::vector<int> mt_edge2; // 2个棱块组合表
+  std::vector<int> mt_edge6; // 6个棱块组合表 (E0+E1)
+  std::vector<int> mt_corn2; // 2个角块组合表 (C4+C5)
+  std::vector<int> mt_corn3; // 3个角块组合表 (C4+C5+C6)
+  std::vector<int> mt_edge3; // 3个棱块组合表 (E0+E1+E2)
 
   // EOCross 专用移动表
-  std::vector<int> eo_cross_ep4_mt; // EP4移动表 (move_table_ep_4.bin)
-  std::vector<int>
-      eo_cross_eo_alt_mt;  // EO Alt移动表 (move_table_eo_12_alt.bin)
-  std::vector<int> eo_mt;  // EO移动表 (move_table_eo_12.bin)
-  std::vector<int> ep1_mt; // EP1移动表 (move_table_ep_1.bin)
+  std::vector<int> mt_ep4;    // EP4移动表 (mt_ep4.bin)
+  std::vector<int> mt_eo_alt; // EO Alt移动表 (mt_eo_alt.bin)
+  std::vector<int> mt_eo;     // EO移动表 (mt_eo.bin)
+  std::vector<int> mt_ep1;    // EP1移动表 (mt_ep1.bin)
 
   // 单例模式
   static MoveTableManager *instance;
@@ -47,96 +46,135 @@ public:
 
   // 细粒度资源管理（供 PruneTableManager 生成时使用）
   // NOTE: 小表添加"已加载"检查，避免重复从磁盘加载
-  bool loadEdgeTable() {
-    if (!edge_table.empty())
+  bool loadEdgeMT() {
+    if (!mt_edge.empty())
       return true;
-    return loadTable(edge_table, "move_table_edge.bin");
+    return loadTable(mt_edge, "move_table_edge.bin");
   }
-  void releaseEdgeTable() { std::vector<int>().swap(edge_table); }
+  void releaseEdgeMT() { std::vector<int>().swap(mt_edge); }
 
-  bool loadCornerTable() {
-    if (!corner_table.empty())
+  bool loadCornMT() {
+    if (!mt_corn.empty())
       return true;
-    return loadTable(corner_table, "move_table_corner.bin");
+    return loadTable(mt_corn, "move_table_corner.bin");
   }
-  void releaseCornerTable() { std::vector<int>().swap(corner_table); }
+  void releaseCornMT() { std::vector<int>().swap(mt_corn); }
 
-  bool loadCrossTable() {
-    if (!cross_table.empty())
+  bool loadCrossMT() {
+    if (!mt_cross.empty())
       return true;
-    return loadTable(cross_table, "move_table_cross.bin");
+    return loadTable(mt_cross, "move_table_cross.bin");
   }
-  void releaseCrossTable() { std::vector<int>().swap(cross_table); }
+  void releaseCrossMT() { std::vector<int>().swap(mt_cross); }
 
-  bool loadEdges2Table() {
-    if (!edges_2_table.empty())
+  bool loadEdge2MT() {
+    if (!mt_edge2.empty())
       return true;
-    return loadTable(edges_2_table, "move_table_edges_2.bin");
+    return loadTable(mt_edge2, "move_table_edges_2.bin");
   }
-  void releaseEdges2Table() { std::vector<int>().swap(edges_2_table); }
+  void releaseEdge2MT() { std::vector<int>().swap(mt_edge2); }
 
-  bool loadEdge3Table() {
-    if (!edge3_table.empty())
+  bool loadEdge3MT() {
+    if (!mt_edge3.empty())
       return true;
-    return loadTable(edge3_table, "move_table_edges_3.bin");
+    return loadTable(mt_edge3, "move_table_edges_3.bin");
   }
-  void releaseEdge3Table() { std::vector<int>().swap(edge3_table); }
+  void releaseEdge3MT() { std::vector<int>().swap(mt_edge3); }
 
   // NOTE: Edge6 保持原有行为，按需加载+用完释放，因为它占用 ~3GB 内存
-  bool loadEdge6Table() {
-    return loadTable(edge6_table, "move_table_edges_6.bin");
-  }
-  void releaseEdge6Table() { std::vector<int>().swap(edge6_table); }
+  bool loadEdge6MT() { return loadTable(mt_edge6, "move_table_edges_6.bin"); }
+  void releaseEdge6MT() { std::vector<int>().swap(mt_edge6); }
 
-  bool loadCorner2Table() {
-    if (!corner2_table.empty())
+  bool loadCorn2MT() {
+    if (!mt_corn2.empty())
       return true;
-    return loadTable(corner2_table, "move_table_corners_2.bin");
+    return loadTable(mt_corn2, "move_table_corners_2.bin");
   }
-  void releaseCorner2Table() { std::vector<int>().swap(corner2_table); }
+  void releaseCorn2MT() { std::vector<int>().swap(mt_corn2); }
 
-  bool loadCorner3Table() {
-    if (!corner3_table.empty())
+  bool loadCorn3MT() {
+    if (!mt_corn3.empty())
       return true;
-    return loadTable(corner3_table, "move_table_corners_3.bin");
+    return loadTable(mt_corn3, "move_table_corners_3.bin");
   }
-  void releaseCorner3Table() { std::vector<int>().swap(corner3_table); }
+  void releaseCorn3MT() { std::vector<int>().swap(mt_corn3); }
 
   // 加载 EOCross 专用移动表
-  bool loadEOCrossMoveTables();
-  bool loadEOTable();  // 加载 EO 移动表 (move_table_eo_12.bin)
-  bool loadEP1Table(); // 加载 EP1 移动表 (move_table_ep_1.bin)
+  bool loadEOCrossMTs();
+  bool loadEOMT();  // 加载 EO 移动表 (mt_eo.bin)
+  bool loadEP1MT(); // 加载 EP1 移动表 (mt_ep1.bin)
 
   // 获取移动表的只读访问
-  const std::vector<int> &getEdgeTable() const { return edge_table; }
-  const std::vector<int> &getCornerTable() const { return corner_table; }
-  const std::vector<int> &getCrossTable() const { return cross_table; }
-  const std::vector<int> &getEdges2Table() const { return edges_2_table; }
-  const std::vector<int> &getEdge3Table() const { return edge3_table; }
-  const std::vector<int> &getEdge6Table() const { return edge6_table; }
-  const std::vector<int> &getCorner2Table() const { return corner2_table; }
-  const std::vector<int> &getCorner3Table() const { return corner3_table; }
+  const std::vector<int> &getEdgeMT() const { return mt_edge; }
+  const std::vector<int> &getCornMT() const { return mt_corn; }
+  const std::vector<int> &getCrossMT() const { return mt_cross; }
+  const std::vector<int> &getEdge2MT() const { return mt_edge2; }
+  const std::vector<int> &getEdge3MT() const { return mt_edge3; }
+  const std::vector<int> &getEdge6MT() const { return mt_edge6; }
+  const std::vector<int> &getCorn2MT() const { return mt_corn2; }
+  const std::vector<int> &getCorn3MT() const { return mt_corn3; }
 
   // 获取指针（用于性能关键的代码）
-  const int *getEdgeTablePtr() const { return edge_table.data(); }
-  const int *getCornerTablePtr() const { return corner_table.data(); }
-  const int *getCrossTablePtr() const { return cross_table.data(); }
-  const int *getEdges2TablePtr() const { return edges_2_table.data(); }
-  const int *getEdge3TablePtr() const { return edge3_table.data(); }
-  const int *getEdge6TablePtr() const { return edge6_table.data(); }
-  const int *getCorner2TablePtr() const { return corner2_table.data(); }
-  const int *getCorner3TablePtr() const { return corner3_table.data(); }
+  const int *getEdgeMTPtr() const { return mt_edge.data(); }
+  const int *getCornMTPtr() const { return mt_corn.data(); }
+  const int *getCrossMTPtr() const { return mt_cross.data(); }
+  const int *getEdge2MTPtr() const { return mt_edge2.data(); }
+  const int *getEdge3MTPtr() const { return mt_edge3.data(); }
+  const int *getEdge6MTPtr() const { return mt_edge6.data(); }
+  const int *getCorn2MTPtr() const { return mt_corn2.data(); }
+  const int *getCorn3MTPtr() const { return mt_corn3.data(); }
 
   // EOCross 专用移动表 Getter
-  const int *getEOCrossEP4Ptr() const { return eo_cross_ep4_mt.data(); }
-  const int *getEOCrossEOAltPtr() const { return eo_cross_eo_alt_mt.data(); }
-  const int *getEOTablePtr() const { return eo_mt.data(); }
-  const int *getEP1TablePtr() const { return ep1_mt.data(); }
+  const int *getEP4MTPtr() const { return mt_ep4.data(); }
+  const int *getEOAltMTPtr() const { return mt_eo_alt.data(); }
+  const int *getEOMTPtr() const { return mt_eo.data(); }
+  const int *getEP1MTPtr() const { return mt_ep1.data(); }
   // EOCross 专用移动表 Vector Getter (用于剪枝表生成)
-  const std::vector<int> &getEOCrossEP4Table() const { return eo_cross_ep4_mt; }
-  const std::vector<int> &getEOCrossEOAltTable() const {
-    return eo_cross_eo_alt_mt;
-  }
+  const std::vector<int> &getEP4MT() const { return mt_ep4; }
+  const std::vector<int> &getEOAltMT() const { return mt_eo_alt; }
+
+  // === 旧名别名 (Analyzer 层兼容, 后续迁移后删除) ===
+  bool loadEdgeTable() { return loadEdgeMT(); }
+  void releaseEdgeTable() { releaseEdgeMT(); }
+  bool loadCornerTable() { return loadCornMT(); }
+  void releaseCornerTable() { releaseCornMT(); }
+  bool loadCrossTable() { return loadCrossMT(); }
+  void releaseCrossTable() { releaseCrossMT(); }
+  bool loadEdges2Table() { return loadEdge2MT(); }
+  void releaseEdges2Table() { releaseEdge2MT(); }
+  bool loadEdge3Table() { return loadEdge3MT(); }
+  void releaseEdge3Table() { releaseEdge3MT(); }
+  bool loadEdge6Table() { return loadEdge6MT(); }
+  void releaseEdge6Table() { releaseEdge6MT(); }
+  bool loadCorner2Table() { return loadCorn2MT(); }
+  void releaseCorner2Table() { releaseCorn2MT(); }
+  bool loadCorner3Table() { return loadCorn3MT(); }
+  void releaseCorner3Table() { releaseCorn3MT(); }
+  bool loadEOCrossMoveTables() { return loadEOCrossMTs(); }
+  bool loadEOTable() { return loadEOMT(); }
+  bool loadEP1Table() { return loadEP1MT(); }
+  const std::vector<int> &getEdgeTable() const { return getEdgeMT(); }
+  const std::vector<int> &getCornerTable() const { return getCornMT(); }
+  const std::vector<int> &getCrossTable() const { return getCrossMT(); }
+  const std::vector<int> &getEdges2Table() const { return getEdge2MT(); }
+  const std::vector<int> &getEdge3Table() const { return getEdge3MT(); }
+  const std::vector<int> &getEdge6Table() const { return getEdge6MT(); }
+  const std::vector<int> &getCorner2Table() const { return getCorn2MT(); }
+  const std::vector<int> &getCorner3Table() const { return getCorn3MT(); }
+  const int *getEdgeTablePtr() const { return getEdgeMTPtr(); }
+  const int *getCornerTablePtr() const { return getCornMTPtr(); }
+  const int *getCrossTablePtr() const { return getCrossMTPtr(); }
+  const int *getEdges2TablePtr() const { return getEdge2MTPtr(); }
+  const int *getEdge3TablePtr() const { return getEdge3MTPtr(); }
+  const int *getEdge6TablePtr() const { return getEdge6MTPtr(); }
+  const int *getCorner2TablePtr() const { return getCorn2MTPtr(); }
+  const int *getCorner3TablePtr() const { return getCorn3MTPtr(); }
+  const int *getEOCrossEP4Ptr() const { return getEP4MTPtr(); }
+  const int *getEOCrossEOAltPtr() const { return getEOAltMTPtr(); }
+  const int *getEOTablePtr() const { return getEOMTPtr(); }
+  const int *getEP1TablePtr() const { return getEP1MTPtr(); }
+  const std::vector<int> &getEOCrossEP4Table() const { return getEP4MT(); }
+  const std::vector<int> &getEOCrossEOAltTable() const { return getEOAltMT(); }
 
 private:
   // 生成函数
