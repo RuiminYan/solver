@@ -146,13 +146,13 @@ struct AuxState {
 constexpr int MAX_AUX = 8;
 
 struct CrossSolver {
-  const int *p_multi;
+  const int *p_mt_edge2;
   const unsigned char *p_prune;
 
   CrossSolver() {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
-    p_multi = mtm.getEdge2MTPtr();
+    p_mt_edge2 = mtm.getEdge2MTPtr();
     p_prune = ptm.getPsCrossPTPtr();
   }
 
@@ -162,8 +162,8 @@ struct CrossSolver {
     for (int k = 0; k < count; ++k) {
       int m = moves[k];
       COUNT_NODE
-      int n_i1 = p_multi[i1 + m];
-      int n_i2 = p_multi[i2 + m];
+      int n_i1 = p_mt_edge2[i1 + m];
+      int n_i2 = p_mt_edge2[i2 + m];
       long long idx = (long long)n_i1 * 528 + n_i2;
       if (get_prune_ptr(p_prune, idx) >= depth)
         continue;
@@ -183,8 +183,8 @@ struct CrossSolver {
       std::vector<int> alg = alg_rotation(base_alg, rots[i]);
       int i1 = 416, i2 = 520;
       for (int m : alg) {
-        i1 = p_multi[i1 * 18 + m];
-        i2 = p_multi[i2 * 18 + m];
+        i1 = p_mt_edge2[i1 * 18 + m];
+        i2 = p_mt_edge2[i2 * 18 + m];
       }
       long long idx = (long long)i1 * 528 + i2;
       int d_min = get_prune_ptr(p_prune, idx);
@@ -204,7 +204,7 @@ struct CrossSolver {
 };
 
 struct XCrossSolver {
-  const int *p_multi, *p_corn, *p_edge, *p_edges2, *p_corners2, *p_corners3,
+  const int *p_mt_edge4, *p_mt_corn, *p_mt_edge, *p_edges2, *p_corners2, *p_corners3,
       *p_edge3;
   const int *p_edge6 = nullptr; // 增加 Edge6 引用
   const unsigned char *p_prune_base[4];
@@ -325,9 +325,9 @@ struct XCrossSolver {
   XCrossSolver() {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
-    p_multi = mtm.getEdge4MTPtr();
-    p_corn = mtm.getCornMTPtr();
-    p_edge = mtm.getEdgeMTPtr();
+    p_mt_edge4 = mtm.getEdge4MTPtr();
+    p_mt_corn = mtm.getCornMTPtr();
+    p_mt_edge = mtm.getEdgeMTPtr();
     p_edges2 = mtm.getEdge2MTPtr();
     p_corners2 = mtm.getCorn2MTPtr();
     p_corners3 = mtm.getCorn3MTPtr();
@@ -385,10 +385,10 @@ struct XCrossSolver {
     int cur_e[] = {0, 2, 4, 6};
     for (int m : alg) {
       int mc = conj_moves_flat[m][slot_k];
-      cur_mul = p_multi[cur_mul + mc];
-      cur_cn = p_corn[cur_cn + mc] * 18;
+      cur_mul = p_mt_edge4[cur_mul + mc];
+      cur_cn = p_mt_corn[cur_cn + mc] * 18;
       for (int k = 0; k < 4; ++k)
-        cur_e[k] = p_edge[cur_e[k] * 18 + mc];
+        cur_e[k] = p_mt_edge[cur_e[k] * 18 + mc];
     }
     out.im = cur_mul;
     out.ic_b = cur_cn / 18;
@@ -527,7 +527,7 @@ struct XCrossSolver {
                   int m_pseudo = conj_moves_flat[m][slot_k];
                   int m_rot = mapper[m_pseudo];
                   cur_c3 = p_corners3[cur_c3 * 18 + m_rot];
-                  cur_cr = p_multi[cur_cr + m_rot];
+                  cur_cr = p_mt_edge4[cur_cr + m_rot];
                 }
                 conjugated_idx = cur_c3;
                 virtual_cross_scaled = cur_cr;
@@ -560,7 +560,7 @@ struct XCrossSolver {
                   int m_pseudo = conj_moves_flat[m][slot_k];
                   int m_rot = mapper[m_pseudo];
                   cur_e3 = p_edge3[cur_e3 * 18 + m_rot];
-                  cur_cr = p_multi[cur_cr + m_rot];
+                  cur_cr = p_mt_edge4[cur_cr + m_rot];
                 }
                 conjugated_idx = cur_e3;
                 virtual_cross_scaled = cur_cr;
@@ -645,7 +645,7 @@ struct XCrossSolver {
               int m_p = conj_moves_flat[m][slot_k];
               int m_r = mapper[m_p];
               cur_e2 = p_edges2[cur_e2 * 18 + m_r];
-              cur_cr = p_multi[cur_cr + m_r];
+              cur_cr = p_mt_edge4[cur_cr + m_r];
             }
             conjugated_idx = cur_e2;
             virtual_cross_scaled = cur_cr;
@@ -695,7 +695,7 @@ struct XCrossSolver {
               int m_p = conj_moves_flat[m][slot_k];
               int m_r = mapper[m_p];
               cur_c2 = p_corners2[cur_c2 * 18 + m_r];
-              cur_cr = p_multi[cur_cr + m_r];
+              cur_cr = p_mt_edge4[cur_cr + m_r];
             }
             conjugated_idx = cur_c2;
             virtual_cross_scaled = cur_cr;
@@ -724,9 +724,9 @@ struct XCrossSolver {
     for (int k = 0; k < count; ++k) {
       int m = moves[k];
       COUNT_NODE
-      int n_i1 = p_multi[i1 + m];
-      int n_i2 = p_corn[i2 + m];
-      long long idx = (long long)(n_i1 + n_i2) * 24 + p_edge[i3 + m];
+      int n_i1 = p_mt_edge4[i1 + m];
+      int n_i2 = p_mt_corn[i2 + m];
+      long long idx = (long long)(n_i1 + n_i2) * 24 + p_mt_edge[i3 + m];
       // ++s1_base_checked;  // NOTE: 统计已禁�?
       if (get_prune_ptr(p_prune, idx) >= depth) {
         // ++s1_base_pruned;
@@ -735,7 +735,7 @@ struct XCrossSolver {
       if (depth == 1) {
         return true;
       }
-      if (search_1(ctx, n_i1, n_i2 * 18, p_edge[i3 + m] * 18, depth - 1, m,
+      if (search_1(ctx, n_i1, n_i2 * 18, p_mt_edge[i3 + m] * 18, depth - 1, m,
                    p_prune))
         return true;
     }
@@ -756,7 +756,7 @@ struct XCrossSolver {
       COUNT_NODE
 
       // 1. Aux Pruning (First!)
-      int n_i1a = p_multi[i1a + m];
+      int n_i1a = p_mt_edge4[i1a + m];
       int cross_state_idx = n_i1a / 24;
 
       bool aux_pruned = false;
@@ -775,7 +775,7 @@ struct XCrossSolver {
           next_aux[i].current_idx =
               cur.def->p_move[cur.current_idx * 18 + m_rot];
           next_aux[i].current_cross_scaled =
-              p_multi[cur.current_cross_scaled + m_rot];
+              p_mt_edge4[cur.current_cross_scaled + m_rot];
           lookup_cross_idx = next_aux[i].current_cross_scaled / 24;
         } else {
           // Standard Logic (Use Main Cross)
@@ -828,8 +828,8 @@ struct XCrossSolver {
       // 3. Base Pruning (Side A) - Skip if Huge Table was checked (Twin Titans
       // dominance) Compute Side A recursive states (needed regardless of
       // pruning source)
-      int n_i2a = p_corn[i2a + m];
-      int n_i3a = p_edge[i3a + m];
+      int n_i2a = p_mt_corn[i2a + m];
+      int n_i3a = p_mt_edge[i3a + m];
 
       if (!p_huge_table) {
         long long idx1 = (long long)(n_i1a + n_i2a) * 24 + n_i3a;
@@ -843,9 +843,9 @@ struct XCrossSolver {
       // 4. Base Pruning (Side B)
 
       int m_b = tr_b[m];
-      int n_i1b = p_multi[i1b + m_b];
-      int n_i2b = p_corn[i2b + m_b];
-      long long idx2 = (long long)(n_i1b + n_i2b) * 24 + p_edge[i3b + m_b];
+      int n_i1b = p_mt_edge4[i1b + m_b];
+      int n_i2b = p_mt_corn[i2b + m_b];
+      long long idx2 = (long long)(n_i1b + n_i2b) * 24 + p_mt_edge[i3b + m_b];
       // ++s2_baseB_checked;  // NOTE: 统计已禁�?
       if (get_prune_ptr(p2, idx2) >= depth) {
         // ++s2_baseB_pruned;
@@ -856,7 +856,7 @@ struct XCrossSolver {
         return true;
       }
       if (search_2(ctx, n_i1a, n_i2a * 18, n_i3a * 18, p1, n_i1b, n_i2b * 18,
-                   p_edge[i3b + m_b] * 18, tr_b, p2, n_e6 * 18, n_c2 * 18,
+                   p_mt_edge[i3b + m_b] * 18, tr_b, p2, n_e6 * 18, n_c2 * 18,
                    p_huge_table, mirror_huge, depth - 1, m, num_aux, next_aux))
         return true;
     }
@@ -876,7 +876,7 @@ struct XCrossSolver {
       COUNT_NODE
 
       // 1. Aux Pruning (Moved to Front)
-      int n_i1a = p_multi[i1a + m];
+      int n_i1a = p_mt_edge4[i1a + m];
       int cross_state_idx = n_i1a / 24;
 
       bool aux_pruned = false;
@@ -895,7 +895,7 @@ struct XCrossSolver {
           next_aux[i].current_idx =
               cur.def->p_move[cur.current_idx * 18 + m_rot];
           next_aux[i].current_cross_scaled =
-              p_multi[cur.current_cross_scaled + m_rot];
+              p_mt_edge4[cur.current_cross_scaled + m_rot];
           lookup_cross_idx = next_aux[i].current_cross_scaled / 24;
         } else {
           // Standard Logic
@@ -916,8 +916,8 @@ struct XCrossSolver {
         continue;
       }
 
-      int n_i2a = p_corn[i2a + m];
-      long long idx1 = (long long)(n_i1a + n_i2a) * 24 + p_edge[i3a + m];
+      int n_i2a = p_mt_corn[i2a + m];
+      long long idx1 = (long long)(n_i1a + n_i2a) * 24 + p_mt_edge[i3a + m];
       // ++s3_baseA_checked;  // NOTE: 统计已禁�?
       if (get_prune_ptr(p1, idx1) >= depth) {
         // ++s3_baseA_pruned;
@@ -925,9 +925,9 @@ struct XCrossSolver {
       }
 
       int m_b = tr_b[m];
-      int n_i1b = p_multi[i1b + m_b];
-      int n_i2b = p_corn[i2b + m_b];
-      long long idx2 = (long long)(n_i1b + n_i2b) * 24 + p_edge[i3b + m_b];
+      int n_i1b = p_mt_edge4[i1b + m_b];
+      int n_i2b = p_mt_corn[i2b + m_b];
+      long long idx2 = (long long)(n_i1b + n_i2b) * 24 + p_mt_edge[i3b + m_b];
       // ++s3_baseB_checked;  // NOTE: 统计已禁�?
       if (get_prune_ptr(p2, idx2) >= depth) {
         // ++s3_baseB_pruned;
@@ -935,9 +935,9 @@ struct XCrossSolver {
       }
 
       int m_c = tr_c[m];
-      int n_i1c = p_multi[i1c + m_c];
-      int n_i2c = p_corn[i2c + m_c];
-      long long idx3 = (long long)(n_i1c + n_i2c) * 24 + p_edge[i3c + m_c];
+      int n_i1c = p_mt_edge4[i1c + m_c];
+      int n_i2c = p_mt_corn[i2c + m_c];
+      long long idx3 = (long long)(n_i1c + n_i2c) * 24 + p_mt_edge[i3c + m_c];
       // ++s3_baseC_checked;  // NOTE: 统计已禁�?
       if (get_prune_ptr(p3, idx3) >= depth) {
         // ++s3_baseC_pruned;
@@ -947,9 +947,9 @@ struct XCrossSolver {
       if (depth == 1) {
         return true;
       }
-      if (search_3(ctx, n_i1a, n_i2a * 18, p_edge[i3a + m] * 18, p1, n_i1b,
-                   n_i2b * 18, p_edge[i3b + m_b] * 18, tr_b, p2, n_i1c,
-                   n_i2c * 18, p_edge[i3c + m_c] * 18, tr_c, p3, depth - 1, m,
+      if (search_3(ctx, n_i1a, n_i2a * 18, p_mt_edge[i3a + m] * 18, p1, n_i1b,
+                   n_i2b * 18, p_mt_edge[i3b + m_b] * 18, tr_b, p2, n_i1c,
+                   n_i2c * 18, p_mt_edge[i3c + m_c] * 18, tr_c, p3, depth - 1, m,
                    num_aux, next_aux))
         return true;
     }
