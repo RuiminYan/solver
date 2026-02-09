@@ -1,97 +1,113 @@
-文件名,管理层变量名(prune_tables.cpp),generator,Std变量名,Pair变量名,Pseudo变量名,PseudoPair变量名,EOCross变量名,加载状态,大小,说明
-===== 剪枝表 (Prune Tables) =====,,,,,,,,,0KB,
-pt_cross.bin,pt_cross,genPTCross(),p_prune(CrossSolver),-,p_prune(CrossSolver),-,p_prune,Canon,136KB,Cross剪枝表
-pt_cross_C4.bin,pt_cross_C4,genPTCrossC4(),-,p_cross,-,-,p_prune(XCross),Canon,4.35MB,Cross+C4
-pt_pair_C4E0.bin,pt_pair_C4E0,genPTPairC4E0(),-,p_pair,-,-,-,Canon,584B,Pair(C4+E0)
-pt_cross_C4E0.bin,pt_cross_C4E0,genPTCrossC4E0(),p_prune_base,p_xcross,-,-,p_prune_base,Canon,52.2MB,XCross(C4+E0)
-pt_cross_C4C5E0E1.bin,pt_cross_C4C5E0E1,genPTCrossC4C5E0E1(),p_prune_neighbor,p_prune_neighbor,p_cross_C4C5E0E1,-,p_huge_neighbor,Canon,9.99GB,Huge邻近表
-pt_cross_C4C6E0E2.bin,pt_cross_C4C6E0E2,genPTCrossC4C6E0E2(),p_prune_diagonal,p_prune_diagonal,-,-,p_huge_diagonal,Canon,9.99GB,Huge对角表
-pt_pscross.bin,pt_pscross,genPTPsCross(),-,-,p_prune(CrossSolver),-,-,Canon,136KB,Pseudo Cross
-pt_pscross_C4.bin,pt_pscross_C[0],genPTPsCrossC(0),-,-,-,p_base_prune[0],-,Canon,2.17MB,Pseudo C4 Base
-pt_pscross_C5.bin,pt_pscross_C[1],genPTPsCrossC(1),-,-,-,p_base_prune[1],-,Canon,2.17MB,Pseudo C5 Base
-pt_pscross_C6.bin,pt_pscross_C[2],genPTPsCrossC(2),-,-,-,p_base_prune[2],-,Canon,2.17MB,Pseudo C6 Base
-pt_pscross_C7.bin,pt_pscross_C[3],genPTPsCrossC(3),-,-,-,p_base_prune[3],-,Canon,2.17MB,Pseudo C7 Base
-pt_pscross_C4E0.bin,pt_pscross_C4E[0],genPTPsCrossC4E(0),-,-,p_prune_base[0],p_pseudo_base_prune[0],-,Canon,52.2MB,Pseudo Base(diff=0)
-pt_pscross_C4E1.bin,pt_pscross_C4E[1],genPTPsCrossC4E(1),-,-,p_prune_base[1],p_pseudo_base_prune[1],-,Canon,52.2MB,Pseudo Base(diff=1)
-pt_pscross_C4E2.bin,pt_pscross_C4E[2],genPTPsCrossC4E(2),-,-,p_prune_base[2],p_pseudo_base_prune[2],-,Canon,52.2MB,Pseudo Base(diff=2)
-pt_pscross_C4E3.bin,pt_pscross_C4E[3],genPTPsCrossC4E(3),-,-,p_prune_base[3],p_pseudo_base_prune[3],-,Canon,52.2MB,Pseudo Base(diff=3)
-pt_pscross_C4_diff0.bin,pt_pscross_C_diff[0*4+0],genPTPsCrossCDiff(0,0),-,-,-,p_xc_prune[0*4+0],-,Canon,2.17MB,Pseudo XC C4 Diff0
-pt_pscross_C4_diff1.bin,pt_pscross_C_diff[1*4+0],genPTPsCrossCDiff(0,1),-,-,-,p_xc_prune[1*4+0],-,Canon,2.17MB,Pseudo XC C4 Diff1
-pt_pscross_C4_diff2.bin,pt_pscross_C_diff[2*4+0],genPTPsCrossCDiff(0,2),-,-,-,p_xc_prune[2*4+0],-,Canon,2.17MB,Pseudo XC C4 Diff2
-pt_pscross_C4_diff3.bin,pt_pscross_C_diff[3*4+0],genPTPsCrossCDiff(0,3),-,-,-,p_xc_prune[3*4+0],-,Canon,2.17MB,Pseudo XC C4 Diff3
-pt_pscross_C5_diff0.bin,pt_pscross_C_diff[0*4+1],genPTPsCrossCDiff(1,0),-,-,-,p_xc_prune[0*4+1],-,Canon,2.17MB,Pseudo XC C5 Diff0
-pt_pscross_C5_diff1.bin,pt_pscross_C_diff[1*4+1],genPTPsCrossCDiff(1,1),-,-,-,p_xc_prune[1*4+1],-,Canon,2.17MB,Pseudo XC C5 Diff1
-pt_pscross_C5_diff2.bin,pt_pscross_C_diff[2*4+1],genPTPsCrossCDiff(1,2),-,-,-,p_xc_prune[2*4+1],-,Canon,2.17MB,Pseudo XC C5 Diff2
-pt_pscross_C5_diff3.bin,pt_pscross_C_diff[3*4+1],genPTPsCrossCDiff(1,3),-,-,-,p_xc_prune[3*4+1],-,Canon,2.17MB,Pseudo XC C5 Diff3
-pt_pscross_C6_diff0.bin,pt_pscross_C_diff[0*4+2],genPTPsCrossCDiff(2,0),-,-,-,p_xc_prune[0*4+2],-,Canon,2.17MB,Pseudo XC C6 Diff0
-pt_pscross_C6_diff1.bin,pt_pscross_C_diff[1*4+2],genPTPsCrossCDiff(2,1),-,-,-,p_xc_prune[1*4+2],-,Canon,2.17MB,Pseudo XC C6 Diff1
-pt_pscross_C6_diff2.bin,pt_pscross_C_diff[2*4+2],genPTPsCrossCDiff(2,2),-,-,-,p_xc_prune[2*4+2],-,Canon,2.17MB,Pseudo XC C6 Diff2
-pt_pscross_C6_diff3.bin,pt_pscross_C_diff[3*4+2],genPTPsCrossCDiff(2,3),-,-,-,p_xc_prune[3*4+2],-,Canon,2.17MB,Pseudo XC C6 Diff3
-pt_pscross_C7_diff0.bin,pt_pscross_C_diff[0*4+3],genPTPsCrossCDiff(3,0),-,-,-,p_xc_prune[0*4+3],-,Canon,2.17MB,Pseudo XC C7 Diff0
-pt_pscross_C7_diff1.bin,pt_pscross_C_diff[1*4+3],genPTPsCrossCDiff(3,1),-,-,-,p_xc_prune[1*4+3],-,Canon,2.17MB,Pseudo XC C7 Diff1
-pt_pscross_C7_diff2.bin,pt_pscross_C_diff[2*4+3],genPTPsCrossCDiff(3,2),-,-,-,p_xc_prune[2*4+3],-,Canon,2.17MB,Pseudo XC C7 Diff2
-pt_pscross_C7_diff3.bin,pt_pscross_C_diff[3*4+3],genPTPsCrossCDiff(3,3),-,-,-,p_xc_prune[3*4+3],-,Canon,2.17MB,Pseudo XC C7 Diff3
-pt_pscross_E0E1.bin,pt_pscross_E0E1,genPTPsCrossE0E1(),-,-,p_aux_e2_adj,p_aux_e2_adj_prune,-,Canon,47.8MB,Edge2邻接规范表
-pt_pscross_E0E2.bin,pt_pscross_E0E2,genPTPsCrossE0E2(),-,-,p_aux_e2_diag,p_aux_e2_diag_prune,-,Canon,47.8MB,Edge2对角规范表
-pt_pscross_E0E3.bin,pt_pscross_E0E3,genPTPsCrossE0E3(),-,-,→p_aux_e2_adj via rot,-,-,Conj,47.8MB,复用E0E1
-pt_pscross_E1E2.bin,pt_pscross_E1E2,genPTPsCrossE1E2(),-,-,→p_aux_e2_adj via rot,-,-,Conj,47.8MB,复用E0E1
-pt_pscross_E1E3.bin,pt_pscross_E1E3,genPTPsCrossE1E3(),-,-,→p_aux_e2_diag via rot,-,-,Conj,47.8MB,复用E0E2
-pt_pscross_E2E3.bin,pt_pscross_E2E3,genPTPsCrossE2E3(),-,-,→p_aux_e2_adj via rot,-,-,Conj,47.8MB,复用E0E1
-pt_pscross_E0E1E2.bin,pt_pscross_E0E1E2,genPTPsCrossE0E1E2(),-,-,p_aux_e3,p_aux_e3_prune,-,Canon,957MB,Edge3规范表
-pt_pscross_E0E1E3.bin,pt_pscross_E0E1E3,genPTPsCrossE0E1E3(),-,-,→p_aux_e3 via rot,-,-,Zombie,957MB,僵尸表(不使用)
-pt_pscross_E0E2E3.bin,pt_pscross_E0E2E3,genPTPsCrossE0E2E3(),-,-,→p_aux_e3 via rot,-,-,Zombie,957MB,僵尸表(不使用)
-pt_pscross_E1E2E3.bin,pt_pscross_E1E2E3,genPTPsCrossE1E2E3(),-,-,→p_aux_e3 via rot,-,-,Zombie,957MB,僵尸表(不使用)
-pt_pscross_C4C5.bin,pt_pscross_C4C5,genPTPsCrossC4C5(),-,-,p_aux_c2_adj,p_aux_c2_adj_prune,-,Canon,45.6MB,Corner2邻接规范表
-pt_pscross_C4C6.bin,pt_pscross_C4C6,genPTPsCrossC4C6(),-,-,p_aux_c2_diag,p_aux_c2_diag_prune,-,Canon,45.6MB,Corner2对角规范表
-pt_pscross_C4C7.bin,pt_pscross_C4C7,genPTPsCrossC4C7(),-,-,→p_aux_c2_adj via rot,-,-,Conj,45.6MB,复用C4C5
-pt_pscross_C5C6.bin,pt_pscross_C5C6,genPTPsCrossC5C6(),-,-,→p_aux_c2_adj via rot,-,-,Conj,45.6MB,复用C4C5
-pt_pscross_C5C7.bin,pt_pscross_C5C7,genPTPsCrossC5C7(),-,-,→p_aux_c2_diag via rot,-,-,Conj,45.6MB,复用C4C6
-pt_pscross_C6C7.bin,pt_pscross_C6C7,genPTPsCrossC6C7(),-,-,→p_aux_c2_adj via rot,-,-,Conj,45.6MB,复用C4C5
-pt_pscross_C4C5C6.bin,pt_pscross_C4C5C6,genPTPsCrossC4C5C6(),-,-,p_aux_c3,p_aux_c3_prune,-,Canon,822MB,Corner3规范表
-pt_pscross_C4C5C7.bin,pt_pscross_C4C5C7,genPTPsCrossC4C5C7(),-,-,→p_aux_c3 via rot,-,-,Zombie,822MB,僵尸表(不使用)
-pt_pscross_C4C6C7.bin,pt_pscross_C4C6C7,genPTPsCrossC4C6C7(),-,-,→p_aux_c3 via rot,-,-,Zombie,822MB,僵尸表(不使用)
-pt_pscross_C5C6C7.bin,pt_pscross_C5C6C7,genPTPsCrossC5C6C7(),-,-,→p_aux_c3 via rot,-,-,Zombie,822MB,僵尸表(不使用)
-pt_pspair_C4E0.bin,pt_pspair_ce[0*4+0],genPTPsPairCE(0,0),-,-,-,p_ec_prune[0*4+0],-,Canon,296B,Pseudo Pair(C4+E0)
-pt_pspair_C4E1.bin,pt_pspair_ce[1*4+0],genPTPsPairCE(0,1),-,-,-,p_ec_prune[1*4+0],-,Canon,296B,Pseudo Pair(C4+E1)
-pt_pspair_C4E2.bin,pt_pspair_ce[2*4+0],genPTPsPairCE(0,2),-,-,-,p_ec_prune[2*4+0],-,Canon,296B,Pseudo Pair(C4+E2)
-pt_pspair_C4E3.bin,pt_pspair_ce[3*4+0],genPTPsPairCE(0,3),-,-,-,p_ec_prune[3*4+0],-,Canon,296B,Pseudo Pair(C4+E3)
-pt_pspair_C5E0.bin,pt_pspair_ce[0*4+1],genPTPsPairCE(1,0),-,-,-,p_ec_prune[0*4+1],-,Canon,296B,Pseudo Pair(C5+E0)
-pt_pspair_C5E1.bin,pt_pspair_ce[1*4+1],genPTPsPairCE(1,1),-,-,-,p_ec_prune[1*4+1],-,Canon,296B,Pseudo Pair(C5+E1)
-pt_pspair_C5E2.bin,pt_pspair_ce[2*4+1],genPTPsPairCE(1,2),-,-,-,p_ec_prune[2*4+1],-,Canon,296B,Pseudo Pair(C5+E2)
-pt_pspair_C5E3.bin,pt_pspair_ce[3*4+1],genPTPsPairCE(1,3),-,-,-,p_ec_prune[3*4+1],-,Canon,296B,Pseudo Pair(C5+E3)
-pt_pspair_C6E0.bin,pt_pspair_ce[0*4+2],genPTPsPairCE(2,0),-,-,-,p_ec_prune[0*4+2],-,Canon,296B,Pseudo Pair(C6+E0)
-pt_pspair_C6E1.bin,pt_pspair_ce[1*4+2],genPTPsPairCE(2,1),-,-,-,p_ec_prune[1*4+2],-,Canon,296B,Pseudo Pair(C6+E1)
-pt_pspair_C6E2.bin,pt_pspair_ce[2*4+2],genPTPsPairCE(2,2),-,-,-,p_ec_prune[2*4+2],-,Canon,296B,Pseudo Pair(C6+E2)
-pt_pspair_C6E3.bin,pt_pspair_ce[3*4+2],genPTPsPairCE(2,3),-,-,-,p_ec_prune[3*4+2],-,Canon,296B,Pseudo Pair(C6+E3)
-pt_pspair_C7E0.bin,pt_pspair_ce[0*4+3],genPTPsPairCE(3,0),-,-,-,p_ec_prune[0*4+3],-,Canon,296B,Pseudo Pair(C7+E0)
-pt_pspair_C7E1.bin,pt_pspair_ce[1*4+3],genPTPsPairCE(3,1),-,-,-,p_ec_prune[1*4+3],-,Canon,296B,Pseudo Pair(C7+E1)
-pt_pspair_C7E2.bin,pt_pspair_ce[2*4+3],genPTPsPairCE(3,2),-,-,-,p_ec_prune[2*4+3],-,Canon,296B,Pseudo Pair(C7+E2)
-pt_pspair_C7E3.bin,pt_pspair_ce[3*4+3],genPTPsPairCE(3,3),-,-,-,p_ec_prune[3*4+3],-,Canon,296B,Pseudo Pair(C7+E3)
-pt_ep4eo12.bin,pt_ep4eo12,genPTEP4EO12(),-,-,-,-,p_prune_dep_eo,Canon,11.6MB,EO Dependency表
-pt_cross_C4E0E1.bin,pt_cross_C4E0E1_C4E0E2_C4E0E3[0],genPTCrossC4E0E1(),-,-,-,-,p_plus_edge[0],Canon,1.22GB,EO Plus Edge(Right)
-pt_cross_C4E0E2.bin,pt_cross_C4E0E1_C4E0E2_C4E0E3[1],genPTCrossC4E0E2(),-,-,-,-,p_plus_edge[1],Canon,1.22GB,EO Plus Edge(Diag)
-pt_cross_C4E0E3.bin,pt_cross_C4E0E1_C4E0E2_C4E0E3[2],genPTCrossC4E0E3(),-,-,-,-,p_plus_edge[2],Canon,1.22GB,EO Plus Edge(Left)
-pt_cross_C4C5E0.bin,pt_cross_C4C5E0_C4C6E0_C4C7E0[0],genPTCrossC4C5E0(),-,-,-,-,p_plus_corn[0],Canon,1.22GB,EO Plus Corn(Right)
-pt_cross_C4C6E0.bin,pt_cross_C4C5E0_C4C6E0_C4C7E0[1],genPTCrossC4C6E0(),-,-,-,-,p_plus_corn[1],Canon,1.22GB,EO Plus Corn(Diag)
-pt_cross_C4C7E0.bin,pt_cross_C4C5E0_C4C6E0_C4C7E0[2],genPTCrossC4C7E0(),-,-,-,-,p_plus_corn[2],Canon,1.22GB,EO Plus Corn(Left)
-pt_cross_C4C5C6.bin,pt_cross_C4C5C6,genPTCrossC4C5C6(),-,-,-,-,p_prune_3c,Canon,1.22GB,EO三角表
-
-
-===== 移动表 (Move Tables) =====,,,,,,,,,0KB,
-mt_edge.bin,mt_edge,genMTEdge(),-,-,p_edge,p_edge_move_ptr,p_edge,Canon,<100KB,单棱移动表
-mt_corn.bin,mt_corn,genMTCorn(),-,-,p_corn,p_corner_move_ptr,p_corner,Canon,<100KB,单角移动表
-mt_edge4.bin,mt_edge4,genMTEdge4(),p_multi,p_multi,p_multi,p_multi_move_ptr,p_multi,Canon,17.4MB,Edge4移动表
-mt_edge2.bin,mt_edge2,genMTEdge2(),p_multi(CrossSolver),-,p_edges2,p_edge2_move_ptr,-,Canon,<100KB,Edge2移动表
-mt_edge3.bin,mt_edge3,genMTEdge3(),-,-,p_edge3,p_edge3_move_ptr,-,Canon,742KB,Edge3移动表
-mt_edge6.bin,mt_edge6,genMTEdge6(),p_edge6,p_edge6,p_edge6,-,p_edge6,Canon,2.85GB,Edge6移动表
-mt_corn2.bin,mt_corn2,genMTCorn2(),p_corn2,p_corn2,p_corners2,p_corner2_move_ptr,p_corn2,Canon,<100KB,Corner2移动表
-mt_corn3.bin,mt_corn3,genMTCorn3(),-,-,p_corners3,p_corner3_move_ptr,-,Canon,637KB,Corner3移动表
-mt_eo12.bin,mt_eo12,genMTEO(),-,-,-,-,p_eo,Canon,144KB,EO移动表
-mt_eo12_alt.bin,mt_eo12_alt,genMTEOAlt(),-,-,-,-,p_eo,Canon,144KB,EO Alt移动表
-mt_ep1.bin,mt_ep1,genMTEP1(),-,-,-,-,-,Canon,<100KB,EP1移动表
-mt_ep4.bin,mt_ep4,genMTEP4(),-,-,-,-,p_dep,Canon,835KB,EP4移动表
+文件名,管理层变量名,generator,Std变量名,Pair变量名,Pseudo变量名,PseudoPair变量名,EOCross变量名,加载状态,大小,说明
 
 ===== 加载状态说明 =====,,,,,,,,,0KB,
 Canon,"规范表,实际加载到内存",,,,,,,,
 Conj,"共轭复用表,不加载,运行时通过rot_map映射到规范表",,,,,,,,
 Zombie,"僵尸表,生成但完全不使用,仅用于调试",,,,,,,,
+
+===== 移动表MT (Move Tables) =====,,,,,,,,,0KB,
+mt_edge.bin,mt_edge,genMTEdge(),-,-,p_mt_edge,p_mt_edge,p_mt_edge,Canon,<100KB,单棱移动表
+mt_corn.bin,mt_corn,genMTCorn(),-,-,p_mt_corn,p_mt_corn,p_mt_corn,Canon,<100KB,单角移动表
+mt_edge4.bin,mt_edge4,genMTEdge4(),p_mt_edge4,p_mt_edge4,p_mt_edge4,p_mt_edge4,p_mt_edge4,Canon,17.4MB,Edge4移动表
+mt_edge2.bin,mt_edge2,genMTEdge2(),p_mt_edge2(CrossSolver),-,p_mt_edge2,p_mt_edge2,-,Canon,<100KB,Edge2移动表
+mt_edge3.bin,mt_edge3,genMTEdge3(),-,-,p_mt_edge3,p_mt_edge3,-,Canon,742KB,Edge3移动表
+mt_edge6.bin,mt_edge6,genMTEdge6(),p_mt_edge6,p_mt_edge6,p_mt_edge6,-,p_mt_edge6,Canon,2.85GB,Edge6移动表
+mt_corn2.bin,mt_corn2,genMTCorn2(),p_mt_corn2,p_mt_corn2,p_mt_corn2,p_mt_corn2,p_mt_corn2,Canon,<100KB,Corner2移动表
+mt_corn3.bin,mt_corn3,genMTCorn3(),-,-,p_mt_corn3,p_mt_corn3,-,Canon,637KB,Corner3移动表
+mt_eo12.bin,mt_eo12,genMTEO(),-,-,-,-,p_mt_eo12,Canon,144KB,EO移动表
+mt_eo12_alt.bin,mt_eo12_alt,genMTEOAlt(),-,-,-,-,p_mt_eo12_alt,Canon,144KB,EO Alt移动表
+mt_ep1.bin,mt_ep1,genMTEP1(),-,-,-,-,-,Canon,<100KB,EP1移动表
+mt_ep4.bin,mt_ep4,genMTEP4(),-,-,-,-,p_mt_ep4,Canon,835KB,EP4移动表
+
+===== 剪枝表PT (Prune Tables) =====,,,,,,,,,0KB,
+
+--- Std/Pair/EOCross 共享表 ---,,,,,,,,,0KB,
+pt_cross.bin,pt_cross,genPTCross(),p_pt_cross(CrossSolver),-,p_pt_cross(CrossSolver),-,p_pt_cross,Canon,136KB,Cross剪枝表
+pt_cross_C4.bin,pt_cross_C4,genPTCrossC4(),-,p_pt_cross_C4,-,-,p_pt_cross_C4(XCross),Canon,4.35MB,Cross+C4
+pt_pair_C4E0.bin,pt_pair_C4E0,genPTPairC4E0(),-,p_pt_pair_C4E0,-,-,-,Canon,584B,Pair(C4+E0)
+pt_cross_C4E0.bin,pt_cross_C4E0,genPTCrossC4E0(),p_pt_cross_C4E0,p_pt_cross_C4E0,-,-,p_pt_cross_C4E0,Canon,52.2MB,XCross(C4+E0)
+pt_cross_C4C5E0E1.bin,pt_cross_C4C5E0E1,genPTCrossC4C5E0E1(),p_pt_cross_C4C5E0E1,p_pt_cross_C4C5E0E1,p_pt_cross_C4C5E0E1,-,p_pt_cross_C4C5E0E1,Canon,9.99GB,Huge邻近表
+pt_cross_C4C6E0E2.bin,pt_cross_C4C6E0E2,genPTCrossC4C6E0E2(),p_pt_cross_C4C6E0E2,p_pt_cross_C4C6E0E2,-,-,p_pt_cross_C4C6E0E2,Canon,9.99GB,Huge对角表
+
+--- Pseudo 基础表 ---,,,,,,,,,0KB,
+pt_pscross.bin,pt_pscross,genPTPsCross(),-,-,p_pt_pscross(CrossSolver),-,-,Canon,136KB,Pseudo Cross
+pt_pscross_C4E0.bin,pt_pscross_C4E[0],genPTPsCrossC4E(0),-,-,p_pt_pscross_C4E[0],p_pt_pscross_C4E[0],-,Canon,52.2MB,Pseudo Base(diff=0)
+pt_pscross_C4E1.bin,pt_pscross_C4E[1],genPTPsCrossC4E(1),-,-,p_pt_pscross_C4E[1],p_pt_pscross_C4E[1],-,Canon,52.2MB,Pseudo Base(diff=1)
+pt_pscross_C4E2.bin,pt_pscross_C4E[2],genPTPsCrossC4E(2),-,-,p_pt_pscross_C4E[2],p_pt_pscross_C4E[2],-,Canon,52.2MB,Pseudo Base(diff=2)
+pt_pscross_C4E3.bin,pt_pscross_C4E[3],genPTPsCrossC4E(3),-,-,p_pt_pscross_C4E[3],p_pt_pscross_C4E[3],-,Canon,52.2MB,Pseudo Base(diff=3)
+
+--- Pseudo Aux Edge2 表 ---,,,,,,,,,0KB,
+pt_pscross_E0E1.bin,pt_pscross_E0E1,genPTPsCrossE0E1(),-,-,p_pt_pscross_E0E1,p_pt_pscross_E0E1,-,Canon,47.8MB,Edge2邻接规范表
+pt_pscross_E0E2.bin,pt_pscross_E0E2,genPTPsCrossE0E2(),-,-,p_pt_pscross_E0E2,p_pt_pscross_E0E2,-,Canon,47.8MB,Edge2对角规范表
+pt_pscross_E0E3.bin,pt_pscross_E0E3,genPTPsCrossE0E3(),-,-,→p_pt_pscross_E0E1 via rot,-,-,Conj,47.8MB,复用E0E1
+pt_pscross_E1E2.bin,pt_pscross_E1E2,genPTPsCrossE1E2(),-,-,→p_pt_pscross_E0E1 via rot,-,-,Conj,47.8MB,复用E0E1
+pt_pscross_E1E3.bin,pt_pscross_E1E3,genPTPsCrossE1E3(),-,-,→p_pt_pscross_E0E2 via rot,-,-,Conj,47.8MB,复用E0E2
+pt_pscross_E2E3.bin,pt_pscross_E2E3,genPTPsCrossE2E3(),-,-,→p_pt_pscross_E0E1 via rot,-,-,Conj,47.8MB,复用E0E1
+
+--- Pseudo Aux Edge3 表 ---,,,,,,,,,0KB,
+pt_pscross_E0E1E2.bin,pt_pscross_E0E1E2,genPTPsCrossE0E1E2(),-,-,p_pt_pscross_E0E1E2,p_pt_pscross_E0E1E2,-,Canon,957MB,Edge3规范表
+pt_pscross_E0E1E3.bin,pt_pscross_E0E1E3,genPTPsCrossE0E1E3(),-,-,→p_pt_pscross_E0E1E2 via rot,-,-,Zombie,957MB,僵尸表(不使用)
+pt_pscross_E0E2E3.bin,pt_pscross_E0E2E3,genPTPsCrossE0E2E3(),-,-,→p_pt_pscross_E0E1E2 via rot,-,-,Zombie,957MB,僵尸表(不使用)
+pt_pscross_E1E2E3.bin,pt_pscross_E1E2E3,genPTPsCrossE1E2E3(),-,-,→p_pt_pscross_E0E1E2 via rot,-,-,Zombie,957MB,僵尸表(不使用)
+
+--- Pseudo Aux Corner2 表 ---,,,,,,,,,0KB,
+pt_pscross_C4C5.bin,pt_pscross_C4C5,genPTPsCrossC4C5(),-,-,p_pt_pscross_C4C5,p_pt_pscross_C4C5,-,Canon,45.6MB,Corner2邻接规范表
+pt_pscross_C4C6.bin,pt_pscross_C4C6,genPTPsCrossC4C6(),-,-,p_pt_pscross_C4C6,p_pt_pscross_C4C6,-,Canon,45.6MB,Corner2对角规范表
+pt_pscross_C4C7.bin,pt_pscross_C4C7,genPTPsCrossC4C7(),-,-,→p_pt_pscross_C4C5 via rot,-,-,Conj,45.6MB,复用C4C5
+pt_pscross_C5C6.bin,pt_pscross_C5C6,genPTPsCrossC5C6(),-,-,→p_pt_pscross_C4C5 via rot,-,-,Conj,45.6MB,复用C4C5
+pt_pscross_C5C7.bin,pt_pscross_C5C7,genPTPsCrossC5C7(),-,-,→p_pt_pscross_C4C6 via rot,-,-,Conj,45.6MB,复用C4C6
+pt_pscross_C6C7.bin,pt_pscross_C6C7,genPTPsCrossC6C7(),-,-,→p_pt_pscross_C4C5 via rot,-,-,Conj,45.6MB,复用C4C5
+
+--- Pseudo Aux Corner3 表 ---,,,,,,,,,0KB,
+pt_pscross_C4C5C6.bin,pt_pscross_C4C5C6,genPTPsCrossC4C5C6(),-,-,p_pt_pscross_C4C5C6,p_pt_pscross_C4C5C6,-,Canon,822MB,Corner3规范表
+pt_pscross_C4C5C7.bin,pt_pscross_C4C5C7,genPTPsCrossC4C5C7(),-,-,→p_pt_pscross_C4C5C6 via rot,-,-,Zombie,822MB,僵尸表(不使用)
+pt_pscross_C4C6C7.bin,pt_pscross_C4C6C7,genPTPsCrossC4C6C7(),-,-,→p_pt_pscross_C4C5C6 via rot,-,-,Zombie,822MB,僵尸表(不使用)
+pt_pscross_C5C6C7.bin,pt_pscross_C5C6C7,genPTPsCrossC5C6C7(),-,-,→p_pt_pscross_C4C5C6 via rot,-,-,Zombie,822MB,僵尸表(不使用)
+
+--- PseudoPair 变体表 ---,,,,,,,,,0KB,
+pt_pscross_C4.bin,pt_pscross_C[0],genPTPsCrossC(0),-,-,-,p_pt_pscross_C[0],-,Canon,2.17MB,Pseudo C4 Base
+pt_pscross_C5.bin,pt_pscross_C[1],genPTPsCrossC(1),-,-,-,p_pt_pscross_C[1],-,Canon,2.17MB,Pseudo C5 Base
+pt_pscross_C6.bin,pt_pscross_C[2],genPTPsCrossC(2),-,-,-,p_pt_pscross_C[2],-,Canon,2.17MB,Pseudo C6 Base
+pt_pscross_C7.bin,pt_pscross_C[3],genPTPsCrossC(3),-,-,-,p_pt_pscross_C[3],-,Canon,2.17MB,Pseudo C7 Base
+pt_pscross_C4_diff0.bin,pt_pscross_C_diff[0*4+0],genPTPsCrossCDiff(0,0),-,-,-,p_pt_pscross_C_diff[0*4+0],-,Canon,2.17MB,Pseudo XC C4 Diff0
+pt_pscross_C4_diff1.bin,pt_pscross_C_diff[1*4+0],genPTPsCrossCDiff(0,1),-,-,-,p_pt_pscross_C_diff[1*4+0],-,Canon,2.17MB,Pseudo XC C4 Diff1
+pt_pscross_C4_diff2.bin,pt_pscross_C_diff[2*4+0],genPTPsCrossCDiff(0,2),-,-,-,p_pt_pscross_C_diff[2*4+0],-,Canon,2.17MB,Pseudo XC C4 Diff2
+pt_pscross_C4_diff3.bin,pt_pscross_C_diff[3*4+0],genPTPsCrossCDiff(0,3),-,-,-,p_pt_pscross_C_diff[3*4+0],-,Canon,2.17MB,Pseudo XC C4 Diff3
+pt_pscross_C5_diff0.bin,pt_pscross_C_diff[0*4+1],genPTPsCrossCDiff(1,0),-,-,-,p_pt_pscross_C_diff[0*4+1],-,Canon,2.17MB,Pseudo XC C5 Diff0
+pt_pscross_C5_diff1.bin,pt_pscross_C_diff[1*4+1],genPTPsCrossCDiff(1,1),-,-,-,p_pt_pscross_C_diff[1*4+1],-,Canon,2.17MB,Pseudo XC C5 Diff1
+pt_pscross_C5_diff2.bin,pt_pscross_C_diff[2*4+1],genPTPsCrossCDiff(1,2),-,-,-,p_pt_pscross_C_diff[2*4+1],-,Canon,2.17MB,Pseudo XC C5 Diff2
+pt_pscross_C5_diff3.bin,pt_pscross_C_diff[3*4+1],genPTPsCrossCDiff(1,3),-,-,-,p_pt_pscross_C_diff[3*4+1],-,Canon,2.17MB,Pseudo XC C5 Diff3
+pt_pscross_C6_diff0.bin,pt_pscross_C_diff[0*4+2],genPTPsCrossCDiff(2,0),-,-,-,p_pt_pscross_C_diff[0*4+2],-,Canon,2.17MB,Pseudo XC C6 Diff0
+pt_pscross_C6_diff1.bin,pt_pscross_C_diff[1*4+2],genPTPsCrossCDiff(2,1),-,-,-,p_pt_pscross_C_diff[1*4+2],-,Canon,2.17MB,Pseudo XC C6 Diff1
+pt_pscross_C6_diff2.bin,pt_pscross_C_diff[2*4+2],genPTPsCrossCDiff(2,2),-,-,-,p_pt_pscross_C_diff[2*4+2],-,Canon,2.17MB,Pseudo XC C6 Diff2
+pt_pscross_C6_diff3.bin,pt_pscross_C_diff[3*4+2],genPTPsCrossCDiff(2,3),-,-,-,p_pt_pscross_C_diff[3*4+2],-,Canon,2.17MB,Pseudo XC C6 Diff3
+pt_pscross_C7_diff0.bin,pt_pscross_C_diff[0*4+3],genPTPsCrossCDiff(3,0),-,-,-,p_pt_pscross_C_diff[0*4+3],-,Canon,2.17MB,Pseudo XC C7 Diff0
+pt_pscross_C7_diff1.bin,pt_pscross_C_diff[1*4+3],genPTPsCrossCDiff(3,1),-,-,-,p_pt_pscross_C_diff[1*4+3],-,Canon,2.17MB,Pseudo XC C7 Diff1
+pt_pscross_C7_diff2.bin,pt_pscross_C_diff[2*4+3],genPTPsCrossCDiff(3,2),-,-,-,p_pt_pscross_C_diff[2*4+3],-,Canon,2.17MB,Pseudo XC C7 Diff2
+pt_pscross_C7_diff3.bin,pt_pscross_C_diff[3*4+3],genPTPsCrossCDiff(3,3),-,-,-,p_pt_pscross_C_diff[3*4+3],-,Canon,2.17MB,Pseudo XC C7 Diff3
+pt_pspair_C4E0.bin,pt_pspair_ce[0*4+0],genPTPsPairCE(0,0),-,-,-,p_pt_pspair_ce[0*4+0],-,Canon,296B,Pseudo Pair(C4+E0)
+pt_pspair_C4E1.bin,pt_pspair_ce[1*4+0],genPTPsPairCE(0,1),-,-,-,p_pt_pspair_ce[1*4+0],-,Canon,296B,Pseudo Pair(C4+E1)
+pt_pspair_C4E2.bin,pt_pspair_ce[2*4+0],genPTPsPairCE(0,2),-,-,-,p_pt_pspair_ce[2*4+0],-,Canon,296B,Pseudo Pair(C4+E2)
+pt_pspair_C4E3.bin,pt_pspair_ce[3*4+0],genPTPsPairCE(0,3),-,-,-,p_pt_pspair_ce[3*4+0],-,Canon,296B,Pseudo Pair(C4+E3)
+pt_pspair_C5E0.bin,pt_pspair_ce[0*4+1],genPTPsPairCE(1,0),-,-,-,p_pt_pspair_ce[0*4+1],-,Canon,296B,Pseudo Pair(C5+E0)
+pt_pspair_C5E1.bin,pt_pspair_ce[1*4+1],genPTPsPairCE(1,1),-,-,-,p_pt_pspair_ce[1*4+1],-,Canon,296B,Pseudo Pair(C5+E1)
+pt_pspair_C5E2.bin,pt_pspair_ce[2*4+1],genPTPsPairCE(1,2),-,-,-,p_pt_pspair_ce[2*4+1],-,Canon,296B,Pseudo Pair(C5+E2)
+pt_pspair_C5E3.bin,pt_pspair_ce[3*4+1],genPTPsPairCE(1,3),-,-,-,p_pt_pspair_ce[3*4+1],-,Canon,296B,Pseudo Pair(C5+E3)
+pt_pspair_C6E0.bin,pt_pspair_ce[0*4+2],genPTPsPairCE(2,0),-,-,-,p_pt_pspair_ce[0*4+2],-,Canon,296B,Pseudo Pair(C6+E0)
+pt_pspair_C6E1.bin,pt_pspair_ce[1*4+2],genPTPsPairCE(2,1),-,-,-,p_pt_pspair_ce[1*4+2],-,Canon,296B,Pseudo Pair(C6+E1)
+pt_pspair_C6E2.bin,pt_pspair_ce[2*4+2],genPTPsPairCE(2,2),-,-,-,p_pt_pspair_ce[2*4+2],-,Canon,296B,Pseudo Pair(C6+E2)
+pt_pspair_C6E3.bin,pt_pspair_ce[3*4+2],genPTPsPairCE(2,3),-,-,-,p_pt_pspair_ce[3*4+2],-,Canon,296B,Pseudo Pair(C6+E3)
+pt_pspair_C7E0.bin,pt_pspair_ce[0*4+3],genPTPsPairCE(3,0),-,-,-,p_pt_pspair_ce[0*4+3],-,Canon,296B,Pseudo Pair(C7+E0)
+pt_pspair_C7E1.bin,pt_pspair_ce[1*4+3],genPTPsPairCE(3,1),-,-,-,p_pt_pspair_ce[1*4+3],-,Canon,296B,Pseudo Pair(C7+E1)
+pt_pspair_C7E2.bin,pt_pspair_ce[2*4+3],genPTPsPairCE(3,2),-,-,-,p_pt_pspair_ce[2*4+3],-,Canon,296B,Pseudo Pair(C7+E2)
+pt_pspair_C7E3.bin,pt_pspair_ce[3*4+3],genPTPsPairCE(3,3),-,-,-,p_pt_pspair_ce[3*4+3],-,Canon,296B,Pseudo Pair(C7+E3)
+
+--- EOCross 专用表 ---,,,,,,,,,0KB,
+pt_ep4eo12.bin,pt_ep4eo12,genPTEP4EO12(),-,-,-,-,p_pt_ep4eo12,Canon,11.6MB,EO Dependency表
+pt_cross_C4E0E1.bin,pt_cross_CEE[0],genPTCrossCEE(0),-,-,-,-,p_pt_cross_CEE[0],Canon,1.22GB,EO Plus Edge(Right)
+pt_cross_C4E0E2.bin,pt_cross_CEE[1],genPTCrossCEE(1),-,-,-,-,p_pt_cross_CEE[1],Canon,1.22GB,EO Plus Edge(Diag)
+pt_cross_C4E0E3.bin,pt_cross_CEE[2],genPTCrossCEE(2),-,-,-,-,p_pt_cross_CEE[2],Canon,1.22GB,EO Plus Edge(Left)
+pt_cross_C4C5E0.bin,pt_cross_CCE[0],genPTCrossCCE(0),-,-,-,-,p_pt_cross_CCE[0],Canon,1.22GB,EO Plus Corn(Right)
+pt_cross_C4C6E0.bin,pt_cross_CCE[1],genPTCrossCCE(1),-,-,-,-,p_pt_cross_CCE[1],Canon,1.22GB,EO Plus Corn(Diag)
+pt_cross_C4C7E0.bin,pt_cross_CCE[2],genPTCrossCCE(2),-,-,-,-,p_pt_cross_CCE[2],Canon,1.22GB,EO Plus Corn(Left)
+pt_cross_C4C5C6.bin,pt_cross_C4C5C6,genPTCrossC4C5C6(),-,-,-,-,p_pt_cross_C4C5C6,Canon,1.22GB,EO三角表
