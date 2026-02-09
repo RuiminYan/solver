@@ -147,13 +147,13 @@ constexpr int MAX_AUX = 8;
 
 struct CrossSolver {
   const int *p_mt_edge2;
-  const unsigned char *p_prune;
+  const unsigned char *p_pt_pscross;
 
   CrossSolver() {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
     p_mt_edge2 = mtm.getEdge2MTPtr();
-    p_prune = ptm.getPsCrossPTPtr();
+    p_pt_pscross = ptm.getPsCrossPTPtr();
   }
 
   bool search(SearchContext &ctx, int i1, int i2, int depth, int prev) {
@@ -165,7 +165,7 @@ struct CrossSolver {
       int n_i1 = p_mt_edge2[i1 + m];
       int n_i2 = p_mt_edge2[i2 + m];
       long long idx = (long long)n_i1 * 528 + n_i2;
-      if (get_prune_ptr(p_prune, idx) >= depth)
+      if (get_prune_ptr(p_pt_pscross, idx) >= depth)
         continue;
       if (depth == 1) {
         return true;
@@ -187,7 +187,7 @@ struct CrossSolver {
         i2 = p_mt_edge2[i2 * 18 + m];
       }
       long long idx = (long long)i1 * 528 + i2;
-      int d_min = get_prune_ptr(p_prune, idx);
+      int d_min = get_prune_ptr(p_pt_pscross, idx);
       if (d_min == 0)
         continue;
       SearchContext ctx;
@@ -207,7 +207,7 @@ struct XCrossSolver {
   const int *p_mt_edge4, *p_mt_corn, *p_mt_edge, *p_mt_edge2, *p_mt_corn2, *p_mt_corn3,
       *p_mt_edge3;
   const int *p_edge6 = nullptr; // 增加 Edge6 引用
-  const unsigned char *p_prune_base[4];
+  const unsigned char *p_pt_pscross_C4E[4];
   const unsigned char *p_cross_C4C5E0E1 = nullptr;
 
   // const unsigned char* p_cross_C4C6E0E2 = nullptr; // Disabled for memory
@@ -340,7 +340,7 @@ struct XCrossSolver {
     // p_cross_C4C6E0E2 = ptm.getCrossC4C6E0E2PTPtr(); // Disabled
 
     for (int i = 0; i < 4; ++i)
-      p_prune_base[i] = ptm.getPsCrossC4EPTPtr(i);
+      p_pt_pscross_C4E[i] = ptm.getPsCrossC4EPTPtr(i);
 
     // 初始化Edge2 对角表(E0E2)
     if (ptm.hasPsCrossE0E2PT()) {
@@ -971,7 +971,7 @@ struct XCrossSolver {
     }
     auto get_h = [&](const ConjState &s, int diff_idx) {
       long long idx = (long long)(s.im + s.ic_b) * 24 + s.ie_rel[diff_idx];
-      return get_prune_ptr(p_prune_base[diff_idx], idx);
+      return get_prune_ptr(p_pt_pscross_C4E[diff_idx], idx);
     };
 
     {
@@ -1000,7 +1000,7 @@ struct XCrossSolver {
             for (int d = t.h; d <= max_search; ++d) {
               ctx.current_max_depth = d;
               if (search_1(ctx, st.im, st.ic_b * 18, st.ie_rel[t.diff] * 18, d,
-                           18, p_prune_base[t.diff])) {
+                           18, p_pt_pscross_C4E[t.diff])) {
                 res = d;
                 break;
               }
@@ -1148,9 +1148,9 @@ struct XCrossSolver {
             for (int d = t.h; d <= max_search; ++d) {
               ctx.current_max_depth = d;
               if (search_2(ctx, st1.im, st1.ic_b * 18, st1.ie_rel[t.diff1] * 18,
-                           p_prune_base[t.diff1], st2.im, st2.ic_b * 18,
+                           p_pt_pscross_C4E[t.diff1], st2.im, st2.ic_b * 18,
                            st2.ie_rel[t.diff2] * 18, trans_moves[t.c1][t.c2],
-                           p_prune_base[t.diff2], t.i_e6 * 18, t.i_c2 * 18,
+                           p_pt_pscross_C4E[t.diff2], t.i_e6 * 18, t.i_c2 * 18,
                            t.p_huge_table, t.mirror_huge, d, 18, t.num_aux,
                            t.aux_init)) {
                 res = d;
@@ -1232,11 +1232,11 @@ struct XCrossSolver {
             for (int d = t.h; d <= max_search; ++d) {
               ctx.current_max_depth = d;
               if (search_3(ctx, s1.im, s1.ic_b * 18, s1.ie_rel[t.diff1] * 18,
-                           p_prune_base[t.diff1], s2.im, s2.ic_b * 18,
+                           p_pt_pscross_C4E[t.diff1], s2.im, s2.ic_b * 18,
                            s2.ie_rel[t.diff2] * 18, trans_moves[t.c1][t.c2],
-                           p_prune_base[t.diff2], s3.im, s3.ic_b * 18,
+                           p_pt_pscross_C4E[t.diff2], s3.im, s3.ic_b * 18,
                            s3.ie_rel[t.diff3] * 18, trans_moves[t.c1][t.c3],
-                           p_prune_base[t.diff3], d, 18, t.num_aux,
+                           p_pt_pscross_C4E[t.diff3], d, 18, t.num_aux,
                            t.aux_init)) {
                 res = d;
                 break;
