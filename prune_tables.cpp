@@ -84,12 +84,13 @@ struct DistributionPrinter {
   }
 
   // 在并行 BFS 循环内部显示扫描进度
-  // 仅线程0报告，使用位掩码控制检查频率以最小化开销
+  // 位掩码检查放最前面（最便宜），绝大多数迭代在此处 return
   void progress(long long i, long long loopTotal, int depth) {
-    if (omp_get_thread_num() != 0)
-      return;
-    // 每 ~100 万次迭代检查一次
+    // 每 ~100 万次迭代检查一次（便宜的位运算，放第一位）
     if ((i & 0xFFFFF) != 0)
+      return;
+    // 仅线程0报告（避免 cout 竞争）
+    if (omp_get_thread_num() != 0)
       return;
     int numThreads = omp_get_num_threads();
     int pct = (int)(i * numThreads * 100 / loopTotal);
