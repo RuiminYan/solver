@@ -398,7 +398,17 @@ std::vector<int> create_multi_move_table(int n, int c, int pn, int size,
   std::vector<int> a(n), b(n);
   std::vector<int> inv = {2,  1,  0, 5,  4,  3,  8,  7,  6,
                           11, 10, 9, 14, 13, 12, 17, 16, 15};
+  // NOTE: 仅对大表显示进度，小表瞬间完成无需显示
+  bool showProgress = (size > 100000);
+  int lastPct = -1;
   for (int i = 0; i < size; ++i) {
+    if (showProgress) {
+      int pct = (int)((long long)i * 100 / size);
+      if (pct != lastPct) {
+        lastPct = pct;
+        std::cout << "\r  Progress: " << pct << "%" << std::flush;
+      }
+    }
     index_to_array(a, i, n, c, pn);
     int tmp_i = i * 18;
     for (int j = 0; j < 18; ++j) {
@@ -411,6 +421,8 @@ std::vector<int> create_multi_move_table(int n, int c, int pn, int size,
       }
     }
   }
+  if (showProgress)
+    std::cout << "\r  Progress: 100%    " << std::endl;
   return mt;
 }
 
@@ -420,7 +432,17 @@ std::vector<int> create_multi_move_table2(int n, int c, int pn, int size,
   std::vector<int> a(n), b(n);
   std::vector<int> inv = {2,  1,  0, 5,  4,  3,  8,  7,  6,
                           11, 10, 9, 14, 13, 12, 17, 16, 15};
+  // NOTE: 仅对大表显示进度，小表瞬间完成无需显示
+  bool showProgress = (size > 100000);
+  int lastPct = -1;
   for (int i = 0; i < size; ++i) {
+    if (showProgress) {
+      int pct = (int)((long long)i * 100 / size);
+      if (pct != lastPct) {
+        lastPct = pct;
+        std::cout << "\r  Progress: " << pct << "%" << std::flush;
+      }
+    }
     index_to_array(a, i, n, c, pn);
     int tmp_i = i * 24;
     for (int j = 0; j < 18; ++j) {
@@ -433,5 +455,7 @@ std::vector<int> create_multi_move_table2(int n, int c, int pn, int size,
       }
     }
   }
+  if (showProgress)
+    std::cout << "\r  Progress: 100%    " << std::endl;
   return mt;
 }
