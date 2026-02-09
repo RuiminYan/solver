@@ -208,9 +208,9 @@ struct XCrossSolver {
       *p_edge3;
   const int *p_edge6 = nullptr; // 增加 Edge6 引用
   const unsigned char *p_prune_base[4];
-  const unsigned char *p_huge_neighbor = nullptr;
+  const unsigned char *p_cross_C4C5E0E1 = nullptr;
 
-  // const unsigned char* p_huge_diagonal = nullptr; // Disabled for memory
+  // const unsigned char* p_cross_C4C6E0E2 = nullptr; // Disabled for memory
 
   // === 静态 Aux 表指针 ===
   // Edge2: 邻棱 (E0E1) 和 对棱 (E0E2)
@@ -335,9 +335,9 @@ struct XCrossSolver {
     p_edge6 = mtm.getEdge6MTPtr();
 
     // 使用 Ptr 方式获取 Huge Table (与 std_analyzer 一致，无日志输出)
-    p_huge_neighbor = ptm.getCrossC4C5E0E1PTPtr();
+    p_cross_C4C5E0E1 = ptm.getCrossC4C5E0E1PTPtr();
 
-    // p_huge_diagonal = ptm.getCrossC4C6E0E2PTPtr(); // Disabled
+    // p_cross_C4C6E0E2 = ptm.getCrossC4C6E0E2PTPtr(); // Disabled
 
     for (int i = 0; i < 4; ++i)
       p_prune_base[i] = ptm.getPsCrossC4EPTPtr(i);
@@ -1038,9 +1038,9 @@ struct XCrossSolver {
 
             // Only for Neighbor Pairs (0,1) with Diff=0
             // NOTE: Diff=1 和 Diff=3 的优化已弃用
-            // (prune_table_cross_C4_E0_C5_E1_diff1)
+            // (pt_cross_C4C5E0E1_diff1)
             if (cp.first == 0 && cp.second == 1 && d1 == d2 && d1 == 0) {
-              selected_huge_table = p_huge_neighbor;
+              selected_huge_table = p_cross_C4C5E0E1;
             }
 
             if (selected_huge_table) {

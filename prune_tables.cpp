@@ -161,7 +161,7 @@ bool PruneTableManager::loadPseudoTables() {
     return false;
   for (int i = 0; i < 4; ++i) {
     std::string fn =
-        "prune_table_pseudo_cross_C4_E" + std::to_string(i) + ".bin";
+        "pt_pscross_C4E" + std::to_string(i) + ".bin";
     if (!loadTable(pt_pscross_C4E[i], fn))
       return false;
   }
@@ -213,7 +213,7 @@ bool PruneTableManager::loadPseudoPairTables() {
   // 1. 加载 Base 表 (Cross + C{4-7})
   for (int c = 0; c < 4; ++c) {
     std::string fn =
-        "prune_table_pseudo_cross_C" + std::to_string(c + 4) + ".bin";
+        "pt_pscross_C" + std::to_string(c + 4) + ".bin";
     if (!loadTable(pt_pscross_C[c], fn))
       return false;
   }
@@ -222,7 +222,7 @@ bool PruneTableManager::loadPseudoPairTables() {
   for (int e = 0; e < 4; ++e) {
     for (int c = 0; c < 4; ++c) {
       int idx = e * 4 + c;
-      std::string fn = "prune_table_pseudo_cross_C" + std::to_string(c + 4) +
+      std::string fn = "pt_pscross_C" + std::to_string(c + 4) +
                        "_into_slot" + std::to_string(e) + ".bin";
       if (!loadTable(pt_pscross_C_diff[idx], fn))
         return false;
@@ -233,7 +233,7 @@ bool PruneTableManager::loadPseudoPairTables() {
   for (int e = 0; e < 4; ++e) {
     for (int c = 0; c < 4; ++c) {
       int idx = e * 4 + c;
-      std::string fn = "prune_table_pseudo_pair_C" + std::to_string(c + 4) +
+      std::string fn = "pt_pspair_C" + std::to_string(c + 4) +
                        "_E" + std::to_string(e) + ".bin";
       if (!loadTable(pt_pspair_ec[idx], fn))
         return false;
@@ -244,7 +244,7 @@ bool PruneTableManager::loadPseudoPairTables() {
   // 这组表用于 Conj 优化，从 C4 视角追踪 XCross 状态
   for (int e = 0; e < 4; ++e) {
     std::string fn =
-        "prune_table_pseudo_cross_C4_E" + std::to_string(e) + ".bin";
+        "pt_pscross_C4E" + std::to_string(e) + ".bin";
     if (!loadTable(pt_pscross_C4E[e], fn))
       return false;
   }
@@ -335,14 +335,14 @@ bool PruneTableManager::loadEOCrossTables() {
 }
 
 // --- 前向声明: Pseudo 表生成函数 ---
-void create_prune_table_pseudo_cross_corner(
+void create_pt_pscross_corner(
     int index2, int depth, const std::vector<int> &table1,
     const std::vector<int> &table2, std::vector<unsigned char> &prune_table);
-void create_prune_table_pseudo_xcross(int index3, int index2, int depth,
+void create_pt_pscross_xcross(int index3, int index2, int depth,
                                       const std::vector<int> &table1,
                                       const std::vector<int> &table2,
                                       std::vector<unsigned char> &prune_table);
-void create_prune_table_pseudo_pair(int index1, int index2, int size1,
+void create_pt_pspair(int index1, int index2, int size1,
                                     int size2, int depth,
                                     const std::vector<int> &table1,
                                     const std::vector<int> &table2,
@@ -427,7 +427,7 @@ void PruneTableManager::generateAllSequentially() {
   // 8. Pseudo XCross Prunes
   for (int i = 0; i < 4; ++i) {
     std::string fn =
-        "prune_table_pseudo_cross_C4_E" + std::to_string(i) + ".bin";
+        "pt_pscross_C4E" + std::to_string(i) + ".bin";
     if (!fileExists(fn)) {
       mtm.loadCrossMT();
       mtm.loadCornMT();
@@ -628,13 +628,13 @@ void PruneTableManager::generateAllSequentially() {
   bool need_variant_tables = false;
   for (int c = 0; c < 4 && !need_variant_tables; ++c) {
     std::string fn =
-        "prune_table_pseudo_cross_C" + std::to_string(c + 4) + ".bin";
+        "pt_pscross_C" + std::to_string(c + 4) + ".bin";
     if (!fileExists(fn))
       need_variant_tables = true;
   }
   for (int c = 0; c < 4 && !need_variant_tables; ++c) {
     for (int e = 0; e < 4 && !need_variant_tables; ++e) {
-      std::string fn = "prune_table_pseudo_cross_C" + std::to_string(c + 4) +
+      std::string fn = "pt_pscross_C" + std::to_string(c + 4) +
                        "_into_slot" + std::to_string(e) + ".bin";
       if (!fileExists(fn))
         need_variant_tables = true;
@@ -642,7 +642,7 @@ void PruneTableManager::generateAllSequentially() {
   }
   for (int c = 0; c < 4 && !need_variant_tables; ++c) {
     for (int e = 0; e < 4 && !need_variant_tables; ++e) {
-      std::string fn = "prune_table_pseudo_pair_C" + std::to_string(c + 4) +
+      std::string fn = "pt_pspair_C" + std::to_string(c + 4) +
                        "_E" + std::to_string(e) + ".bin";
       if (!fileExists(fn))
         need_variant_tables = true;
@@ -658,10 +658,10 @@ void PruneTableManager::generateAllSequentially() {
     // 22. Pseudo Cross + Corner 变体表 (4 个: C4, C5, C6, C7)
     for (int c = 0; c < 4; ++c) {
       std::string fn =
-          "prune_table_pseudo_cross_C" + std::to_string(c + 4) + ".bin";
+          "pt_pscross_C" + std::to_string(c + 4) + ".bin";
       if (!fileExists(fn)) {
         std::cout << "  Generating " << fn << "..." << std::endl;
-        create_prune_table_pseudo_cross_corner(
+        create_pt_pscross_corner(
             corner_indices[c], 10, mtm.getCrossMT(), mtm.getCornMT(),
             temp_table);
         saveTable(temp_table, fn);
@@ -671,11 +671,11 @@ void PruneTableManager::generateAllSequentially() {
     // 23. Pseudo XCross 变体表 (16 个: C{4-7}_into_slot{0-3})
     for (int c = 0; c < 4; ++c) {
       for (int e = 0; e < 4; ++e) {
-        std::string fn = "prune_table_pseudo_cross_C" + std::to_string(c + 4) +
+        std::string fn = "pt_pscross_C" + std::to_string(c + 4) +
                          "_into_slot" + std::to_string(e) + ".bin";
         if (!fileExists(fn)) {
           std::cout << "  Generating " << fn << "..." << std::endl;
-          create_prune_table_pseudo_xcross(edge_indices[e], corner_indices[c],
+          create_pt_pscross_xcross(edge_indices[e], corner_indices[c],
                                            10, mtm.getCrossMT(),
                                            mtm.getCornMT(), temp_table);
           saveTable(temp_table, fn);
@@ -686,11 +686,11 @@ void PruneTableManager::generateAllSequentially() {
     // 24. Pseudo Pair 变体表 (16 个: C{4-7}_E{0-3})
     for (int c = 0; c < 4; ++c) {
       for (int e = 0; e < 4; ++e) {
-        std::string fn = "prune_table_pseudo_pair_C" + std::to_string(c + 4) +
+        std::string fn = "pt_pspair_C" + std::to_string(c + 4) +
                          "_E" + std::to_string(e) + ".bin";
         if (!fileExists(fn)) {
           std::cout << "  Generating " << fn << "..." << std::endl;
-          create_prune_table_pseudo_pair(edge_indices[e], corner_indices[c], 24,
+          create_pt_pspair(edge_indices[e], corner_indices[c], 24,
                                          24, 8, mtm.getEdgeMT(),
                                          mtm.getCornMT(), temp_table);
           saveTable(temp_table, fn);
@@ -728,7 +728,7 @@ void PruneTableManager::generateCrossPT() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating cross prune table..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  const auto &edges_2_table = mtm.getEdge2MT();
+  const auto &edge2_mt = mtm.getEdge2MT();
   long long sz = 24LL * 22 * 24 * 22;
   std::vector<unsigned char> tmp(sz, 255);
   int i1 = 416, i2 = 520;
@@ -742,8 +742,8 @@ void PruneTableManager::generateCrossPT() {
         cnt++;
         int idx1 = (i / 528) * 18, idx2 = (i % 528) * 18;
         for (int j = 0; j < 18; ++j) {
-          long long ni = (long long)edges_2_table[idx1 + j] * 528 +
-                         edges_2_table[idx2 + j];
+          long long ni = (long long)edge2_mt[idx1 + j] * 528 +
+                         edge2_mt[idx2 + j];
           // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected,
@@ -851,15 +851,15 @@ void PruneTableManager::generatePsCrossPT() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pseudo cross prune table..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  const auto &edges_2_table = mtm.getEdge2MT();
+  const auto &edge2_mt = mtm.getEdge2MT();
   long long sz = 24LL * 22 * 24 * 22;
   std::vector<unsigned char> tmp(sz, 255);
   int d_moves[] = {-1, 3, 4, 5};
   for (int k = 0; k < 4; ++k) {
     int i1 = 416, i2 = 520;
     if (k > 0) {
-      i1 = edges_2_table[i1 * 18 + d_moves[k]];
-      i2 = edges_2_table[i2 * 18 + d_moves[k]];
+      i1 = edge2_mt[i1 * 18 + d_moves[k]];
+      i2 = edge2_mt[i2 * 18 + d_moves[k]];
     }
     tmp[(long long)i1 * 528 + i2] = 0;
   }
@@ -872,8 +872,8 @@ void PruneTableManager::generatePsCrossPT() {
         cnt++;
         int idx1 = (i / 528) * 18, idx2 = (i % 528) * 18;
         for (int j = 0; j < 18; ++j) {
-          long long ni = (long long)edges_2_table[idx1 + j] * 528 +
-                         edges_2_table[idx2 + j];
+          long long ni = (long long)edge2_mt[idx1 + j] * 528 +
+                         edge2_mt[idx2 + j];
           // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected,
@@ -894,7 +894,7 @@ void PruneTableManager::generatePsCrossPT() {
 }
 
 void PruneTableManager::generatePsCrossC4EPT(int i) {
-  std::string fn = "prune_table_pseudo_cross_C4_E" + std::to_string(i) + ".bin";
+  std::string fn = "pt_pscross_C4E" + std::to_string(i) + ".bin";
   if (loadTable(pt_pscross_C4E[i], fn))
     return;
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
@@ -1429,7 +1429,7 @@ void create_pt_pscross_edges3(int idx_cr, int idx_e3, int sz_cr,
 
 // --- 辅助生成函数实现 (移植自 pseudo_pair_analyzer.cpp) ---
 
-void create_prune_table_pseudo_base(int idx_cr, int idx_cn, int idx_ed,
+void create_pt_pscross_base(int idx_cr, int idx_cn, int idx_ed,
                                     int sz_cr, int sz_cn, int sz_ed, int depth,
                                     const std::vector<int> &t1,
                                     const std::vector<int> &t2,
@@ -2096,7 +2096,7 @@ void create_pt_xcross_corn3(
 
 // 生成 Pseudo Cross + Corner 表 (例如: prune_table_pseudo_cross_C4.bin)
 // index2: corner 初始索引 (如 12=C4, 15=C5, 18=C6, 21=C7)
-void create_prune_table_pseudo_cross_corner(
+void create_pt_pscross_corner(
     int index2, int depth, const std::vector<int> &table1,
     const std::vector<int> &table2, std::vector<unsigned char> &prune_table) {
   long long size1 = 190080, size2 = 24, size = size1 * size2;
@@ -2141,7 +2141,7 @@ void create_prune_table_pseudo_cross_corner(
 // 生成 Pseudo XCross 表 (例如: prune_table_pseudo_cross_C4_into_slot0.bin)
 // index3: edge 初始索引 (0, 2, 4, 6 for E0-E3)
 // index2: corner 初始索引 (12, 15, 18, 21 for C4-C7)
-void create_prune_table_pseudo_xcross(int index3, int index2, int depth,
+void create_pt_pscross_xcross(int index3, int index2, int depth,
                                       const std::vector<int> &table1,
                                       const std::vector<int> &table2,
                                       std::vector<unsigned char> &prune_table) {
@@ -2243,7 +2243,7 @@ void create_prune_table_pseudo_xcross(int index3, int index2, int depth,
 // 生成 Pseudo Pair 表 (例如: prune_table_pseudo_pair_C4_E0.bin)
 // index1: edge 初始索引 (0, 2, 4, 6)
 // index2: corner 初始索引 (12, 15, 18, 21)
-void create_prune_table_pseudo_pair(int index1, int index2, int size1,
+void create_pt_pspair(int index1, int index2, int size1,
                                     int size2, int depth,
                                     const std::vector<int> &table1,
                                     const std::vector<int> &table2,

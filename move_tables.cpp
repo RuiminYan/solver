@@ -254,7 +254,7 @@ bool MoveTableManager::loadEOCrossMTs() {
   return true;
 }
 
-// 加载 EO 移动表 (move_table_eo_12.bin)
+// 加载 EO 移动表 (mt_eo.bin)
 bool MoveTableManager::loadEOMT() {
   if (!mt_eo.empty())
     return true;

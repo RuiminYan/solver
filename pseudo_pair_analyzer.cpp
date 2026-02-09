@@ -207,7 +207,7 @@ struct xcross_analyzer2 {
     }
 
     // 4. 获取 Pseudo Base Prune Tables 指针 (C4+E{0-3})
-    // 复用 Pseudo Analyzer 的 pseudo_cross_base_prune
+    // 复用 Pseudo Analyzer 的 pt_pscross_C4E
     for (int e = 0; e < 4; ++e) {
       p_pseudo_base_prune[e] = ptm.getPsCrossC4EPTPtr(e);
     }
