@@ -348,7 +348,7 @@ id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_p
 ### eo_cross_analyzer.cpp
 * 测试命令: `cmd /c "echo scramble_20.txt | eo_cross_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
-* 执行时间: 8.6s
+* 执行时间: 7.9s
 * 输入文件: scramble_20.txt
 * 输出文件: scramble_20_eo.csv
 * 正确结果 (表头 + 前20行数据):
