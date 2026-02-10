@@ -32,13 +32,13 @@
 - **适用范围**: `xxxcross_analyze`, `xxxxcross_analyze` 的 slot 组合枚举
 - **风险**: 低
 
-### ~~8. 跨阶段 Early Exit（级联搜索深度下界）~~ ✅ 已完成
+### 8. 跨阶段 Early Exit（级联搜索深度下界）
 
 - **原理**: 级联搜索中，更多约束只增不减步数（如 XXCross ≥ XCross）。用前一阶段的 best 做后一阶段的搜索起始深度下界
 - **适用范围**: 任何具有级联搜索阶段的 analyzer（如 XCross → XXCross → XXXCross → XXXXCross）
 - **已验证**: `eo_cross_analyzer` 实测效果极小（heuristic 通常已 ≥ 前阶段 best）
 
-### ~~9. 配对内 best 共享（对称输出剪枝）~~ ✅ 已完成
+### 9. 配对内 best 共享（对称输出剪枝）
 
 - **原理**: 若最终输出取 `min(res[2c], res[2c+1])`，则偶数 sym 算完后，奇数 sym 只需搜索比它更优的解，可用偶数 sym 结果做搜索上界
 - **适用范围**: 任何对 rotation 配对取 min 输出的 analyzer
