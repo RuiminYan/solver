@@ -6,7 +6,7 @@
 #   mingw32-make <target> - Build specific target
 
 CXX      = g++
-CXXFLAGS = -std=c++17 -O3 -fopenmp -Wall -Wextra
+CXXFLAGS = -std=c++17 -O3 -mavx2 -fopenmp -Wall -Wextra
 LDFLAGS  = -fopenmp
 LDLIBS   = -lpsapi
 
