@@ -335,9 +335,8 @@ void createPTCrossInsC(int idx1, int idx2, int sz1, int sz2, int depth,
                        const std::vector<int> &t1, const std::vector<int> &t2,
                        std::vector<unsigned char> &pt);
 
-void createPTPair(int idx_e, int idx_c, int sz_e, int sz_c, int depth,
-                  const std::vector<int> &t_edge,
-                  const std::vector<int> &t_corn,
+void createPTPair(int idx_ed, int idx_cn, int sz_ed, int sz_cn, int depth,
+                  const std::vector<int> &t_ed, const std::vector<int> &t_cn,
                   std::vector<unsigned char> &pt);
 
 void createPTCrossCE(int idx_cr, int idx_cn, int idx_ed, int sz_cr, int sz_cn,

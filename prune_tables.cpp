@@ -1624,25 +1624,24 @@ void createPTCrossInsC(int idx1, int idx2, int sz1, int sz2, int depth,
 }
 
 // 2. Pair C4 + E0 (Base)
-void createPTPair(int idx_e, int idx_c, int sz_e, int sz_c, int depth,
-                  const std::vector<int> &t_edge,
-                  const std::vector<int> &t_corn,
+void createPTPair(int idx_ed, int idx_cn, int sz_ed, int sz_cn, int depth,
+                  const std::vector<int> &t_ed, const std::vector<int> &t_cn,
                   std::vector<unsigned char> &pt) {
-  long long total = (long long)sz_e * sz_c;
+  long long total = (long long)sz_ed * sz_cn;
   std::fill(pt.begin(), pt.end(), 255);
   std::vector<std::string> am = {"L U L'", "L U' L'", "B' U B", "B' U' B"};
-  pt[idx_e * sz_c + idx_c] = 0;
+  pt[idx_ed * sz_cn + idx_cn] = 0;
   for (const auto &s : am) {
-    int c1 = idx_e, c2 = idx_c;
+    int c_ed = idx_ed, c_cn = idx_cn;
     for (int m : string_to_alg(s)) {
-      c1 = t_edge[c1 * 18 + m];
-      c2 = t_corn[c2 * 18 + m];
+      c_ed = t_ed[c_ed * 18 + m];
+      c_cn = t_cn[c_cn * 18 + m];
     }
-    pt[c1 * sz_c + c2] = 0;
+    pt[c_ed * sz_cn + c_cn] = 0;
     for (int k = 0; k < 3; ++k) {
-      int n1 = t_edge[c1 * 18 + k];
-      int n2 = t_corn[c2 * 18 + k];
-      pt[n1 * sz_c + n2] = 0;
+      int n_ed = t_ed[c_ed * 18 + k];
+      int n_cn = t_cn[c_cn * 18 + k];
+      pt[n_ed * sz_cn + n_cn] = 0;
     }
   }
   DistributionPrinter dp(total);
@@ -1654,10 +1653,10 @@ void createPTPair(int idx_e, int idx_c, int sz_e, int sz_c, int depth,
       dp.progress(i, total, d);
       if (pt[i] == d) {
         cnt++;
-        int i1 = (i / sz_c) * 18;
-        int i2 = (i % sz_c) * 18;
+        int i_ed = (i / sz_cn) * 18;
+        int i_cn = (i % sz_cn) * 18;
         for (int j = 0; j < 18; ++j) {
-          long long ni = (long long)t_edge[i1 + j] * sz_c + t_corn[i2 + j];
+          long long ni = (long long)t_ed[i_ed + j] * sz_cn + t_cn[i_cn + j];
           if (pt[ni] == 255)
             pt[ni] = nd;
         }
