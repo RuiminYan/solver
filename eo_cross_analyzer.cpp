@@ -591,25 +591,22 @@ struct XCrossSolver {
     return false;
   }
 
-  // --- Search 4: XXXXCross+EO (优化版，与search_3 剪枝策略一致) ---
-  // 4 个视角，每个视角检查对其他 3 个槽位的 Plus 表+ 3-Corner 表
-  bool search_4(
-      // 4 个视角的状态
-      int i1_a, int i2_a, int i3_a, int i1_b, int i2_b, int i3_b, int i1_c,
-      int i2_c, int i3_c, int i1_d, int i2_d, int i3_d,
-      // 全局约束
-      int i_dep, int i_eo, int depth, int prev, int bound,
-      // 追踪状态：每视角对其他 3 个槽位的 Edge/Corner
-      // View A (s0): 看s1,s2,s3
-      int ea_1, int ca_1, int ea_2, int ca_2, int ea_3, int ca_3,
-      // View B (s1): 看s0,s2,s3
-      int eb_0, int cb_0, int eb_2, int cb_2, int eb_3, int cb_3,
-      // View C (s2): 看s0,s1,s3
-      int ec_0, int cc_0, int ec_1, int cc_1, int ec_3, int cc_3,
-      // View D (s3): 看s0,s1,s2
-      int ed_0, int cd_0, int ed_1, int cd_1, int ed_2, int cd_2,
-      // Huge 表参考
-      int v_huge, const unsigned char *p_huge_active, int i_e6, int i_c2) {
+  // 每个 View 在 search_4 中的完整状态
+  // NOTE: ex/cx 统一按 [Right, Diag, Left] 顺序排列，
+  //   因此 Plus 表索引固定为 CEE[0]/CCE[0] (Right), CEE[1]/CCE[1] (Diag),
+  //   CEE[2]/CCE[2] (Left)， 3-Corner 也固定使用 cx[0](Right) 和 cx[1](Diag)
+  struct ViewState {
+    int i1, i2, i3; // Edge4, Corner, Edge 索引
+    int slot;       // conj slot 号 (0,1,2,3)
+    int ex[3];      // 追踪 Edge: [Right, Diag, Left]
+    int cx[3];      // 追踪 Corner: [Right, Diag, Left]
+  };
+
+  // --- Search 4: XXXXCross+EO (数据驱动循环版) ---
+  // 4 个视角按 viewOrder 顺序检查，每个视角检查 Base + Plus×3 + 3-Corner
+  bool search_4(const ViewState views[4], const int viewOrder[4], int i_dep,
+                int i_eo, int depth, int prev, int bound, int v_huge,
+                const unsigned char *p_huge_active, int i_e6, int i_c2) {
     if (depth > bound)
       return false;
 
@@ -637,150 +634,64 @@ struct XCrossSolver {
           depth)
         continue;
 
-      // --- View A (s0): 看s1(Right), s2(Diag), s3(Left) ---
-      int m0 = conj_moves_flat[m][0];
-      int n1a = p_mt_edge4[i1_a + m0], n2a = p_mt_corn[i2_a + m0],
-          n3a = p_mt_edge[i3_a + m0];
-      long long idx_a = (long long)(n1a + n2a) * 24 + n3a;
-      if (get_prune(p_pt_cross_C4E0, idx_a) >= depth)
-        continue;
+      // --- 按 viewOrder 顺序检查 4 个 View ---
+      ViewState nv[4]; // 本轮各 View 的新状态
+      bool pruned = false;
 
-      int n_ea_1 = p_mt_edge[ea_1 * 18 + m0],
-          n_ca_1 = p_mt_corn[ca_1 * 18 + m0];
-      if (get_prune(p_pt_cross_CEE[0], idx_a * 24 + n_ea_1) >= depth)
-        continue; // s1: Right
-      if (get_prune(p_pt_cross_CCE[0], idx_a * 24 + n_ca_1) >= depth)
-        continue;
+      for (int vi = 0; vi < 4; ++vi) {
+        int v = viewOrder[vi];
+        const ViewState &cur = views[v];
+        int mv = conj_moves_flat[m][cur.slot];
 
-      int n_ea_2 = p_mt_edge[ea_2 * 18 + m0],
-          n_ca_2 = p_mt_corn[ca_2 * 18 + m0];
-      if (get_prune(p_pt_cross_CEE[1], idx_a * 24 + n_ea_2) >= depth)
-        continue; // s2: Diag
-      if (get_prune(p_pt_cross_CCE[1], idx_a * 24 + n_ca_2) >= depth)
-        continue;
+        int n1 = p_mt_edge4[cur.i1 + mv];
+        int n2 = p_mt_corn[cur.i2 + mv];
+        int n3 = p_mt_edge[cur.i3 + mv];
+        long long idx = (long long)(n1 + n2) * 24 + n3;
 
-      int n_ea_3 = p_mt_edge[ea_3 * 18 + m0],
-          n_ca_3 = p_mt_corn[ca_3 * 18 + m0];
-      if (get_prune(p_pt_cross_CEE[2], idx_a * 24 + n_ea_3) >= depth)
-        continue; // s3: Left
-      if (get_prune(p_pt_cross_CCE[2], idx_a * 24 + n_ca_3) >= depth)
-        continue;
+        // Base 表
+        if (get_prune(p_pt_cross_C4E0, idx) >= depth) {
+          pruned = true;
+          break;
+        }
 
-      // 3-Corner: s1(Right) + s2(Diag) -- 始终满足
-      long long idx_3c_a = ((long long)(n1a + n2a) * 24 + n_ca_1) * 24 + n_ca_2;
-      if (get_prune(p_pt_cross_C4C5C6, idx_3c_a) >= depth)
-        continue;
+        // Plus Edge/Corner 表 (3 对: Right, Diag, Left)
+        int ne[3], nc[3];
+        for (int t = 0; t < 3; ++t) {
+          ne[t] = p_mt_edge[cur.ex[t] * 18 + mv];
+          if (get_prune(p_pt_cross_CEE[t], idx * 24 + ne[t]) >= depth) {
+            pruned = true;
+            break;
+          }
+          nc[t] = p_mt_corn[cur.cx[t] * 18 + mv];
+          if (get_prune(p_pt_cross_CCE[t], idx * 24 + nc[t]) >= depth) {
+            pruned = true;
+            break;
+          }
+        }
+        if (pruned)
+          break;
 
-      // --- View B (s1): 看s0(Left), s2(Right), s3(Diag) ---
-      int m1 = conj_moves_flat[m][1];
-      int n1b = p_mt_edge4[i1_b + m1], n2b = p_mt_corn[i2_b + m1],
-          n3b = p_mt_edge[i3_b + m1];
-      long long idx_b = (long long)(n1b + n2b) * 24 + n3b;
-      if (get_prune(p_pt_cross_C4E0, idx_b) >= depth)
-        continue;
+        // 3-Corner: Right(cx[0]) + Diag(cx[1])
+        long long idx_3c = ((long long)(n1 + n2) * 24 + nc[0]) * 24 + nc[1];
+        if (get_prune(p_pt_cross_C4C5C6, idx_3c) >= depth) {
+          pruned = true;
+          break;
+        }
 
-      int n_eb_0 = p_mt_edge[eb_0 * 18 + m1],
-          n_cb_0 = p_mt_corn[cb_0 * 18 + m1];
-      if (get_prune(p_pt_cross_CEE[2], idx_b * 24 + n_eb_0) >= depth)
-        continue; // s0: Left
-      if (get_prune(p_pt_cross_CCE[2], idx_b * 24 + n_cb_0) >= depth)
-        continue;
-
-      int n_eb_2 = p_mt_edge[eb_2 * 18 + m1],
-          n_cb_2 = p_mt_corn[cb_2 * 18 + m1];
-      if (get_prune(p_pt_cross_CEE[0], idx_b * 24 + n_eb_2) >= depth)
-        continue; // s2: Right
-      if (get_prune(p_pt_cross_CCE[0], idx_b * 24 + n_cb_2) >= depth)
-        continue;
-
-      int n_eb_3 = p_mt_edge[eb_3 * 18 + m1],
-          n_cb_3 = p_mt_corn[cb_3 * 18 + m1];
-      if (get_prune(p_pt_cross_CEE[1], idx_b * 24 + n_eb_3) >= depth)
-        continue; // s3: Diag
-      if (get_prune(p_pt_cross_CCE[1], idx_b * 24 + n_cb_3) >= depth)
-        continue;
-
-      // 3-Corner: s2(Right) + s3(Diag)
-      long long idx_3c_b = ((long long)(n1b + n2b) * 24 + n_cb_2) * 24 + n_cb_3;
-      if (get_prune(p_pt_cross_C4C5C6, idx_3c_b) >= depth)
-        continue;
-
-      // --- View C (s2): 看s0(Diag), s1(Left), s3(Right) ---
-      int m2 = conj_moves_flat[m][2];
-      int n1c = p_mt_edge4[i1_c + m2], n2c = p_mt_corn[i2_c + m2],
-          n3c = p_mt_edge[i3_c + m2];
-      long long idx_c = (long long)(n1c + n2c) * 24 + n3c;
-      if (get_prune(p_pt_cross_C4E0, idx_c) >= depth)
-        continue;
-
-      int n_ec_0 = p_mt_edge[ec_0 * 18 + m2],
-          n_cc_0 = p_mt_corn[cc_0 * 18 + m2];
-      if (get_prune(p_pt_cross_CEE[1], idx_c * 24 + n_ec_0) >= depth)
-        continue; // s0: Diag
-      if (get_prune(p_pt_cross_CCE[1], idx_c * 24 + n_cc_0) >= depth)
-        continue;
-
-      int n_ec_1 = p_mt_edge[ec_1 * 18 + m2],
-          n_cc_1 = p_mt_corn[cc_1 * 18 + m2];
-      if (get_prune(p_pt_cross_CEE[2], idx_c * 24 + n_ec_1) >= depth)
-        continue; // s1: Left
-      if (get_prune(p_pt_cross_CCE[2], idx_c * 24 + n_cc_1) >= depth)
-        continue;
-
-      int n_ec_3 = p_mt_edge[ec_3 * 18 + m2],
-          n_cc_3 = p_mt_corn[cc_3 * 18 + m2];
-      if (get_prune(p_pt_cross_CEE[0], idx_c * 24 + n_ec_3) >= depth)
-        continue; // s3: Right
-      if (get_prune(p_pt_cross_CCE[0], idx_c * 24 + n_cc_3) >= depth)
-        continue;
-
-      // 3-Corner: s3(Right) + s0(Diag)
-      long long idx_3c_c = ((long long)(n1c + n2c) * 24 + n_cc_3) * 24 + n_cc_0;
-      if (get_prune(p_pt_cross_C4C5C6, idx_3c_c) >= depth)
-        continue;
-
-      // --- View D (s3): 看s0(Right), s1(Diag), s2(Left) ---
-      int m3 = conj_moves_flat[m][3];
-      int n1d = p_mt_edge4[i1_d + m3], n2d = p_mt_corn[i2_d + m3],
-          n3d = p_mt_edge[i3_d + m3];
-      long long idx_d = (long long)(n1d + n2d) * 24 + n3d;
-      if (get_prune(p_pt_cross_C4E0, idx_d) >= depth)
-        continue;
-
-      int n_ed_0 = p_mt_edge[ed_0 * 18 + m3],
-          n_cd_0 = p_mt_corn[cd_0 * 18 + m3];
-      if (get_prune(p_pt_cross_CEE[0], idx_d * 24 + n_ed_0) >= depth)
-        continue; // s0: Right
-      if (get_prune(p_pt_cross_CCE[0], idx_d * 24 + n_cd_0) >= depth)
-        continue;
-
-      int n_ed_1 = p_mt_edge[ed_1 * 18 + m3],
-          n_cd_1 = p_mt_corn[cd_1 * 18 + m3];
-      if (get_prune(p_pt_cross_CEE[1], idx_d * 24 + n_ed_1) >= depth)
-        continue; // s1: Diag
-      if (get_prune(p_pt_cross_CCE[1], idx_d * 24 + n_cd_1) >= depth)
-        continue;
-
-      int n_ed_2 = p_mt_edge[ed_2 * 18 + m3],
-          n_cd_2 = p_mt_corn[cd_2 * 18 + m3];
-      if (get_prune(p_pt_cross_CEE[2], idx_d * 24 + n_ed_2) >= depth)
-        continue; // s2: Left
-      if (get_prune(p_pt_cross_CCE[2], idx_d * 24 + n_cd_2) >= depth)
-        continue;
-
-      // 3-Corner: s0(Right) + s1(Diag)
-      long long idx_3c_d = ((long long)(n1d + n2d) * 24 + n_cd_0) * 24 + n_cd_1;
-      if (get_prune(p_pt_cross_C4C5C6, idx_3c_d) >= depth)
+        // 保存新状态（递归用）
+        nv[v] = {n1,
+                 n2 * 18,
+                 n3 * 18,
+                 cur.slot,
+                 {ne[0], ne[1], ne[2]},
+                 {nc[0], nc[1], nc[2]}};
+      }
+      if (pruned)
         continue;
 
       if (depth == 1)
         return true;
-      else if (search_4(n1a, n2a * 18, n3a * 18, n1b, n2b * 18, n3b * 18, n1c,
-                        n2c * 18, n3c * 18, n1d, n2d * 18, n3d * 18, nd * 18,
-                        neo * 18, depth - 1, m, bound, n_ea_1, n_ca_1, n_ea_2,
-                        n_ca_2, n_ea_3, n_ca_3, n_eb_0, n_cb_0, n_eb_2, n_cb_2,
-                        n_eb_3, n_cb_3, n_ec_0, n_cc_0, n_ec_1, n_cc_1, n_ec_3,
-                        n_cc_3, n_ed_0, n_cd_0, n_ed_1, n_cd_1, n_ed_2, n_cd_2,
+      else if (search_4(nv, viewOrder, nd * 18, neo * 18, depth - 1, m, bound,
                         v_huge, p_huge_active, (v_huge != -1) ? n_ie6 : -1,
                         (v_huge != -1) ? n_ic2 : -1))
         return true;
@@ -1079,27 +990,48 @@ struct XCrossSolver {
         // --- 4. XXXXCross+EO ---
         // 只有 1 种组合{0, 1, 2, 3}
         {
-          // 获取初始下界：检查所有4 个视角的 Base 表+ Plus 表+ 3-Corner 表
+          // 构造 4 个 ViewState，ex/cx 统一按 [Right, Diag, Left] 排列
+          // NOTE: e_trk[0] 始终对应 Right, e_trk[1] 对应 Diag, e_trk[2] 对应
+          // Left
+          ViewState views[4];
+          for (int s = 0; s < 4; ++s) {
+            views[s] = {st[s].i1,
+                        st[s].i2 * 18,
+                        st[s].i3 * 18,
+                        s,
+                        {st[s].e_trk[0], st[s].e_trk[1], st[s].e_trk[2]},
+                        {st[s].c_trk[0], st[s].c_trk[1], st[s].c_trk[2]}};
+          }
+
+          // 计算每个 View 的 heuristic，按从高到低排序
+          int viewH[4];
+          for (int v = 0; v < 4; ++v) {
+            long long idx = (long long)(st[v].i1 + st[v].i2) * 24 + st[v].i3;
+            viewH[v] = get_prune(p_pt_cross_C4E0, idx);
+            for (int t = 0; t < 3; ++t) {
+              viewH[v] =
+                  std::max(viewH[v], get_prune(p_pt_cross_CEE[t],
+                                               idx * 24 + st[v].e_trk[t]));
+              viewH[v] =
+                  std::max(viewH[v], get_prune(p_pt_cross_CCE[t],
+                                               idx * 24 + st[v].c_trk[t]));
+            }
+            long long idx_3c =
+                ((long long)(st[v].i1 + st[v].i2) * 24 + st[v].c_trk[0]) * 24 +
+                st[v].c_trk[1];
+            viewH[v] = std::max(viewH[v], get_prune(p_pt_cross_C4C5C6, idx_3c));
+          }
+
+          // 按 heuristic 从高到低排序，拒绝率高的 View 先检查
+          int viewOrder[4] = {0, 1, 2, 3};
+          std::sort(viewOrder, viewOrder + 4,
+                    [&](int a, int b) { return viewH[a] > viewH[b]; });
+
+          // 全局初始下界 = max(所有 View heuristic, Dep+EO)
           int h_de =
               get_prune(p_pt_ep4eo12,
                         (long long)st[0].idep * StateSpace::EO12 + st[0].ieo);
-          int h_max = h_de;
-          for (int s = 0; s < 4; ++s) {
-            long long idx = (long long)(st[s].i1 + st[s].i2) * 24 + st[s].i3;
-            h_max = std::max(h_max, get_prune(p_pt_cross_C4E0, idx));
-            // Plus Edge/Corner 检查
-            for (int t = 0; t < 3; ++t) {
-              h_max = std::max(h_max, get_prune(p_pt_cross_CEE[t],
-                                                idx * 24 + st[s].e_trk[t]));
-              h_max = std::max(h_max, get_prune(p_pt_cross_CCE[t],
-                                                idx * 24 + st[s].c_trk[t]));
-            }
-            // 3-Corner 检查(Right + Diag)
-            long long idx_3c =
-                ((long long)(st[s].i1 + st[s].i2) * 24 + st[s].c_trk[0]) * 24 +
-                st[s].c_trk[1];
-            h_max = std::max(h_max, get_prune(p_pt_cross_C4C5C6, idx_3c));
-          }
+          int h_max = std::max({h_de, viewH[0], viewH[1], viewH[2], viewH[3]});
 
           // 确定 Huge 表视角(使用 s0-s1 相邻对)
           int v_nb = getNeighborView(0, 1); // 始终是0
@@ -1119,30 +1051,9 @@ struct XCrossSolver {
             // 跨阶段下界: XXXXCross >= XXXCross
             int startD = std::max(h_max, best_xxx);
             for (int d = startD; d <= std::min(20, best_xxxx - 1); ++d) {
-              // 初始追踪状态：每视角对其他 3 个槽位的 Edge/Corner
-              // View A (s0): 看s1(e_trk[0],c_trk[0]), s2(e_trk[1],c_trk[1]),
-              // s3(e_trk[2],c_trk[2]) View B (s1): s0→Left(2), s2→Right(0),
-              // s3→Diag(1) View C (s2): s0→Diag(1), s1→Left(2), s3→Right(0)
-              // View D (s3): s0→Right(0), s1→Diag(1), s2→Left(2)
-              if (search_4(st[0].i1, st[0].i2 * 18, st[0].i3 * 18, st[1].i1,
-                           st[1].i2 * 18, st[1].i3 * 18, st[2].i1,
-                           st[2].i2 * 18, st[2].i3 * 18, st[3].i1,
-                           st[3].i2 * 18, st[3].i3 * 18, st[0].idep * 18,
-                           st[0].ieo * 18, d, 18, best_xxxx - 1,
-                           // View A: s1(Right), s2(Diag), s3(Left)
-                           st[0].e_trk[0], st[0].c_trk[0], st[0].e_trk[1],
-                           st[0].c_trk[1], st[0].e_trk[2], st[0].c_trk[2],
-                           // View B: s0(Left:2), s2(Right:0), s3(Diag:1)
-                           st[1].e_trk[2], st[1].c_trk[2], st[1].e_trk[0],
-                           st[1].c_trk[0], st[1].e_trk[1], st[1].c_trk[1],
-                           // View C: s0(Diag:1), s1(Left:2), s3(Right:0)
-                           st[2].e_trk[1], st[2].c_trk[1], st[2].e_trk[2],
-                           st[2].c_trk[2], st[2].e_trk[0], st[2].c_trk[0],
-                           // View D: s0(Right:0), s1(Diag:1), s2(Left:2)
-                           st[3].e_trk[0], st[3].c_trk[0], st[3].e_trk[1],
-                           st[3].c_trk[1], st[3].e_trk[2], st[3].c_trk[2],
-                           // Huge 表
-                           v_huge, p_huge, init_e6, init_c2)) {
+              if (search_4(views, viewOrder, st[0].idep * 18, st[0].ieo * 18, d,
+                           18, best_xxxx - 1, v_huge, p_huge, init_e6,
+                           init_c2)) {
                 best_xxxx = d;
                 break;
               }

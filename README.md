@@ -350,7 +350,7 @@ id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_p
 * 加载移动表和剪枝表时间: 小于1min
 * 执行时间: 8.6s
 * 输入文件: scramble_20.txt
-* 输出文件: scramble_20_eo_cross.csv
+* 输出文件: scramble_20_eo.csv
 * 正确结果 (表头 + 前20行数据):
 id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xcross_z0,eo_xcross_z1,eo_xcross_z2,eo_xcross_z3,eo_xcross_x1,eo_xcross_x3,eo_xxcross_z0,eo_xxcross_z1,eo_xxcross_z2,eo_xxcross_z3,eo_xxcross_x1,eo_xxcross_x3,eo_xxxcross_z0,eo_xxxcross_z1,eo_xxxcross_z2,eo_xxxcross_z3,eo_xxxcross_x1,eo_xxxcross_x3,eo_xxxxcross_z0,eo_xxxxcross_z1,eo_xxxxcross_z2,eo_xxxxcross_z3,eo_xxxxcross_x1,eo_xxxxcross_x3
 22001,8,6,7,6,8,7,8,8,8,9,9,9,11,10,11,9,11,10,12,11,12,13,12,12,15,15,15,14,15,14
@@ -386,6 +386,3 @@ mt = move table
 pt = prune table
 adj = adjacent
 diag = diagonal
-
-## TODO
-early exit 
