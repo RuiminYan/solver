@@ -821,7 +821,10 @@ struct XCrossSolver {
         }
         std::sort(tasks.begin(), tasks.end());
 
-        int best = 99;
+        // NOTE: 配对内 best 共享 —— 最终输出取 min(res[2c], res[2c+1])
+        // 当 sym 为奇数时，配对的偶数 sym 已算完，用其结果做搜索上界
+        int pairBound = (sym & 1) ? res[sym - 1] : 99;
+        int best = pairBound;
         for (auto &t : tasks) {
           if (t.first >= best)
             break;
@@ -881,7 +884,7 @@ struct XCrossSolver {
           }
           std::sort(tasks_xx.begin(), tasks_xx.end());
 
-          best_xx = 99;
+          best_xx = (sym & 1) ? res[12 + sym - 1] : 99;
           for (auto &t : tasks_xx) {
             if (t.first >= best_xx)
               break;
@@ -1017,7 +1020,7 @@ struct XCrossSolver {
           }
           std::sort(tasks_xxx.begin(), tasks_xxx.end());
 
-          best_xxx = 99;
+          best_xxx = (sym & 1) ? res[24 + sym - 1] : 99;
           for (auto &t : tasks_xxx) {
             if (t.first >= best_xxx)
               break;
@@ -1109,7 +1112,7 @@ struct XCrossSolver {
             init_c2 = st[v_nb].i_c2_nb;
           }
 
-          int best_xxxx = 99;
+          int best_xxxx = (sym & 1) ? res[36 + sym - 1] : 99;
           if (h_max == 0) {
             best_xxxx = 0;
           } else {
