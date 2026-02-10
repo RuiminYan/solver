@@ -851,6 +851,9 @@ struct XCrossSolver {
                              CrossSolver &ca) {
     std::vector<int> results = ca.get_stats(base_alg, rots);
     results.reserve(24);
+    // NOTE: 跨阶段 Early Exit — 前阶段 best 作为后阶段搜索起始深度下界
+    // PsCross 结果已在 results[0..5] 中
+    std::vector<int> ps_xc_min, ps_xxc_min;
 
     std::vector<std::vector<ConjState>> precomputed_states(
         rots.size(), std::vector<ConjState>(4));
@@ -865,7 +868,7 @@ struct XCrossSolver {
     };
 
     {
-      std::vector<int> stage_min(rots.size(), 99);
+      ps_xc_min.assign(rots.size(), 99);
       for (size_t r = 0; r < rots.size(); ++r) {
         std::vector<PseudoTask1> tasks;
         for (int c = 0; c < 4; ++c) {
@@ -886,7 +889,9 @@ struct XCrossSolver {
           if (t.h > 0) {
             int max_search = std::min(16, current_best - 1);
             auto &st = precomputed_states[r][t.c_idx];
-            for (int d = t.h; d <= max_search; ++d) {
+            // 跨阶段下界：PsXC 解 ≥ PsCross 解
+            int startD = std::max(t.h, results[r]);
+            for (int d = startD; d <= max_search; ++d) {
               if (search_1(st.im, st.ic_b * 18, st.ie_rel[t.diff] * 18, d, 18,
                            p_pt_pscross_C4E[t.diff])) {
                 res = d;
@@ -899,13 +904,13 @@ struct XCrossSolver {
           if (res < current_best)
             current_best = res;
         }
-        stage_min[r] = current_best;
+        ps_xc_min[r] = current_best;
       }
-      results.insert(results.end(), stage_min.begin(), stage_min.end());
+      results.insert(results.end(), ps_xc_min.begin(), ps_xc_min.end());
     }
 
     {
-      std::vector<int> stage_min(rots.size(), 99);
+      ps_xxc_min.assign(rots.size(), 99);
       std::vector<std::pair<int, int>> pairs = {{0, 1}, {0, 2}, {0, 3},
                                                 {1, 2}, {1, 3}, {2, 3}};
       for (size_t r = 0; r < rots.size(); ++r) {
@@ -1032,7 +1037,9 @@ struct XCrossSolver {
             int max_search = std::min(16, current_best - 1);
             auto &st1 = precomputed_states[r][t.c1];
             auto &st2 = precomputed_states[r][t.c2];
-            for (int d = t.h; d <= max_search; ++d) {
+            // 跨阶段下界：PsXXC 解 ≥ PsXC 解
+            int startD = std::max(t.h, ps_xc_min[r]);
+            for (int d = startD; d <= max_search; ++d) {
               if (search_2(st1.im, st1.ic_b * 18, st1.ie_rel[t.diff1] * 18,
                            p_pt_pscross_C4E[t.diff1], st2.im, st2.ic_b * 18,
                            st2.ie_rel[t.diff2] * 18, trans_moves[t.c1][t.c2],
@@ -1048,13 +1055,13 @@ struct XCrossSolver {
           if (res < current_best)
             current_best = res;
         }
-        stage_min[r] = current_best;
+        ps_xxc_min[r] = current_best;
       }
-      results.insert(results.end(), stage_min.begin(), stage_min.end());
+      results.insert(results.end(), ps_xxc_min.begin(), ps_xxc_min.end());
     }
 
     {
-      std::vector<int> stage_min(rots.size(), 99);
+      std::vector<int> xxxc_min(rots.size(), 99);
       std::vector<std::vector<int>> triples = {
           {0, 1, 2}, {0, 1, 3}, {0, 2, 3}, {1, 2, 3}};
       for (size_t r = 0; r < rots.size(); ++r) {
@@ -1113,7 +1120,9 @@ struct XCrossSolver {
             auto &s1 = precomputed_states[r][t.c1];
             auto &s2 = precomputed_states[r][t.c2];
             auto &s3 = precomputed_states[r][t.c3];
-            for (int d = t.h; d <= max_search; ++d) {
+            // 跨阶段下界：PsXXXC 解 ≥ PsXXC 解
+            int startD = std::max(t.h, ps_xxc_min[r]);
+            for (int d = startD; d <= max_search; ++d) {
               if (search_3(s1.im, s1.ic_b * 18, s1.ie_rel[t.diff1] * 18,
                            p_pt_pscross_C4E[t.diff1], s2.im, s2.ic_b * 18,
                            s2.ie_rel[t.diff2] * 18, trans_moves[t.c1][t.c2],
@@ -1131,9 +1140,9 @@ struct XCrossSolver {
           if (res < current_best)
             current_best = res;
         }
-        stage_min[r] = current_best;
+        xxxc_min[r] = current_best;
       }
-      results.insert(results.end(), stage_min.begin(), stage_min.end());
+      results.insert(results.end(), xxxc_min.begin(), xxxc_min.end());
     }
     return results;
   }
