@@ -379,3 +379,8 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 
 ## 常见缩写
 ins = insertion
+sz = size
+ed = edge
+cn = corner
+cr = cross
+ex = extra

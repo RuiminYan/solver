@@ -40,7 +40,7 @@ struct SearchContext {
 int trans_moves[4][4][18];
 
 // --- 镜像映射表(用于 Diff=3 -> Diff=1) ---
-int sym_corner2[504];
+int sym_corner2[StateSpace::CORNER2];
 int sym_edge6_pos[665280]; // 12P6
 int sym_edge6_ori[64];     // 2^6
 
@@ -56,7 +56,7 @@ void initMirrorTables() {
   // 1. Corner2 Mirror Table
   // Swap C4 <-> C5 roles
   std::vector<int> c_arr(2);
-  for (int i = 0; i < 504; ++i) {
+  for (int i = 0; i < StateSpace::CORNER2; ++i) {
     index_to_array(c_arr, i, 2, 3, 8); // c_arr[0]=C4_state, c_arr[1]=C5_state
     // Decode state to physical pos & ori
     int p0 = c_arr[0] / 3;
@@ -164,7 +164,7 @@ struct CrossSolver {
       COUNT_NODE
       int n_i1 = p_mt_edge2[i1 + m];
       int n_i2 = p_mt_edge2[i2 + m];
-      long long idx = (long long)n_i1 * 528 + n_i2;
+      long long idx = (long long)n_i1 * StateSpace::EDGE2 + n_i2;
       if (get_prune_ptr(p_pt_pscross, idx) >= depth)
         continue;
       if (depth == 1) {
@@ -186,7 +186,7 @@ struct CrossSolver {
         i1 = p_mt_edge2[i1 * 18 + m];
         i2 = p_mt_edge2[i2 * 18 + m];
       }
-      long long idx = (long long)i1 * 528 + i2;
+      long long idx = (long long)i1 * StateSpace::EDGE2 + i2;
       int d_min = get_prune_ptr(p_pt_pscross, idx);
       if (d_min == 0)
         continue;
@@ -204,8 +204,8 @@ struct CrossSolver {
 };
 
 struct XCrossSolver {
-  const int *p_mt_edge4, *p_mt_corn, *p_mt_edge, *p_mt_edge2, *p_mt_corn2, *p_mt_corn3,
-      *p_mt_edge3;
+  const int *p_mt_edge4, *p_mt_corn, *p_mt_edge, *p_mt_edge2, *p_mt_corn2,
+      *p_mt_corn3, *p_mt_edge3;
   const int *p_edge6 = nullptr; // 增加 Edge6 引用
   const unsigned char *p_pt_pscross_C4E[4];
   const unsigned char *p_cross_C4C5E0E1 = nullptr;
@@ -214,26 +214,29 @@ struct XCrossSolver {
 
   // === 静态Aux 表指针===
   // Edge2: 邻棱 (E0E1) 和对棱 (E0E2)
-  const unsigned char *p_pt_pscross_E0E1 = nullptr; // 邻接: {0,1},{1,2},{2,3},{0,3}
+  const unsigned char *p_pt_pscross_E0E1 =
+      nullptr; // 邻接: {0,1},{1,2},{2,3},{0,3}
   const unsigned char *p_pt_pscross_E0E2 = nullptr; // 对角: {0,2},{1,3}
 
   // Corner2: 邻角 (C4C5) 和对角 (C4C6)
-  const unsigned char *p_pt_pscross_C4C5 = nullptr; // 邻接: {4,5},{5,6},{6,7},{4,7}
+  const unsigned char *p_pt_pscross_C4C5 =
+      nullptr; // 邻接: {4,5},{5,6},{6,7},{4,7}
   const unsigned char *p_pt_pscross_C4C6 = nullptr; // 对角: {4,6},{5,7}
 
   // Edge3: 规范表(E0E1E2)
   const unsigned char *p_pt_pscross_E0E1E2 = nullptr; // 所有Edge3 组合映射到此
 
   // Corner3: 规范表(C4C5C6)
-  const unsigned char *p_pt_pscross_C4C5C6 = nullptr; // 所有Corner3 组合映射到此
+  const unsigned char *p_pt_pscross_C4C5C6 =
+      nullptr; // 所有Corner3 组合映射到此
 
   // === 静态AuxPrunerDef 对象 ===
-  AuxPrunerDef aux_def_pscross_E0E1;  // Edge2 邻接
-  AuxPrunerDef aux_def_pscross_E0E2; // Edge2 对角
-  AuxPrunerDef aux_def_pscross_C4C5;  // Corner2 邻接
-  AuxPrunerDef aux_def_pscross_C4C6; // Corner2 对角
-  AuxPrunerDef aux_def_pscross_E0E1E2;      // Edge3
-  AuxPrunerDef aux_def_pscross_C4C5C6;      // Corner3
+  AuxPrunerDef aux_def_pscross_E0E1;   // Edge2 邻接
+  AuxPrunerDef aux_def_pscross_E0E2;   // Edge2 对角
+  AuxPrunerDef aux_def_pscross_C4C5;   // Corner2 邻接
+  AuxPrunerDef aux_def_pscross_C4C6;   // Corner2 对角
+  AuxPrunerDef aux_def_pscross_E0E1E2; // Edge3
+  AuxPrunerDef aux_def_pscross_C4C5C6; // Corner3
 
   // === 索引映射辅助函数 ===
   // Edge2: 返回 0=邻接, 1=对角
@@ -345,35 +348,39 @@ struct XCrossSolver {
     // 初始化Edge2 对角表(E0E2)
     if (ptm.hasPsCrossE0E2PT()) {
       p_pt_pscross_E0E2 = ptm.getPsCrossE0E2PTPtr();
-      aux_def_pscross_E0E2 = {p_pt_pscross_E0E2, p_mt_edge2, 528};
+      aux_def_pscross_E0E2 = {p_pt_pscross_E0E2, p_mt_edge2, StateSpace::EDGE2};
     }
     // 初始化Edge2 邻接表(E0E1)
     if (ptm.hasPsCrossE0E1PT()) {
       p_pt_pscross_E0E1 = ptm.getPsCrossE0E1PTPtr();
-      aux_def_pscross_E0E1 = {p_pt_pscross_E0E1, p_mt_edge2, 528};
+      aux_def_pscross_E0E1 = {p_pt_pscross_E0E1, p_mt_edge2, StateSpace::EDGE2};
     }
 
     // 初始化Corner2 对角表(C4C6)
     if (ptm.hasPsCrossC4C6PT()) {
       p_pt_pscross_C4C6 = ptm.getPsCrossC4C6PTPtr();
-      aux_def_pscross_C4C6 = {p_pt_pscross_C4C6, p_mt_corn2, 504};
+      aux_def_pscross_C4C6 = {p_pt_pscross_C4C6, p_mt_corn2,
+                              StateSpace::CORNER2};
     }
     // 初始化Corner2 邻接表(C4C5)
     if (ptm.hasPsCrossC4C5PT()) {
       p_pt_pscross_C4C5 = ptm.getPsCrossC4C5PTPtr();
-      aux_def_pscross_C4C5 = {p_pt_pscross_C4C5, p_mt_corn2, 504};
+      aux_def_pscross_C4C5 = {p_pt_pscross_C4C5, p_mt_corn2,
+                              StateSpace::CORNER2};
     }
 
     // 初始化Corner3 规范表(C4C5C6，其他组合通过旋转映射)
     if (ptm.hasPsCrossC4C5C6PT()) {
       p_pt_pscross_C4C5C6 = ptm.getPsCrossC4C5C6PTPtr();
-      aux_def_pscross_C4C5C6 = {p_pt_pscross_C4C5C6, p_mt_corn3, 9072};
+      aux_def_pscross_C4C5C6 = {p_pt_pscross_C4C5C6, p_mt_corn3,
+                                StateSpace::CORNER3};
     }
 
     // 初始化Edge3 规范表(E0E1E2，其他组合通过旋转映射)
     if (ptm.hasPsCrossE0E1E2PT()) {
       p_pt_pscross_E0E1E2 = ptm.getPsCrossE0E1E2PTPtr();
-      aux_def_pscross_E0E1E2 = {p_pt_pscross_E0E1E2, p_mt_edge3, 10560};
+      aux_def_pscross_E0E1E2 = {p_pt_pscross_E0E1E2, p_mt_edge3,
+                                StateSpace::EDGE3};
     }
   }
 
@@ -809,9 +816,9 @@ struct XCrossSolver {
           int e_ori = n_e6 % 64;
           int ne6 = sym_edge6_pos[e_pos] * 64 + sym_edge6_ori[e_ori];
           int nc2 = sym_corner2[n_c2];
-          huge_idx = (long long)ne6 * 504 + nc2;
+          huge_idx = (long long)ne6 * StateSpace::CORNER2 + nc2;
         } else {
-          huge_idx = (long long)n_e6 * 504 + n_c2;
+          huge_idx = (long long)n_e6 * StateSpace::CORNER2 + n_c2;
         }
 
         if (get_prune_ptr(p_huge_table, huge_idx) >= depth) {
@@ -949,8 +956,8 @@ struct XCrossSolver {
       }
       if (search_3(ctx, n_i1a, n_i2a * 18, p_mt_edge[i3a + m] * 18, p1, n_i1b,
                    n_i2b * 18, p_mt_edge[i3b + m_b] * 18, tr_b, p2, n_i1c,
-                   n_i2c * 18, p_mt_edge[i3c + m_c] * 18, tr_c, p3, depth - 1, m,
-                   num_aux, next_aux))
+                   n_i2c * 18, p_mt_edge[i3c + m_c] * 18, tr_c, p3, depth - 1,
+                   m, num_aux, next_aux))
         return true;
     }
     return false;
@@ -1065,9 +1072,9 @@ struct XCrossSolver {
                 int e_ori = init_e6 % 64;
                 int ne6 = sym_edge6_pos[e_pos] * 64 + sym_edge6_ori[e_ori];
                 int nc2 = sym_corner2[init_c2];
-                huge_idx = (long long)ne6 * 504 + nc2;
+                huge_idx = (long long)ne6 * StateSpace::CORNER2 + nc2;
               } else {
-                huge_idx = (long long)init_e6 * 504 + init_c2;
+                huge_idx = (long long)init_e6 * StateSpace::CORNER2 + init_c2;
               }
 
               int h_huge = get_prune_ptr(selected_huge_table, huge_idx);

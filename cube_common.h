@@ -245,4 +245,19 @@ bool save_vector_chunked(const std::vector<T> &vec,
   return out.good();
 }
 
+// NOTE: 各子空间的状态数量，源于排列/组合计算
+// 用作剪枝表维度参数和索引计算，消除硬编码魔数
+namespace StateSpace {
+constexpr int EDGE = 24;        // 单棱: P(12,1) * 2 = 24
+constexpr int CORNER = 24;      // 单角: P(8,1) * 3  = 24
+constexpr int EDGE2 = 528;      // 2棱: 24 * 22
+constexpr int EDGE3 = 10560;    // 3棱: 24 * 22 * 20
+constexpr int CORNER2 = 504;    // 2角: 24 * 21
+constexpr int CORNER3 = 9072;   // 3角: 24 * 21 * 18
+constexpr int CROSS = 190080;   // 4棱(Cross): 24 * 22 * 20 * 18
+constexpr int EDGE6 = 42577920; // 6棱组合移动表状态数
+constexpr int EP4 = 11880;      // EP4: P(12,4) = 12 * 11 * 10 * 9
+constexpr int EO12 = 2048;      // EO12: 2^11
+} // namespace StateSpace
+
 #endif // CUBE_COMMON_H

@@ -237,12 +237,18 @@ struct xcross_analyzer2 {
     p_pt_pscross_E0E2 = ptm.getPsCrossE0E2PTPtr();
 
     // 6. 初始化静态AuxPrunerDef 对象
-    aux_def_pscross_C4C5C6 = {p_pt_pscross_C4C5C6, p_mt_corn3, 9072}; // Corner3
-    aux_def_pscross_E0E1E2 = {p_pt_pscross_E0E1E2, p_mt_edge3, 10560}; // Edge3
-    aux_def_pscross_C4C5 = {p_pt_pscross_C4C5, p_mt_corn2, 504}; // Corner2 邻接
-    aux_def_pscross_C4C6 = {p_pt_pscross_C4C6, p_mt_corn2, 504}; // Corner2 对角
-    aux_def_pscross_E0E1 = {p_pt_pscross_E0E1, p_mt_edge2, 528}; // Edge2 邻接
-    aux_def_pscross_E0E2 = {p_pt_pscross_E0E2, p_mt_edge2, 528}; // Edge2 对角
+    aux_def_pscross_C4C5C6 = {p_pt_pscross_C4C5C6, p_mt_corn3,
+                              StateSpace::CORNER3}; // Corner3
+    aux_def_pscross_E0E1E2 = {p_pt_pscross_E0E1E2, p_mt_edge3,
+                              StateSpace::EDGE3}; // Edge3
+    aux_def_pscross_C4C5 = {p_pt_pscross_C4C5, p_mt_corn2,
+                            StateSpace::CORNER2}; // Corner2 邻接
+    aux_def_pscross_C4C6 = {p_pt_pscross_C4C6, p_mt_corn2,
+                            StateSpace::CORNER2}; // Corner2 对角
+    aux_def_pscross_E0E1 = {p_pt_pscross_E0E1, p_mt_edge2,
+                            StateSpace::EDGE2}; // Edge2 邻接
+    aux_def_pscross_E0E2 = {p_pt_pscross_E0E2, p_mt_edge2,
+                            StateSpace::EDGE2}; // Edge2 对角
 
     tables_initialized = true;
   }

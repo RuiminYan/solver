@@ -296,9 +296,10 @@ struct PairSolver {
       if (s_v != -1 && p_table_huge) {
         int mv = conj_moves_flat[m][s_v];
         S3_CHECK(s3_huge);
-        if (get_prune_4bit(p_table_huge,
-                           (long long)p_mt_edge6[i_e6 * 18 + mv] * 504 +
-                               p_mt_corn2[i_c2 * 18 + mv]) >= depth) {
+        if (get_prune_4bit(p_table_huge, (long long)p_mt_edge6[i_e6 * 18 + mv] *
+                                                 StateSpace::CORNER2 +
+                                             p_mt_corn2[i_c2 * 18 + mv]) >=
+            depth) {
           S3_HIT(s3_huge);
           continue;
         }
@@ -358,7 +359,8 @@ struct PairSolver {
       if (v1 != -1 && p1) {
         int mx = conj_moves_flat[m][v1];
         S4_CHECK(s4_huge1);
-        if (get_prune_4bit(p1, (long long)p_mt_edge6[ie6_1 * 18 + mx] * 504 +
+        if (get_prune_4bit(p1, (long long)p_mt_edge6[ie6_1 * 18 + mx] *
+                                       StateSpace::CORNER2 +
                                    p_mt_corn2[ic2_1 * 18 + mx]) >= depth) {
           S4_HIT(s4_huge1);
           continue;
@@ -367,7 +369,8 @@ struct PairSolver {
       if (v2 != -1 && p2) {
         int mx = conj_moves_flat[m][v2];
         S4_CHECK(s4_huge2);
-        if (get_prune_4bit(p2, (long long)p_mt_edge6[ie6_2 * 18 + mx] * 504 +
+        if (get_prune_4bit(p2, (long long)p_mt_edge6[ie6_2 * 18 + mx] *
+                                       StateSpace::CORNER2 +
                                    p_mt_corn2[ic2_2 * 18 + mx]) >= depth) {
           S4_HIT(s4_huge2);
           continue;
@@ -376,7 +379,8 @@ struct PairSolver {
       if (v3 != -1 && p3) {
         int mx = conj_moves_flat[m][v3];
         S4_CHECK(s4_huge3);
-        if (get_prune_4bit(p3, (long long)p_mt_edge6[ie6_3 * 18 + mx] * 504 +
+        if (get_prune_4bit(p3, (long long)p_mt_edge6[ie6_3 * 18 + mx] *
+                                       StateSpace::CORNER2 +
                                    p_mt_corn2[ic2_3 * 18 + mx]) >= depth) {
           S4_HIT(s4_huge3);
           continue;
@@ -530,12 +534,14 @@ struct PairSolver {
         if (v != -1) {
           get_conjugated_indices_full(alg, v, st_v);
           h_huge = get_prune_4bit(p_pt_cross_C4C5E0E1,
-                                  (long long)st_v.ie6_nb * 504 + st_v.ic2_nb);
+                                  (long long)st_v.ie6_nb * StateSpace::CORNER2 +
+                                      st_v.ic2_nb);
         } else if (p_pt_cross_C4C6E0E2) {
           v = get_diagonal_view(p[0], p[1]);
           get_conjugated_indices_full(alg, v, st_v);
           h_huge = get_prune_4bit(p_pt_cross_C4C6E0E2,
-                                  (long long)st_v.ie6_dg * 504 + st_v.ic2_dg);
+                                  (long long)st_v.ie6_dg * StateSpace::CORNER2 +
+                                      st_v.ic2_dg);
         }
         tasks.push_back({tgt, p[0], p[1], std::max({h1, h2, h3, h_huge})});
       }
@@ -603,17 +609,17 @@ struct PairSolver {
           int v = get_neighbor_view(fix[i], fix[j]);
           if (v != -1) {
             get_conjugated_indices_full(alg, v, st_v);
-            h_val =
-                std::max(h_val, get_prune_4bit(p_pt_cross_C4C5E0E1,
-                                               (long long)st_v.ie6_nb * 504 +
-                                                   st_v.ic2_nb));
+            h_val = std::max(h_val, get_prune_4bit(p_pt_cross_C4C5E0E1,
+                                                   (long long)st_v.ie6_nb *
+                                                           StateSpace::CORNER2 +
+                                                       st_v.ic2_nb));
           } else if (p_pt_cross_C4C6E0E2) {
             v = get_diagonal_view(fix[i], fix[j]);
             get_conjugated_indices_full(alg, v, st_v);
-            h_val =
-                std::max(h_val, get_prune_4bit(p_pt_cross_C4C6E0E2,
-                                               (long long)st_v.ie6_dg * 504 +
-                                                   st_v.ic2_dg));
+            h_val = std::max(h_val, get_prune_4bit(p_pt_cross_C4C6E0E2,
+                                                   (long long)st_v.ie6_dg *
+                                                           StateSpace::CORNER2 +
+                                                       st_v.ic2_dg));
           }
         }
       }
