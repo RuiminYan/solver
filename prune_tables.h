@@ -6,6 +6,105 @@
 #define PRUNE_TABLES_H
 
 #include "cube_common.h"
+#include <iomanip>
+#include <omp.h>
+
+// 深度分布打印器 - 用于打印带百分比的深度分布表格
+// NOTE: 使用 ANSI 转义码在 done() 时覆盖输出，修正百分比为 Count/Total
+struct DistributionPrinter {
+  long long total_size;                           // 状态空间大小
+  long long accumulated;                          // 累计计数
+  std::vector<std::pair<int, long long>> records; // 存储 (depth, count)
+
+  // 格式化数字为带千分位的字符串
+  static std::string formatWithCommas(long long n) {
+    std::string s = std::to_string(n);
+    int insertPos = s.length() - 3;
+    while (insertPos > 0) {
+      s.insert(insertPos, ",");
+      insertPos -= 3;
+    }
+    return s;
+  }
+
+  DistributionPrinter(long long total) : total_size(total), accumulated(0) {
+    // 打印状态空间大小
+    std::cout << "  State Space: " << formatWithCommas(total_size) << std::endl;
+    // 打印表头（上下都有横线，类似 cloc 风格)
+    std::cout << "  -------------------------------------------------"
+              << std::endl;
+    std::cout << "  Depth         Count           Pct         Cum" << std::endl;
+    std::cout << "  -------------------------------------------------"
+              << std::endl;
+  }
+
+  void print(int depth, long long count) {
+    if (count == 0)
+      return; // 跳过空行
+    accumulated += count;
+    records.push_back({depth, count});
+    // 临时打印（百分比稍后修正)
+    double pct = (total_size > 0) ? (100.0 * count / total_size) : 0.0;
+    double cumPct = (total_size > 0) ? (100.0 * accumulated / total_size) : 0.0;
+    std::cout << "  " << std::setw(5) << std::right << depth << "  "
+              << std::setw(14) << std::right << formatWithCommas(count) << "  "
+              << std::fixed << std::setprecision(6) << std::setw(10)
+              << std::right << pct << "%  " << std::setw(10) << std::right
+              << cumPct << "%" << std::endl;
+  }
+
+  void done() {
+    // 光标上移 records.size() 行，重新打印正确的百分比
+    int lineCount = records.size();
+    std::cout << "\033[" << lineCount << "A"; // ANSI: 上移 lineCount 行
+
+    long long total = accumulated; // 最终 Total
+    long long cumSum = 0;
+    for (auto &p : records) {
+      cumSum += p.second;
+      double pct = (total > 0) ? (100.0 * p.second / total) : 0.0;
+      double cumPct = (total > 0) ? (100.0 * cumSum / total) : 0.0;
+      std::cout << "\033[2K"; // ANSI: 清除当前行
+      std::cout << "  " << std::setw(5) << std::right << p.first << "  "
+                << std::setw(14) << std::right << formatWithCommas(p.second)
+                << "  " << std::fixed << std::setprecision(6) << std::setw(10)
+                << std::right << pct << "%  " << std::setw(10) << std::right
+                << cumPct << "%" << std::endl;
+    }
+
+    std::cout << "  -------------------------------------------------"
+              << std::endl;
+    // 计算加权平均深度: sum(depth * count) / total
+    double avg = 0.0;
+    for (auto &p : records) {
+      avg += (double)p.first * p.second;
+    }
+    avg /= accumulated;
+    std::cout << "  " << std::fixed << std::setprecision(2) << std::setw(5)
+              << std::right << avg << "  " << std::setw(14) << std::right
+              << formatWithCommas(accumulated) << "  100.000000%" << std::endl;
+  }
+
+  // 在并发BFS 循环内部显示扫描进度
+  // 位掩码检查放最前面（最便宜），绝大多数迭代在此处 return
+  void progress(long long i, long long loopTotal, int depth) {
+    // 每 ~100 万次迭代检查一次（便宜的位运算，放第一位）
+    if ((i & 0xFFFFF) != 0)
+      return;
+    // 仅线程 0 报告（避免cout 竞争)
+    if (omp_get_thread_num() != 0)
+      return;
+    int numThreads = omp_get_num_threads();
+    int pct = (int)(i * numThreads * 100 / loopTotal);
+    if (pct > 99)
+      pct = 99;
+    std::cout << "\033[?25l\r  Scanning depth " << depth << ": " << pct << "%  "
+              << std::flush;
+  }
+
+  // 在 dp.print() 前调用，清除进度行
+  void clearProgress() { std::cout << "\r\033[2K\033[?25h" << std::flush; }
+};
 
 // --- 剪枝表操作 ---
 inline void set_prune(std::vector<unsigned char> &table, long long index,
