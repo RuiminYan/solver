@@ -224,7 +224,23 @@ XXXXCross 已还原，且剩余4个棱块色向正确。
 - **输出处理**: 最终结果会对每对状态（同一个底面的 2 个视角）取 `std::min`，输出该底面轴向下的最优步数。
 
 ## 编译
-`.\build.bat`
+
+
+```cmd
+# 编译所有目标（并行）
+.\build.bat
+
+# 或直接使用 Makefile
+mingw32-make -j8
+
+# 只编译某个目标
+mingw32-make std_analyzer.exe
+
+# 清理编译产物
+mingw32-make clean
+```
+
+> `build.bat` 是 `mingw32-make -j8` 的包装，支持增量编译（只重新编译修改过的文件）。
 
 ## 测试
 
@@ -234,7 +250,7 @@ XXXXCross 已还原，且剩余4个棱块色向正确。
 ```
 运行所有 analyzer，自动对比输出 CSV 的前 21 行（表头 + 前 20 行数据）与 `golden/` 目录中的正确结果。
 
-### 手动测试
+### 手动验证
 执行后会生成对应的csv, 检查csv与正确结果是否一致。
 
 ### std_analyzer.cpp
