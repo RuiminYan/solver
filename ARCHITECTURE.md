@@ -44,6 +44,7 @@
 | `move_tables.h/cpp` | `MoveTableManager` 单例：管理 12 种移动表 (`.bin`) 的生成、加载、释放。提供细粒度资源控制（按需加载/用完释放），`Edge6` 约 3GB，需特殊处理 |
 | `prune_tables.h/cpp` | `PruneTableManager` 单例：管理所有剪枝表的生成和加载。包含 15+ 种 `create*` 引擎函数和 60+ 种 `gen*` 生成函数。使用 4-bit 压缩存储，BFS 填充 |
 | `prune_stats.h` | 剪枝效率统计宏（可开关），用于调优各阶段剪枝策略的命中率 |
+| `cross_solver.h` | Cross 搜索器（Std/Pseudo 共享），通过 `isPseudo` 参数区分标准/伪 Cross 剪枝表。EO 版因维度差异独立定义 |
 
 ### 执行框架层
 
