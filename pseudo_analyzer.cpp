@@ -126,61 +126,9 @@ void init_pseudo_matrix() {
 
 // NOTE: AuxPrunerDef/AuxState/MAX_AUX 已移至 cube_common.h
 
-struct CrossSolver {
-  const int *p_mt_edge2;
-  const unsigned char *p_pt_pscross;
-
-  CrossSolver() {
-    auto &mtm = MoveTableManager::getInstance();
-    auto &ptm = PruneTableManager::getInstance();
-    p_mt_edge2 = mtm.getMTEdge2Ptr();
-    p_pt_pscross = ptm.getPsCrossPTPtr();
-  }
-
-  bool search(int i1, int i2, int depth, int prev) {
-    const int *moves = valid_moves_flat[prev];
-    const int count = valid_moves_count[prev];
-    for (int k = 0; k < count; ++k) {
-      int m = moves[k];
-      COUNT_NODE
-      int n_i1 = p_mt_edge2[i1 + m];
-      int n_i2 = p_mt_edge2[i2 + m];
-      long long idx = (long long)n_i1 * StateSpace::EDGE2 + n_i2;
-      if (get_prune_ptr(p_pt_pscross, idx) >= depth)
-        continue;
-      if (depth == 1) {
-        return true;
-      }
-      if (search(n_i1 * 18, n_i2 * 18, depth - 1, m))
-        return true;
-    }
-    return false;
-  }
-
-  std::vector<int> get_stats(const std::vector<int> &base_alg,
-                             const std::vector<std::string> &rots) {
-    std::vector<int> res(rots.size(), 0);
-    for (size_t i = 0; i < rots.size(); ++i) {
-      std::vector<int> alg = alg_rotation(base_alg, rots[i]);
-      int i1 = 416, i2 = 520;
-      for (int m : alg) {
-        i1 = p_mt_edge2[i1 * 18 + m];
-        i2 = p_mt_edge2[i2 * 18 + m];
-      }
-      long long idx = (long long)i1 * StateSpace::EDGE2 + i2;
-      int d_min = get_prune_ptr(p_pt_pscross, idx);
-      if (d_min == 0)
-        continue;
-      for (int d = d_min; d <= 8; ++d) {
-        if (search(i1 * 18, i2 * 18, d, 18)) {
-          res[i] = d;
-          break;
-        }
-      }
-    }
-    return res;
-  }
-};
+// NOTE: CrossSolver 已抽取到 cross_solver.h（Std/Pseudo 共享，isPseudo=true
+// 使用 PsCross 表）
+#include "cross_solver.h"
 
 struct XCrossSolver {
   const int *p_mt_edge4, *p_mt_corn, *p_mt_edge, *p_mt_edge2, *p_mt_corn2,
@@ -1226,7 +1174,7 @@ struct PseudoSolverWrapper {
   static inline std::vector<std::string> rots = {"",  "z2", "z'",
                                                  "z", "x'", "x"};
 
-  CrossSolver crossSolver;
+  CrossSolver crossSolver{true}; // NOTE: isPseudo=true 使用 PsCross 表
   XCrossSolver xcrossSolver;
 
   static void global_init() {
