@@ -39,10 +39,10 @@ STAT_DECL(s4_prune3); // S4: 基础剪枝表3
 STAT_DECL(s4_prune4); // S4: 基础剪枝表4
 STAT_DECL(s4_xc4);    // S4: XC4 剪枝表
 
-struct xcross_analyzer2;
+struct XCrossSolver;
 
 // 定义静态指针，供类内初始化
-struct xcross_analyzer2 {
+struct XCrossSolver {
   static bool tables_initialized;
   // [重构] 改用 Manager 统一管理的指针(方案A)
   static const unsigned char *p_pt_pscross_C[4]; // Cross + C{4-7}
@@ -229,7 +229,7 @@ struct xcross_analyzer2 {
     tables_initialized = true;
   }
 
-  xcross_analyzer2() {
+  XCrossSolver() {
     initialize_tables();
     stage_results = StageResults();
   }
@@ -1462,41 +1462,41 @@ struct xcross_analyzer2 {
   }
 };
 
-bool xcross_analyzer2::tables_initialized = false;
+bool XCrossSolver::tables_initialized = false;
 
 // [重构] 指针数组静态定义(从 Manager 获取)
-const unsigned char *xcross_analyzer2::p_pt_pscross_C[4] = {nullptr};
-const unsigned char *xcross_analyzer2::p_pt_pscross_ins_C_diff[16] = {nullptr};
-const unsigned char *xcross_analyzer2::p_pt_pspair_CE[16] = {nullptr};
-const unsigned char *xcross_analyzer2::p_pt_pscross_C4E[4] = {nullptr};
+const unsigned char *XCrossSolver::p_pt_pscross_C[4] = {nullptr};
+const unsigned char *XCrossSolver::p_pt_pscross_ins_C_diff[16] = {nullptr};
+const unsigned char *XCrossSolver::p_pt_pspair_CE[16] = {nullptr};
+const unsigned char *XCrossSolver::p_pt_pscross_C4E[4] = {nullptr};
 
-const int *xcross_analyzer2::p_mt_edge = nullptr;
-const int *xcross_analyzer2::p_mt_corn = nullptr;
-const int *xcross_analyzer2::p_mt_edge4 = nullptr;
-const int *xcross_analyzer2::p_mt_edge3 = nullptr;
-const int *xcross_analyzer2::p_mt_corn3 = nullptr;
-const int *xcross_analyzer2::p_mt_corn2 = nullptr;
-const int *xcross_analyzer2::p_mt_edge2 = nullptr;
+const int *XCrossSolver::p_mt_edge = nullptr;
+const int *XCrossSolver::p_mt_corn = nullptr;
+const int *XCrossSolver::p_mt_edge4 = nullptr;
+const int *XCrossSolver::p_mt_edge3 = nullptr;
+const int *XCrossSolver::p_mt_corn3 = nullptr;
+const int *XCrossSolver::p_mt_corn2 = nullptr;
+const int *XCrossSolver::p_mt_edge2 = nullptr;
 
 // [重构] Aux 表指针静态定义
-const unsigned char *xcross_analyzer2::p_pt_pscross_E0E1E2 = nullptr;
-const unsigned char *xcross_analyzer2::p_pt_pscross_C4C5C6 = nullptr;
-const unsigned char *xcross_analyzer2::p_pt_pscross_C4C5 = nullptr;
-const unsigned char *xcross_analyzer2::p_pt_pscross_C4C6 = nullptr;
-const unsigned char *xcross_analyzer2::p_pt_pscross_E0E1 = nullptr;
-const unsigned char *xcross_analyzer2::p_pt_pscross_E0E2 = nullptr;
+const unsigned char *XCrossSolver::p_pt_pscross_E0E1E2 = nullptr;
+const unsigned char *XCrossSolver::p_pt_pscross_C4C5C6 = nullptr;
+const unsigned char *XCrossSolver::p_pt_pscross_C4C5 = nullptr;
+const unsigned char *XCrossSolver::p_pt_pscross_C4C6 = nullptr;
+const unsigned char *XCrossSolver::p_pt_pscross_E0E1 = nullptr;
+const unsigned char *XCrossSolver::p_pt_pscross_E0E2 = nullptr;
 
 // 静态AuxPrunerDef 成员定义
-AuxPrunerDef xcross_analyzer2::aux_def_pscross_E0E1;
-AuxPrunerDef xcross_analyzer2::aux_def_pscross_E0E2;
-AuxPrunerDef xcross_analyzer2::aux_def_pscross_C4C5;
-AuxPrunerDef xcross_analyzer2::aux_def_pscross_C4C6;
-AuxPrunerDef xcross_analyzer2::aux_def_pscross_E0E1E2;
-AuxPrunerDef xcross_analyzer2::aux_def_pscross_C4C5C6;
+AuxPrunerDef XCrossSolver::aux_def_pscross_E0E1;
+AuxPrunerDef XCrossSolver::aux_def_pscross_E0E2;
+AuxPrunerDef XCrossSolver::aux_def_pscross_C4C5;
+AuxPrunerDef XCrossSolver::aux_def_pscross_C4C6;
+AuxPrunerDef XCrossSolver::aux_def_pscross_E0E1E2;
+AuxPrunerDef XCrossSolver::aux_def_pscross_C4C5C6;
 
-std::string analyzer_compute(xcross_analyzer2 &xcs, std::string scramble,
+std::string analyzer_compute(XCrossSolver &xcs, std::string scramble,
                              std::string id) {
-  xcs.stage_results = xcross_analyzer2::StageResults();
+  xcs.stage_results = XCrossSolver::StageResults();
 
   std::vector<std::string> rotations;
   std::string rot_set = "DULRFB";
@@ -1546,16 +1546,16 @@ std::string analyzer_compute(xcross_analyzer2 &xcs, std::string scramble,
   return oss.str();
 }
 
-// --- PseudoPairSolverWrapper: 封装xcross_analyzer2的统一接口 ---
+// --- PseudoPairSolverWrapper: 封装XCrossSolver的统一接口 ---
 struct PseudoPairSolverWrapper {
   static inline std::vector<std::string> rots = {"",  "z2", "z'",
                                                  "z", "x'", "x"};
 
-  xcross_analyzer2 analyzer;
+  XCrossSolver analyzer;
 
   static void global_init() {
     init_matrix();
-    xcross_analyzer2::initialize_tables();
+    XCrossSolver::initialize_tables();
   }
 
   static std::string get_csv_header() {
