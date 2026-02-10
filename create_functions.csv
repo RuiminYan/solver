@@ -17,12 +17,12 @@ createPTCrossCCC,Cross×Corner×Corner×Corner,sz_cr×sz_cn1×sz_cn2×sz_cn3,1,1
 createPTDim2,Dim1×Dim2,sz1×sz2,1,11,MTEP4(18),MTEOAlt(18),-,-,genPTEP4EO12,通用2维BFS(步长18×18)
 
 --- Pseudo Cross/XCross 引擎 ---,,,,,,,,,
-createPTPsCrossCorner,Cross×Corner,190080×24,4,10,MTEdge4(24),MTCorn(18),-,-,genPTPsCrossC(×4),Pseudo Cross+1Corner(4个D偏移初始化)
-createPTPsCrossInsC,Cross×Corner,190080×24,4×4=16,10,MTEdge4(24),MTCorn(18),-,-,genPTPsCrossInsCDiff(×16),Pseudo Cross+1Corner Insertion (含U插入+D偏移+边块展开)
-createPTPsPair,Edge×Corner,size1×size2,4×4=16,8,MTEdge(18),MTCorn(18),-,-,genPTPsPairCE(×16),Pseudo Pair(含U插入+D偏移+边块展开)
+createPTPsCrossCorner,Cross×Corner,CROSS×CORNER,4,10,MTEdge4(24),MTCorn(18),-,-,genPTPsCrossC(×4),Pseudo Cross+1Corner(4个D偏移初始化)
+createPTPsCrossInsC,Cross×Corner,CROSS×CORNER,4×4=16,10,MTEdge4(24),MTCorn(18),-,-,genPTPsCrossInsCDiff(×16),Pseudo Cross+1Corner Insertion (含U插入+D偏移+边块展开)
+createPTPsPair,Edge×Corner,EDGE×CORNER,4×4=16,8,MTEdge(18),MTCorn(18),-,-,genPTPsPairCE(×16),Pseudo Pair(含U插入+D偏移+边块展开)
 
 --- Pseudo Aux 表引擎 ---,,,,,,,,,
-createPTPsCrossEdges2,Cross×Edge2,190080×528,4,11,MTEdge4(24),MTEdge2(18),-,-,genPTPsCrossE0E1等(×6),Pseudo Cross+2Edge(4个D偏移)
-createPTPsCrossEdges3,Cross×Edge3,190080×10560,4,12,MTEdge4(24),MTEdge3(18),-,-,genPTPsCrossE0E1E2等(×4),Pseudo Cross+3Edge(4个D偏移)
-createPTPsCrossCorners2,Cross×Corner2,190080×504,4,11,MTEdge4(24),MTCorn2(18),-,-,genPTPsCrossC4C5等(×6),Pseudo Cross+2Corner(4个D偏移)
-createPTPsCrossCorners3,Cross×Corner3,190080×9072,4,13,MTEdge4(24),MTCorn3(18),-,-,genPTPsCrossC4C5C6等(×4),Pseudo Cross+3Corner(4个D偏移)
+createPTPsCrossEdges2,Cross×Edge2,CROSS×EDGE2,4,11,MTEdge4(24),MTEdge2(18),-,-,genPTPsCrossE0E1等(×6),Pseudo Cross+2Edge(4个D偏移)
+createPTPsCrossEdges3,Cross×Edge3,CROSS×EDGE3,4,12,MTEdge4(24),MTEdge3(18),-,-,genPTPsCrossE0E1E2等(×4),Pseudo Cross+3Edge(4个D偏移)
+createPTPsCrossCorners2,Cross×Corner2,CROSS×CORNER2,4,11,MTEdge4(24),MTCorn2(18),-,-,genPTPsCrossC4C5等(×6),Pseudo Cross+2Corner(4个D偏移)
+createPTPsCrossCorners3,Cross×Corner3,CROSS×CORNER3,4,13,MTEdge4(24),MTCorn3(18),-,-,genPTPsCrossC4C5C6等(×4),Pseudo Cross+3Corner(4个D偏移)
