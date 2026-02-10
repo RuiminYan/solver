@@ -34,7 +34,7 @@ struct CrossSolver {
       int n_i1 = p_mt_edge2[i1 + m];
       int n_i2 = p_mt_edge2[i2 + m];
       long long idx = (long long)n_i1 * StateSpace::EDGE2 + n_i2;
-      if (get_prune_ptr(p_pt, idx) >= depth)
+      if (get_prune(p_pt, idx) >= depth)
         continue;
       if (depth == 1) {
         return true;
@@ -56,7 +56,7 @@ struct CrossSolver {
         i2 = p_mt_edge2[i2 * 18 + m];
       }
       long long idx = (long long)i1 * StateSpace::EDGE2 + i2;
-      int d_min = get_prune_ptr(p_pt, idx);
+      int d_min = get_prune(p_pt, idx);
       if (d_min == 0)
         continue;
       for (int d = d_min; d <= 8; ++d) {

@@ -510,7 +510,7 @@ struct XCrossSolver {
       int index1_tmp = p_mt_edge4[arg_index1 + i];
       int index2_tmp = p_mt_corn[arg_index2 + i];
 
-      int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
+      int prune1_tmp = get_prune(prune1, index1_tmp + index2_tmp);
       // ++s1_prune1_checked;  // NOTE: S1统计已禁用
       if (prune1_tmp >= depth) {
         // ++s1_prune1_pruned;
@@ -518,8 +518,7 @@ struct XCrossSolver {
       }
 
       int index3_tmp = p_mt_edge[arg_index3 + i];
-      int edge_prune1_tmp =
-          get_prune_ptr(edge_prune, index3_tmp * 24 + index2_tmp);
+      int edge_prune1_tmp = get_prune(edge_prune, index3_tmp * 24 + index2_tmp);
       // ++s1_edge_checked;  // NOTE: S1统计已禁用
       if (edge_prune1_tmp >= depth) {
         // ++s1_edge_pruned;
@@ -581,8 +580,8 @@ struct XCrossSolver {
       get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx3, slot1,
                           pslot1, edge_index, corner_index, single_edge_index);
 
-      int h1 = get_prune_ptr(p_prune1, idx1 + idx2);
-      int h2 = get_prune_ptr(p_edge_prune, idx3 * 24 + idx2);
+      int h1 = get_prune(p_prune1, idx1 + idx2);
+      int h2 = get_prune(p_edge_prune, idx3 * 24 + idx2);
       tasks.push_back({(int)r, std::max(h1, h2)});
     }
     std::sort(tasks.begin(), tasks.end(),
@@ -602,8 +601,8 @@ struct XCrossSolver {
       index2 = idx2;
       index3 = idx3;
 
-      int prune1_tmp = get_prune_ptr(p_prune1, index1 + index2);
-      int edge_prune1_tmp = get_prune_ptr(p_edge_prune, index3 * 24 + index2);
+      int prune1_tmp = get_prune(p_prune1, index1 + index2);
+      int edge_prune1_tmp = get_prune(p_edge_prune, index3 * 24 + index2);
 
       if (prune1_tmp == 0 && edge_prune1_tmp == 0) {
         results[r] = 0;
@@ -670,7 +669,7 @@ struct XCrossSolver {
                                      : xc2_e3_n;
 
       long long idx_xc2 = (long long)(xc2_cr_n + xc2_cn_n) * 24 + xc2_e_sel;
-      int prune_xc2_tmp = get_prune_ptr(prune_xc2, idx_xc2);
+      int prune_xc2_tmp = get_prune(prune_xc2, idx_xc2);
       // ++s2_xc2_checked;  // NOTE: S2统计已禁用
       if (prune_xc2_tmp >= depth) {
         // ++s2_xc2_pruned;
@@ -680,7 +679,7 @@ struct XCrossSolver {
       // 2. prune1 剪枝 (61.45% 剪枝表
       int index1_tmp = p_mt_edge4[arg_index1 + i];
       int index2_tmp = p_mt_corn[arg_index2 + i];
-      int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
+      int prune1_tmp = get_prune(prune1, index1_tmp + index2_tmp);
       // ++s2_prune1_checked;  // NOTE: S2统计已禁用
       if (prune1_tmp >= depth) {
         // ++s2_prune1_pruned;
@@ -693,7 +692,7 @@ struct XCrossSolver {
       // 3. edge_prune1 剪枝 (11% 剪枝表
       int index5_tmp = p_mt_edge[arg_index5 + i];
       int edge_prune1_tmp =
-          get_prune_ptr(edge_prune1, index5_tmp * 24 + index2_tmp);
+          get_prune(edge_prune1, index5_tmp * 24 + index2_tmp);
       // ++s2_edge_checked;  // NOTE: S2统计已禁用
       if (edge_prune1_tmp >= depth) {
         // ++s2_edge_pruned;
@@ -756,9 +755,9 @@ struct XCrossSolver {
       get_rotated_indices(base_alg, rotations[r], idx1_dummy, idx4, idx6, slot2,
                           pslot2, edge_index, corner_index, single_edge_index);
 
-      int h1 = get_prune_ptr(p_prune1, idx1 + idx2);
-      int h2 = get_prune_ptr(p_prune2, idx1 + idx4);
-      int h3 = get_prune_ptr(p_edge_prune1, idx5 * 24 + idx2);
+      int h1 = get_prune(p_prune1, idx1 + idx2);
+      int h2 = get_prune(p_prune2, idx1 + idx4);
+      int h3 = get_prune(p_edge_prune1, idx5 * 24 + idx2);
 
       // [Conj优化] 使用 Conj 索引计算 h4
       std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
@@ -767,7 +766,7 @@ struct XCrossSolver {
       long long conj_idx_xc2 =
 
           (long long)(st.cross + st.corner) * 24 + st.edge[diff2];
-      int h4 = get_prune_ptr(p_prune_xc2, conj_idx_xc2);
+      int h4 = get_prune(p_prune_xc2, conj_idx_xc2);
 
       tasks.push_back({(int)r, std::max({h1, h2, h3, h4})});
     }
@@ -794,9 +793,9 @@ struct XCrossSolver {
       index6 = idx6;
       edge_solved2 = single_edge_index[slot2];
 
-      int prune1_tmp = get_prune_ptr(p_prune1, index1 + index2);
-      int prune2_tmp = get_prune_ptr(p_prune2, index1 + index4);
-      int edge_prune1_tmp = get_prune_ptr(p_edge_prune1, index5 * 24 + index2);
+      int prune1_tmp = get_prune(p_prune1, index1 + index2);
+      int prune2_tmp = get_prune(p_prune2, index1 + index4);
+      int edge_prune1_tmp = get_prune(p_edge_prune1, index5 * 24 + index2);
 
       // [Conj优化] 计算 XC2 Conj 状态)
       std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
@@ -804,7 +803,7 @@ struct XCrossSolver {
       get_conj_state_xc(rotated_alg, pslot2, st);
       long long conj_idx_xc2 =
           (long long)(st.cross + st.corner) * 24 + st.edge[diff2];
-      int prune_xc2_tmp = get_prune_ptr(p_prune_xc2, conj_idx_xc2);
+      int prune_xc2_tmp = get_prune(p_prune_xc2, conj_idx_xc2);
 
       if (prune1_tmp == 0 && prune2_tmp == 0 && edge_prune1_tmp == 0 &&
           prune_xc2_tmp == 0 && index6 == edge_solved2) {
@@ -907,7 +906,7 @@ struct XCrossSolver {
 
         long long idx_aux = (long long)lookup_cross_idx * cur.def->multiplier +
                             next_aux[a].current_idx;
-        if (get_prune_ptr(cur.def->p_prune, idx_aux) >= depth) {
+        if (get_prune(cur.def->p_prune, idx_aux) >= depth) {
           aux_pruned = true;
           break;
         }
@@ -932,7 +931,7 @@ struct XCrossSolver {
                                      : xc3_e3_n;
 
       long long idx_xc3 = (long long)(xc3_cr_n + xc3_cn_n) * 24 + xc3_e_sel;
-      int prune_xc3_tmp = get_prune_ptr(prune_xc3, idx_xc3);
+      int prune_xc3_tmp = get_prune(prune_xc3, idx_xc3);
       // ++s3_xc3_checked;  // NOTE: S3统计已禁用
       if (prune_xc3_tmp >= depth) {
         // ++s3_xc3_pruned;
@@ -941,7 +940,7 @@ struct XCrossSolver {
 
       // 3. prune1 剪枝 (1.12% 剪枝表
       int index2_tmp = p_mt_corn[arg_index2 + i];
-      int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
+      int prune1_tmp = get_prune(prune1, index1_tmp + index2_tmp);
       // ++s3_prune1_checked;  // NOTE: S3统计已禁用
       if (prune1_tmp >= depth) {
         // ++s3_prune1_pruned;
@@ -951,7 +950,7 @@ struct XCrossSolver {
       // 4. edge_prune1 剪枝 (0.43% 剪枝表
       int index7_tmp = p_mt_edge[arg_index7 + i];
       int edge_prune1_tmp =
-          get_prune_ptr(edge_prune1, index7_tmp * 24 + index2_tmp);
+          get_prune(edge_prune1, index7_tmp * 24 + index2_tmp);
       // ++s3_edge_checked;  // NOTE: S3统计已禁用
       if (edge_prune1_tmp >= depth) {
         // ++s3_edge_pruned;
@@ -1019,8 +1018,8 @@ struct XCrossSolver {
                           slot3, pslot3, edge_index, corner_index,
                           single_edge_index);
 
-      int h1 = get_prune_ptr(p_prune1, idx1 + idx2);
-      int h4 = get_prune_ptr(p_edge_prune1, idx7 * 24 + idx2);
+      int h1 = get_prune(p_prune1, idx1 + idx2);
+      int h4 = get_prune(p_edge_prune1, idx7 * 24 + idx2);
 
       // [Conj优化] 使用 Conj 索引计算 h5
       std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
@@ -1029,7 +1028,7 @@ struct XCrossSolver {
 
       long long conj_idx_xc3 =
           (long long)(st.cross + st.corner) * 24 + st.edge[diff3];
-      int h5 = get_prune_ptr(p_prune_xc3, conj_idx_xc3);
+      int h5 = get_prune(p_prune_xc3, conj_idx_xc3);
 
       tasks.push_back({(int)r, std::max({h1, h4, h5})});
     }
@@ -1064,8 +1063,8 @@ struct XCrossSolver {
       index9 = idx9;
       edge_solved3 = single_edge_index[slot3];
 
-      int prune1_tmp = get_prune_ptr(p_prune1, index1 + index2);
-      int edge_prune1_tmp = get_prune_ptr(p_edge_prune1, index7 * 24 + index2);
+      int prune1_tmp = get_prune(p_prune1, index1 + index2);
+      int edge_prune1_tmp = get_prune(p_edge_prune1, index7 * 24 + index2);
 
       // [Conj优化] 计算 XC3 Conj 状态)
       std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
@@ -1073,7 +1072,7 @@ struct XCrossSolver {
       get_conj_state_xc(rotated_alg, pslot3, st);
       long long conj_idx_xc3 =
           (long long)(st.cross + st.corner) * 24 + st.edge[diff3];
-      int prune_xc3_tmp = get_prune_ptr(p_prune_xc3, conj_idx_xc3);
+      int prune_xc3_tmp = get_prune(p_prune_xc3, conj_idx_xc3);
 
       if (prune1_tmp == 0 && edge_prune1_tmp == 0 && prune_xc3_tmp == 0 &&
           index8 == edge_solved2 && index9 == edge_solved3) {
@@ -1197,7 +1196,7 @@ struct XCrossSolver {
 
         long long idx_aux = (long long)lookup_cross_idx * cur.def->multiplier +
                             next_aux[a].current_idx;
-        if (get_prune_ptr(cur.def->p_prune, idx_aux) >= depth) {
+        if (get_prune(cur.def->p_prune, idx_aux) >= depth) {
           aux_pruned = true;
           break;
         }
@@ -1224,7 +1223,7 @@ struct XCrossSolver {
 
       long long idx_xc4 = (long long)(xc4_cr_n + xc4_cn_n) * 24 + xc4_e_sel;
       // ++s4_xc4_checked; // 统计已禁用
-      int prune_xc4_tmp = get_prune_ptr(prune_xc4, idx_xc4);
+      int prune_xc4_tmp = get_prune(prune_xc4, idx_xc4);
       if (prune_xc4_tmp >= depth) {
         // ++s4_xc4_pruned; // 统计已禁用
         continue;
@@ -1234,8 +1233,8 @@ struct XCrossSolver {
       // 但仍需计算它们用于 depth==1 时验证解决状态
       int index9_tmp = p_mt_edge[arg_index9 + i];
       int edge_prune1_tmp =
-          get_prune_ptr(edge_prune1, index9_tmp * 24 + index2_tmp);
-      int prune1_tmp = get_prune_ptr(prune1, index1_tmp + index2_tmp);
+          get_prune(edge_prune1, index9_tmp * 24 + index2_tmp);
+      int prune1_tmp = get_prune(prune1, index1_tmp + index2_tmp);
 
       // NOTE: prune2/3/4 (Base 表) 已移除，因为被AuxState (Corner3) 完全覆盖
       int index4_tmp = p_mt_corn[arg_index4 + i];
@@ -1320,11 +1319,11 @@ struct XCrossSolver {
                           slot4, pslot4, edge_index, corner_index,
                           single_edge_index);
 
-      int h1 = get_prune_ptr(p_prune1, idx1 + idx2);
-      int h2 = get_prune_ptr(p_prune2, idx1 + idx4);
-      int h3 = get_prune_ptr(p_prune3, idx1 + idx6);
-      int h4 = get_prune_ptr(p_prune4, idx1 + idx8);
-      int h5 = get_prune_ptr(p_edge_prune1, idx9 * 24 + idx2);
+      int h1 = get_prune(p_prune1, idx1 + idx2);
+      int h2 = get_prune(p_prune2, idx1 + idx4);
+      int h3 = get_prune(p_prune3, idx1 + idx6);
+      int h4 = get_prune(p_prune4, idx1 + idx8);
+      int h5 = get_prune(p_edge_prune1, idx9 * 24 + idx2);
 
       // [Conj优化] 使用 Conj 索引计算 h6
       std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
@@ -1332,7 +1331,7 @@ struct XCrossSolver {
       get_conj_state_xc(rotated_alg, pslot4, st);
       long long conj_idx_xc4 =
           (long long)(st.cross + st.corner) * 24 + st.edge[diff4];
-      int h6 = get_prune_ptr(p_prune_xc4, conj_idx_xc4);
+      int h6 = get_prune(p_prune_xc4, conj_idx_xc4);
 
       tasks.push_back({(int)r, std::max({h1, h2, h3, h4, h5, h6})});
     }
@@ -1376,11 +1375,11 @@ struct XCrossSolver {
       index12 = idx12;
       edge_solved4 = single_edge_index[slot4];
 
-      int prune1_tmp = get_prune_ptr(p_prune1, index1 + index2);
-      int prune2_tmp = get_prune_ptr(p_prune2, index1 + index4);
-      int prune3_tmp = get_prune_ptr(p_prune3, index1 + index6);
-      int prune4_tmp = get_prune_ptr(p_prune4, index1 + index8);
-      int edge_prune1_tmp = get_prune_ptr(p_edge_prune1, index9 * 24 + index2);
+      int prune1_tmp = get_prune(p_prune1, index1 + index2);
+      int prune2_tmp = get_prune(p_prune2, index1 + index4);
+      int prune3_tmp = get_prune(p_prune3, index1 + index6);
+      int prune4_tmp = get_prune(p_prune4, index1 + index8);
+      int edge_prune1_tmp = get_prune(p_edge_prune1, index9 * 24 + index2);
 
       // [Conj优化] 计算 XC4 Conj 状态)
       std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
@@ -1388,7 +1387,7 @@ struct XCrossSolver {
       get_conj_state_xc(rotated_alg, pslot4, st);
       long long conj_idx_xc4 =
           (long long)(st.cross + st.corner) * 24 + st.edge[diff4];
-      int prune_xc4_tmp = get_prune_ptr(p_prune_xc4, conj_idx_xc4);
+      int prune_xc4_tmp = get_prune(p_prune_xc4, conj_idx_xc4);
 
       if (prune1_tmp == 0 && prune2_tmp == 0 && prune3_tmp == 0 &&
           prune4_tmp == 0 && edge_prune1_tmp == 0 && prune_xc4_tmp == 0 &&

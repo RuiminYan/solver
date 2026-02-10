@@ -60,10 +60,6 @@
 #include <iomanip>
 #include <queue>
 
-static inline int get_prune(const unsigned char *table, long long idx) {
-  return (table[idx >> 1] >> ((idx & 1) * 4)) & 0x0F;
-}
-
 // y2 rotation move mapping: R↔L, F↔B, U/D 不变 (旋转不反转方向)
 static const int Y2_MOVE[18] = {
     3,  4,  5,  // R→L, R'→L', R2→L2

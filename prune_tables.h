@@ -15,15 +15,11 @@ inline void set_prune(std::vector<unsigned char> &table, long long index,
   table[index >> 1] |= (value & 0xF) << shift;
 }
 
-inline int get_prune_4bit(const unsigned char *table, long long index) {
-  return (table[index >> 1] >> ((index & 1) << 2)) & 0xF;
-}
-
 inline int get_prune(const std::vector<unsigned char> &table, long long index) {
   return (table[index >> 1] >> ((index & 1) << 2)) & 0xF;
 }
 
-inline int get_prune_ptr(const unsigned char *table, long long index) {
+inline int get_prune(const unsigned char *table, long long index) {
   return (table[index >> 1] >> ((index & 1) << 2)) & 0xF;
 }
 

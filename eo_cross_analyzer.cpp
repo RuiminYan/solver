@@ -101,7 +101,7 @@ struct CrossSolver {
       // : 先Cross 查表
       int n1 = p_mt_edge2[i1 + m], n2 = p_mt_edge2[i2 + m];
       long long idx = (long long)n1 * StateSpace::EDGE2 + n2;
-      int pr = get_prune_ptr(p_pt_cross, idx);
+      int pr = get_prune(p_pt_cross, idx);
       if (pr >= depth)
         continue;
 
@@ -126,7 +126,7 @@ struct CrossSolver {
       int i1, i2, ieo;
       get_indices_sym(base_alg, s, i1, i2, ieo);
       long long idx = (long long)i1 * StateSpace::EDGE2 + i2;
-      int h = get_prune_ptr(p_pt_cross, idx);
+      int h = get_prune(p_pt_cross, idx);
       if (h == 0 && ieo != 0)
         h = 1;
       if (h == 0 && ieo == 0) {
@@ -350,7 +350,7 @@ struct XCrossSolver {
       // Check 1: Dependency (EO + Partial Cross)
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];
       S1_CHECK(s1_dep_eo);
-      if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
+      if (get_prune(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
           depth) {
         S1_HIT(s1_dep_eo);
         continue;
@@ -362,7 +362,7 @@ struct XCrossSolver {
           n3 = p_mt_edge[i3 + m_slot];
       long long idx_xc = (long long)(n1 + n2) * 24 + n3;
       S1_CHECK(s1_xcross);
-      if (get_prune_ptr(p_pt_cross_C4E0, idx_xc) >= depth) {
+      if (get_prune(p_pt_cross_C4E0, idx_xc) >= depth) {
         S1_HIT(s1_xcross);
         continue;
       }
@@ -400,15 +400,14 @@ struct XCrossSolver {
         int mv = conj_moves_flat[m][v_huge];
         n_ie6 = p_mt_edge6[i_e6 * 18 + mv];
         n_ic2 = p_mt_corn2[i_c2 * 18 + mv];
-        if (get_prune_ptr(p_huge_active,
-                          (long long)n_ie6 * StateSpace::CORNER2 + n_ic2) >=
-            depth)
+        if (get_prune(p_huge_active,
+                      (long long)n_ie6 * StateSpace::CORNER2 + n_ic2) >= depth)
           continue;
       }
 
       // Check 1: Dep + EO
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];
-      if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
+      if (get_prune(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
           depth)
         continue;
 
@@ -417,14 +416,14 @@ struct XCrossSolver {
       int n1a = p_mt_edge4[i1a + m1], n2a = p_mt_corn[i2a + m1],
           n3a = p_mt_edge[i3a + m1];
       long long idx_a = (long long)(n1a + n2a) * 24 + n3a;
-      if (get_prune_ptr(p_pt_cross_C4E0, idx_a) >= depth)
+      if (get_prune(p_pt_cross_C4E0, idx_a) >= depth)
         continue;
 
       int n_ea_rel = p_mt_edge[ea_rel * 18 + m1];
-      if (get_prune_ptr(p_pt_cross_CEE[tab], idx_a * 24 + n_ea_rel) >= depth)
+      if (get_prune(p_pt_cross_CEE[tab], idx_a * 24 + n_ea_rel) >= depth)
         continue;
       int n_ca_rel = p_mt_corn[ca_rel * 18 + m1];
-      if (get_prune_ptr(p_pt_cross_CCE[tab], idx_a * 24 + n_ca_rel) >= depth)
+      if (get_prune(p_pt_cross_CCE[tab], idx_a * 24 + n_ca_rel) >= depth)
         continue;
 
       // Check 3: View B (Base + Plus)
@@ -432,14 +431,14 @@ struct XCrossSolver {
       int n1b = p_mt_edge4[i1b + m2], n2b = p_mt_corn[i2b + m2],
           n3b = p_mt_edge[i3b + m2];
       long long idx_b = (long long)(n1b + n2b) * 24 + n3b;
-      if (get_prune_ptr(p_pt_cross_C4E0, idx_b) >= depth)
+      if (get_prune(p_pt_cross_C4E0, idx_b) >= depth)
         continue;
 
       int n_eb_rel = p_mt_edge[eb_rel * 18 + m2];
-      if (get_prune_ptr(p_pt_cross_CEE[tba], idx_b * 24 + n_eb_rel) >= depth)
+      if (get_prune(p_pt_cross_CEE[tba], idx_b * 24 + n_eb_rel) >= depth)
         continue;
       int n_cb_rel = p_mt_corn[cb_rel * 18 + m2];
-      if (get_prune_ptr(p_pt_cross_CCE[tba], idx_b * 24 + n_cb_rel) >= depth)
+      if (get_prune(p_pt_cross_CCE[tba], idx_b * 24 + n_cb_rel) >= depth)
         continue;
 
       if (depth == 1)
@@ -484,15 +483,14 @@ struct XCrossSolver {
         int mv = conj_moves_flat[m][v_huge];
         n_ie6 = p_mt_edge6[i_e6 * 18 + mv];
         n_ic2 = p_mt_corn2[i_c2 * 18 + mv];
-        if (get_prune_ptr(p_huge_active,
-                          (long long)n_ie6 * StateSpace::CORNER2 + n_ic2) >=
-            depth)
+        if (get_prune(p_huge_active,
+                      (long long)n_ie6 * StateSpace::CORNER2 + n_ic2) >= depth)
           continue;
       }
 
       // Check 1: Dep + EO
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];
-      if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
+      if (get_prune(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
           depth)
         continue;
 
@@ -501,26 +499,26 @@ struct XCrossSolver {
       int n1a = p_mt_edge4[i1a + m1], n2a = p_mt_corn[i2a + m1],
           n3a = p_mt_edge[i3a + m1];
       long long idx_a = (long long)(n1a + n2a) * 24 + n3a;
-      if (get_prune_ptr(p_pt_cross_C4E0, idx_a) >= depth)
+      if (get_prune(p_pt_cross_C4E0, idx_a) >= depth)
         continue;
 
       int n_ea_b = p_mt_edge[ea_b * 18 + m1],
           n_ca_b = p_mt_corn[ca_b * 18 + m1];
-      if (get_prune_ptr(p_pt_cross_CEE[t_ab], idx_a * 24 + n_ea_b) >= depth)
+      if (get_prune(p_pt_cross_CEE[t_ab], idx_a * 24 + n_ea_b) >= depth)
         continue;
-      if (get_prune_ptr(p_pt_cross_CCE[t_ab], idx_a * 24 + n_ca_b) >= depth)
+      if (get_prune(p_pt_cross_CCE[t_ab], idx_a * 24 + n_ca_b) >= depth)
         continue;
 
       int n_ea_c = p_mt_edge[ea_c * 18 + m1],
           n_ca_c = p_mt_corn[ca_c * 18 + m1];
-      if (get_prune_ptr(p_pt_cross_CEE[t_ac], idx_a * 24 + n_ea_c) >= depth)
+      if (get_prune(p_pt_cross_CEE[t_ac], idx_a * 24 + n_ea_c) >= depth)
         continue;
-      if (get_prune_ptr(p_pt_cross_CCE[t_ac], idx_a * 24 + n_ca_c) >= depth)
+      if (get_prune(p_pt_cross_CCE[t_ac], idx_a * 24 + n_ca_c) >= depth)
         continue;
 
       if (check_3c_A) {
         long long idx_3c = ((long long)(n1a + n2a) * 24 + n_ca_b) * 24 + n_ca_c;
-        if (get_prune_ptr(p_pt_cross_C4C5C6, idx_3c) >= depth)
+        if (get_prune(p_pt_cross_C4C5C6, idx_3c) >= depth)
           continue;
       }
 
@@ -529,26 +527,26 @@ struct XCrossSolver {
       int n1b = p_mt_edge4[i1b + m2], n2b = p_mt_corn[i2b + m2],
           n3b = p_mt_edge[i3b + m2];
       long long idx_b = (long long)(n1b + n2b) * 24 + n3b;
-      if (get_prune_ptr(p_pt_cross_C4E0, idx_b) >= depth)
+      if (get_prune(p_pt_cross_C4E0, idx_b) >= depth)
         continue;
 
       int n_eb_a = p_mt_edge[eb_a * 18 + m2],
           n_cb_a = p_mt_corn[cb_a * 18 + m2];
-      if (get_prune_ptr(p_pt_cross_CEE[t_ba], idx_b * 24 + n_eb_a) >= depth)
+      if (get_prune(p_pt_cross_CEE[t_ba], idx_b * 24 + n_eb_a) >= depth)
         continue;
-      if (get_prune_ptr(p_pt_cross_CCE[t_ba], idx_b * 24 + n_cb_a) >= depth)
+      if (get_prune(p_pt_cross_CCE[t_ba], idx_b * 24 + n_cb_a) >= depth)
         continue;
 
       int n_eb_c = p_mt_edge[eb_c * 18 + m2],
           n_cb_c = p_mt_corn[cb_c * 18 + m2];
-      if (get_prune_ptr(p_pt_cross_CEE[t_bc], idx_b * 24 + n_eb_c) >= depth)
+      if (get_prune(p_pt_cross_CEE[t_bc], idx_b * 24 + n_eb_c) >= depth)
         continue;
-      if (get_prune_ptr(p_pt_cross_CCE[t_bc], idx_b * 24 + n_cb_c) >= depth)
+      if (get_prune(p_pt_cross_CCE[t_bc], idx_b * 24 + n_cb_c) >= depth)
         continue;
 
       if (check_3c_B) {
         long long idx_3c = ((long long)(n1b + n2b) * 24 + n_cb_a) * 24 + n_cb_c;
-        if (get_prune_ptr(p_pt_cross_C4C5C6, idx_3c) >= depth)
+        if (get_prune(p_pt_cross_C4C5C6, idx_3c) >= depth)
           continue;
       }
 
@@ -557,26 +555,26 @@ struct XCrossSolver {
       int n1c = p_mt_edge4[i1c + m3], n2c = p_mt_corn[i2c + m3],
           n3c = p_mt_edge[i3c + m3];
       long long idx_c = (long long)(n1c + n2c) * 24 + n3c;
-      if (get_prune_ptr(p_pt_cross_C4E0, idx_c) >= depth)
+      if (get_prune(p_pt_cross_C4E0, idx_c) >= depth)
         continue;
 
       int n_ec_a = p_mt_edge[ec_a * 18 + m3],
           n_cc_a = p_mt_corn[cc_a * 18 + m3];
-      if (get_prune_ptr(p_pt_cross_CEE[t_ca], idx_c * 24 + n_ec_a) >= depth)
+      if (get_prune(p_pt_cross_CEE[t_ca], idx_c * 24 + n_ec_a) >= depth)
         continue;
-      if (get_prune_ptr(p_pt_cross_CCE[t_ca], idx_c * 24 + n_cc_a) >= depth)
+      if (get_prune(p_pt_cross_CCE[t_ca], idx_c * 24 + n_cc_a) >= depth)
         continue;
 
       int n_ec_b = p_mt_edge[ec_b * 18 + m3],
           n_cc_b = p_mt_corn[cc_b * 18 + m3];
-      if (get_prune_ptr(p_pt_cross_CEE[t_cb], idx_c * 24 + n_ec_b) >= depth)
+      if (get_prune(p_pt_cross_CEE[t_cb], idx_c * 24 + n_ec_b) >= depth)
         continue;
-      if (get_prune_ptr(p_pt_cross_CCE[t_cb], idx_c * 24 + n_cc_b) >= depth)
+      if (get_prune(p_pt_cross_CCE[t_cb], idx_c * 24 + n_cc_b) >= depth)
         continue;
 
       if (check_3c_C) {
         long long idx_3c = ((long long)(n1c + n2c) * 24 + n_cc_a) * 24 + n_cc_b;
-        if (get_prune_ptr(p_pt_cross_C4C5C6, idx_3c) >= depth)
+        if (get_prune(p_pt_cross_C4C5C6, idx_3c) >= depth)
           continue;
       }
 
@@ -629,15 +627,14 @@ struct XCrossSolver {
         int mv = conj_moves_flat[m][v_huge];
         n_ie6 = p_mt_edge6[i_e6 * 18 + mv];
         n_ic2 = p_mt_corn2[i_c2 * 18 + mv];
-        if (get_prune_ptr(p_huge_active,
-                          (long long)n_ie6 * StateSpace::CORNER2 + n_ic2) >=
-            depth)
+        if (get_prune(p_huge_active,
+                      (long long)n_ie6 * StateSpace::CORNER2 + n_ic2) >= depth)
           continue;
       }
 
       // --- Check 1: Dep + EO ---
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];
-      if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
+      if (get_prune(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
           depth)
         continue;
 
@@ -646,33 +643,33 @@ struct XCrossSolver {
       int n1a = p_mt_edge4[i1_a + m0], n2a = p_mt_corn[i2_a + m0],
           n3a = p_mt_edge[i3_a + m0];
       long long idx_a = (long long)(n1a + n2a) * 24 + n3a;
-      if (get_prune_ptr(p_pt_cross_C4E0, idx_a) >= depth)
+      if (get_prune(p_pt_cross_C4E0, idx_a) >= depth)
         continue;
 
       int n_ea_1 = p_mt_edge[ea_1 * 18 + m0],
           n_ca_1 = p_mt_corn[ca_1 * 18 + m0];
-      if (get_prune_ptr(p_pt_cross_CEE[0], idx_a * 24 + n_ea_1) >= depth)
+      if (get_prune(p_pt_cross_CEE[0], idx_a * 24 + n_ea_1) >= depth)
         continue; // s1: Right
-      if (get_prune_ptr(p_pt_cross_CCE[0], idx_a * 24 + n_ca_1) >= depth)
+      if (get_prune(p_pt_cross_CCE[0], idx_a * 24 + n_ca_1) >= depth)
         continue;
 
       int n_ea_2 = p_mt_edge[ea_2 * 18 + m0],
           n_ca_2 = p_mt_corn[ca_2 * 18 + m0];
-      if (get_prune_ptr(p_pt_cross_CEE[1], idx_a * 24 + n_ea_2) >= depth)
+      if (get_prune(p_pt_cross_CEE[1], idx_a * 24 + n_ea_2) >= depth)
         continue; // s2: Diag
-      if (get_prune_ptr(p_pt_cross_CCE[1], idx_a * 24 + n_ca_2) >= depth)
+      if (get_prune(p_pt_cross_CCE[1], idx_a * 24 + n_ca_2) >= depth)
         continue;
 
       int n_ea_3 = p_mt_edge[ea_3 * 18 + m0],
           n_ca_3 = p_mt_corn[ca_3 * 18 + m0];
-      if (get_prune_ptr(p_pt_cross_CEE[2], idx_a * 24 + n_ea_3) >= depth)
+      if (get_prune(p_pt_cross_CEE[2], idx_a * 24 + n_ea_3) >= depth)
         continue; // s3: Left
-      if (get_prune_ptr(p_pt_cross_CCE[2], idx_a * 24 + n_ca_3) >= depth)
+      if (get_prune(p_pt_cross_CCE[2], idx_a * 24 + n_ca_3) >= depth)
         continue;
 
       // 3-Corner: s1(Right) + s2(Diag) -- 始终满足
       long long idx_3c_a = ((long long)(n1a + n2a) * 24 + n_ca_1) * 24 + n_ca_2;
-      if (get_prune_ptr(p_pt_cross_C4C5C6, idx_3c_a) >= depth)
+      if (get_prune(p_pt_cross_C4C5C6, idx_3c_a) >= depth)
         continue;
 
       // --- View B (s1): 看s0(Left), s2(Right), s3(Diag) ---
@@ -680,33 +677,33 @@ struct XCrossSolver {
       int n1b = p_mt_edge4[i1_b + m1], n2b = p_mt_corn[i2_b + m1],
           n3b = p_mt_edge[i3_b + m1];
       long long idx_b = (long long)(n1b + n2b) * 24 + n3b;
-      if (get_prune_ptr(p_pt_cross_C4E0, idx_b) >= depth)
+      if (get_prune(p_pt_cross_C4E0, idx_b) >= depth)
         continue;
 
       int n_eb_0 = p_mt_edge[eb_0 * 18 + m1],
           n_cb_0 = p_mt_corn[cb_0 * 18 + m1];
-      if (get_prune_ptr(p_pt_cross_CEE[2], idx_b * 24 + n_eb_0) >= depth)
+      if (get_prune(p_pt_cross_CEE[2], idx_b * 24 + n_eb_0) >= depth)
         continue; // s0: Left
-      if (get_prune_ptr(p_pt_cross_CCE[2], idx_b * 24 + n_cb_0) >= depth)
+      if (get_prune(p_pt_cross_CCE[2], idx_b * 24 + n_cb_0) >= depth)
         continue;
 
       int n_eb_2 = p_mt_edge[eb_2 * 18 + m1],
           n_cb_2 = p_mt_corn[cb_2 * 18 + m1];
-      if (get_prune_ptr(p_pt_cross_CEE[0], idx_b * 24 + n_eb_2) >= depth)
+      if (get_prune(p_pt_cross_CEE[0], idx_b * 24 + n_eb_2) >= depth)
         continue; // s2: Right
-      if (get_prune_ptr(p_pt_cross_CCE[0], idx_b * 24 + n_cb_2) >= depth)
+      if (get_prune(p_pt_cross_CCE[0], idx_b * 24 + n_cb_2) >= depth)
         continue;
 
       int n_eb_3 = p_mt_edge[eb_3 * 18 + m1],
           n_cb_3 = p_mt_corn[cb_3 * 18 + m1];
-      if (get_prune_ptr(p_pt_cross_CEE[1], idx_b * 24 + n_eb_3) >= depth)
+      if (get_prune(p_pt_cross_CEE[1], idx_b * 24 + n_eb_3) >= depth)
         continue; // s3: Diag
-      if (get_prune_ptr(p_pt_cross_CCE[1], idx_b * 24 + n_cb_3) >= depth)
+      if (get_prune(p_pt_cross_CCE[1], idx_b * 24 + n_cb_3) >= depth)
         continue;
 
       // 3-Corner: s2(Right) + s3(Diag)
       long long idx_3c_b = ((long long)(n1b + n2b) * 24 + n_cb_2) * 24 + n_cb_3;
-      if (get_prune_ptr(p_pt_cross_C4C5C6, idx_3c_b) >= depth)
+      if (get_prune(p_pt_cross_C4C5C6, idx_3c_b) >= depth)
         continue;
 
       // --- View C (s2): 看s0(Diag), s1(Left), s3(Right) ---
@@ -714,33 +711,33 @@ struct XCrossSolver {
       int n1c = p_mt_edge4[i1_c + m2], n2c = p_mt_corn[i2_c + m2],
           n3c = p_mt_edge[i3_c + m2];
       long long idx_c = (long long)(n1c + n2c) * 24 + n3c;
-      if (get_prune_ptr(p_pt_cross_C4E0, idx_c) >= depth)
+      if (get_prune(p_pt_cross_C4E0, idx_c) >= depth)
         continue;
 
       int n_ec_0 = p_mt_edge[ec_0 * 18 + m2],
           n_cc_0 = p_mt_corn[cc_0 * 18 + m2];
-      if (get_prune_ptr(p_pt_cross_CEE[1], idx_c * 24 + n_ec_0) >= depth)
+      if (get_prune(p_pt_cross_CEE[1], idx_c * 24 + n_ec_0) >= depth)
         continue; // s0: Diag
-      if (get_prune_ptr(p_pt_cross_CCE[1], idx_c * 24 + n_cc_0) >= depth)
+      if (get_prune(p_pt_cross_CCE[1], idx_c * 24 + n_cc_0) >= depth)
         continue;
 
       int n_ec_1 = p_mt_edge[ec_1 * 18 + m2],
           n_cc_1 = p_mt_corn[cc_1 * 18 + m2];
-      if (get_prune_ptr(p_pt_cross_CEE[2], idx_c * 24 + n_ec_1) >= depth)
+      if (get_prune(p_pt_cross_CEE[2], idx_c * 24 + n_ec_1) >= depth)
         continue; // s1: Left
-      if (get_prune_ptr(p_pt_cross_CCE[2], idx_c * 24 + n_cc_1) >= depth)
+      if (get_prune(p_pt_cross_CCE[2], idx_c * 24 + n_cc_1) >= depth)
         continue;
 
       int n_ec_3 = p_mt_edge[ec_3 * 18 + m2],
           n_cc_3 = p_mt_corn[cc_3 * 18 + m2];
-      if (get_prune_ptr(p_pt_cross_CEE[0], idx_c * 24 + n_ec_3) >= depth)
+      if (get_prune(p_pt_cross_CEE[0], idx_c * 24 + n_ec_3) >= depth)
         continue; // s3: Right
-      if (get_prune_ptr(p_pt_cross_CCE[0], idx_c * 24 + n_cc_3) >= depth)
+      if (get_prune(p_pt_cross_CCE[0], idx_c * 24 + n_cc_3) >= depth)
         continue;
 
       // 3-Corner: s3(Right) + s0(Diag)
       long long idx_3c_c = ((long long)(n1c + n2c) * 24 + n_cc_3) * 24 + n_cc_0;
-      if (get_prune_ptr(p_pt_cross_C4C5C6, idx_3c_c) >= depth)
+      if (get_prune(p_pt_cross_C4C5C6, idx_3c_c) >= depth)
         continue;
 
       // --- View D (s3): 看s0(Right), s1(Diag), s2(Left) ---
@@ -748,33 +745,33 @@ struct XCrossSolver {
       int n1d = p_mt_edge4[i1_d + m3], n2d = p_mt_corn[i2_d + m3],
           n3d = p_mt_edge[i3_d + m3];
       long long idx_d = (long long)(n1d + n2d) * 24 + n3d;
-      if (get_prune_ptr(p_pt_cross_C4E0, idx_d) >= depth)
+      if (get_prune(p_pt_cross_C4E0, idx_d) >= depth)
         continue;
 
       int n_ed_0 = p_mt_edge[ed_0 * 18 + m3],
           n_cd_0 = p_mt_corn[cd_0 * 18 + m3];
-      if (get_prune_ptr(p_pt_cross_CEE[0], idx_d * 24 + n_ed_0) >= depth)
+      if (get_prune(p_pt_cross_CEE[0], idx_d * 24 + n_ed_0) >= depth)
         continue; // s0: Right
-      if (get_prune_ptr(p_pt_cross_CCE[0], idx_d * 24 + n_cd_0) >= depth)
+      if (get_prune(p_pt_cross_CCE[0], idx_d * 24 + n_cd_0) >= depth)
         continue;
 
       int n_ed_1 = p_mt_edge[ed_1 * 18 + m3],
           n_cd_1 = p_mt_corn[cd_1 * 18 + m3];
-      if (get_prune_ptr(p_pt_cross_CEE[1], idx_d * 24 + n_ed_1) >= depth)
+      if (get_prune(p_pt_cross_CEE[1], idx_d * 24 + n_ed_1) >= depth)
         continue; // s1: Diag
-      if (get_prune_ptr(p_pt_cross_CCE[1], idx_d * 24 + n_cd_1) >= depth)
+      if (get_prune(p_pt_cross_CCE[1], idx_d * 24 + n_cd_1) >= depth)
         continue;
 
       int n_ed_2 = p_mt_edge[ed_2 * 18 + m3],
           n_cd_2 = p_mt_corn[cd_2 * 18 + m3];
-      if (get_prune_ptr(p_pt_cross_CEE[2], idx_d * 24 + n_ed_2) >= depth)
+      if (get_prune(p_pt_cross_CEE[2], idx_d * 24 + n_ed_2) >= depth)
         continue; // s2: Left
-      if (get_prune_ptr(p_pt_cross_CCE[2], idx_d * 24 + n_cd_2) >= depth)
+      if (get_prune(p_pt_cross_CCE[2], idx_d * 24 + n_cd_2) >= depth)
         continue;
 
       // 3-Corner: s0(Right) + s1(Diag)
       long long idx_3c_d = ((long long)(n1d + n2d) * 24 + n_cd_0) * 24 + n_cd_1;
-      if (get_prune_ptr(p_pt_cross_C4C5C6, idx_3c_d) >= depth)
+      if (get_prune(p_pt_cross_C4C5C6, idx_3c_d) >= depth)
         continue;
 
       if (depth == 1)
@@ -817,10 +814,10 @@ struct XCrossSolver {
         std::vector<std::pair<int, int>> tasks;
         for (int s = 0; s < 4; ++s) {
           long long idx_xc = (long long)(st[s].i1 + st[s].i2) * 24 + st[s].i3;
-          int pr_xc = get_prune_ptr(p_pt_cross_C4E0, idx_xc);
-          int pr_de = get_prune_ptr(p_pt_ep4eo12,
-                                    (long long)st[s].idep * StateSpace::EO12 +
-                                        st[s].ieo);
+          int pr_xc = get_prune(p_pt_cross_C4E0, idx_xc);
+          int pr_de =
+              get_prune(p_pt_ep4eo12,
+                        (long long)st[s].idep * StateSpace::EO12 + st[s].ieo);
           tasks.push_back({std::max(pr_xc, pr_de), s});
         }
         std::sort(tasks.begin(), tasks.end());
@@ -856,24 +853,24 @@ struct XCrossSolver {
             // View A
             long long idx1 =
                 (long long)(st[s1].i1 + st[s1].i2) * 24 + st[s1].i3;
-            int h1 = get_prune_ptr(p_pt_cross_C4E0, idx1);
-            int h1_pe = get_prune_ptr(p_pt_cross_CEE[t_ab],
-                                      idx1 * 24 + st[s1].e_trk[t_ab]);
-            int h1_pc = get_prune_ptr(p_pt_cross_CCE[t_ab],
-                                      idx1 * 24 + st[s1].c_trk[t_ab]);
+            int h1 = get_prune(p_pt_cross_C4E0, idx1);
+            int h1_pe =
+                get_prune(p_pt_cross_CEE[t_ab], idx1 * 24 + st[s1].e_trk[t_ab]);
+            int h1_pc =
+                get_prune(p_pt_cross_CCE[t_ab], idx1 * 24 + st[s1].c_trk[t_ab]);
 
             // View B
             long long idx2 =
                 (long long)(st[s2].i1 + st[s2].i2) * 24 + st[s2].i3;
-            int h2 = get_prune_ptr(p_pt_cross_C4E0, idx2);
-            int h2_pe = get_prune_ptr(p_pt_cross_CEE[t_ba],
-                                      idx2 * 24 + st[s2].e_trk[t_ba]);
-            int h2_pc = get_prune_ptr(p_pt_cross_CCE[t_ba],
-                                      idx2 * 24 + st[s2].c_trk[t_ba]);
+            int h2 = get_prune(p_pt_cross_C4E0, idx2);
+            int h2_pe =
+                get_prune(p_pt_cross_CEE[t_ba], idx2 * 24 + st[s2].e_trk[t_ba]);
+            int h2_pc =
+                get_prune(p_pt_cross_CCE[t_ba], idx2 * 24 + st[s2].c_trk[t_ba]);
 
-            int h_de = get_prune_ptr(p_pt_ep4eo12,
-                                     (long long)st[s1].idep * StateSpace::EO12 +
-                                         st[s1].ieo);
+            int h_de = get_prune(p_pt_ep4eo12,
+                                 (long long)st[s1].idep * StateSpace::EO12 +
+                                     st[s1].ieo);
             int h = std::max({h1, h1_pe, h1_pc, h2, h2_pe, h2_pc, h_de});
             tasks_xx.push_back({h, p});
           }
@@ -938,39 +935,39 @@ struct XCrossSolver {
             // Pruning check for all 3 views
             long long idx1 =
                 (long long)(st[s1].i1 + st[s1].i2) * 24 + st[s1].i3;
-            int h1 = std::max({get_prune_ptr(p_pt_cross_C4E0, idx1),
-                               get_prune_ptr(p_pt_cross_CEE[t_ab],
-                                             idx1 * 24 + st[s1].e_trk[t_ab]),
-                               get_prune_ptr(p_pt_cross_CCE[t_ab],
-                                             idx1 * 24 + st[s1].c_trk[t_ab]),
-                               get_prune_ptr(p_pt_cross_CEE[t_ac],
-                                             idx1 * 24 + st[s1].e_trk[t_ac]),
-                               get_prune_ptr(p_pt_cross_CCE[t_ac],
-                                             idx1 * 24 + st[s1].c_trk[t_ac])});
+            int h1 = std::max({get_prune(p_pt_cross_C4E0, idx1),
+                               get_prune(p_pt_cross_CEE[t_ab],
+                                         idx1 * 24 + st[s1].e_trk[t_ab]),
+                               get_prune(p_pt_cross_CCE[t_ab],
+                                         idx1 * 24 + st[s1].c_trk[t_ab]),
+                               get_prune(p_pt_cross_CEE[t_ac],
+                                         idx1 * 24 + st[s1].e_trk[t_ac]),
+                               get_prune(p_pt_cross_CCE[t_ac],
+                                         idx1 * 24 + st[s1].c_trk[t_ac])});
 
             long long idx2 =
                 (long long)(st[s2].i1 + st[s2].i2) * 24 + st[s2].i3;
-            int h2 = std::max({get_prune_ptr(p_pt_cross_C4E0, idx2),
-                               get_prune_ptr(p_pt_cross_CEE[t_ba],
-                                             idx2 * 24 + st[s2].e_trk[t_ba]),
-                               get_prune_ptr(p_pt_cross_CCE[t_ba],
-                                             idx2 * 24 + st[s2].c_trk[t_ba]),
-                               get_prune_ptr(p_pt_cross_CEE[t_bc],
-                                             idx2 * 24 + st[s2].e_trk[t_bc]),
-                               get_prune_ptr(p_pt_cross_CCE[t_bc],
-                                             idx2 * 24 + st[s2].c_trk[t_bc])});
+            int h2 = std::max({get_prune(p_pt_cross_C4E0, idx2),
+                               get_prune(p_pt_cross_CEE[t_ba],
+                                         idx2 * 24 + st[s2].e_trk[t_ba]),
+                               get_prune(p_pt_cross_CCE[t_ba],
+                                         idx2 * 24 + st[s2].c_trk[t_ba]),
+                               get_prune(p_pt_cross_CEE[t_bc],
+                                         idx2 * 24 + st[s2].e_trk[t_bc]),
+                               get_prune(p_pt_cross_CCE[t_bc],
+                                         idx2 * 24 + st[s2].c_trk[t_bc])});
 
             long long idx3 =
                 (long long)(st[s3].i1 + st[s3].i2) * 24 + st[s3].i3;
-            int h3 = std::max({get_prune_ptr(p_pt_cross_C4E0, idx3),
-                               get_prune_ptr(p_pt_cross_CEE[t_ca],
-                                             idx3 * 24 + st[s3].e_trk[t_ca]),
-                               get_prune_ptr(p_pt_cross_CCE[t_ca],
-                                             idx3 * 24 + st[s3].c_trk[t_ca]),
-                               get_prune_ptr(p_pt_cross_CEE[t_cb],
-                                             idx3 * 24 + st[s3].e_trk[t_cb]),
-                               get_prune_ptr(p_pt_cross_CCE[t_cb],
-                                             idx3 * 24 + st[s3].c_trk[t_cb])});
+            int h3 = std::max({get_prune(p_pt_cross_C4E0, idx3),
+                               get_prune(p_pt_cross_CEE[t_ca],
+                                         idx3 * 24 + st[s3].e_trk[t_ca]),
+                               get_prune(p_pt_cross_CCE[t_ca],
+                                         idx3 * 24 + st[s3].c_trk[t_ca]),
+                               get_prune(p_pt_cross_CEE[t_cb],
+                                         idx3 * 24 + st[s3].e_trk[t_cb]),
+                               get_prune(p_pt_cross_CCE[t_cb],
+                                         idx3 * 24 + st[s3].c_trk[t_cb])});
 
             // 3-Corner Pruning
             int d_3c = 0;
@@ -979,35 +976,35 @@ struct XCrossSolver {
               int c_r = (t_ab == 0) ? st[s1].c_trk[t_ab] : st[s1].c_trk[t_ac];
               int c_d = (t_ab == 0) ? st[s1].c_trk[t_ac] : st[s1].c_trk[t_ab];
               d_3c = std::max(
-                  d_3c, get_prune_ptr(p_pt_cross_C4C5C6,
-                                      ((long long)(st[s1].i1 + st[s1].i2) * 24 +
-                                       c_r) * 24 +
-                                          c_d));
+                  d_3c, get_prune(p_pt_cross_C4C5C6,
+                                  ((long long)(st[s1].i1 + st[s1].i2) * 24 +
+                                   c_r) * 24 +
+                                      c_d));
             }
             if ((t_ba == 0 && t_bc == 1) ||
                 (t_bc == 0 && t_ba == 1)) { // View B
               int c_r = (t_ba == 0) ? st[s2].c_trk[t_ba] : st[s2].c_trk[t_bc];
               int c_d = (t_ba == 0) ? st[s2].c_trk[t_bc] : st[s2].c_trk[t_ba];
               d_3c = std::max(
-                  d_3c, get_prune_ptr(p_pt_cross_C4C5C6,
-                                      ((long long)(st[s2].i1 + st[s2].i2) * 24 +
-                                       c_r) * 24 +
-                                          c_d));
+                  d_3c, get_prune(p_pt_cross_C4C5C6,
+                                  ((long long)(st[s2].i1 + st[s2].i2) * 24 +
+                                   c_r) * 24 +
+                                      c_d));
             }
             if ((t_ca == 0 && t_cb == 1) ||
                 (t_cb == 0 && t_ca == 1)) { // View C
               int c_r = (t_ca == 0) ? st[s3].c_trk[t_ca] : st[s3].c_trk[t_cb];
               int c_d = (t_ca == 0) ? st[s3].c_trk[t_cb] : st[s3].c_trk[t_ca];
               d_3c = std::max(
-                  d_3c, get_prune_ptr(p_pt_cross_C4C5C6,
-                                      ((long long)(st[s3].i1 + st[s3].i2) * 24 +
-                                       c_r) * 24 +
-                                          c_d));
+                  d_3c, get_prune(p_pt_cross_C4C5C6,
+                                  ((long long)(st[s3].i1 + st[s3].i2) * 24 +
+                                   c_r) * 24 +
+                                      c_d));
             }
 
-            int pr_de = get_prune_ptr(
-                p_pt_ep4eo12,
-                (long long)st[s1].idep * StateSpace::EO12 + st[s1].ieo);
+            int pr_de = get_prune(p_pt_ep4eo12,
+                                  (long long)st[s1].idep * StateSpace::EO12 +
+                                      st[s1].ieo);
             int h = std::max({h1, h2, h3, pr_de, d_3c});
             tasks_xxx.push_back({h, tr});
           }
@@ -1071,25 +1068,25 @@ struct XCrossSolver {
         // 只有 1 种组合{0, 1, 2, 3}
         {
           // 获取初始下界：检查所有4 个视角的 Base 表+ Plus 表+ 3-Corner 表
-          int h_de = get_prune_ptr(p_pt_ep4eo12,
-                                   (long long)st[0].idep * StateSpace::EO12 +
-                                       st[0].ieo);
+          int h_de =
+              get_prune(p_pt_ep4eo12,
+                        (long long)st[0].idep * StateSpace::EO12 + st[0].ieo);
           int h_max = h_de;
           for (int s = 0; s < 4; ++s) {
             long long idx = (long long)(st[s].i1 + st[s].i2) * 24 + st[s].i3;
-            h_max = std::max(h_max, get_prune_ptr(p_pt_cross_C4E0, idx));
+            h_max = std::max(h_max, get_prune(p_pt_cross_C4E0, idx));
             // Plus Edge/Corner 检查
             for (int t = 0; t < 3; ++t) {
-              h_max = std::max(h_max, get_prune_ptr(p_pt_cross_CEE[t],
-                                                    idx * 24 + st[s].e_trk[t]));
-              h_max = std::max(h_max, get_prune_ptr(p_pt_cross_CCE[t],
-                                                    idx * 24 + st[s].c_trk[t]));
+              h_max = std::max(h_max, get_prune(p_pt_cross_CEE[t],
+                                                idx * 24 + st[s].e_trk[t]));
+              h_max = std::max(h_max, get_prune(p_pt_cross_CCE[t],
+                                                idx * 24 + st[s].c_trk[t]));
             }
             // 3-Corner 检查(Right + Diag)
             long long idx_3c =
                 ((long long)(st[s].i1 + st[s].i2) * 24 + st[s].c_trk[0]) * 24 +
                 st[s].c_trk[1];
-            h_max = std::max(h_max, get_prune_ptr(p_pt_cross_C4C5C6, idx_3c));
+            h_max = std::max(h_max, get_prune(p_pt_cross_C4C5C6, idx_3c));
           }
 
           // 确定 Huge 表视角(使用 s0-s1 相邻对)
