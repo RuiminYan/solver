@@ -215,7 +215,7 @@ XXCross 已还原，且剩余6个棱块色向正确。
 ### EO + XXXCross
 XXXCross 已还原，且剩余5个棱块色向正确。
 
-### EO + XXXXCross (尚未加入此功能)
+### EO + XXXXCross
 XXXXCross 已还原，且剩余4个棱块色向正确。
 
 程序通过处理 **12 个对称状态** 来模拟颜色中性（Color Neutrality）并压缩计算量：
@@ -227,6 +227,14 @@ XXXXCross 已还原，且剩余4个棱块色向正确。
 `.\build.bat`
 
 ## 测试
+
+### 自动化验证
+```cmd
+.\verify.bat
+```
+运行所有 analyzer，自动对比输出 CSV 的前 21 行（表头 + 前 20 行数据）与 `golden/` 目录中的正确结果。
+
+### 手动测试
 执行后会生成对应的csv, 检查csv与正确结果是否一致。
 
 ### std_analyzer.cpp
