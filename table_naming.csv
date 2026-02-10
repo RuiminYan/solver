@@ -1,4 +1,4 @@
-文件名,管理层变量名,generator,Std变量名,Pair变量名,Pseudo变量名,PseudoPair变量名,EOCross变量名,加载状态,大小,说明
+文件名,管理层变量名,generator,Std变量名,Pair变量名,Pseudo变量名,PseudoPair变量名,EOCross变量名,加载状态,大小,说明,步长,存储值,查表方式,编码类型
 
 ===== 加载状态说明 =====,,,,,,,,,0KB,
 Canon,"规范表,实际加载到内存",,,,,,,,
@@ -6,18 +6,18 @@ Conj,"共轭复用表,不加载,运行时通过rot_map映射到规范表",,,,,,,
 Zombie,"僵尸表,生成但完全不使用,仅用于调试",,,,,,,,
 
 ===== 移动表MT (Move Tables) =====,,,,,,,,,0KB,
-mt_edge.bin,mt_edge,genMTEdge(),-,-,p_mt_edge,p_mt_edge,p_mt_edge,Canon,<100KB,单棱移动表
-mt_corn.bin,mt_corn,genMTCorn(),-,-,p_mt_corn,p_mt_corn,p_mt_corn,Canon,<100KB,单角移动表
-mt_edge4.bin,mt_edge4,genMTEdge4(),p_mt_edge4,p_mt_edge4,p_mt_edge4,p_mt_edge4,p_mt_edge4,Canon,17.4MB,Edge4移动表
-mt_edge2.bin,mt_edge2,genMTEdge2(),p_mt_edge2(CrossSolver),-,p_mt_edge2,p_mt_edge2,-,Canon,<100KB,Edge2移动表
-mt_edge3.bin,mt_edge3,genMTEdge3(),-,-,p_mt_edge3,p_mt_edge3,-,Canon,742KB,Edge3移动表
-mt_edge6.bin,mt_edge6,genMTEdge6(),p_mt_edge6,p_mt_edge6,-,-,p_mt_edge6,Canon,2.85GB,Edge6移动表
-mt_corn2.bin,mt_corn2,genMTCorn2(),p_mt_corn2,p_mt_corn2,p_mt_corn2,p_mt_corn2,p_mt_corn2,Canon,<100KB,Corner2移动表
-mt_corn3.bin,mt_corn3,genMTCorn3(),-,-,p_mt_corn3,p_mt_corn3,-,Canon,637KB,Corner3移动表
-mt_eo12.bin,mt_eo12,genMTEO(),-,-,-,-,p_mt_eo12,Canon,144KB,EO移动表
-mt_eo12_alt.bin,mt_eo12_alt,genMTEOAlt(),-,-,-,-,p_mt_eo12_alt,Canon,144KB,EO Alt移动表
-mt_ep1.bin,mt_ep1,genMTEP1(),-,-,-,-,-,Canon,<100KB,EP1移动表
-mt_ep4.bin,mt_ep4,genMTEP4(),-,-,-,-,p_mt_ep4,Canon,835KB,EP4移动表
+mt_edge.bin,mt_edge,genMTEdge(),-,-,p_mt_edge,p_mt_edge,p_mt_edge,Canon,<100KB,单棱移动表,18,2*pos+eo,table[val*18+move],原始
+mt_corn.bin,mt_corn,genMTCorn(),-,-,p_mt_corn,p_mt_corn,p_mt_corn,Canon,<100KB,单角移动表,18,3*pos+co,table[val*18+move],原始
+mt_edge4.bin,mt_edge4,genMTEdge4(),p_mt_edge4,p_mt_edge4,p_mt_edge4,p_mt_edge4,p_mt_edge4,Canon,17.4MB,Edge4移动表,24,index*24,table[val+move],预乘
+mt_edge2.bin,mt_edge2,genMTEdge2(),p_mt_edge2(CrossSolver),-,p_mt_edge2,p_mt_edge2,-,Canon,<100KB,Edge2移动表,18,index,table[val*18+move],原始
+mt_edge3.bin,mt_edge3,genMTEdge3(),-,-,p_mt_edge3,p_mt_edge3,-,Canon,742KB,Edge3移动表,18,index,table[val*18+move],原始
+mt_edge6.bin,mt_edge6,genMTEdge6(),p_mt_edge6,p_mt_edge6,-,-,p_mt_edge6,Canon,2.85GB,Edge6移动表,18,index,table[val*18+move],原始
+mt_corn2.bin,mt_corn2,genMTCorn2(),p_mt_corn2,p_mt_corn2,p_mt_corn2,p_mt_corn2,p_mt_corn2,Canon,<100KB,Corner2移动表,18,index,table[val*18+move],原始
+mt_corn3.bin,mt_corn3,genMTCorn3(),-,-,p_mt_corn3,p_mt_corn3,-,Canon,637KB,Corner3移动表,18,index,table[val*18+move],原始
+mt_eo12.bin,mt_eo12,genMTEO(),-,-,-,-,p_mt_eo12,Canon,144KB,EO移动表,18,index*18,table[val+move],预乘
+mt_eo12_alt.bin,mt_eo12_alt,genMTEOAlt(),-,-,-,-,p_mt_eo12_alt,Canon,144KB,EO Alt移动表,18,index,table[val*18+move],原始
+mt_ep1.bin,mt_ep1,genMTEP1(),-,-,-,-,-,Canon,<100KB,EP1移动表,18,position,table[val*18+move],原始
+mt_ep4.bin,mt_ep4,genMTEP4(),-,-,-,-,p_mt_ep4,Canon,835KB,EP4移动表,18,index,table[val*18+move],原始
 
 ===== 剪枝表PT (Prune Tables) =====,,,,,,,,,0KB,
 

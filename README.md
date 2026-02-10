@@ -387,3 +387,5 @@ ins = insertion
 ex = extra
 mt = move table
 pt = prune table
+adj = adjacent
+diag = diagonal

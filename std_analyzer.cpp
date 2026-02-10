@@ -145,32 +145,6 @@ struct XCrossSolver {
 #endif
   }
 
-  inline int get_plus_table_idx(int s_base, int s_target) {
-    int diff = (s_target - s_base + 4) % 4;
-    if (diff == 1)
-      return 0;
-    if (diff == 2)
-      return 1;
-    if (diff == 3)
-      return 2;
-    return -1;
-  }
-  inline int get_neighbor_view(int s1, int s2) {
-    if ((s2 - s1 + 4) % 4 == 1)
-      return s1;
-    if ((s1 - s2 + 4) % 4 == 1)
-      return s2;
-    return -1;
-  }
-  inline int get_diagonal_view(int s1, int s2) {
-    int mn = std::min(s1, s2);
-    int mx = std::max(s1, s2);
-    if (mn == 0 && mx == 2)
-      return 0;
-    if (mn == 1 && mx == 3)
-      return 1;
-    return -1;
-  }
   int get_correct_edge_start(int idx, int e0, int e2, int e4, int e6) {
     if (idx == 0)
       return e2;
@@ -615,8 +589,8 @@ struct XCrossSolver {
         std::vector<P2> pairs = {{0, 1}, {0, 2}, {0, 3},
                                  {1, 2}, {1, 3}, {2, 3}};
         for (auto &p : pairs) {
-          int v_nb = get_neighbor_view(p.a, p.b);
-          int v_dg = get_diagonal_view(p.a, p.b);
+          int v_nb = getNeighborView(p.a, p.b);
+          int v_dg = getDiagonalView(p.a, p.b);
           int h_val = 0;
           int view_used = -1;
           if (v_nb != -1) {
@@ -644,8 +618,8 @@ struct XCrossSolver {
           if (t.h > 0) {
             SearchContext ctx;
             int max_search = std::min(14, current_best - 1);
-            int t1 = get_plus_table_idx(t.a, t.b);
-            int t2 = get_plus_table_idx(t.b, t.a);
+            int t1 = getPlusTableIdx(t.a, t.b);
+            int t2 = getPlusTableIdx(t.b, t.a);
             int ea = get_correct_edge_start(t1, st[t.a].e0, st[t.a].e2,
                                             st[t.a].e4, st[t.a].e6);
             int ca =
@@ -656,7 +630,7 @@ struct XCrossSolver {
                 get_correct_corn_start(t2, st[t.b].c5, st[t.b].c6, st[t.b].c7);
             int ie6_use = -1, ic2_use = -1;
             const unsigned char *p_table_use = nullptr;
-            if (get_neighbor_view(t.a, t.b) != -1) {
+            if (getNeighborView(t.a, t.b) != -1) {
               ie6_use = st[t.v].ie6_nb;
               ic2_use = st[t.v].ic2_nb;
               p_table_use = p_pt_cross_C4C5E0E1;
@@ -722,38 +696,38 @@ struct XCrossSolver {
         std::vector<P3> trips = {{0, 1, 2}, {0, 1, 3}, {0, 2, 3}, {1, 2, 3}};
         for (auto &t : trips) {
           int h_max = 0;
-          int v1 = get_neighbor_view(t.a, t.b);
+          int v1 = getNeighborView(t.a, t.b);
           int d1 = 0;
           if (v1 != -1)
             d1 = get_prune_ptr(p_pt_cross_C4C5E0E1,
                                (long long)st[v1].ie6_nb * StateSpace::CORNER2 +
                                    st[v1].ic2_nb);
           else if (p_pt_cross_C4C6E0E2) {
-            v1 = get_diagonal_view(t.a, t.b);
+            v1 = getDiagonalView(t.a, t.b);
             d1 = get_prune_ptr(p_pt_cross_C4C6E0E2,
                                (long long)st[v1].ie6_dg * StateSpace::CORNER2 +
                                    st[v1].ic2_dg);
           }
-          int v2 = get_neighbor_view(t.b, t.c);
+          int v2 = getNeighborView(t.b, t.c);
           int d2 = 0;
           if (v2 != -1)
             d2 = get_prune_ptr(p_pt_cross_C4C5E0E1,
                                (long long)st[v2].ie6_nb * StateSpace::CORNER2 +
                                    st[v2].ic2_nb);
           else if (p_pt_cross_C4C6E0E2) {
-            v2 = get_diagonal_view(t.b, t.c);
+            v2 = getDiagonalView(t.b, t.c);
             d2 = get_prune_ptr(p_pt_cross_C4C6E0E2,
                                (long long)st[v2].ie6_dg * StateSpace::CORNER2 +
                                    st[v2].ic2_dg);
           }
-          int v3 = get_neighbor_view(t.c, t.a);
+          int v3 = getNeighborView(t.c, t.a);
           int d3 = 0;
           if (v3 != -1)
             d3 = get_prune_ptr(p_pt_cross_C4C5E0E1,
                                (long long)st[v3].ie6_nb * StateSpace::CORNER2 +
                                    st[v3].ic2_nb);
           else if (p_pt_cross_C4C6E0E2) {
-            v3 = get_diagonal_view(t.c, t.a);
+            v3 = getDiagonalView(t.c, t.a);
             d3 = get_prune_ptr(p_pt_cross_C4C6E0E2,
                                (long long)st[v3].ie6_dg * StateSpace::CORNER2 +
                                    st[v3].ic2_dg);
@@ -771,12 +745,12 @@ struct XCrossSolver {
           if (t.h > 0) {
             SearchContext ctx;
             int max_search = std::min(16, current_best - 1);
-            int t12 = get_plus_table_idx(t.a, t.b);
-            int t21 = get_plus_table_idx(t.b, t.a);
-            int t23 = get_plus_table_idx(t.b, t.c);
-            int t32 = get_plus_table_idx(t.c, t.b);
-            int t31 = get_plus_table_idx(t.c, t.a);
-            int t13 = get_plus_table_idx(t.a, t.c);
+            int t12 = getPlusTableIdx(t.a, t.b);
+            int t21 = getPlusTableIdx(t.b, t.a);
+            int t23 = getPlusTableIdx(t.b, t.c);
+            int t32 = getPlusTableIdx(t.c, t.b);
+            int t31 = getPlusTableIdx(t.c, t.a);
+            int t13 = getPlusTableIdx(t.a, t.c);
             int ea_b = get_correct_edge_start(t12, st[t.a].e0, st[t.a].e2,
                                               st[t.a].e4, st[t.a].e6);
             int ca_b =
@@ -804,7 +778,7 @@ struct XCrossSolver {
 
             int i_e6_1 = -1, i_c2_1 = -1;
             const unsigned char *p_1 = nullptr;
-            if (get_neighbor_view(t.a, t.b) != -1) {
+            if (getNeighborView(t.a, t.b) != -1) {
               i_e6_1 = st[t.v12].ie6_nb;
               i_c2_1 = st[t.v12].ic2_nb;
               p_1 = p_pt_cross_C4C5E0E1;
@@ -815,7 +789,7 @@ struct XCrossSolver {
             }
             int i_e6_2 = -1, i_c2_2 = -1;
             const unsigned char *p_2 = nullptr;
-            if (get_neighbor_view(t.b, t.c) != -1) {
+            if (getNeighborView(t.b, t.c) != -1) {
               i_e6_2 = st[t.v23].ie6_nb;
               i_c2_2 = st[t.v23].ic2_nb;
               p_2 = p_pt_cross_C4C5E0E1;
@@ -826,7 +800,7 @@ struct XCrossSolver {
             }
             int i_e6_3 = -1, i_c2_3 = -1;
             const unsigned char *p_3 = nullptr;
-            if (get_neighbor_view(t.c, t.a) != -1) {
+            if (getNeighborView(t.c, t.a) != -1) {
               i_e6_3 = st[t.v31].ie6_nb;
               i_c2_3 = st[t.v31].ic2_nb;
               p_3 = p_pt_cross_C4C5E0E1;

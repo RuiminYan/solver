@@ -157,23 +157,6 @@ struct PairSolver {
     int ic2_dg; // Corn2 index (Diagonal)
   };
 
-  inline int get_neighbor_view(int s1, int s2) {
-    if ((s2 - s1 + 4) % 4 == 1)
-      return s1;
-    if ((s1 - s2 + 4) % 4 == 1)
-      return s2;
-    return -1;
-  }
-  inline int get_diagonal_view(int s1, int s2) {
-    int mn = std::min(s1, s2);
-    int mx = std::max(s1, s2);
-    if (mn == 0 && mx == 2)
-      return 0;
-    if (mn == 1 && mx == 3)
-      return 1;
-    return -1;
-  }
-
   void get_conjugated_indices_full(const std::vector<int> &alg, int slot_k,
                                    VirtState &vs) {
     int cur_mul = IDX_MULTI_BASE * 24;
@@ -530,14 +513,14 @@ struct PairSolver {
         int h3 = get_prune_4bit(p_pt_cross_C4E0,
                                 (long long)(sx2.im + sx2.ic) * 24 + sx2.ie);
         int h_huge = 0;
-        int v = get_neighbor_view(p[0], p[1]);
+        int v = getNeighborView(p[0], p[1]);
         if (v != -1) {
           get_conjugated_indices_full(alg, v, st_v);
           h_huge = get_prune_4bit(p_pt_cross_C4C5E0E1,
                                   (long long)st_v.ie6_nb * StateSpace::CORNER2 +
                                       st_v.ic2_nb);
         } else if (p_pt_cross_C4C6E0E2) {
-          v = get_diagonal_view(p[0], p[1]);
+          v = getDiagonalView(p[0], p[1]);
           get_conjugated_indices_full(alg, v, st_v);
           h_huge = get_prune_4bit(p_pt_cross_C4C6E0E2,
                                   (long long)st_v.ie6_dg * StateSpace::CORNER2 +
@@ -560,14 +543,14 @@ struct PairSolver {
       int ie6_use = -1, ic2_use = -1, v_use = -1;
       const unsigned char *p_use = nullptr;
       VirtState st_tmp;
-      if (get_neighbor_view(t.s2, t.s3) != -1) {
-        v_use = get_neighbor_view(t.s2, t.s3);
+      if (getNeighborView(t.s2, t.s3) != -1) {
+        v_use = getNeighborView(t.s2, t.s3);
         get_conjugated_indices_full(alg, v_use, st_tmp);
         ie6_use = st_tmp.ie6_nb;
         ic2_use = st_tmp.ic2_nb;
         p_use = p_pt_cross_C4C5E0E1;
       } else if (p_pt_cross_C4C6E0E2) {
-        v_use = get_diagonal_view(t.s2, t.s3);
+        v_use = getDiagonalView(t.s2, t.s3);
         get_conjugated_indices_full(alg, v_use, st_tmp);
         ie6_use = st_tmp.ie6_dg;
         ic2_use = st_tmp.ic2_dg;
@@ -606,7 +589,7 @@ struct PairSolver {
       }
       for (int i = 0; i < 3; ++i) {
         for (int j = i + 1; j < 3; ++j) {
-          int v = get_neighbor_view(fix[i], fix[j]);
+          int v = getNeighborView(fix[i], fix[j]);
           if (v != -1) {
             get_conjugated_indices_full(alg, v, st_v);
             h_val = std::max(h_val, get_prune_4bit(p_pt_cross_C4C5E0E1,
@@ -614,7 +597,7 @@ struct PairSolver {
                                                            StateSpace::CORNER2 +
                                                        st_v.ic2_nb));
           } else if (p_pt_cross_C4C6E0E2) {
-            v = get_diagonal_view(fix[i], fix[j]);
+            v = getDiagonalView(fix[i], fix[j]);
             get_conjugated_indices_full(alg, v, st_v);
             h_val = std::max(h_val, get_prune_4bit(p_pt_cross_C4C6E0E2,
                                                    (long long)st_v.ie6_dg *
@@ -643,14 +626,14 @@ struct PairSolver {
       VirtState st_tmp;
       for (int i = 0; i < 3; ++i) {
         v[i] = -1;
-        if (get_neighbor_view(pairs[i][0], pairs[i][1]) != -1) {
-          v[i] = get_neighbor_view(pairs[i][0], pairs[i][1]);
+        if (getNeighborView(pairs[i][0], pairs[i][1]) != -1) {
+          v[i] = getNeighborView(pairs[i][0], pairs[i][1]);
           get_conjugated_indices_full(alg, v[i], st_tmp);
           ie6[i] = st_tmp.ie6_nb;
           ic2[i] = st_tmp.ic2_nb;
           p[i] = p_pt_cross_C4C5E0E1;
         } else if (p_pt_cross_C4C6E0E2) {
-          v[i] = get_diagonal_view(pairs[i][0], pairs[i][1]);
+          v[i] = getDiagonalView(pairs[i][0], pairs[i][1]);
           get_conjugated_indices_full(alg, v[i], st_tmp);
           ie6[i] = st_tmp.ie6_dg;
           ic2[i] = st_tmp.ic2_dg;

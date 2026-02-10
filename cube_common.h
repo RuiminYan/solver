@@ -263,4 +263,40 @@ constexpr int EP4 = 11880;      // EP4: P(12,4) = 12 * 11 * 10 * 9
 constexpr int EO12 = 2048;      // EO12: 2^11
 } // namespace StateSpace
 
+// --- 槽位关系判断工具函数 ---
+// NOTE: F2L 4个槽位 (0-3) 按环形排列，以下函数判断两个槽位的空间关系
+// 用于选择正确的 Conj 表（Neighbor/Diagonal）和 Plus 表索引
+
+// 判断两个 slot 是否相邻，返回 Conj 基准 slot; -1 表示非相邻
+inline int getNeighborView(int s1, int s2) {
+  if ((s2 - s1 + 4) % 4 == 1)
+    return s1;
+  if ((s1 - s2 + 4) % 4 == 1)
+    return s2;
+  return -1;
+}
+
+// 判断两个 slot 是否对角，返回 Conj 基准 slot; -1 表示非对角
+inline int getDiagonalView(int s1, int s2) {
+  int mn = std::min(s1, s2);
+  int mx = std::max(s1, s2);
+  if (mn == 0 && mx == 2)
+    return 0;
+  if (mn == 1 && mx == 3)
+    return 1;
+  return -1;
+}
+
+// slot 差值映射到 Plus 表索引: 0=Right, 1=Diag, 2=Left; -1 表示无效
+inline int getPlusTableIdx(int s_base, int s_target) {
+  int diff = (s_target - s_base + 4) % 4;
+  if (diff == 1)
+    return 0;
+  if (diff == 2)
+    return 1;
+  if (diff == 3)
+    return 2;
+  return -1;
+}
+
 #endif // CUBE_COMMON_H

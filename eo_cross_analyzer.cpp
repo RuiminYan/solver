@@ -275,38 +275,6 @@ struct xcross_analyzer {
     p_pt_cross_C4C6E0E2 = s_p_pt_cross_C4C6E0E2; // Huge Diagonal 表
   }
 
-  inline int get_plus_table_idx(int s_base, int s_target) {
-    int diff = (s_target - s_base + 4) % 4;
-    if (diff == 1)
-      return 0; // Right
-    if (diff == 2)
-      return 1; // Diag
-    if (diff == 3)
-      return 2; // Left
-    return -1;
-  }
-
-  // 判断两个 slot 是否为相邻关系，返回用于 Huge Neighbor 表的 Conj View
-  // 返回值: 应作为conj 基准的slot; 1 表示非相邻
-  inline int get_neighbor_view(int s1, int s2) {
-    if ((s2 - s1 + 4) % 4 == 1)
-      return s1; // s2 是 s1 的右邻, View=s1
-    if ((s1 - s2 + 4) % 4 == 1)
-      return s2; // s1 是 s2 的右邻, View=s2
-    return -1;   // 非相邻
-  }
-
-  // 判断两个 slot 是否为对角关系，返回用于 Huge Diagonal 表的 Conj View
-  // 返回值: 应作为conj 基准的slot; 1 表示非对角
-  inline int get_diagonal_view(int s1, int s2) {
-    int mn = std::min(s1, s2), mx = std::max(s1, s2);
-    if (mn == 0 && mx == 2)
-      return 0; // (0,2) 对角线;View=0
-    if (mn == 1 && mx == 3)
-      return 1; // (1,3) 对角线;View=1
-    return -1;  // 非对角
-  }
-
   void get_indices_conj_full(const std::vector<int> &alg, int sym_idx,
                              int slot_idx, int &i1, int &i2, int &i3,
                              int &i_dep, int &i_eo, int *track_e, int *track_c,
@@ -882,8 +850,8 @@ struct xcross_analyzer {
           std::vector<std::pair<int, int>> tasks_xx;
           for (int p = 0; p < 6; ++p) {
             int s1 = pairs[p][0], s2 = pairs[p][1];
-            int t_ab = get_plus_table_idx(s1, s2);
-            int t_ba = get_plus_table_idx(s2, s1);
+            int t_ab = getPlusTableIdx(s1, s2);
+            int t_ba = getPlusTableIdx(s2, s1);
 
             // View A
             long long idx1 =
@@ -920,13 +888,13 @@ struct xcross_analyzer {
               break;
             }
             int s1 = pairs[t.second][0], s2 = pairs[t.second][1];
-            int t_ab = get_plus_table_idx(s1, s2);
-            int t_ba = get_plus_table_idx(s2, s1);
+            int t_ab = getPlusTableIdx(s1, s2);
+            int t_ba = getPlusTableIdx(s2, s1);
 
             for (int d = t.first; d <= std::min(20, best_xx - 1); ++d) {
               // 确定 Huge 表视角和初始状态
-              int v_nb = get_neighbor_view(s1, s2);
-              int v_dg = get_diagonal_view(s1, s2);
+              int v_nb = getNeighborView(s1, s2);
+              int v_dg = getDiagonalView(s1, s2);
 
               // 选择使用 Neighbor 或 Diagonal 表
               int v_huge = (v_nb != -1) ? v_nb : v_dg;
@@ -963,12 +931,9 @@ struct xcross_analyzer {
           std::vector<std::pair<int, int>> tasks_xxx;
           for (int tr = 0; tr < 4; ++tr) {
             int s1 = trips[tr][0], s2 = trips[tr][1], s3 = trips[tr][2];
-            int t_ab = get_plus_table_idx(s1, s2),
-                t_ba = get_plus_table_idx(s2, s1);
-            int t_bc = get_plus_table_idx(s2, s3),
-                t_cb = get_plus_table_idx(s3, s2);
-            int t_ac = get_plus_table_idx(s1, s3),
-                t_ca = get_plus_table_idx(s3, s1);
+            int t_ab = getPlusTableIdx(s1, s2), t_ba = getPlusTableIdx(s2, s1);
+            int t_bc = getPlusTableIdx(s2, s3), t_cb = getPlusTableIdx(s3, s2);
+            int t_ac = getPlusTableIdx(s1, s3), t_ca = getPlusTableIdx(s3, s1);
 
             // Pruning check for all 3 views
             long long idx1 =
@@ -1058,17 +1023,14 @@ struct xcross_analyzer {
             }
             int s1 = trips[t.second][0], s2 = trips[t.second][1],
                 s3 = trips[t.second][2];
-            int t_ab = get_plus_table_idx(s1, s2),
-                t_ba = get_plus_table_idx(s2, s1);
-            int t_bc = get_plus_table_idx(s2, s3),
-                t_cb = get_plus_table_idx(s3, s2);
-            int t_ac = get_plus_table_idx(s1, s3),
-                t_ca = get_plus_table_idx(s3, s1);
+            int t_ab = getPlusTableIdx(s1, s2), t_ba = getPlusTableIdx(s2, s1);
+            int t_bc = getPlusTableIdx(s2, s3), t_cb = getPlusTableIdx(s3, s2);
+            int t_ac = getPlusTableIdx(s1, s3), t_ca = getPlusTableIdx(s3, s1);
 
             for (int d = t.first; d <= std::min(20, best_xxx - 1); ++d) {
               // 确定 Huge 表视角和初始状态(选择第一对s1-s2)
-              int v_nb = get_neighbor_view(s1, s2);
-              int v_dg = get_diagonal_view(s1, s2);
+              int v_nb = getNeighborView(s1, s2);
+              int v_dg = getDiagonalView(s1, s2);
 
               int v_huge = (v_nb != -1) ? v_nb : v_dg;
               const unsigned char *p_huge = nullptr;
@@ -1131,7 +1093,7 @@ struct xcross_analyzer {
           }
 
           // 确定 Huge 表视角(使用 s0-s1 相邻对)
-          int v_nb = get_neighbor_view(0, 1); // 始终是0
+          int v_nb = getNeighborView(0, 1); // 始终是0
           int v_huge = v_nb;
           const unsigned char *p_huge = nullptr;
           int init_e6 = -1, init_c2 = -1;
