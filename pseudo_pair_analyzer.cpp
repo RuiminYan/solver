@@ -540,10 +540,10 @@ struct XCrossSolver {
     return false;
   }
 
-  // 辅助：计算旋转后的状态索引
-  void get_rotated_indices(const std::vector<int> &base_alg,
-                           const std::string &rot, int &idx1, int &idx2,
-                           int &idx3, int s1, int ps1,
+  // 辅助：基于预计算的旋转算法计算状态索引
+  // NOTE: rotated_alg 应在外部预计算, 避免重复调用 alg_rotation
+  void get_rotated_indices(const std::vector<int> &rotated_alg, int &idx1,
+                           int &idx2, int &idx3, int s1, int ps1,
                            const std::vector<int> &edge_index,
                            const std::vector<int> &corner_index,
                            const std::vector<int> &single_edge_index) {
@@ -551,9 +551,7 @@ struct XCrossSolver {
     idx2 = corner_index[ps1];
     idx3 = single_edge_index[s1];
 
-    // 仍然需要转换算法，但这是为了计算状态
-    std::vector<int> alg = alg_rotation(base_alg, rot);
-    for (int m : alg) {
+    for (int m : rotated_alg) {
       idx1 = p_mt_edge4[idx1 + m];
       idx2 = p_mt_corn[idx2 * 18 + m];
       idx3 = p_mt_edge[idx3 * 18 + m];
@@ -574,39 +572,49 @@ struct XCrossSolver {
                                    StateSpace::CROSS_SOLVED},
                      single_edge_index = {0, 2, 4, 6},
                      corner_index = {12, 15, 18, 21};
+    const unsigned char *p_prune1 = prune1;
+    const unsigned char *p_edge_prune = edge_prune;
+
+    // 预计算每个 rotation 的旋转算法和索引 (优化5/6/7)
+    struct RotCache {
+      int idx1, idx2, idx3; // edge4, corner, single_edge 索引
+    };
+    size_t num_rot = rotations.size();
+    std::vector<std::vector<int>> rotated_algs(num_rot);
+    std::vector<RotCache> caches(num_rot);
+
+    for (size_t r = 0; r < num_rot; ++r) {
+      rotated_algs[r] = alg_rotation(base_alg, rotations[r]);
+      get_rotated_indices(rotated_algs[r], caches[r].idx1, caches[r].idx2,
+                          caches[r].idx3, slot1, pslot1, edge_index,
+                          corner_index, single_edge_index);
+    }
+
+    // 预排序: 按 heuristic 从小到大
     struct RotTask {
       int rot_idx;
       int heuristic;
     };
     std::vector<RotTask> tasks;
-    const unsigned char *p_prune1 = prune1;
-    const unsigned char *p_edge_prune = edge_prune;
-
-    for (size_t r = 0; r < rotations.size(); ++r) {
-      int idx1, idx2, idx3;
-      get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx3, slot1,
-                          pslot1, edge_index, corner_index, single_edge_index);
-
-      int h1 = get_prune(p_prune1, idx1 + idx2);
-      int h2 = get_prune(p_edge_prune, idx3 * 24 + idx2);
+    for (size_t r = 0; r < num_rot; ++r) {
+      int h1 = get_prune(p_prune1, caches[r].idx1 + caches[r].idx2);
+      int h2 = get_prune(p_edge_prune, caches[r].idx3 * 24 + caches[r].idx2);
       tasks.push_back({(int)r, std::max(h1, h2)});
     }
     std::sort(tasks.begin(), tasks.end(),
               [](const RotTask &a, const RotTask &b) {
                 return a.heuristic < b.heuristic;
               });
-    std::vector<int> results(rotations.size());
+
+    // 搜索阶段: 直接使用缓存的索引
+    std::vector<int> results(num_rot);
     for (const auto &task : tasks) {
       int r = task.rot_idx;
+      const auto &c = caches[r];
 
-      int idx1, idx2, idx3;
-      get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx3, slot1,
-                          pslot1, edge_index, corner_index, single_edge_index);
-
-      // 设置成员变量供搜索使用
-      index1 = idx1;
-      index2 = idx2;
-      index3 = idx3;
+      index1 = c.idx1;
+      index2 = c.idx2;
+      index3 = c.idx3;
 
       int prune1_tmp = get_prune(p_prune1, index1 + index2);
       int edge_prune1_tmp = get_prune(p_edge_prune, index3 * 24 + index2);
@@ -627,7 +635,7 @@ struct XCrossSolver {
         results[r] = found;
       }
     }
-    for (size_t r = 0; r < rotations.size(); ++r) {
+    for (size_t r = 0; r < num_rot; ++r) {
       int val = (results[r] == 999) ? 0 : results[r];
       if (val < stage_results.min_xc[r])
         stage_results.min_xc[r] = val;
@@ -748,67 +756,68 @@ struct XCrossSolver {
     const unsigned char *p_edge_prune1 = edge_prune1;
     const unsigned char *p_prune_xc2 = prune_xc2;
 
+    // 预计算每个 rotation 的旋转算法、索引和 Conj 状态 (优化5/6/7)
+    struct RotCache {
+      int idx1, idx2, idx5; // slot1 索引
+      int idx4, idx6;       // slot2 索引
+      ConjStateXC conj_st;  // Conj 状态
+    };
+    size_t num_rot = rotations.size();
+    std::vector<std::vector<int>> rotated_algs(num_rot);
+    std::vector<RotCache> caches(num_rot);
+
+    for (size_t r = 0; r < num_rot; ++r) {
+      rotated_algs[r] = alg_rotation(base_alg, rotations[r]);
+      int dummy;
+      get_rotated_indices(rotated_algs[r], caches[r].idx1, caches[r].idx2,
+                          caches[r].idx5, slot1, pslot1, edge_index,
+                          corner_index, single_edge_index);
+      get_rotated_indices(rotated_algs[r], dummy, caches[r].idx4,
+                          caches[r].idx6, slot2, pslot2, edge_index,
+                          corner_index, single_edge_index);
+      get_conj_state_xc(rotated_algs[r], pslot2, caches[r].conj_st);
+    }
+
+    // 预排序
     struct RotTask {
       int rot_idx;
       int heuristic;
     };
     std::vector<RotTask> tasks;
-
-    for (size_t r = 0; r < rotations.size(); ++r) {
-      int idx1, idx2, idx5;
-      get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx5, slot1,
-                          pslot1, edge_index, corner_index, single_edge_index);
-
-      int idx1_dummy, idx4, idx6;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy, idx4, idx6, slot2,
-                          pslot2, edge_index, corner_index, single_edge_index);
-
-      int h1 = get_prune(p_prune1, idx1 + idx2);
-      int h2 = get_prune(p_prune2, idx1 + idx4);
-      int h3 = get_prune(p_edge_prune1, idx5 * 24 + idx2);
-
-      // [Conj优化] 使用 Conj 索引计算 h4
-      std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
-      ConjStateXC st;
-      get_conj_state_xc(rotated_alg, pslot2, st);
+    for (size_t r = 0; r < num_rot; ++r) {
+      const auto &c = caches[r];
+      int h1 = get_prune(p_prune1, c.idx1 + c.idx2);
+      int h2 = get_prune(p_prune2, c.idx1 + c.idx4);
+      int h3 = get_prune(p_edge_prune1, c.idx5 * 24 + c.idx2);
       long long conj_idx_xc2 =
-
-          (long long)(st.cross + st.corner) * 24 + st.edge[diff2];
+          (long long)(c.conj_st.cross + c.conj_st.corner) * 24 +
+          c.conj_st.edge[diff2];
       int h4 = get_prune(p_prune_xc2, conj_idx_xc2);
-
       tasks.push_back({(int)r, std::max({h1, h2, h3, h4})});
     }
     std::sort(tasks.begin(), tasks.end(),
               [](const RotTask &a, const RotTask &b) {
                 return a.heuristic < b.heuristic;
               });
-    std::vector<int> results(rotations.size());
+
+    // 搜索阶段: 直接使用缓存
+    std::vector<int> results(num_rot);
     for (const auto &task : tasks) {
       int r = task.rot_idx;
+      const auto &c = caches[r];
 
-      int idx1, idx2, idx5;
-      get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx5, slot1,
-                          pslot1, edge_index, corner_index, single_edge_index);
-      int idx1_dummy, idx4, idx6;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy, idx4, idx6, slot2,
-                          pslot2, edge_index, corner_index, single_edge_index);
-
-      index1 = idx1;
-      index2 = idx2;
-      index5 = idx5;
-
-      index4 = idx4;
-      index6 = idx6;
+      index1 = c.idx1;
+      index2 = c.idx2;
+      index5 = c.idx5;
+      index4 = c.idx4;
+      index6 = c.idx6;
       edge_solved2 = single_edge_index[slot2];
 
       int prune1_tmp = get_prune(p_prune1, index1 + index2);
       int prune2_tmp = get_prune(p_prune2, index1 + index4);
       int edge_prune1_tmp = get_prune(p_edge_prune1, index5 * 24 + index2);
 
-      // [Conj优化] 计算 XC2 Conj 状态)
-      std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
-      ConjStateXC st;
-      get_conj_state_xc(rotated_alg, pslot2, st);
+      const auto &st = c.conj_st;
       long long conj_idx_xc2 =
           (long long)(st.cross + st.corner) * 24 + st.edge[diff2];
       int prune_xc2_tmp = get_prune(p_prune_xc2, conj_idx_xc2);
@@ -836,7 +845,7 @@ struct XCrossSolver {
         results[r] = found;
       }
     }
-    for (size_t r = 0; r < rotations.size(); ++r) {
+    for (size_t r = 0; r < num_rot; ++r) {
       int val = (results[r] == 999) ? 0 : results[r];
       if (val < stage_results.min_xxc[r])
         stage_results.min_xxc[r] = val;
@@ -1009,76 +1018,73 @@ struct XCrossSolver {
     const unsigned char *p_edge_prune1 = edge_prune1;
     const unsigned char *p_prune_xc3 = prune_xc3;
 
+    // 预计算每个 rotation 的旋转算法、索引和 Conj 状态 (优化5/6/7)
+    struct RotCache {
+      int idx1, idx2, idx7; // slot1 索引
+      int idx4, idx8;       // slot2 索引
+      int idx6, idx9;       // slot3 索引
+      ConjStateXC conj_st;  // Conj 状态
+    };
+    size_t num_rot = rotations.size();
+    std::vector<std::vector<int>> rotated_algs(num_rot);
+    std::vector<RotCache> caches(num_rot);
+
+    for (size_t r = 0; r < num_rot; ++r) {
+      rotated_algs[r] = alg_rotation(base_alg, rotations[r]);
+      int dummy;
+      get_rotated_indices(rotated_algs[r], caches[r].idx1, caches[r].idx2,
+                          caches[r].idx7, slot1, pslot1, edge_index,
+                          corner_index, single_edge_index);
+      get_rotated_indices(rotated_algs[r], dummy, caches[r].idx4,
+                          caches[r].idx8, slot2, pslot2, edge_index,
+                          corner_index, single_edge_index);
+      get_rotated_indices(rotated_algs[r], dummy, caches[r].idx6,
+                          caches[r].idx9, slot3, pslot3, edge_index,
+                          corner_index, single_edge_index);
+      get_conj_state_xc(rotated_algs[r], pslot3, caches[r].conj_st);
+    }
+
+    // 预排序
     struct RotTask {
       int rot_idx;
       int heuristic;
     };
     std::vector<RotTask> tasks;
-
-    for (size_t r = 0; r < rotations.size(); ++r) {
-      int idx1, idx2, idx7;
-      get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx7, slot1,
-                          pslot1, edge_index, corner_index, single_edge_index);
-      int idx1_dummy, idx4, idx8;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy, idx4, idx8, slot2,
-                          pslot2, edge_index, corner_index, single_edge_index);
-      int idx1_dummy2, idx6, idx9;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy2, idx6, idx9,
-                          slot3, pslot3, edge_index, corner_index,
-                          single_edge_index);
-
-      int h1 = get_prune(p_prune1, idx1 + idx2);
-      int h4 = get_prune(p_edge_prune1, idx7 * 24 + idx2);
-
-      // [Conj优化] 使用 Conj 索引计算 h5
-      std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
-      ConjStateXC st;
-      get_conj_state_xc(rotated_alg, pslot3, st);
-
+    for (size_t r = 0; r < num_rot; ++r) {
+      const auto &c = caches[r];
+      int h1 = get_prune(p_prune1, c.idx1 + c.idx2);
+      int h4 = get_prune(p_edge_prune1, c.idx7 * 24 + c.idx2);
       long long conj_idx_xc3 =
-          (long long)(st.cross + st.corner) * 24 + st.edge[diff3];
+          (long long)(c.conj_st.cross + c.conj_st.corner) * 24 +
+          c.conj_st.edge[diff3];
       int h5 = get_prune(p_prune_xc3, conj_idx_xc3);
-
       tasks.push_back({(int)r, std::max({h1, h4, h5})});
     }
     std::sort(tasks.begin(), tasks.end(),
               [](const RotTask &a, const RotTask &b) {
                 return a.heuristic < b.heuristic;
               });
-    std::vector<int> results(rotations.size());
+
+    // 搜索阶段: 直接使用缓存
+    std::vector<int> results(num_rot);
     for (const auto &task : tasks) {
       int r = task.rot_idx;
+      const auto &c = caches[r];
 
-      int idx1, idx2, idx7;
-      get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx7, slot1,
-                          pslot1, edge_index, corner_index, single_edge_index);
-      int idx1_dummy, idx4, idx8;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy, idx4, idx8, slot2,
-                          pslot2, edge_index, corner_index, single_edge_index);
-      int idx1_dummy2, idx6, idx9;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy2, idx6, idx9,
-                          slot3, pslot3, edge_index, corner_index,
-                          single_edge_index);
-
-      index1 = idx1;
-      index2 = idx2;
-      index7 = idx7;
-
-      index4 = idx4;
-      index8 = idx8;
+      index1 = c.idx1;
+      index2 = c.idx2;
+      index7 = c.idx7;
+      index4 = c.idx4;
+      index8 = c.idx8;
       edge_solved2 = single_edge_index[slot2];
-
-      index6 = idx6;
-      index9 = idx9;
+      index6 = c.idx6;
+      index9 = c.idx9;
       edge_solved3 = single_edge_index[slot3];
 
       int prune1_tmp = get_prune(p_prune1, index1 + index2);
       int edge_prune1_tmp = get_prune(p_edge_prune1, index7 * 24 + index2);
 
-      // [Conj优化] 计算 XC3 Conj 状态)
-      std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
-      ConjStateXC st;
-      get_conj_state_xc(rotated_alg, pslot3, st);
+      const auto &st = c.conj_st;
       long long conj_idx_xc3 =
           (long long)(st.cross + st.corner) * 24 + st.edge[diff3];
       int prune_xc3_tmp = get_prune(p_prune_xc3, conj_idx_xc3);
@@ -1090,7 +1096,7 @@ struct XCrossSolver {
         // [新增] 设置 AuxState (Corner2 + Edge2)
         AuxState aux_init[MAX_AUX];
         int num_aux = setup_aux_pruners_for_search3(
-            pslot1, slot2, slot3, pslot2, pslot3, rotated_alg, aux_init);
+            pslot1, slot2, slot3, pslot2, pslot3, rotated_algs[r], aux_init);
 
         index2 *= 18;
         index7 *= 18;
@@ -1111,7 +1117,7 @@ struct XCrossSolver {
         results[r] = found;
       }
     }
-    for (size_t r = 0; r < rotations.size(); ++r) {
+    for (size_t r = 0; r < num_rot; ++r) {
       int val = (results[r] == 999) ? 0 : results[r];
       if (val < stage_results.min_xxxc[r])
         stage_results.min_xxxc[r] = val;
@@ -1296,83 +1302,77 @@ struct XCrossSolver {
     const unsigned char *p_edge_prune1 = edge_prune1;
     const unsigned char *p_prune_xc4 = prune_xc4;
 
+    // 预计算每个 rotation 的旋转算法、索引和 Conj 状态 (优化5/6/7)
+    struct RotCache {
+      int idx1, idx2, idx9; // slot1 索引
+      int idx4, idx10;      // slot2 索引
+      int idx6, idx11;      // slot3 索引
+      int idx8, idx12;      // slot4 索引
+      ConjStateXC conj_st;  // Conj 状态
+    };
+    size_t num_rot = rotations.size();
+    std::vector<std::vector<int>> rotated_algs(num_rot);
+    std::vector<RotCache> caches(num_rot);
+
+    for (size_t r = 0; r < num_rot; ++r) {
+      rotated_algs[r] = alg_rotation(base_alg, rotations[r]);
+      int dummy;
+      get_rotated_indices(rotated_algs[r], caches[r].idx1, caches[r].idx2,
+                          caches[r].idx9, slot1, pslot1, edge_index,
+                          corner_index, single_edge_index);
+      get_rotated_indices(rotated_algs[r], dummy, caches[r].idx4,
+                          caches[r].idx10, slot2, pslot2, edge_index,
+                          corner_index, single_edge_index);
+      get_rotated_indices(rotated_algs[r], dummy, caches[r].idx6,
+                          caches[r].idx11, slot3, pslot3, edge_index,
+                          corner_index, single_edge_index);
+      get_rotated_indices(rotated_algs[r], dummy, caches[r].idx8,
+                          caches[r].idx12, slot4, pslot4, edge_index,
+                          corner_index, single_edge_index);
+      get_conj_state_xc(rotated_algs[r], pslot4, caches[r].conj_st);
+    }
+
+    // 预排序
     struct RotTask {
       int rot_idx;
       int heuristic;
     };
     std::vector<RotTask> tasks;
-
-    for (size_t r = 0; r < rotations.size(); ++r) {
-      int idx1, idx2, idx9;
-      get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx9, slot1,
-                          pslot1, edge_index, corner_index, single_edge_index);
-      int idx1_dummy, idx4, idx10;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy, idx4, idx10,
-                          slot2, pslot2, edge_index, corner_index,
-                          single_edge_index);
-      int idx1_dummy2, idx6, idx11;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy2, idx6, idx11,
-                          slot3, pslot3, edge_index, corner_index,
-                          single_edge_index);
-      int idx1_dummy3, idx8, idx12;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy3, idx8, idx12,
-                          slot4, pslot4, edge_index, corner_index,
-                          single_edge_index);
-
-      int h1 = get_prune(p_prune1, idx1 + idx2);
-      int h2 = get_prune(p_prune2, idx1 + idx4);
-      int h3 = get_prune(p_prune3, idx1 + idx6);
-      int h4 = get_prune(p_prune4, idx1 + idx8);
-      int h5 = get_prune(p_edge_prune1, idx9 * 24 + idx2);
-
-      // [Conj优化] 使用 Conj 索引计算 h6
-      std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
-      ConjStateXC st;
-      get_conj_state_xc(rotated_alg, pslot4, st);
+    for (size_t r = 0; r < num_rot; ++r) {
+      const auto &c = caches[r];
+      int h1 = get_prune(p_prune1, c.idx1 + c.idx2);
+      int h2 = get_prune(p_prune2, c.idx1 + c.idx4);
+      int h3 = get_prune(p_prune3, c.idx1 + c.idx6);
+      int h4 = get_prune(p_prune4, c.idx1 + c.idx8);
+      int h5 = get_prune(p_edge_prune1, c.idx9 * 24 + c.idx2);
       long long conj_idx_xc4 =
-          (long long)(st.cross + st.corner) * 24 + st.edge[diff4];
+          (long long)(c.conj_st.cross + c.conj_st.corner) * 24 +
+          c.conj_st.edge[diff4];
       int h6 = get_prune(p_prune_xc4, conj_idx_xc4);
-
       tasks.push_back({(int)r, std::max({h1, h2, h3, h4, h5, h6})});
     }
     std::sort(tasks.begin(), tasks.end(),
               [](const RotTask &a, const RotTask &b) {
                 return a.heuristic < b.heuristic;
               });
-    std::vector<int> results(rotations.size());
+
+    // 搜索阶段: 直接使用缓存
+    std::vector<int> results(num_rot);
     for (const auto &task : tasks) {
       int r = task.rot_idx;
+      const auto &c = caches[r];
 
-      int idx1, idx2, idx9;
-      get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx9, slot1,
-                          pslot1, edge_index, corner_index, single_edge_index);
-      int idx1_dummy, idx4, idx10;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy, idx4, idx10,
-                          slot2, pslot2, edge_index, corner_index,
-                          single_edge_index);
-      int idx1_dummy2, idx6, idx11;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy2, idx6, idx11,
-                          slot3, pslot3, edge_index, corner_index,
-                          single_edge_index);
-      int idx1_dummy3, idx8, idx12;
-      get_rotated_indices(base_alg, rotations[r], idx1_dummy3, idx8, idx12,
-                          slot4, pslot4, edge_index, corner_index,
-                          single_edge_index);
-
-      index1 = idx1;
-      index2 = idx2;
-      index9 = idx9;
-
-      index4 = idx4;
-      index10 = idx10;
+      index1 = c.idx1;
+      index2 = c.idx2;
+      index9 = c.idx9;
+      index4 = c.idx4;
+      index10 = c.idx10;
       edge_solved2 = single_edge_index[slot2];
-
-      index6 = idx6;
-      index11 = idx11;
+      index6 = c.idx6;
+      index11 = c.idx11;
       edge_solved3 = single_edge_index[slot3];
-
-      index8 = idx8;
-      index12 = idx12;
+      index8 = c.idx8;
+      index12 = c.idx12;
       edge_solved4 = single_edge_index[slot4];
 
       int prune1_tmp = get_prune(p_prune1, index1 + index2);
@@ -1381,10 +1381,7 @@ struct XCrossSolver {
       int prune4_tmp = get_prune(p_prune4, index1 + index8);
       int edge_prune1_tmp = get_prune(p_edge_prune1, index9 * 24 + index2);
 
-      // [Conj优化] 计算 XC4 Conj 状态)
-      std::vector<int> rotated_alg = alg_rotation(base_alg, rotations[r]);
-      ConjStateXC st;
-      get_conj_state_xc(rotated_alg, pslot4, st);
+      const auto &st = c.conj_st;
       long long conj_idx_xc4 =
           (long long)(st.cross + st.corner) * 24 + st.edge[diff4];
       int prune_xc4_tmp = get_prune(p_prune_xc4, conj_idx_xc4);
@@ -1410,7 +1407,7 @@ struct XCrossSolver {
             pslot1,                 // 参考槽位(slot_k)
             slot2, slot3, slot4,    // Edge 槽位 (固定的)
             pslot2, pslot3, pslot4, // Corner 伪槽位
-            rotated_alg, aux_init);
+            rotated_algs[r], aux_init);
 
         int found = 999;
         int start_depth =
@@ -1429,7 +1426,7 @@ struct XCrossSolver {
         results[r] = found;
       }
     }
-    for (size_t r = 0; r < rotations.size(); ++r) {
+    for (size_t r = 0; r < num_rot; ++r) {
       int val = (results[r] == 999) ? 0 : results[r];
       if (val < stage_results.min_xxxxc[r])
         stage_results.min_xxxxc[r] = val;
