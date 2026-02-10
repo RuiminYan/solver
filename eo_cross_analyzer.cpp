@@ -840,6 +840,12 @@ struct XCrossSolver {
         }
         res[sym] = best;
 
+        // NOTE: 提前声明，使 best_xx/best_xxx 可被后续阶段引用
+        // 跨阶段不变量: XXCross >= XCross, XXXCross >= XXCross, XXXXCross >=
+        // XXXCross
+        int best_xx = 99;
+        int best_xxx = 99;
+
         // --- 2. XXCross+EO ---
         {
           int pairs[6][2] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}};
@@ -875,7 +881,7 @@ struct XCrossSolver {
           }
           std::sort(tasks_xx.begin(), tasks_xx.end());
 
-          int best_xx = 99;
+          best_xx = 99;
           for (auto &t : tasks_xx) {
             if (t.first >= best_xx)
               break;
@@ -887,7 +893,9 @@ struct XCrossSolver {
             int t_ab = getPlusTableIdx(s1, s2);
             int t_ba = getPlusTableIdx(s2, s1);
 
-            for (int d = t.first; d <= std::min(20, best_xx - 1); ++d) {
+            // 跨阶段下界: XXCross >= XCross
+            int startD = std::max(t.first, best);
+            for (int d = startD; d <= std::min(20, best_xx - 1); ++d) {
               // 确定 Huge 表视角和初始状态
               int v_nb = getNeighborView(s1, s2);
               int v_dg = getDiagonalView(s1, s2);
@@ -1009,7 +1017,7 @@ struct XCrossSolver {
           }
           std::sort(tasks_xxx.begin(), tasks_xxx.end());
 
-          int best_xxx = 99;
+          best_xxx = 99;
           for (auto &t : tasks_xxx) {
             if (t.first >= best_xxx)
               break;
@@ -1023,7 +1031,9 @@ struct XCrossSolver {
             int t_bc = getPlusTableIdx(s2, s3), t_cb = getPlusTableIdx(s3, s2);
             int t_ac = getPlusTableIdx(s1, s3), t_ca = getPlusTableIdx(s3, s1);
 
-            for (int d = t.first; d <= std::min(20, best_xxx - 1); ++d) {
+            // 跨阶段下界: XXXCross >= XXCross
+            int startD = std::max(t.first, best_xx);
+            for (int d = startD; d <= std::min(20, best_xxx - 1); ++d) {
               // 确定 Huge 表视角和初始状态(选择第一对s1-s2)
               int v_nb = getNeighborView(s1, s2);
               int v_dg = getDiagonalView(s1, s2);
@@ -1103,7 +1113,9 @@ struct XCrossSolver {
           if (h_max == 0) {
             best_xxxx = 0;
           } else {
-            for (int d = h_max; d <= std::min(20, best_xxxx - 1); ++d) {
+            // 跨阶段下界: XXXXCross >= XXXCross
+            int startD = std::max(h_max, best_xxx);
+            for (int d = startD; d <= std::min(20, best_xxxx - 1); ++d) {
               // 初始追踪状态：每视角对其他 3 个槽位的 Edge/Corner
               // View A (s0): 看s1(e_trk[0],c_trk[0]), s2(e_trk[1],c_trk[1]),
               // s3(e_trk[2],c_trk[2]) View B (s1): s0→Left(2), s2→Right(0),

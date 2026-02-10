@@ -319,7 +319,7 @@ id,cross_pair_z0,cross_pair_z1,cross_pair_z2,cross_pair_z3,cross_pair_x1,cross_p
 ### pseudo_pair_analyzer.cpp
 * 测试命令: `cmd /c "echo scramble_100.txt | pseudo_pair_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
-* 执行时间: ~36s
+* 执行时间: ~3s
 * 输入文件: scramble_100.txt
 * 输出文件: scramble_100_pseudo_pair.csv
 * 正确结果 (表头 + 前20行数据):
