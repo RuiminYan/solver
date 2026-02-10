@@ -386,3 +386,6 @@ mt = move table
 pt = prune table
 adj = adjacent
 diag = diagonal
+
+## TODO
+early exit 

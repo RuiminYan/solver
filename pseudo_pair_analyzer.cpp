@@ -595,15 +595,19 @@ struct XCrossSolver {
               [](const RotTask &a, const RotTask &b) {
                 return a.heuristic < b.heuristic;
               });
-    std::vector<int> results(rotations.size());
     for (const auto &task : tasks) {
       int r = task.rot_idx;
+
+      // [Early Exit] 当前已知最优解，无法改进则跳过
+      int cur_best = stage_results.min_xc[r];
+      if (task.heuristic >= cur_best)
+        continue;
+      int max_depth = std::min(20, cur_best - 1);
 
       int idx1, idx2, idx3;
       get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx3, slot1,
                           pslot1, edge_index, corner_index, single_edge_index);
 
-      // 设置成员变量供搜索使用
       index1 = idx1;
       index2 = idx2;
       index3 = idx3;
@@ -612,25 +616,18 @@ struct XCrossSolver {
       int edge_prune1_tmp = get_prune(p_edge_prune, index3 * 24 + index2);
 
       if (prune1_tmp == 0 && edge_prune1_tmp == 0) {
-        results[r] = 0;
+        stage_results.min_xc[r] = 0;
       } else {
         index2 *= 18;
         index3 *= 18;
-        int found = 999;
-        for (int d = std::max(prune1_tmp, edge_prune1_tmp); d <= max_length;
-             d++) {
+        int start_depth = std::max(prune1_tmp, edge_prune1_tmp);
+        for (int d = start_depth; d <= max_depth; d++) {
           if (search_1(index1, index2, index3, d, 18, p_prune1, p_edge_prune)) {
-            found = d;
+            stage_results.min_xc[r] = d;
             break;
           }
         }
-        results[r] = found;
       }
-    }
-    for (size_t r = 0; r < rotations.size(); ++r) {
-      int val = (results[r] == 999) ? 0 : results[r];
-      if (val < stage_results.min_xc[r])
-        stage_results.min_xc[r] = val;
     }
   }
 
@@ -782,9 +779,14 @@ struct XCrossSolver {
               [](const RotTask &a, const RotTask &b) {
                 return a.heuristic < b.heuristic;
               });
-    std::vector<int> results(rotations.size());
     for (const auto &task : tasks) {
       int r = task.rot_idx;
+
+      // [Early Exit] 当前已知最优解，无法改进则跳过
+      int cur_best = stage_results.min_xxc[r];
+      if (task.heuristic >= cur_best)
+        continue;
+      int max_depth = std::min(20, cur_best - 1);
 
       int idx1, idx2, idx5;
       get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx5, slot1,
@@ -796,7 +798,6 @@ struct XCrossSolver {
       index1 = idx1;
       index2 = idx2;
       index5 = idx5;
-
       index4 = idx4;
       index6 = idx6;
       edge_solved2 = single_edge_index[slot2];
@@ -815,31 +816,24 @@ struct XCrossSolver {
 
       if (prune1_tmp == 0 && prune2_tmp == 0 && edge_prune1_tmp == 0 &&
           prune_xc2_tmp == 0 && index6 == edge_solved2) {
-        results[r] = 0;
+        stage_results.min_xxc[r] = 0;
       } else {
         index2 *= 18;
         index4 *= 18;
         index5 *= 18;
         index6 *= 18;
-        int found = 999;
         int start_depth =
             std::max({prune1_tmp, prune2_tmp, edge_prune1_tmp, prune_xc2_tmp});
-        for (int d = start_depth; d <= max_length; d++) {
+        for (int d = start_depth; d <= max_depth; d++) {
           if (search_2(index1, index2, index4, index5, index6, d, 18, p_prune1,
                        p_prune2, p_edge_prune1, p_prune_xc2, st.cross,
                        st.corner * 18, st.edge[0] * 18, st.edge[1] * 18,
                        st.edge[2] * 18, st.edge[3] * 18, diff2)) {
-            found = d;
+            stage_results.min_xxc[r] = d;
             break;
           }
         }
-        results[r] = found;
       }
-    }
-    for (size_t r = 0; r < rotations.size(); ++r) {
-      int val = (results[r] == 999) ? 0 : results[r];
-      if (val < stage_results.min_xxc[r])
-        stage_results.min_xxc[r] = val;
     }
   }
 
@@ -1045,9 +1039,14 @@ struct XCrossSolver {
               [](const RotTask &a, const RotTask &b) {
                 return a.heuristic < b.heuristic;
               });
-    std::vector<int> results(rotations.size());
     for (const auto &task : tasks) {
       int r = task.rot_idx;
+
+      // [Early Exit] 当前已知最优解，无法改进则跳过
+      int cur_best = stage_results.min_xxxc[r];
+      if (task.heuristic >= cur_best)
+        continue;
+      int max_depth = std::min(20, cur_best - 1);
 
       int idx1, idx2, idx7;
       get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx7, slot1,
@@ -1063,11 +1062,9 @@ struct XCrossSolver {
       index1 = idx1;
       index2 = idx2;
       index7 = idx7;
-
       index4 = idx4;
       index8 = idx8;
       edge_solved2 = single_edge_index[slot2];
-
       index6 = idx6;
       index9 = idx9;
       edge_solved3 = single_edge_index[slot3];
@@ -1085,7 +1082,7 @@ struct XCrossSolver {
 
       if (prune1_tmp == 0 && edge_prune1_tmp == 0 && prune_xc3_tmp == 0 &&
           index8 == edge_solved2 && index9 == edge_solved3) {
-        results[r] = 0;
+        stage_results.min_xxxc[r] = 0;
       } else {
         // [新增] 设置 AuxState (Corner2 + Edge2)
         AuxState aux_init[MAX_AUX];
@@ -1096,25 +1093,18 @@ struct XCrossSolver {
         index7 *= 18;
         index8 *= 18;
         index9 *= 18;
-        int found = 999;
         int start_depth =
             std::max({prune1_tmp, edge_prune1_tmp, prune_xc3_tmp});
-        for (int d = start_depth; d <= max_length; d++) {
+        for (int d = start_depth; d <= max_depth; d++) {
           if (search_3(index1, index2, index7, index8, index9, d, 18, p_prune1,
                        p_edge_prune1, p_prune_xc3, num_aux, aux_init, st.cross,
                        st.corner * 18, st.edge[0] * 18, st.edge[1] * 18,
                        st.edge[2] * 18, st.edge[3] * 18, diff3)) {
-            found = d;
+            stage_results.min_xxxc[r] = d;
             break;
           }
         }
-        results[r] = found;
       }
-    }
-    for (size_t r = 0; r < rotations.size(); ++r) {
-      int val = (results[r] == 999) ? 0 : results[r];
-      if (val < stage_results.min_xxxc[r])
-        stage_results.min_xxxc[r] = val;
     }
   }
 
@@ -1339,9 +1329,14 @@ struct XCrossSolver {
               [](const RotTask &a, const RotTask &b) {
                 return a.heuristic < b.heuristic;
               });
-    std::vector<int> results(rotations.size());
     for (const auto &task : tasks) {
       int r = task.rot_idx;
+
+      // [Early Exit] 当前已知最优解，无法改进则跳过
+      int cur_best = stage_results.min_xxxxc[r];
+      if (task.heuristic >= cur_best)
+        continue;
+      int max_depth = std::min(20, cur_best - 1);
 
       int idx1, idx2, idx9;
       get_rotated_indices(base_alg, rotations[r], idx1, idx2, idx9, slot1,
@@ -1362,15 +1357,12 @@ struct XCrossSolver {
       index1 = idx1;
       index2 = idx2;
       index9 = idx9;
-
       index4 = idx4;
       index10 = idx10;
       edge_solved2 = single_edge_index[slot2];
-
       index6 = idx6;
       index11 = idx11;
       edge_solved3 = single_edge_index[slot3];
-
       index8 = idx8;
       index12 = idx12;
       edge_solved4 = single_edge_index[slot4];
@@ -1393,7 +1385,7 @@ struct XCrossSolver {
           prune4_tmp == 0 && edge_prune1_tmp == 0 && prune_xc4_tmp == 0 &&
           index10 == edge_solved2 && index11 == edge_solved3 &&
           index12 == edge_solved4) {
-        results[r] = 0;
+        stage_results.min_xxxxc[r] = 0;
       } else {
         index2 *= 18;
         index4 *= 18;
@@ -1412,27 +1404,20 @@ struct XCrossSolver {
             pslot2, pslot3, pslot4, // Corner 伪槽位
             rotated_alg, aux_init);
 
-        int found = 999;
         int start_depth =
             std::max({prune1_tmp, prune2_tmp, prune3_tmp, prune4_tmp,
                       edge_prune1_tmp, prune_xc4_tmp});
-        for (int d = start_depth; d <= max_length; d++) {
+        for (int d = start_depth; d <= max_depth; d++) {
           if (search_4(index1, index2, index4, index6, index8, index9, index10,
                        index11, index12, d, 18, p_prune1, p_edge_prune1,
                        p_prune_xc4, num_aux, aux_init, st.cross, st.corner * 18,
                        st.edge[0] * 18, st.edge[1] * 18, st.edge[2] * 18,
                        st.edge[3] * 18, diff4)) {
-            found = d;
+            stage_results.min_xxxxc[r] = d;
             break;
           }
         }
-        results[r] = found;
       }
-    }
-    for (size_t r = 0; r < rotations.size(); ++r) {
-      int val = (results[r] == 999) ? 0 : results[r];
-      if (val < stage_results.min_xxxxc[r])
-        stage_results.min_xxxxc[r] = val;
     }
   }
 
