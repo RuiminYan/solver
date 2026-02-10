@@ -78,9 +78,15 @@ struct DistributionPrinter {
 
     std::cout << "  -------------------------------------------------"
               << std::endl;
-    std::cout << "  Total  " << std::setw(14) << std::right
+    // 计算加权平均深度: sum(depth * count) / total
+    double avg = 0.0;
+    for (auto &p : records) {
+      avg += (double)p.first * p.second;
+    }
+    avg /= accumulated;
+    std::cout << "  " << std::fixed << std::setprecision(2) << std::setw(5)
+              << std::right << avg << "  " << std::setw(14) << std::right
               << formatWithCommas(accumulated) << "  100.000000%" << std::endl;
-    std::cout << std::endl; // 空行分隔
   }
 
   // 在并发BFS 循环内部显示扫描进度
@@ -112,8 +118,7 @@ PruneTableManager &PruneTableManager::getInstance() {
 }
 
 void PruneTableManager::initialize() {
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Initializing prune tables..." << std::endl;
+  std::cout << "Initializing prune tables..." << std::endl;
 
   genPTCross();
   genPTCrossInsC4();
@@ -125,8 +130,7 @@ void PruneTableManager::initialize() {
 
 unsigned char *PruneTableManager::loadTableMMap(const std::string &filename) {
 #ifdef _WIN32
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " MMap loading "
-            << filename << "..." << std::endl;
+  std::cout << "MMap loading " << filename << "..." << std::endl;
   HANDLE hFile = CreateFile(filename.c_str(), GENERIC_READ, FILE_SHARE_READ,
                             NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (hFile == INVALID_HANDLE_VALUE) {
@@ -344,8 +348,7 @@ void PruneTableManager::genAllSequentially() {
 
   // 1. Cross Prune (Needs Edges2)
   if (!fileExists("pt_cross.bin")) {
-    std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-              << " Generating pt_cross.bin..." << std::endl;
+    std::cout << "Generating pt_cross.bin..." << std::endl;
     mtm.loadMTEdge2();
     genPTCross();
     std::vector<unsigned char>().swap(pt_cross);
@@ -709,8 +712,6 @@ static const int EDGE_INDICES[4] = {0, 2, 4, 6};
 
 void PruneTableManager::genPTPsCrossC(int c) {
   std::string fn = "pt_pscross_C" + std::to_string(c + 4) + ".bin";
-  if (loadTable(pt_pscross_C[c], fn))
-    return;
   if (fileExists(fn))
     return;
   auto &mtm = MoveTableManager::getInstance();
@@ -730,9 +731,6 @@ void PruneTableManager::genPTPsCrossC(int c) {
 void PruneTableManager::genPTPsCrossInsCDiff(int c, int e) {
   std::string fn = "pt_pscross_ins_C" + std::to_string(c + 4) + "_diff" +
                    std::to_string(e) + ".bin";
-  int idx = e * 4 + c;
-  if (loadTable(pt_pscross_ins_C_diff[idx], fn))
-    return;
   if (fileExists(fn))
     return;
   auto &mtm = MoveTableManager::getInstance();
@@ -752,9 +750,6 @@ void PruneTableManager::genPTPsCrossInsCDiff(int c, int e) {
 void PruneTableManager::genPTPsPairCE(int c, int e) {
   std::string fn =
       "pt_pspair_C" + std::to_string(c + 4) + "_E" + std::to_string(e) + ".bin";
-  int idx = e * 4 + c;
-  if (loadTable(pt_pspair_CE[idx], fn))
-    return;
   if (fileExists(fn))
     return;
   auto &mtm = MoveTableManager::getInstance();
@@ -792,8 +787,7 @@ void PruneTableManager::genPTCross() {
   if (loadTable(pt_cross, "pt_cross.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_cross.bin..." << std::endl;
+  std::cout << "Generating pt_cross.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   const auto &edge2_mt = mtm.getMTEdge2();
   long long sz = (long long)StateSpace::EDGE2 * StateSpace::EDGE2;
@@ -838,11 +832,10 @@ void PruneTableManager::genPTCrossInsC4() {
   if (loadTable(pt_cross_ins_C4, "pt_cross_ins_C4.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_cross_ins_C4.bin..." << std::endl;
+  std::cout << "Generating pt_cross_ins_C4.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  pt_cross_ins_C4.resize((long long)StateSpace::CROSS * StateSpace::CORNER,
-                         255);
+  pt_cross_ins_C4.resize(
+      ((long long)StateSpace::CROSS * StateSpace::CORNER + 1) / 2, 0xFF);
   createPTCrossInsC(187520, 12, StateSpace::CROSS, StateSpace::CORNER, 10,
                     mtm.getMTEdge4(), mtm.getMTCorn(), pt_cross_ins_C4);
   saveTable(pt_cross_ins_C4, "pt_cross_ins_C4.bin");
@@ -853,10 +846,10 @@ void PruneTableManager::genPTPairC4E0() {
   if (loadTable(pt_pair_C4E0, "pt_pair_C4E0.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pair_C4E0.bin..." << std::endl;
+  std::cout << "Generating pt_pair_C4E0.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  pt_pair_C4E0.resize(StateSpace::EDGE * StateSpace::CORNER, 255);
+  pt_pair_C4E0.resize(
+      ((long long)StateSpace::EDGE * StateSpace::CORNER + 1) / 2, 0xFF);
   createPTPair(0, 12, StateSpace::EDGE, StateSpace::CORNER, 8, mtm.getMTEdge(),
                mtm.getMTCorn(), pt_pair_C4E0);
   saveTable(pt_pair_C4E0, "pt_pair_C4E0.bin");
@@ -867,8 +860,7 @@ void PruneTableManager::genPTCrossC4E0() {
   if (loadTable(pt_cross_C4E0, "pt_cross_C4E0.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_cross_C4E0.bin..." << std::endl;
+  std::cout << "Generating pt_cross_C4E0.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   long long c_sz =
       ((long long)StateSpace::CROSS * StateSpace::CORNER * StateSpace::EDGE +
@@ -886,8 +878,7 @@ void PruneTableManager::genPTCrossC4C5E0E1() {
   if (loadTable(pt_cross_C4C5E0E1, "pt_cross_C4C5E0E1.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_cross_C4C5E0E1.bin..." << std::endl;
+  std::cout << "Generating pt_cross_C4C5E0E1.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   createPTEdge6Corn2(StateSpace::EDGE6, StateSpace::CORNER2, 15,
                      {0, 2, 16, 18, 20, 22}, {12, 15}, mtm.getMTEdge6(),
@@ -903,8 +894,7 @@ void PruneTableManager::genPTCrossC4C6E0E2() {
   if (loadTable(pt_cross_C4C6E0E2, "pt_cross_C4C6E0E2.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_cross_C4C6E0E2.bin..." << std::endl;
+  std::cout << "Generating pt_cross_C4C6E0E2.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   createPTEdge6Corn2(StateSpace::EDGE6, StateSpace::CORNER2, 15,
                      {0, 4, 16, 18, 20, 22}, {12, 18}, mtm.getMTEdge6(),
@@ -917,8 +907,7 @@ void PruneTableManager::genPTEP4EO12() {
   if (loadTable(pt_ep4eo12, "pt_ep4eo12.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_ep4eo12.bin..." << std::endl;
+  std::cout << "Generating pt_ep4eo12.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   // 状态空间: EP4 (12*11*10*9 = 11880) x EO12 (2^11 = 2048)
   // 初始状态: EP4_SOLVED=11720, EO_SOLVED=0
@@ -940,8 +929,7 @@ void PruneTableManager::genPTCrossCEE(int i) {
   if (loadTable(pt_cross_CEE[i], fn))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating " << fn
-            << "..." << std::endl;
+  std::cout << "Generating " << fn << "..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   // idx_extra: E1=2, E2=4, E3=6 → EDGE_INDICES[i+1]
   int idx_extra = EDGE_INDICES[i + 1];
@@ -964,8 +952,7 @@ void PruneTableManager::genPTCrossCCE(int i) {
   if (loadTable(pt_cross_CCE[i], fn))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating " << fn
-            << "..." << std::endl;
+  std::cout << "Generating " << fn << "..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   // idx_extra: C5=15, C6=18, C7=21 → CORNER_INDICES[i+1]
   int idx_extra = CORNER_INDICES[i + 1];
@@ -985,8 +972,7 @@ void PruneTableManager::genPTCrossC4C5C6() {
   if (loadTable(pt_cross_C4C5C6, "pt_cross_C4C5C6.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_cross_C4C5C6.bin..." << std::endl;
+  std::cout << "Generating pt_cross_C4C5C6.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   // 3-Corner: idx_c5=15, idx_c6=18, t_c5=CornMT, t_c6=CornMT
   createPTCrossCCC(187520, 12, 15, 18, StateSpace::CROSS, StateSpace::CORNER,
@@ -1001,8 +987,7 @@ void PruneTableManager::genPTPsCross() {
   if (loadTable(pt_pscross, "pt_pscross.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross.bin..." << std::endl;
+  std::cout << "Generating pt_pscross.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   const auto &edge2_mt = mtm.getMTEdge2();
   long long sz = (long long)StateSpace::EDGE2 * StateSpace::EDGE2;
@@ -1055,8 +1040,7 @@ void PruneTableManager::genPTPsCrossC4E(int i) {
   if (loadTable(pt_pscross_C4E[i], fn))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET << " Generating " << fn
-            << "..." << std::endl;
+  std::cout << "Generating " << fn << "..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   int e_diffs[] = {0, 2, 4, 6};
   pt_pscross_C4E[i].resize(
@@ -1075,8 +1059,7 @@ void PruneTableManager::genPTPsCrossE0E2() {
   if (loadTable(pt_pscross_E0E2, "pt_pscross_E0E2.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_E0E2.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_E0E2.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {0, 4};
   int idx_e0_e2_solved = array_to_index(target, 2, 2, 12);
@@ -1093,8 +1076,7 @@ void PruneTableManager::genPTPsCrossE0E1() {
   if (loadTable(pt_pscross_E0E1, "pt_pscross_E0E1.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_E0E1.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_E0E1.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {0, 2}; // E0(0*2=0), E1(1*2=2) - 邻棱
   int idx_solved = array_to_index(target, 2, 2, 12);
@@ -1110,8 +1092,7 @@ void PruneTableManager::genPTPsCrossE1E3() {
   if (loadTable(pt_pscross_E1E3, "pt_pscross_E1E3.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_E1E3.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_E1E3.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {2, 6}; // E1(1*2=2), E3(3*2=6) - 对棱
   int idx_solved = array_to_index(target, 2, 2, 12);
@@ -1127,8 +1108,7 @@ void PruneTableManager::genPTPsCrossE0E3() {
   if (loadTable(pt_pscross_E0E3, "pt_pscross_E0E3.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_E0E3.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_E0E3.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {0, 6}; // E0(0*2=0), E3(3*2=6) - 邻棱
   int idx_solved = array_to_index(target, 2, 2, 12);
@@ -1144,8 +1124,7 @@ void PruneTableManager::genPTPsCrossE1E2() {
   if (loadTable(pt_pscross_E1E2, "pt_pscross_E1E2.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_E1E2.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_E1E2.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {2, 4}; // E1(1*2=2), E2(2*2=4) - 邻棱
   int idx_solved = array_to_index(target, 2, 2, 12);
@@ -1161,8 +1140,7 @@ void PruneTableManager::genPTPsCrossE2E3() {
   if (loadTable(pt_pscross_E2E3, "pt_pscross_E2E3.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_E2E3.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_E2E3.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {4, 6}; // E2(2*2=4), E3(3*2=6) - 邻棱
   int idx_solved = array_to_index(target, 2, 2, 12);
@@ -1178,8 +1156,7 @@ void PruneTableManager::genPTPsCrossE0E1E2() {
   if (loadTable(pt_pscross_E0E1E2, "pt_pscross_E0E1E2.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_E0E1E2.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_E0E1E2.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {0, 2, 4}; // E0, E1, E2 (0, 2, 4)
   int idx_solved = array_to_index(target, 3, 2, 12);
@@ -1196,8 +1173,7 @@ void PruneTableManager::genPTPsCrossE1E2E3() {
   if (loadTable(pt_pscross_E1E2E3, "pt_pscross_E1E2E3.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_E1E2E3.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_E1E2E3.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {2, 4, 6}; // E1, E2, E3
   int idx_solved = array_to_index(target, 3, 2, 12);
@@ -1214,8 +1190,7 @@ void PruneTableManager::genPTPsCrossE0E2E3() {
   if (loadTable(pt_pscross_E0E2E3, "pt_pscross_E0E2E3.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_E0E2E3.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_E0E2E3.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {0, 4, 6}; // E0, E2, E3
   int idx_solved = array_to_index(target, 3, 2, 12);
@@ -1232,8 +1207,7 @@ void PruneTableManager::genPTPsCrossE0E1E3() {
   if (loadTable(pt_pscross_E0E1E3, "pt_pscross_E0E1E3.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_E0E1E3.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_E0E1E3.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {0, 2, 6}; // E0, E1, E3
   int idx_solved = array_to_index(target, 3, 2, 12);
@@ -1250,8 +1224,7 @@ void PruneTableManager::genPTPsCrossC4C6() {
   if (loadTable(pt_pscross_C4C6, "pt_pscross_C4C6.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_C4C6.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_C4C6.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {12, 18}; // C4(4*3=12), C6(6*3=18) - 对角
   int idx_solved = array_to_index(target, 2, 3, 8);
@@ -1268,8 +1241,7 @@ void PruneTableManager::genPTPsCrossC5C7() {
   if (loadTable(pt_pscross_C5C7, "pt_pscross_C5C7.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_C5C7.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_C5C7.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {15, 21}; // C5(5*3=15), C7(7*3=21) - 对角
   int idx_solved = array_to_index(target, 2, 3, 8);
@@ -1286,8 +1258,7 @@ void PruneTableManager::genPTPsCrossC4C5() {
   if (loadTable(pt_pscross_C4C5, "pt_pscross_C4C5.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_C4C5.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_C4C5.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {12, 15}; // C4(4*3=12), C5(5*3=15)
   int idx_solved = array_to_index(target, 2, 3, 8);
@@ -1304,8 +1275,7 @@ void PruneTableManager::genPTPsCrossC4C7() {
   if (loadTable(pt_pscross_C4C7, "pt_pscross_C4C7.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_C4C7.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_C4C7.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {12, 21}; // C4(4*3=12), C7(7*3=21)
   int idx_solved = array_to_index(target, 2, 3, 8);
@@ -1322,8 +1292,7 @@ void PruneTableManager::genPTPsCrossC5C6() {
   if (loadTable(pt_pscross_C5C6, "pt_pscross_C5C6.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_C5C6.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_C5C6.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {15, 18}; // C5(5*3=15), C6(6*3=18)
   int idx_solved = array_to_index(target, 2, 3, 8);
@@ -1340,8 +1309,7 @@ void PruneTableManager::genPTPsCrossC6C7() {
   if (loadTable(pt_pscross_C6C7, "pt_pscross_C6C7.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_C6C7.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_C6C7.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {18, 21}; // C6(6*3=18), C7(7*3=21)
   int idx_solved = array_to_index(target, 2, 3, 8);
@@ -1358,8 +1326,7 @@ void PruneTableManager::genPTPsCrossC4C5C6() {
   if (loadTable(pt_pscross_C4C5C6, "pt_pscross_C4C5C6.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_C4C5C6.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_C4C5C6.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {12, 15, 18}; // C4, C5, C6
   int idx_solved = array_to_index(target, 3, 3, 8);
@@ -1376,8 +1343,7 @@ void PruneTableManager::genPTPsCrossC4C5C7() {
   if (loadTable(pt_pscross_C4C5C7, "pt_pscross_C4C5C7.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_C4C5C7.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_C4C5C7.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {12, 15, 21}; // C4, C5, C7
   int idx_solved = array_to_index(target, 3, 3, 8);
@@ -1394,8 +1360,7 @@ void PruneTableManager::genPTPsCrossC4C6C7() {
   if (loadTable(pt_pscross_C4C6C7, "pt_pscross_C4C6C7.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_C4C6C7.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_C4C6C7.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {12, 18, 21}; // C4, C6, C7
   int idx_solved = array_to_index(target, 3, 3, 8);
@@ -1412,8 +1377,7 @@ void PruneTableManager::genPTPsCrossC5C6C7() {
   if (loadTable(pt_pscross_C5C6C7, "pt_pscross_C5C6C7.bin"))
     return;
   GenerationTimer timer;
-  std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
-            << " Generating pt_pscross_C5C6C7.bin..." << std::endl;
+  std::cout << "Generating pt_pscross_C5C6C7.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
   std::vector<int> target = {15, 18, 21}; // C5, C6, C7
   int idx_solved = array_to_index(target, 3, 3, 8);
@@ -1627,20 +1591,20 @@ void createPTCrossInsC(int idx_cr, int idx_cn, int sz_cr, int sz_cn, int depth,
                        const std::vector<int> &t_cn,
                        std::vector<unsigned char> &pt) {
   long long total = (long long)sz_cr * sz_cn;
-  std::fill(pt.begin(), pt.end(), 255);
+  std::vector<unsigned char> tmp(total, 255);
   std::vector<std::string> am = {"L U L'", "L U' L'", "B' U B", "B' U' B"};
-  pt[(long long)idx_cr * sz_cn + idx_cn] = 0;
+  tmp[(long long)idx_cr * sz_cn + idx_cn] = 0;
   for (const auto &s : am) {
     int i_cr = idx_cr * 24, i_cn = idx_cn;
     for (int m : string_to_alg(s)) {
       i_cr = t_cr[i_cr + m];
       i_cn = t_cn[i_cn * 18 + m];
     }
-    pt[(long long)i_cr / 24 * sz_cn + i_cn] = 0;
+    tmp[(long long)i_cr / 24 * sz_cn + i_cn] = 0;
     int base_cr = i_cr, base_cn = i_cn * 18;
-    pt[t_cr[base_cr] + t_cn[base_cn]] = 0;
-    pt[t_cr[base_cr + 1] + t_cn[base_cn + 1]] = 0;
-    pt[t_cr[base_cr + 2] + t_cn[base_cn + 2]] = 0;
+    tmp[t_cr[base_cr] + t_cn[base_cn]] = 0;
+    tmp[t_cr[base_cr + 1] + t_cn[base_cn + 1]] = 0;
+    tmp[t_cr[base_cr + 2] + t_cn[base_cn + 2]] = 0;
   }
   DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
@@ -1649,14 +1613,15 @@ void createPTCrossInsC(int idx_cr, int idx_cn, int sz_cr, int sz_cn, int depth,
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
       dp.progress(i, total, d);
-      if (pt[i] == d) {
+      if (tmp[i] == d) {
         cnt++;
         int i_cr = (i / sz_cn) * 24;
         int i_cn = (i % sz_cn) * 18;
         for (int j = 0; j < 18; ++j) {
           long long ni = (long long)t_cr[i_cr + j] + t_cn[i_cn + j];
-          if (pt[ni] == 255)
-            pt[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
@@ -1666,6 +1631,11 @@ void createPTCrossInsC(int idx_cr, int idx_cn, int sz_cr, int sz_cn, int depth,
       break;
   }
   dp.done();
+  std::fill(pt.begin(), pt.end(), 0xFF);
+#pragma omp parallel for
+  for (long long i = 0; i < total; ++i)
+    if (tmp[i] != 255)
+      set_prune(pt, i, tmp[i]);
 }
 
 // 2. Pair C4 + E0 (Base)
@@ -1673,20 +1643,20 @@ void createPTPair(int idx_ed, int idx_cn, int sz_ed, int sz_cn, int depth,
                   const std::vector<int> &t_ed, const std::vector<int> &t_cn,
                   std::vector<unsigned char> &pt) {
   long long total = (long long)sz_ed * sz_cn;
-  std::fill(pt.begin(), pt.end(), 255);
+  std::vector<unsigned char> tmp(total, 255);
   std::vector<std::string> am = {"L U L'", "L U' L'", "B' U B", "B' U' B"};
-  pt[idx_ed * sz_cn + idx_cn] = 0;
+  tmp[idx_ed * sz_cn + idx_cn] = 0;
   for (const auto &s : am) {
     int c_ed = idx_ed, c_cn = idx_cn;
     for (int m : string_to_alg(s)) {
       c_ed = t_ed[c_ed * 18 + m];
       c_cn = t_cn[c_cn * 18 + m];
     }
-    pt[c_ed * sz_cn + c_cn] = 0;
+    tmp[c_ed * sz_cn + c_cn] = 0;
     for (int k = 0; k < 3; ++k) {
       int n_ed = t_ed[c_ed * 18 + k];
       int n_cn = t_cn[c_cn * 18 + k];
-      pt[n_ed * sz_cn + n_cn] = 0;
+      tmp[n_ed * sz_cn + n_cn] = 0;
     }
   }
   DistributionPrinter dp(total);
@@ -1696,14 +1666,15 @@ void createPTPair(int idx_ed, int idx_cn, int sz_ed, int sz_cn, int depth,
 #pragma omp parallel for reduction(+ : cnt)
     for (long long i = 0; i < total; ++i) {
       dp.progress(i, total, d);
-      if (pt[i] == d) {
+      if (tmp[i] == d) {
         cnt++;
         int i_ed = (i / sz_cn) * 18;
         int i_cn = (i % sz_cn) * 18;
         for (int j = 0; j < 18; ++j) {
           long long ni = (long long)t_ed[i_ed + j] * sz_cn + t_cn[i_cn + j];
-          if (pt[ni] == 255)
-            pt[ni] = nd;
+          // NOTE: 使用 CAS 避免竞态条件
+          unsigned char expected = 255;
+          __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
       }
     }
@@ -1713,6 +1684,11 @@ void createPTPair(int idx_ed, int idx_cn, int sz_ed, int sz_cn, int depth,
       break;
   }
   dp.done();
+  std::fill(pt.begin(), pt.end(), 0xFF);
+#pragma omp parallel for
+  for (long long i = 0; i < total; ++i)
+    if (tmp[i] != 255)
+      set_prune(pt, i, tmp[i]);
 }
 
 void createPTCrossCE(int idx_cr, int idx_cn, int idx_ed, int sz_cr, int sz_cn,

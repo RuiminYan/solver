@@ -378,9 +378,12 @@ id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xc
 41001,7,7,8,6,7,7,8,8,9,8,9,8,9,9,9,9,9,9,12,10,12,11,10,11,13,13,14,15,12,13
 
 ## 常见缩写
-ins = insertion
 sz = size
 ed = edge
-cn = corner
+cn = corn = corner
 cr = cross
+ps = pseudo
+ins = insertion
 ex = extra
+mt = move table
+pt = prune table

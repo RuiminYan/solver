@@ -98,7 +98,7 @@ struct cross_analyzer {
       COUNT_NODE
       int m = moves[k];
 
-      // 级联: 先Cross 查表
+      // : 先Cross 查表
       int n1 = p_mt_edge2[i1 + m], n2 = p_mt_edge2[i2 + m];
       long long idx = (long long)n1 * StateSpace::EDGE2 + n2;
       int pr = get_prune_ptr(p_pt_cross, idx);
@@ -379,7 +379,7 @@ struct xcross_analyzer {
       COUNT_NODE
       int m = moves[k];
 
-      // 级联 Check 1: Dependency (EO + Partial Cross)
+      // Check 1: Dependency (EO + Partial Cross)
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];
       S1_CHECK(s1_dep_eo);
       if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
@@ -388,7 +388,7 @@ struct xcross_analyzer {
         continue;
       }
 
-      // 级联 Check 2: Main XCross
+      // Check 2: Main XCross
       int m_slot = conj_moves_flat[m][slot];
       int n1 = p_mt_edge4[i1 + m_slot], n2 = p_mt_corn[i2 + m_slot],
           n3 = p_mt_edge[i3 + m_slot];
@@ -426,7 +426,7 @@ struct xcross_analyzer {
       COUNT_NODE
       int m = moves[k];
 
-      // 级联 Check 0: Huge 表(最前置，剪枝力最强)
+      // Check 0: Huge 表(最前置，剪枝力最强)
       int n_ie6 = -1, n_ic2 = -1;
       if (v_huge != -1 && p_huge_active) {
         int mv = conj_moves_flat[m][v_huge];
@@ -438,13 +438,13 @@ struct xcross_analyzer {
           continue;
       }
 
-      // 级联 Check 1: Dep + EO
+      // Check 1: Dep + EO
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];
       if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
           depth)
         continue;
 
-      // 级联 Check 2: View A (Base + Plus)
+      // Check 2: View A (Base + Plus)
       int m1 = conj_moves_flat[m][s1];
       int n1a = p_mt_edge4[i1a + m1], n2a = p_mt_corn[i2a + m1],
           n3a = p_mt_edge[i3a + m1];
@@ -459,7 +459,7 @@ struct xcross_analyzer {
       if (get_prune_ptr(p_pt_cross_CCE[tab], idx_a * 24 + n_ca_rel) >= depth)
         continue;
 
-      // 级联 Check 3: View B (Base + Plus)
+      // Check 3: View B (Base + Plus)
       int m2 = conj_moves_flat[m][s2];
       int n1b = p_mt_edge4[i1b + m2], n2b = p_mt_corn[i2b + m2],
           n3b = p_mt_edge[i3b + m2];
@@ -510,7 +510,7 @@ struct xcross_analyzer {
       COUNT_NODE
       int m = moves[k];
 
-      // 级联 Check 0: Huge 表(最前置)
+      // Check 0: Huge 表(最前置)
       int n_ie6 = -1, n_ic2 = -1;
       if (v_huge != -1 && p_huge_active) {
         int mv = conj_moves_flat[m][v_huge];
@@ -522,7 +522,7 @@ struct xcross_analyzer {
           continue;
       }
 
-      // 级联 Check 1: Dep + EO
+      // Check 1: Dep + EO
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];
       if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
           depth)

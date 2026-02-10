@@ -1,28 +1,25 @@
 NOTE: 移动表引擎位于cube_common.cpp 其余所有函数位于prune_tables.cpp
-函数名,状态空间,维度公式,初始状态数,BFS最大深度,移动表1(步长),移动表2(步长),移动表3(步长),移动表4(步长),调用者(gen函数),说明
+函数名,状态空间,维度公式,初始状态数,最大深度,移动表1(步长),移动表2(步长),移动表3(步长),移动表4(步长),调用者(gen函数),说明
 
 --- 移动表引擎 ---,,,,,,,,,
 createMultiMoveTable,-,-,-,-,basic_t,-,-,-,mt_edge2/3/6 mt_corn2/3 mt_ep4,标准多块移动表(步长18 逆操作优化)
 createMultiMoveTable2,-,-,-,-,basic_t,-,-,-,mt_edge4,预乘偏移移动表(步长24 空间换时间)
 
---- 标准剪枝表引擎 ---,,,,,,,,,
+--- 剪枝表引擎 ---,,,,,,,,,
 createPTCrossInsC,Cross×Corner,CROSS×CORNER,9,10,MTEdge4(24),MTCorn(18),-,-,genPTCrossInsC4,Cross+1Corner(初始化含U系列插入操作)
 createPTPair,Edge×Corner,EDGE×CORNER,20,8,MTEdge(18),MTCorn(18),-,-,genPTPairC4E0,Pair(初始化含U系列插入操作)
 createPTCrossCE,Cross×Corner×Edge,CROSS×CORNER×EDGE,1或4,11,MTEdge4(24),MTCorn(18),MTEdge(18),-,genPTCrossC4E0 genPTPsCrossC4E,XCross核心引擎(is_pseudo区分标准/伪模式)
-createPTEdge6Corner2,Edge6×Corner2,EDGE6×CORNER2,1,15,MTEdge6(18),MTCorn2(18),-,-,genPTCrossC4C5E0E1 genPTCrossC4C6E0E2,超大表(~20GB RAM)
+createPTEdge6Corn2,Edge6×Corner2,EDGE6×CORNER2,1,15,MTEdge6(18),MTCorn2(18),-,-,genPTCrossC4C5E0E1 genPTCrossC4C6E0E2,大表
 createPTCrossCEX,Cross×Corner×Edge×Extra,CROSS×CORNER×EDGE×(EDGE|CORNER),1,14,MTEdge4(24),MTCorn(18),MTEdge(18),MTEdge或MTCorn(18),genPTCrossCEE(×3) genPTCrossCCE(×3),4维XCross扩展(Plus Edge/Plus Corner)
 createPTCrossCCC,Cross×Corner×Corner×Corner,CROSS×CORNER×CORNER×CORNER,1,14,MTEdge4(24),MTCorn(18),MTCorn(18),MTCorn(18),genPTCrossC4C5C6,4维3-Corner表
 
---- 级联剪枝表引擎 ---,,,,,,,,,
-createPTDim2,Dim1×Dim2,EP4×EO12,1,11,MTEP4(18),MTEOAlt(18),-,-,genPTEP4EO12,通用2维BFS(步长18×18)
-
---- Pseudo Cross/XCross 引擎 ---,,,,,,,,,
-createPTPsCrossCorner,Cross×Corner,CROSS×CORNER,4,10,MTEdge4(24),MTCorn(18),-,-,genPTPsCrossC(×4),Pseudo Cross+1Corner(4个D偏移初始化)
+createPTPsCrossCorn,Cross×Corner,CROSS×CORNER,4,10,MTEdge4(24),MTCorn(18),-,-,genPTPsCrossC(×4),Pseudo Cross+1Corner(4个D偏移初始化)
 createPTPsCrossInsC,Cross×Corner,CROSS×CORNER,4×4=16,10,MTEdge4(24),MTCorn(18),-,-,genPTPsCrossInsCDiff(×16),Pseudo Cross+1Corner Insertion (含U插入+D偏移+边块展开)
 createPTPsPair,Edge×Corner,EDGE×CORNER,4×4=16,8,MTEdge(18),MTCorn(18),-,-,genPTPsPairCE(×16),Pseudo Pair(含U插入+D偏移+边块展开)
 
---- Pseudo Aux 表引擎 ---,,,,,,,,,
-createPTPsCrossEdges2,Cross×Edge2,CROSS×EDGE2,4,11,MTEdge4(24),MTEdge2(18),-,-,genPTPsCrossE0E1等(×6),Pseudo Cross+2Edge(4个D偏移)
-createPTPsCrossEdges3,Cross×Edge3,CROSS×EDGE3,4,12,MTEdge4(24),MTEdge3(18),-,-,genPTPsCrossE0E1E2等(×4),Pseudo Cross+3Edge(4个D偏移)
-createPTPsCrossCorners2,Cross×Corner2,CROSS×CORNER2,4,11,MTEdge4(24),MTCorn2(18),-,-,genPTPsCrossC4C5等(×6),Pseudo Cross+2Corner(4个D偏移)
-createPTPsCrossCorners3,Cross×Corner3,CROSS×CORNER3,4,13,MTEdge4(24),MTCorn3(18),-,-,genPTPsCrossC4C5C6等(×4),Pseudo Cross+3Corner(4个D偏移)
+createPTPsCrossEdge2,Cross×Edge2,CROSS×EDGE2,4,11,MTEdge4(24),MTEdge2(18),-,-,genPTPsCrossE0E1等(×6),Pseudo Cross+2Edge(4个D偏移)
+createPTPsCrossEdge3,Cross×Edge3,CROSS×EDGE3,4,12,MTEdge4(24),MTEdge3(18),-,-,genPTPsCrossE0E1E2等(×4),Pseudo Cross+3Edge(4个D偏移)
+createPTPsCrossCorn2,Cross×Corner2,CROSS×CORNER2,4,11,MTEdge4(24),MTCorn2(18),-,-,genPTPsCrossC4C5等(×6),Pseudo Cross+2Corner(4个D偏移)
+createPTPsCrossCorn3,Cross×Corner3,CROSS×CORNER3,4,13,MTEdge4(24),MTCorn3(18),-,-,genPTPsCrossC4C5C6等(×4),Pseudo Cross+3Corner(4个D偏移)
+
+createPTDim2,Dim1×Dim2,EP4×EO12,1,11,MTEP4(18),MTEOAlt(18),-,-,genPTEP4EO12,通用2维BFS(步长18×18)

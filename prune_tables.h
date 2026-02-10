@@ -346,35 +346,35 @@ void createPTCrossCE(int idx_cr, int idx_cn, int idx_ed, int sz_cr, int sz_cn,
                      const std::vector<int> &t2, const std::vector<int> &t3,
                      std::vector<unsigned char> &pt, bool is_pseudo = false);
 
-void createPTPsCrossEdges2(int idx_cr, int idx_e2, int sz_cr, int sz_e2,
-                           int depth, const std::vector<int> &t_cr,
-                           const std::vector<int> &t_e2,
-                           std::vector<unsigned char> &pt);
-
-// 新增 helper: 针对角块对
-void createPTPsCrossCorners2(int idx_cr, int idx_c2, int sz_cr, int sz_c2,
-                             int depth, const std::vector<int> &t_cr,
-                             const std::vector<int> &t_c2,
-                             std::vector<unsigned char> &pt);
-
-void createPTPsCrossCorners3(int idx_cr, int idx_c3, int sz_cr, int sz_c3,
-                             int depth, const std::vector<int> &t_cr,
-                             const std::vector<int> &t_c3,
-                             std::vector<unsigned char> &pt);
-
-void createPTPsCrossEdges3(int idx_cr, int idx_e3, int sz_cr, int sz_e3,
-                           int depth, const std::vector<int> &t_cr,
-                           const std::vector<int> &t_e3,
-                           std::vector<unsigned char> &pt);
-
-void createPTEdge6Corner2(int sz_e6, int sz_c2, int depth,
-                          const std::vector<int> &target_e_ids,
-                          const std::vector<int> &target_c_ids,
-                          const std::vector<int> &mt_e6,
-                          const std::vector<int> &mt_c2,
+void createPTPsCrossEdge2(int idx_cr, int idx_e2, int sz_cr, int sz_e2,
+                          int depth, const std::vector<int> &t_cr,
+                          const std::vector<int> &t_e2,
                           std::vector<unsigned char> &pt);
 
-// --- 级联剪枝表生成函数 (from eo_cross_analyzer) ---
+// 新增 helper: 针对角块对
+void createPTPsCrossCorn2(int idx_cr, int idx_c2, int sz_cr, int sz_c2,
+                          int depth, const std::vector<int> &t_cr,
+                          const std::vector<int> &t_c2,
+                          std::vector<unsigned char> &pt);
+
+void createPTPsCrossCorn3(int idx_cr, int idx_c3, int sz_cr, int sz_c3,
+                          int depth, const std::vector<int> &t_cr,
+                          const std::vector<int> &t_c3,
+                          std::vector<unsigned char> &pt);
+
+void createPTPsCrossEdge3(int idx_cr, int idx_e3, int sz_cr, int sz_e3,
+                          int depth, const std::vector<int> &t_cr,
+                          const std::vector<int> &t_e3,
+                          std::vector<unsigned char> &pt);
+
+void createPTEdge6Corn2(int sz_e6, int sz_c2, int depth,
+                        const std::vector<int> &target_e_ids,
+                        const std::vector<int> &target_c_ids,
+                        const std::vector<int> &mt_e6,
+                        const std::vector<int> &mt_c2,
+                        std::vector<unsigned char> &pt);
+
+// --- 剪枝表生成函数 (from eo_cross_analyzer) ---
 void createPTDim2(int idx1, int idx2, int sz1, int sz2, int depth,
                   const std::vector<int> &t1, const std::vector<int> &t2,
                   std::vector<unsigned char> &pt);

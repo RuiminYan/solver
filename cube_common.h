@@ -53,14 +53,17 @@ struct GenerationTimer {
 
   GenerationTimer() : start(std::chrono::steady_clock::now()) {}
 
-  void printElapsed(const std::string &filename) const {
+  void printElapsed(const std::string & /*filename*/) const {
     auto end = std::chrono::steady_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
                   .count();
     int min = static_cast<int>(ms / 60000);
     int sec = static_cast<int>((ms % 60000) / 1000);
-    std::cout << TAG_COLOR << "[DONE]" << ANSI_RESET << " " << filename << " ("
-              << min << " min " << sec << " s)" << std::endl;
+    if (min > 0) {
+      std::cout << "  Done in " << min << "min " << sec << "s." << std::endl;
+    } else {
+      std::cout << "  Done in " << sec << "s." << std::endl;
+    }
   }
 };
 
