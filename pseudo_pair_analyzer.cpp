@@ -1122,28 +1122,21 @@ struct XCrossSolver {
                         std::vector<std::string> rotations) {
     stage_results.min_xxxc.assign(6, 999);
     std::vector<int> base_alg = string_to_alg(scramble);
-    std::vector<std::vector<int>> slot_tmps_set = {{0, 1}, {0, 2}, {0, 3},
-                                                   {1, 2}, {1, 3}, {2, 3}},
-                                  pslot_tmps_set = {{0, 1}, {0, 2}, {0, 3},
-                                                    {1, 2}, {1, 3}, {2, 3}};
+
+    // C(4,2)=6 种二元组合及其在 {0,1,2,3} 中的互补
+    static constexpr int pairs[6][2] = {{0, 1}, {0, 2}, {0, 3},
+                                        {1, 2}, {1, 3}, {2, 3}};
+    static constexpr int complements[6][2] = {{2, 3}, {1, 3}, {1, 2},
+                                              {0, 3}, {0, 2}, {0, 1}};
+
     for (int i = 0; i < 6; i++) {
-      std::vector<int> a_slot_tmps = {0, 1, 2, 3};
-      for (int i_tmp = 1; i_tmp >= 0; i_tmp--)
-        a_slot_tmps.erase(std::remove(a_slot_tmps.begin(), a_slot_tmps.end(),
-                                      slot_tmps_set[i][i_tmp]),
-                          a_slot_tmps.end());
       for (int j = 0; j < 6; j++) {
-        std::vector<int> a_pslot_tmps = {0, 1, 2, 3};
-        for (int i_tmp = 1; i_tmp >= 0; i_tmp--)
-          a_pslot_tmps.erase(std::remove(a_pslot_tmps.begin(),
-                                         a_pslot_tmps.end(),
-                                         slot_tmps_set[j][i_tmp]),
-                             a_pslot_tmps.end());
-        for (int slot1_tmp : a_slot_tmps) {
-          for (int pslot1_tmp : a_pslot_tmps) {
-            start_search_3(slot1_tmp, slot_tmps_set[i][0], slot_tmps_set[i][1],
-                           pslot1_tmp, pslot_tmps_set[j][0],
-                           pslot_tmps_set[j][1],
+        for (int ci = 0; ci < 2; ci++) {
+          int slot1_tmp = complements[i][ci];
+          for (int cj = 0; cj < 2; cj++) {
+            int pslot1_tmp = complements[j][cj];
+            start_search_3(slot1_tmp, pairs[i][0], pairs[i][1], pslot1_tmp,
+                           pairs[j][0], pairs[j][1],
                            p_pt_pscross_ins_C_diff[slot1_tmp * 4 + pslot1_tmp],
                            p_pt_pspair_CE[slot1_tmp * 4 + pslot1_tmp],
                            rotations, base_alg);
