@@ -374,9 +374,9 @@ void createPTEdge6Corner2(int sz_e6, int sz_c2, int depth,
                           std::vector<unsigned char> &pt);
 
 // --- 级联剪枝表生成函数 (from eo_cross_analyzer) ---
-void createCascadedPT3(int i1, int i2, int s1, int s2, int depth,
-                       const std::vector<int> &t1, const std::vector<int> &t2,
-                       std::vector<unsigned char> &pt);
+void createPTDim2(int idx1, int idx2, int sz1, int sz2, int depth,
+                  const std::vector<int> &t1, const std::vector<int> &t2,
+                  std::vector<unsigned char> &pt);
 void createPTCrossCEX(int idx_cr, int idx_cn, int idx_ed, int idx_extra,
                       int sz_cr, int sz_cn, int sz_ed, int sz_ex, int depth,
                       const std::vector<int> &t1, const std::vector<int> &t2,

@@ -917,8 +917,8 @@ void PruneTableManager::genPTEP4EO12() {
   // 状态空? EP4 (12*11*10*9 = 11880) x EO12 (2^11 = 2048)
   // 初始状? EP4_SOLVED=11720, EO_SOLVED=0
   // 使用 MoveTableManager 中已加载的移动表
-  createCascadedPT3(11720, 0, 12 * 11 * 10 * 9, 2048, 11, mtm.getMTEP4(),
-                    mtm.getMTEOAlt(), pt_ep4eo12);
+  createPTDim2(11720, 0, 12 * 11 * 10 * 9, 2048, 11, mtm.getMTEP4(),
+               mtm.getMTEOAlt(), pt_ep4eo12);
   saveTable(pt_ep4eo12, "pt_ep4eo12.bin");
   timer.printElapsed("pt_ep4eo12.bin");
 }
@@ -1866,26 +1866,26 @@ void createPTPsCrossEdges2(int idx_cr, int idx_e2, int sz_cr, int sz_e2,
 
 // --- 级联剪枝表生成函数实现 (from eo_cross_analyzer) ---
 
-void createCascadedPT3(int i1, int i2, int s1, int s2, int depth,
-                       const std::vector<int> &t1, const std::vector<int> &t2,
-                       std::vector<unsigned char> &pt) {
-  long long sz = (long long)s1 * s2;
-  std::vector<unsigned char> tmp(sz, 255);
-  tmp[(long long)i1 * s2 + i2] = 0;
+void createPTDim2(int idx1, int idx2, int sz1, int sz2, int depth,
+                  const std::vector<int> &t1, const std::vector<int> &t2,
+                  std::vector<unsigned char> &pt) {
+  long long total = (long long)sz1 * sz2;
+  std::vector<unsigned char> tmp(total, 255);
+  tmp[(long long)idx1 * sz2 + idx2] = 0;
 
-  DistributionPrinter dp(sz);
+  DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
     int nd = d + 1;
     long long cnt = 0;
 #pragma omp parallel for reduction(+ : cnt)
-    for (long long i = 0; i < sz; ++i) {
-      dp.progress(i, sz, d);
+    for (long long i = 0; i < total; ++i) {
+      dp.progress(i, total, d);
       if (tmp[i] == d) {
         cnt++;
-        int tb1 = (i / s2) * 18, tb2 = (i % s2) * 18;
+        int i1 = (i / sz2) * 18, i2 = (i % sz2) * 18;
         for (int j = 0; j < 18; ++j) {
-          long long ni = (long long)t1[tb1 + j] * s2 + t2[tb2 + j];
-          // NOTE: 使用 CAS 避免竞态条?
+          long long ni = (long long)t1[i1 + j] * sz2 + t2[i2 + j];
+          // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -1897,8 +1897,8 @@ void createCascadedPT3(int i1, int i2, int s1, int s2, int depth,
       break;
   }
   dp.done();
-  pt.assign((sz + 1) / 2, 0xFF);
-  for (long long i = 0; i < sz; ++i)
+  pt.assign((total + 1) / 2, 0xFF);
+  for (long long i = 0; i < total; ++i)
     if (tmp[i] != 255)
       set_prune(pt, i, tmp[i]);
 }

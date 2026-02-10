@@ -14,7 +14,7 @@ createPTCrossCEX,Cross×Corner×Edge×Extra,sz_cr×sz_cn×sz_ed×sz_ex,1,14,MTEd
 createPTCrossCCC,Cross×Corner×Corner×Corner,sz_cr×sz_cn1×sz_cn2×sz_cn3,1,14,MTEdge4(24),MTCorn(18),MTCorn(18),MTCorn(18),genPTCrossC4C5C6,4维3-Corner表
 
 --- 级联剪枝表引擎 ---,,,,,,,,,
-createCascadedPT3,Dim1×Dim2,s1×s2,1,11,MTEP4(18),MTEOAlt(18),-,-,genPTEP4EO12,级联BFS(步长18+18)
+createPTDim2,Dim1×Dim2,sz1×sz2,1,11,MTEP4(18),MTEOAlt(18),-,-,genPTEP4EO12,通用2维BFS(步长18×18)
 
 --- Pseudo Cross/XCross 引擎 ---,,,,,,,,,
 createPTPsCrossCorner,Cross×Corner,190080×24,4,10,MTEdge4(24),MTCorn(18),-,-,genPTPsCrossC(×4),Pseudo Cross+1Corner(4个D偏移初始化)
