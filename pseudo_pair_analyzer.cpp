@@ -76,20 +76,7 @@ struct xcross_analyzer2 {
   static const unsigned char *p_pt_pscross_E0E1; // E0E1 邻接
   static const unsigned char *p_pt_pscross_E0E2; // E0E2 对角
 
-  // [新增] 辅助剪枝定义 (用于通用 AuxState 架构)
-  struct AuxPrunerDef {
-    const unsigned char *p_prune; // 剪枝表指针
-    const int *p_move;            // 移动表指针
-    int multiplier;               // 状态乘数 (Corner3=9072, Edge3=10560)
-  };
-
-  struct AuxState {
-    const AuxPrunerDef *def = nullptr;
-    int current_idx = 0;
-    int current_cross_scaled = 0;     // 虚拟 Cross 状态* 24
-    const int *move_mapper = nullptr; // rot_map[rot_idx]
-    int slot_k = 0;                   // 共轭参考槽位(pslot1)
-  };
+  // NOTE: AuxPrunerDef/AuxState/MAX_AUX 已移至 cube_common.h
 
   // [Conj优化] XC 预计算状态(用于 pseudo_base 表的 Conj 优化)
   // 以 pslot 视角追踪 Cross + Corner + 4个Edge 状态
@@ -98,8 +85,6 @@ struct xcross_analyzer2 {
     int corner;  // Corner 索引 (如 C4=12 开始)
     int edge[4]; // 4 个Edge 相对索引 (如 {0,2,4,6} 开始)
   };
-
-  static constexpr int MAX_AUX = 8;
 
   // === 静态AuxPrunerDef 对象 (替代 aux_registry map) ===
   // Edge2: 邻接 (E0E1) 和对角 (E0E2)
@@ -113,17 +98,8 @@ struct xcross_analyzer2 {
   // Corner3: 规范表(C4C5C6)
   static AuxPrunerDef aux_def_pscross_C4C5C6; // {4,5,6}: prune_c4c5c6
 
-  // === 索引类型判断辅助函数 ===
-  // Edge2: 返回 0=邻接, 1=对角
-  static inline int get_e2_type(int e1, int e2) {
-    int diff = (e2 - e1 + 4) & 3;
-    return (diff == 2) ? 1 : 0; // diff==2 表示对角 ({0,2} 或{1,3})
-  }
-  // Corner2: 返回 0=邻接, 1=对角
-  static inline int get_c2_type(int c1, int c2) {
-    int diff = (c2 - c1 + 4) & 3;
-    return (diff == 2) ? 1 : 0; // diff==2 表示对角 ({4,6} 或{5,7})
-  }
+  static inline int get_e2_type(int e1, int e2) { return getE2Type(e1, e2); }
+  static inline int get_c2_type(int c1, int c2) { return getC2Type(c1, c2); }
 
   // === 获取 AuxPrunerDef 的辅助函数===
   // 根据规范表keys 返回对应的AuxPrunerDef 指针
@@ -1511,12 +1487,12 @@ const unsigned char *xcross_analyzer2::p_pt_pscross_E0E1 = nullptr;
 const unsigned char *xcross_analyzer2::p_pt_pscross_E0E2 = nullptr;
 
 // 静态AuxPrunerDef 成员定义
-xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_pscross_E0E1;
-xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_pscross_E0E2;
-xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_pscross_C4C5;
-xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_pscross_C4C6;
-xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_pscross_E0E1E2;
-xcross_analyzer2::AuxPrunerDef xcross_analyzer2::aux_def_pscross_C4C5C6;
+AuxPrunerDef xcross_analyzer2::aux_def_pscross_E0E1;
+AuxPrunerDef xcross_analyzer2::aux_def_pscross_E0E2;
+AuxPrunerDef xcross_analyzer2::aux_def_pscross_C4C5;
+AuxPrunerDef xcross_analyzer2::aux_def_pscross_C4C6;
+AuxPrunerDef xcross_analyzer2::aux_def_pscross_E0E1E2;
+AuxPrunerDef xcross_analyzer2::aux_def_pscross_C4C5C6;
 
 std::string analyzer_compute(xcross_analyzer2 &xcs, std::string scramble,
                              std::string id) {

@@ -128,22 +128,7 @@ void init_pseudo_matrix() {
   }
 }
 
-// --- 通用辅助剪枝结构 ---
-struct AuxPrunerDef {
-  const unsigned char *p_prune; // 剪枝表指针
-  const int *p_move;            // 移动表指针(Edges2, Corners2, etc.)
-  int multiplier;               // 状态乘数(用于结合 Cross 状态)
-};
-
-struct AuxState {
-  const AuxPrunerDef *def = nullptr;
-  int current_idx = 0;
-  int current_cross_scaled = 0;     // Cross state * 24 (for virtual cross)
-  const int *move_mapper = nullptr; // Map move m -> m'
-};
-
-// 最大支持的辅助表数量(每个搜索路径)
-constexpr int MAX_AUX = 8;
+// NOTE: AuxPrunerDef/AuxState/MAX_AUX 已移至 cube_common.h
 
 struct CrossSolver {
   const int *p_mt_edge2;
@@ -240,39 +225,25 @@ struct XCrossSolver {
 
   // === 索引映射辅助函数 ===
   // Edge2: 返回 0=邻接, 1=对角
-  static inline int get_e2_type(int e1, int e2) {
-    int diff = (e2 - e1 + 4) & 3;
-    return (diff == 2) ? 1 : 0; // diff==2 是对角
-  }
+  static inline int get_e2_type(int e1, int e2) { return getE2Type(e1, e2); }
 
   // Corner2: 返回 0=邻接, 1=对角
-  static inline int get_c2_type(int c1, int c2) {
-    int diff = (c2 - c1 + 4) & 3;
-    return (diff == 2) ? 1 : 0; // diff==2 是对角
-  }
+  static inline int get_c2_type(int c1, int c2) { return getC2Type(c1, c2); }
 
-  // === 获取 AuxPrunerDef 的辅助函数===
-  // 根据 keys 返回对应的AuxPrunerDef 指针
   const AuxPrunerDef *get_aux_def(const std::vector<int> &keys) {
     if (keys.size() == 2) {
-      // Edge2 和Corner2
       if (keys[0] < 4) {
-        // Edge2
-        return (get_e2_type(keys[0], keys[1]) == 1)
-                   ? (p_pt_pscross_E0E2 ? &aux_def_pscross_E0E2 : nullptr)
-                   : (p_pt_pscross_E0E1 ? &aux_def_pscross_E0E1 : nullptr);
+        return (get_e2_type(keys[0], keys[1]) == 1) ? &aux_def_pscross_E0E2
+                                                    : &aux_def_pscross_E0E1;
       } else {
-        // Corner2
-        return (get_c2_type(keys[0], keys[1]) == 1)
-                   ? (p_pt_pscross_C4C6 ? &aux_def_pscross_C4C6 : nullptr)
-                   : (p_pt_pscross_C4C5 ? &aux_def_pscross_C4C5 : nullptr);
+        return (get_c2_type(keys[0], keys[1]) == 1) ? &aux_def_pscross_C4C6
+                                                    : &aux_def_pscross_C4C5;
       }
     } else if (keys.size() == 3) {
-      // Edge3 和Corner3
       if (keys[0] < 4) {
-        return p_pt_pscross_E0E1E2 ? &aux_def_pscross_E0E1E2 : nullptr;
+        return &aux_def_pscross_E0E1E2;
       } else {
-        return p_pt_pscross_C4C5C6 ? &aux_def_pscross_C4C5C6 : nullptr;
+        return &aux_def_pscross_C4C5C6;
       }
     }
     return nullptr;
