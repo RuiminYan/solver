@@ -266,10 +266,9 @@ struct PairSolver {
     return false;
   }
 
-  bool search_3(int im_p, int ic_p, int ie_p, int im_x1, int ic_x1, int ie_x1,
-                int im_x2, int ic_x2, int ie_x2, int i_e6, int i_c2, int s_v,
-                const unsigned char *p_table_huge, int depth, int prev, int s_p,
-                int s_x1, int s_x2) {
+  bool search_3(int im_p, int ic_p, int ie_p, int i_e6, int i_c2, int s_v,
+                const unsigned char *p_table_huge, int depth, int prev,
+                int s_p) {
     const int *moves = valid_moves_flat[prev];
     const int count = valid_moves_count[prev];
     for (int k = 0; k < count; ++k) {
@@ -298,40 +297,27 @@ struct PairSolver {
         S3_HIT(s3_pair);
         continue;
       }
-      // NOTE: xcross1/2 变量计算保留用于递归，剪枝检查已移除 (剪枝率 0%)
-      int mc_x1 = conj_moves_flat[m][s_x1];
-      int n_im_x1 = p_mt_edge4[im_x1 + mc_x1],
-          n_ic_x1 = p_mt_corn[ic_x1 + mc_x1],
-          n_ie_x1 = p_mt_edge[ie_x1 + mc_x1];
-      int mc_x2 = conj_moves_flat[m][s_x2];
-      int n_im_x2 = p_mt_edge4[im_x2 + mc_x2],
-          n_ic_x2 = p_mt_corn[ic_x2 + mc_x2],
-          n_ie_x2 = p_mt_edge[ie_x2 + mc_x2];
       if (depth == 1) {
         if (get_prune(p_pt_pair_C4E0, n_ie_p * 24 + n_ic_p) == 0)
           return true;
       } else {
         if (search_3(
-                n_im_p, n_ic_p * 18, n_ie_p * 18, n_im_x1, n_ic_x1 * 18,
-                n_ie_x1 * 18, n_im_x2, n_ic_x2 * 18, n_ie_x2 * 18,
+                n_im_p, n_ic_p * 18, n_ie_p * 18,
                 (s_v != -1) ? p_mt_edge6[i_e6 * 18 + conj_moves_flat[m][s_v]]
                             : -1,
                 (s_v != -1) ? p_mt_corn2[i_c2 * 18 + conj_moves_flat[m][s_v]]
                             : -1,
-                s_v, p_table_huge, depth - 1, m, s_p, s_x1, s_x2))
+                s_v, p_table_huge, depth - 1, m, s_p))
           return true;
       }
     }
     return false;
   }
 
-  bool search_4(int im_p, int ic_p, int ie_p, int im_x1, int ic_x1, int ie_x1,
-                int im_x2, int ic_x2, int ie_x2, int im_x3, int ic_x3,
-                int ie_x3, int ie6_1, int ic2_1, int v1,
+  bool search_4(int im_p, int ic_p, int ie_p, int ie6_1, int ic2_1, int v1,
                 const unsigned char *p1, int ie6_2, int ic2_2, int v2,
                 const unsigned char *p2, int ie6_3, int ic2_3, int v3,
-                const unsigned char *p3, int depth, int prev, int s_p, int s_x1,
-                int s_x2, int s_x3) {
+                const unsigned char *p3, int depth, int prev, int s_p) {
     const int *moves = valid_moves_flat[prev];
     const int count = valid_moves_count[prev];
     for (int k = 0; k < count; ++k) {
@@ -380,25 +366,10 @@ struct PairSolver {
         S4_HIT(s4_pair);
         continue;
       }
-      // NOTE: xcross1/2/3 变量计算保留用于递归，剪枝检查已移除 (剪枝率 0%)
-      int mc_x1 = conj_moves_flat[m][s_x1];
-      int n_im_x1 = p_mt_edge4[im_x1 + mc_x1],
-          n_ic_x1 = p_mt_corn[ic_x1 + mc_x1],
-          n_ie_x1 = p_mt_edge[ie_x1 + mc_x1];
-      int mc_x2 = conj_moves_flat[m][s_x2];
-      int n_im_x2 = p_mt_edge4[im_x2 + mc_x2],
-          n_ic_x2 = p_mt_corn[ic_x2 + mc_x2],
-          n_ie_x2 = p_mt_edge[ie_x2 + mc_x2];
-      int mc_x3 = conj_moves_flat[m][s_x3];
-      int n_im_x3 = p_mt_edge4[im_x3 + mc_x3],
-          n_ic_x3 = p_mt_corn[ic_x3 + mc_x3],
-          n_ie_x3 = p_mt_edge[ie_x3 + mc_x3];
       if (depth == 1) {
         if (get_prune(p_pt_pair_C4E0, n_ie_p * 24 + n_ic_p) == 0)
           return true;
-      } else if (search_4(n_im_p, n_ic_p * 18, n_ie_p * 18, n_im_x1,
-                          n_ic_x1 * 18, n_ie_x1 * 18, n_im_x2, n_ic_x2 * 18,
-                          n_ie_x2 * 18, n_im_x3, n_ic_x3 * 18, n_ie_x3 * 18,
+      } else if (search_4(n_im_p, n_ic_p * 18, n_ie_p * 18,
                           (v1 != -1)
                               ? p_mt_edge6[ie6_1 * 18 + conj_moves_flat[m][v1]]
                               : -1,
@@ -419,7 +390,7 @@ struct PairSolver {
                           (v3 != -1)
                               ? p_mt_corn2[ic2_3 * 18 + conj_moves_flat[m][v3]]
                               : -1,
-                          v3, p3, depth - 1, m, s_p, s_x1, s_x2, s_x3))
+                          v3, p3, depth - 1, m, s_p))
         return true;
     }
     return false;
@@ -556,9 +527,8 @@ struct PairSolver {
       }
       int max_search = std::min(18, min_v - 1);
       for (int d = t.h; d <= max_search; ++d) {
-        if (search_3(sp.im, sp.ic * 18, sp.ie * 18, sx1.im, sx1.ic * 18,
-                     sx1.ie * 18, sx2.im, sx2.ic * 18, sx2.ie * 18, ie6_use,
-                     ic2_use, v_use, p_use, d, 18, t.s1, t.s2, t.s3)) {
+        if (search_3(sp.im, sp.ic * 18, sp.ie * 18, ie6_use, ic2_use, v_use,
+                     p_use, d, 18, t.s1)) {
           if (d < min_v)
             min_v = d;
           break;
@@ -639,11 +609,9 @@ struct PairSolver {
       }
       int max_search = std::min(18, min_v - 1);
       for (int d = t.h; d <= max_search; ++d) {
-        if (search_4(sp.im, sp.ic * 18, sp.ie * 18, s[0].im, s[0].ic * 18,
-                     s[0].ie * 18, s[1].im, s[1].ic * 18, s[1].ie * 18, s[2].im,
-                     s[2].ic * 18, s[2].ie * 18, ie6[0], ic2[0], v[0], p[0],
+        if (search_4(sp.im, sp.ic * 18, sp.ie * 18, ie6[0], ic2[0], v[0], p[0],
                      ie6[1], ic2[1], v[1], p[1], ie6[2], ic2[2], v[2], p[2], d,
-                     18, t.s1, t.s2, t.s3, t.s4)) {
+                     18, t.s1)) {
           if (d < min_v)
             min_v = d;
           break;

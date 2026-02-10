@@ -17,14 +17,14 @@
 // --- 剪枝统计 (通过 prune_stats.h 统一开关控制) ---
 // 优化完成后的最优顺序
 // Search 1: base 87%
-// Search 2: Aux 88% , Huge 0% , baseA 30% , baseB 27%
+// Search 2: Aux 88% , baseA 30% , baseB 27%
 // Search 3: Aux 91% , baseA 6% , baseB 5% , baseC 4%
 #include "prune_stats.h"
 
 STAT_DECL(s1_base); // Search 1: 基础剪枝表
 
-STAT_DECL(s2_aux);   // Search 2: 辅助表(Corner2/Edge2)
-STAT_DECL(s2_huge);  // Search 2: Huge 表
+STAT_DECL(s2_aux); // Search 2: 辅助表(Corner2/Edge2)
+// NOTE: s2_huge 已移除(剪枝表0%，被 Aux 完全覆盖)
 STAT_DECL(s2_baseA); // Search 2: 视角 A 基础表
 STAT_DECL(s2_baseB); // Search 2: 视角 B 基础表
 
@@ -668,8 +668,6 @@ struct XCrossSolver {
 
   bool search_2(int i1a, int i2a, int i3a, const unsigned char *p1, int i1b,
                 int i2b, int i3b, const int *tr_b, const unsigned char *p2,
-                int i_e6, int i_c2, const unsigned char *p_huge_table,
-                bool mirror_huge, // Added mirror_huge
                 int depth, int prev, int num_aux, const AuxState *aux_states) {
 
     const int *moves = valid_moves_flat[prev];
@@ -719,42 +717,11 @@ struct XCrossSolver {
         continue;
       }
 
-      // 2. Huge Table Pruning
-      int n_e6 = 0, n_c2 = 0;
-      bool huge_pruned = false;
-      if (p_huge_table) {
-        n_e6 = p_edge6[i_e6 + m];
-        n_c2 = p_mt_corn2[i_c2 + m];
-
-        long long huge_idx;
-        if (mirror_huge) {
-          int e_pos = n_e6 / 64;
-          int e_ori = n_e6 % 64;
-          int ne6 = sym_edge6_pos[e_pos] * 64 + sym_edge6_ori[e_ori];
-          int nc2 = sym_corner2[n_c2];
-          huge_idx = (long long)ne6 * StateSpace::CORNER2 + nc2;
-        } else {
-          huge_idx = (long long)n_e6 * StateSpace::CORNER2 + n_c2;
-        }
-
-        if (get_prune(p_huge_table, huge_idx) >= depth) {
-          huge_pruned = true;
-        }
-      }
-
-      // ++s2_huge_checked;  // NOTE: 统计已禁用
-      if (huge_pruned) {
-        // ++s2_huge_pruned;
-        continue;
-      }
-
-      // 3. Base Pruning (Side A) - Skip if Huge Table was checked (Twin Titans
-      // dominance) Compute Side A recursive states (needed regardless of
-      // pruning source)
+      // 3. Base Pruning (Side A)
       int n_i2a = p_mt_corn[i2a + m];
       int n_i3a = p_mt_edge[i3a + m];
 
-      if (!p_huge_table) {
+      {
         long long idx1 = (long long)(n_i1a + n_i2a) * 24 + n_i3a;
         // ++s2_baseA_checked;  // NOTE: 统计已禁用
         if (get_prune(p1, idx1) >= depth) {
@@ -779,8 +746,8 @@ struct XCrossSolver {
         return true;
       }
       if (search_2(n_i1a, n_i2a * 18, n_i3a * 18, p1, n_i1b, n_i2b * 18,
-                   p_mt_edge[i3b + m_b] * 18, tr_b, p2, n_e6 * 18, n_c2 * 18,
-                   p_huge_table, mirror_huge, depth - 1, m, num_aux, next_aux))
+                   p_mt_edge[i3b + m_b] * 18, tr_b, p2, depth - 1, m, num_aux,
+                   next_aux))
         return true;
     }
     return false;
@@ -1069,8 +1036,7 @@ struct XCrossSolver {
               if (search_2(st1.im, st1.ic_b * 18, st1.ie_rel[t.diff1] * 18,
                            p_pt_pscross_C4E[t.diff1], st2.im, st2.ic_b * 18,
                            st2.ie_rel[t.diff2] * 18, trans_moves[t.c1][t.c2],
-                           p_pt_pscross_C4E[t.diff2], t.i_e6 * 18, t.i_c2 * 18,
-                           t.p_huge_table, t.mirror_huge, d, 18, t.num_aux,
+                           p_pt_pscross_C4E[t.diff2], d, 18, t.num_aux,
                            t.aux_init)) {
                 res = d;
                 break;
@@ -1248,7 +1214,7 @@ struct PseudoSolverWrapper {
   static void print_stats() {
     // NOTE: 剪枝统计已禁用(优化完成，顺序已最优)
     // Search 1: base 87%
-    // Search 2: Aux 88% , Huge 0% , baseA 30% , baseB 27%
+    // Search 2: Aux 88% , baseA 30% , baseB 27%
     // Search 3: Aux 91% , baseA 6% , baseB 5% , baseC 4%
   }
 };

@@ -648,8 +648,7 @@ struct XCrossSolver {
   // 新增参数: xc2_cross, xc2_corner, xc2_e0-e3 (Conj 状态), diff2 (边选择)
   bool search_2(int arg_index1, int arg_index2, int arg_index4, int arg_index5,
                 int arg_index6, int depth, int prev,
-                const unsigned char *prune1, const unsigned char *prune2,
-                const unsigned char *edge_prune1,
+                const unsigned char *prune1, const unsigned char *edge_prune1,
                 const unsigned char *prune_xc2, int xc2_cr, int xc2_cn,
                 int xc2_e0, int xc2_e1, int xc2_e2, int xc2_e3, int diff2) {
     const int *moves = valid_moves_flat[prev];
@@ -688,7 +687,6 @@ struct XCrossSolver {
         continue;
       }
 
-      // NOTE: prune2 已移除(剪枝表0%，被 Conj 完全覆盖)
       int index4_tmp = p_mt_corn[arg_index4 + i];
 
       // 3. edge_prune1 剪枝 (11% 剪枝表
@@ -710,7 +708,7 @@ struct XCrossSolver {
         }
       } else if (search_2(index1_tmp, index2_tmp * 18, index4_tmp * 18,
                           index5_tmp * 18, index6_tmp * 18, depth - 1, i,
-                          prune1, prune2, edge_prune1, prune_xc2, xc2_cr_n,
+                          prune1, edge_prune1, prune_xc2, xc2_cr_n,
                           xc2_cn_n * 18, xc2_e0_n * 18, xc2_e1_n * 18,
                           xc2_e2_n * 18, xc2_e3_n * 18, diff2))
         return true;
@@ -826,9 +824,9 @@ struct XCrossSolver {
             std::max({prune1_tmp, prune2_tmp, edge_prune1_tmp, prune_xc2_tmp});
         for (int d = start_depth; d <= max_depth; d++) {
           if (search_2(index1, index2, index4, index5, index6, d, 18, p_prune1,
-                       p_prune2, p_edge_prune1, p_prune_xc2, st.cross,
-                       st.corner * 18, st.edge[0] * 18, st.edge[1] * 18,
-                       st.edge[2] * 18, st.edge[3] * 18, diff2)) {
+                       p_edge_prune1, p_prune_xc2, st.cross, st.corner * 18,
+                       st.edge[0] * 18, st.edge[1] * 18, st.edge[2] * 18,
+                       st.edge[3] * 18, diff2)) {
             stage_results.min_xxc[r] = d;
             break;
           }
