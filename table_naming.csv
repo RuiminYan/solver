@@ -36,32 +36,32 @@ pt_pscross_C4E2.bin,pt_pscross_C4E[2],genPTPsCrossC4E(2),-,-,p_pt_pscross_C4E[2]
 pt_pscross_C4E3.bin,pt_pscross_C4E[3],genPTPsCrossC4E(3),-,-,p_pt_pscross_C4E[3],p_pt_pscross_C4E[3],-,Canon,52.2MB,包含4种diff
 
 --- Pseudo Aux Edge2 表 ---,,,,,,,,,,
-pt_pscross_E0E1.bin,pt_pscross_E0E1,genPTPsCrossE0E1(),-,-,p_pt_pscross_E0E1,p_pt_pscross_E0E1,-,Canon,47.8MB,Edge2相邻规范表
-pt_pscross_E0E2.bin,pt_pscross_E0E2,genPTPsCrossE0E2(),-,-,p_pt_pscross_E0E2,p_pt_pscross_E0E2,-,Canon,47.8MB,Edge2对角规范表
-pt_pscross_E0E3.bin,pt_pscross_E0E3,genPTPsCrossE0E3(),-,-,-,-,-,Zombie,47.8MB,僵尸表(不使用)
-pt_pscross_E1E2.bin,pt_pscross_E1E2,genPTPsCrossE1E2(),-,-,-,-,-,Zombie,47.8MB,僵尸表(不使用)
-pt_pscross_E1E3.bin,pt_pscross_E1E3,genPTPsCrossE1E3(),-,-,-,-,-,Zombie,47.8MB,僵尸表(不使用)
-pt_pscross_E2E3.bin,pt_pscross_E2E3,genPTPsCrossE2E3(),-,-,-,-,-,Zombie,47.8MB,僵尸表(不使用)
+pt_pscross_E0E1.bin,pt_pscross_Edge2[pairIdx(0 1)],genPTPsCrossEdge2(0 1),-,-,p_pt_pscross_E0E1,p_pt_pscross_E0E1,-,Canon,47.8MB,Edge2相邻规范表
+pt_pscross_E0E2.bin,pt_pscross_Edge2[pairIdx(0 2)],genPTPsCrossEdge2(0 2),-,-,p_pt_pscross_E0E2,p_pt_pscross_E0E2,-,Canon,47.8MB,Edge2对角规范表
+pt_pscross_E0E3.bin,pt_pscross_Edge2[pairIdx(0 3)],genPTPsCrossEdge2(0 3),-,-,-,-,-,Zombie,47.8MB,僵尸表(不使用)
+pt_pscross_E1E2.bin,pt_pscross_Edge2[pairIdx(1 2)],genPTPsCrossEdge2(1 2),-,-,-,-,-,Zombie,47.8MB,僵尸表(不使用)
+pt_pscross_E1E3.bin,pt_pscross_Edge2[pairIdx(1 3)],genPTPsCrossEdge2(1 3),-,-,-,-,-,Zombie,47.8MB,僵尸表(不使用)
+pt_pscross_E2E3.bin,pt_pscross_Edge2[pairIdx(2 3)],genPTPsCrossEdge2(2 3),-,-,-,-,-,Zombie,47.8MB,僵尸表(不使用)
 
 --- Pseudo Aux Edge3 表 ---,,,,,,,,,,
-pt_pscross_E0E1E2.bin,pt_pscross_E0E1E2,genPTPsCrossE0E1E2(),-,-,p_pt_pscross_E0E1E2,p_pt_pscross_E0E1E2,-,Canon,957MB,Edge3规范表
-pt_pscross_E0E1E3.bin,pt_pscross_E0E1E3,genPTPsCrossE0E1E3(),-,-,→p_pt_pscross_E0E1E2 via rot,-,-,Zombie,957MB,僵尸表(不使用)
-pt_pscross_E0E2E3.bin,pt_pscross_E0E2E3,genPTPsCrossE0E2E3(),-,-,→p_pt_pscross_E0E1E2 via rot,-,-,Zombie,957MB,僵尸表(不使用)
-pt_pscross_E1E2E3.bin,pt_pscross_E1E2E3,genPTPsCrossE1E2E3(),-,-,→p_pt_pscross_E0E1E2 via rot,-,-,Zombie,957MB,僵尸表(不使用)
+pt_pscross_E0E1E2.bin,pt_pscross_Edge3[tripleIdx(0 1 2)],genPTPsCrossEdge3(0 1 2),-,-,p_pt_pscross_E0E1E2,p_pt_pscross_E0E1E2,-,Canon,957MB,Edge3规范表
+pt_pscross_E0E1E3.bin,pt_pscross_Edge3[tripleIdx(0 1 3)],genPTPsCrossEdge3(0 1 3),-,-,→p_pt_pscross_E0E1E2 via rot,-,-,Zombie,957MB,僵尸表(不使用)
+pt_pscross_E0E2E3.bin,pt_pscross_Edge3[tripleIdx(0 2 3)],genPTPsCrossEdge3(0 2 3),-,-,→p_pt_pscross_E0E1E2 via rot,-,-,Zombie,957MB,僵尸表(不使用)
+pt_pscross_E1E2E3.bin,pt_pscross_Edge3[tripleIdx(1 2 3)],genPTPsCrossEdge3(1 2 3),-,-,→p_pt_pscross_E0E1E2 via rot,-,-,Zombie,957MB,僵尸表(不使用)
 
 --- Pseudo Aux Corner2 表 ---,,,,,,,,,,
-pt_pscross_C4C5.bin,pt_pscross_C4C5,genPTPsCrossC4C5(),-,-,p_pt_pscross_C4C5,p_pt_pscross_C4C5,-,Canon,45.6MB,Corner2邻接规范表
-pt_pscross_C4C6.bin,pt_pscross_C4C6,genPTPsCrossC4C6(),-,-,p_pt_pscross_C4C6,p_pt_pscross_C4C6,-,Canon,45.6MB,Corner2对角规范表
-pt_pscross_C4C7.bin,pt_pscross_C4C7,genPTPsCrossC4C7(),-,-,→p_pt_pscross_C4C5 via rot,-,-,Zombie,45.6MB,僵尸表(不使用)
-pt_pscross_C5C6.bin,pt_pscross_C5C6,genPTPsCrossC5C6(),-,-,→p_pt_pscross_C4C5 via rot,-,-,Zombie,45.6MB,僵尸表(不使用)
-pt_pscross_C5C7.bin,pt_pscross_C5C7,genPTPsCrossC5C7(),-,-,→p_pt_pscross_C4C6 via rot,-,-,Zombie,45.6MB,僵尸表(不使用)
-pt_pscross_C6C7.bin,pt_pscross_C6C7,genPTPsCrossC6C7(),-,-,→p_pt_pscross_C4C5 via rot,-,-,Zombie,45.6MB,僵尸表(不使用)
+pt_pscross_C4C5.bin,pt_pscross_Corner2[pairIdx(0 1)],genPTPsCrossCorner2(4 5),-,-,p_pt_pscross_C4C5,p_pt_pscross_C4C5,-,Canon,45.6MB,Corner2邻接规范表
+pt_pscross_C4C6.bin,pt_pscross_Corner2[pairIdx(0 2)],genPTPsCrossCorner2(4 6),-,-,p_pt_pscross_C4C6,p_pt_pscross_C4C6,-,Canon,45.6MB,Corner2对角规范表
+pt_pscross_C4C7.bin,pt_pscross_Corner2[pairIdx(0 3)],genPTPsCrossCorner2(4 7),-,-,→p_pt_pscross_C4C5 via rot,-,-,Zombie,45.6MB,僵尸表(不使用)
+pt_pscross_C5C6.bin,pt_pscross_Corner2[pairIdx(1 2)],genPTPsCrossCorner2(5 6),-,-,→p_pt_pscross_C4C5 via rot,-,-,Zombie,45.6MB,僵尸表(不使用)
+pt_pscross_C5C7.bin,pt_pscross_Corner2[pairIdx(1 3)],genPTPsCrossCorner2(5 7),-,-,→p_pt_pscross_C4C6 via rot,-,-,Zombie,45.6MB,僵尸表(不使用)
+pt_pscross_C6C7.bin,pt_pscross_Corner2[pairIdx(2 3)],genPTPsCrossCorner2(6 7),-,-,→p_pt_pscross_C4C5 via rot,-,-,Zombie,45.6MB,僵尸表(不使用)
 
 --- Pseudo Aux Corner3 表 ---,,,,,,,,,,
-pt_pscross_C4C5C6.bin,pt_pscross_C4C5C6,genPTPsCrossC4C5C6(),-,-,p_pt_pscross_C4C5C6,p_pt_pscross_C4C5C6,-,Canon,822MB,Corner3规范表
-pt_pscross_C4C5C7.bin,pt_pscross_C4C5C7,genPTPsCrossC4C5C7(),-,-,→p_pt_pscross_C4C5C6 via rot,-,-,Zombie,822MB,僵尸表(不使用)
-pt_pscross_C4C6C7.bin,pt_pscross_C4C6C7,genPTPsCrossC4C6C7(),-,-,→p_pt_pscross_C4C5C6 via rot,-,-,Zombie,822MB,僵尸表(不使用)
-pt_pscross_C5C6C7.bin,pt_pscross_C5C6C7,genPTPsCrossC5C6C7(),-,-,→p_pt_pscross_C4C5C6 via rot,-,-,Zombie,822MB,僵尸表(不使用)
+pt_pscross_C4C5C6.bin,pt_pscross_Corner3[tripleIdx(0 1 2)],genPTPsCrossCorner3(4 5 6),-,-,p_pt_pscross_C4C5C6,p_pt_pscross_C4C5C6,-,Canon,822MB,Corner3规范表
+pt_pscross_C4C5C7.bin,pt_pscross_Corner3[tripleIdx(0 1 3)],genPTPsCrossCorner3(4 5 7),-,-,→p_pt_pscross_C4C5C6 via rot,-,-,Zombie,822MB,僵尸表(不使用)
+pt_pscross_C4C6C7.bin,pt_pscross_Corner3[tripleIdx(0 2 3)],genPTPsCrossCorner3(4 6 7),-,-,→p_pt_pscross_C4C5C6 via rot,-,-,Zombie,822MB,僵尸表(不使用)
+pt_pscross_C5C6C7.bin,pt_pscross_Corner3[tripleIdx(1 2 3)],genPTPsCrossCorner3(5 6 7),-,-,→p_pt_pscross_C4C5C6 via rot,-,-,Zombie,822MB,僵尸表(不使用)
 
 --- PseudoPair 变体表 ---,,,,,,,,,,
 pt_pscross_C4.bin,pt_pscross_C[0],genPTPsCrossC(0),-,-,-,p_pt_pscross_C[0],-,Canon,2.17MB,包含4种diff
