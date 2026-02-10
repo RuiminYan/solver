@@ -42,7 +42,7 @@ STAT_DECL(s4_xcross3); // S4: XCross 3 剪枝表
 STAT_DECL(s4_xcross4); // S4: XCross 4 剪枝表
 
 // --- Cross Analyzer (EO Cross) ---
-struct cross_analyzer {
+struct CrossAnalyzer {
   // 静态成员：所有实例共享
   static inline bool s_initialized = false;
   static inline const int *s_p_mt_edge2 = nullptr;
@@ -69,7 +69,7 @@ struct cross_analyzer {
     s_initialized = true;
   }
 
-  cross_analyzer() {
+  CrossAnalyzer() {
     // 仅复制指针引用
     p_mt_edge2 = s_p_mt_edge2;
     p_mt_eo12 = s_p_mt_eo12;
@@ -153,7 +153,7 @@ struct cross_analyzer {
 };
 
 // --- XCross Analyzer (Optimized with Symmetry + Single Base Tables) ---
-struct xcross_analyzer {
+struct XCrossAnalyzer {
   // 静态成员：所有实例共享
   static inline bool s_initialized = false;
   // NOTE: 移动表和剪枝表已迁移到Manager，此处仅保留指针
@@ -257,7 +257,7 @@ struct xcross_analyzer {
     s_initialized = true;
   }
 
-  xcross_analyzer() {
+  XCrossAnalyzer() {
     // 仅复制指针引用
     p_mt_edge4 = s_p_mt_edge4;
     p_mt_corn = s_p_mt_corn;
@@ -1148,16 +1148,16 @@ struct xcross_analyzer {
 
 // --- EOCrossSolverWrapper: 封装 EO Cross 求解器的统一接口 ---
 struct EOCrossSolverWrapper {
-  cross_analyzer crossSolver;
-  xcross_analyzer xcrossSolver;
+  CrossAnalyzer crossSolver;
+  XCrossAnalyzer xcrossSolver;
 
   static void global_init() {
     printCuberootLogo();
     init_matrix();
 
     // 调用静态初始化方法，加载所有表（只执行一次）
-    cross_analyzer::static_init();
-    xcross_analyzer::static_init();
+    CrossAnalyzer::static_init();
+    XCrossAnalyzer::static_init();
   }
 
   static std::string get_csv_header() {
