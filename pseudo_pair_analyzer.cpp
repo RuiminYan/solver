@@ -276,8 +276,8 @@ struct XCrossSolver {
       int r1 = ((pslot2_arg)-slot_k + 4) % 4 + 4; // 映射到4-7 范围
       int r2 = ((pslot3_arg)-slot_k + 4) % 4 + 4;
       int r3 = ((pslot4_arg)-slot_k + 4) % 4 + 4;
-      std::vector<int> keys = {r1, r2, r3};
-      std::sort(keys.begin(), keys.end());
+      int keys[] = {r1, r2, r3};
+      std::sort(keys, keys + 3);
 
       // 使用静态AuxPrunerDef 替代 aux_registry.find
       const AuxPrunerDef *def_ptr = &aux_def_pscross_C4C5C6;
@@ -324,8 +324,8 @@ struct XCrossSolver {
       int r1 = (slot2_arg - slot_k + 4) % 4; // 映射到0-3 范围
       int r2 = (slot3_arg - slot_k + 4) % 4;
       int r3 = (slot4_arg - slot_k + 4) % 4;
-      std::vector<int> keys = {r1, r2, r3};
-      std::sort(keys.begin(), keys.end());
+      int keys[] = {r1, r2, r3};
+      std::sort(keys, keys + 3);
 
       // 使用静态AuxPrunerDef 替代 aux_registry.find
       const AuxPrunerDef *def_ptr = &aux_def_pscross_E0E1E2;
