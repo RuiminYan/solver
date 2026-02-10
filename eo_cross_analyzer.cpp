@@ -100,7 +100,7 @@ struct cross_analyzer {
 
       // 级联: 先Cross 查表
       int n1 = p_mt_edge2[i1 + m], n2 = p_mt_edge2[i2 + m];
-      long long idx = (long long)n1 * 528 + n2;
+      long long idx = (long long)n1 * StateSpace::EDGE2 + n2;
       int pr = get_prune_ptr(p_pt_cross, idx);
       if (pr >= depth)
         continue;
@@ -125,7 +125,7 @@ struct cross_analyzer {
     for (int s = 0; s < 12; ++s) {
       int i1, i2, ieo;
       get_indices_sym(base_alg, s, i1, i2, ieo);
-      long long idx = (long long)i1 * 528 + i2;
+      long long idx = (long long)i1 * StateSpace::EDGE2 + i2;
       int h = get_prune_ptr(p_pt_cross, idx);
       if (h == 0 && ieo != 0)
         h = 1;
@@ -382,7 +382,8 @@ struct xcross_analyzer {
       // 级联 Check 1: Dependency (EO + Partial Cross)
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];
       S1_CHECK(s1_dep_eo);
-      if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * 2048 + neo) >= depth) {
+      if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
+          depth) {
         S1_HIT(s1_dep_eo);
         continue;
       }
@@ -431,14 +432,16 @@ struct xcross_analyzer {
         int mv = conj_moves_flat[m][v_huge];
         n_ie6 = p_mt_edge6[i_e6 * 18 + mv];
         n_ic2 = p_mt_corn2[i_c2 * 18 + mv];
-        if (get_prune_ptr(p_huge_active, (long long)n_ie6 * 504 + n_ic2) >=
+        if (get_prune_ptr(p_huge_active,
+                          (long long)n_ie6 * StateSpace::CORNER2 + n_ic2) >=
             depth)
           continue;
       }
 
       // 级联 Check 1: Dep + EO
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];
-      if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * 2048 + neo) >= depth)
+      if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
+          depth)
         continue;
 
       // 级联 Check 2: View A (Base + Plus)
@@ -513,14 +516,16 @@ struct xcross_analyzer {
         int mv = conj_moves_flat[m][v_huge];
         n_ie6 = p_mt_edge6[i_e6 * 18 + mv];
         n_ic2 = p_mt_corn2[i_c2 * 18 + mv];
-        if (get_prune_ptr(p_huge_active, (long long)n_ie6 * 504 + n_ic2) >=
+        if (get_prune_ptr(p_huge_active,
+                          (long long)n_ie6 * StateSpace::CORNER2 + n_ic2) >=
             depth)
           continue;
       }
 
       // 级联 Check 1: Dep + EO
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];
-      if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * 2048 + neo) >= depth)
+      if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
+          depth)
         continue;
 
       // --- View A ---
@@ -656,14 +661,16 @@ struct xcross_analyzer {
         int mv = conj_moves_flat[m][v_huge];
         n_ie6 = p_mt_edge6[i_e6 * 18 + mv];
         n_ic2 = p_mt_corn2[i_c2 * 18 + mv];
-        if (get_prune_ptr(p_huge_active, (long long)n_ie6 * 504 + n_ic2) >=
+        if (get_prune_ptr(p_huge_active,
+                          (long long)n_ie6 * StateSpace::CORNER2 + n_ic2) >=
             depth)
           continue;
       }
 
       // --- Check 1: Dep + EO ---
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];
-      if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * 2048 + neo) >= depth)
+      if (get_prune_ptr(p_pt_ep4eo12, (long long)nd * StateSpace::EO12 + neo) >=
+          depth)
         continue;
 
       // --- View A (s0): 看s1(Right), s2(Diag), s3(Left) ---
@@ -844,7 +851,8 @@ struct xcross_analyzer {
           long long idx_xc = (long long)(st[s].i1 + st[s].i2) * 24 + st[s].i3;
           int pr_xc = get_prune_ptr(p_pt_cross_C4E0, idx_xc);
           int pr_de = get_prune_ptr(p_pt_ep4eo12,
-                                    (long long)st[s].idep * 2048 + st[s].ieo);
+                                    (long long)st[s].idep * StateSpace::EO12 +
+                                        st[s].ieo);
           tasks.push_back({std::max(pr_xc, pr_de), s});
         }
         std::sort(tasks.begin(), tasks.end());
@@ -895,8 +903,9 @@ struct xcross_analyzer {
             int h2_pc = get_prune_ptr(p_pt_cross_CCE[t_ba],
                                       idx2 * 24 + st[s2].c_trk[t_ba]);
 
-            int h_de = get_prune_ptr(
-                p_pt_ep4eo12, (long long)st[s1].idep * 2048 + st[s1].ieo);
+            int h_de = get_prune_ptr(p_pt_ep4eo12,
+                                     (long long)st[s1].idep * StateSpace::EO12 +
+                                         st[s1].ieo);
             int h = std::max({h1, h1_pe, h1_pc, h2, h2_pe, h2_pc, h_de});
             tasks_xx.push_back({h, p});
           }
@@ -1032,7 +1041,8 @@ struct xcross_analyzer {
             }
 
             int pr_de = get_prune_ptr(
-                p_pt_ep4eo12, (long long)st[s1].idep * 2048 + st[s1].ieo);
+                p_pt_ep4eo12,
+                (long long)st[s1].idep * StateSpace::EO12 + st[s1].ieo);
             int h = std::max({h1, h2, h3, pr_de, d_3c});
             tasks_xxx.push_back({h, tr});
           }
@@ -1100,7 +1110,8 @@ struct xcross_analyzer {
         {
           // 获取初始下界：检查所有4 个视角的 Base 表+ Plus 表+ 3-Corner 表
           int h_de = get_prune_ptr(p_pt_ep4eo12,
-                                   (long long)st[0].idep * 2048 + st[0].ieo);
+                                   (long long)st[0].idep * StateSpace::EO12 +
+                                       st[0].ieo);
           int h_max = h_de;
           for (int s = 0; s < 4; ++s) {
             long long idx = (long long)(st[s].i1 + st[s].i2) * 24 + st[s].i3;
