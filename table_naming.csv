@@ -11,7 +11,7 @@ mt_corn.bin,mt_corn,genMTCorn(),-,-,p_mt_corn,p_mt_corn,p_mt_corn,Canon,<100KB,�
 mt_edge4.bin,mt_edge4,genMTEdge4(),p_mt_edge4,p_mt_edge4,p_mt_edge4,p_mt_edge4,p_mt_edge4,Canon,17.4MB,Edge4移动表
 mt_edge2.bin,mt_edge2,genMTEdge2(),p_mt_edge2(CrossSolver),-,p_mt_edge2,p_mt_edge2,-,Canon,<100KB,Edge2移动表
 mt_edge3.bin,mt_edge3,genMTEdge3(),-,-,p_mt_edge3,p_mt_edge3,-,Canon,742KB,Edge3移动表
-mt_edge6.bin,mt_edge6,genMTEdge6(),p_mt_edge6,p_mt_edge6,p_mt_edge6,-,p_mt_edge6,Canon,2.85GB,Edge6移动表
+mt_edge6.bin,mt_edge6,genMTEdge6(),p_mt_edge6,p_mt_edge6,-,-,p_mt_edge6,Canon,2.85GB,Edge6移动表
 mt_corn2.bin,mt_corn2,genMTCorn2(),p_mt_corn2,p_mt_corn2,p_mt_corn2,p_mt_corn2,p_mt_corn2,Canon,<100KB,Corner2移动表
 mt_corn3.bin,mt_corn3,genMTCorn3(),-,-,p_mt_corn3,p_mt_corn3,-,Canon,637KB,Corner3移动表
 mt_eo12.bin,mt_eo12,genMTEO(),-,-,-,-,p_mt_eo12,Canon,144KB,EO移动表
@@ -26,7 +26,7 @@ pt_cross.bin,pt_cross,genPTCross(),p_pt_cross(CrossSolver),-,p_pt_cross(CrossSol
 pt_cross_C4.bin,pt_cross_C4,genPTCrossC4(),-,p_pt_cross_C4,-,-,-,Canon,4.35MB,Cross+C4
 pt_pair_C4E0.bin,pt_pair_C4E0,genPTPairC4E0(),-,p_pt_pair_C4E0,-,-,-,Canon,584B,Pair(C4+E0)
 pt_cross_C4E0.bin,pt_cross_C4E0,genPTCrossC4E0(),p_pt_cross_C4E0,p_pt_cross_C4E0,-,-,p_pt_cross_C4E0,Canon,52.2MB,XCross(C4+E0)
-pt_cross_C4C5E0E1.bin,pt_cross_C4C5E0E1,genPTCrossC4C5E0E1(),p_pt_cross_C4C5E0E1,p_pt_cross_C4C5E0E1,p_pt_cross_C4C5E0E1,-,p_pt_cross_C4C5E0E1,Canon,9.99GB,Huge邻近表
+pt_cross_C4C5E0E1.bin,pt_cross_C4C5E0E1,genPTCrossC4C5E0E1(),p_pt_cross_C4C5E0E1,p_pt_cross_C4C5E0E1,-,-,p_pt_cross_C4C5E0E1,Canon,9.99GB,Huge邻近表
 pt_cross_C4C6E0E2.bin,pt_cross_C4C6E0E2,genPTCrossC4C6E0E2(),p_pt_cross_C4C6E0E2,p_pt_cross_C4C6E0E2,-,-,p_pt_cross_C4C6E0E2,Canon,9.99GB,Huge对角表
 
 --- Pseudo 基础表 ---,,,,,,,,,0KB,
