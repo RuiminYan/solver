@@ -18,11 +18,11 @@
 #include "prune_stats.h"
 
 // Search 1: Cross+Pair
-STAT_DECL(s1_cross); // S1: Cross C4 剪枝表
+STAT_DECL(s1_cross); // S1: Cross Ins C4 剪枝表
 STAT_DECL(s1_pair);  // S1: Pair C4+E0 剪枝表
 
 // Search 2: Cross+Pair+XCross
-STAT_DECL(s2_cross);  // S2: Cross C4 剪枝表
+STAT_DECL(s2_cross);  // S2: Cross Ins C4 剪枝表
 STAT_DECL(s2_pair);   // S2: Pair 剪枝表
 STAT_DECL(s2_xcross); // S2: XCross 剪枝表
 
@@ -48,7 +48,7 @@ struct PairSolver {
   // 快速指针
   const int *p_mt_edge4, *p_mt_corn, *p_mt_edge;
   const int *p_mt_edge6, *p_mt_corn2;
-  const unsigned char *p_pt_cross_C4, *p_pt_pair_C4E0, *p_pt_cross_C4E0;
+  const unsigned char *p_pt_cross_ins_C4, *p_pt_pair_C4E0, *p_pt_cross_C4E0;
   const unsigned char *p_pt_cross_C4C5E0E1, *p_pt_cross_C4C6E0E2;
 
   // 常量定义 (以 Slot 0 为基准)
@@ -86,7 +86,7 @@ struct PairSolver {
   static inline const int *s_p_mt_edge = nullptr;
   static inline const int *s_p_mt_edge6 = nullptr;
   static inline const int *s_p_mt_corn2 = nullptr;
-  static inline const unsigned char *s_p_pt_cross_C4 = nullptr;
+  static inline const unsigned char *s_p_pt_cross_ins_C4 = nullptr;
   static inline const unsigned char *s_p_pt_pair_C4E0 = nullptr;
   static inline const unsigned char *s_p_pt_cross_C4E0 = nullptr;
   static inline const unsigned char *s_p_pt_cross_C4C5E0E1 = nullptr;
@@ -111,7 +111,7 @@ struct PairSolver {
     s_p_mt_corn2 = mtm.getMTCorn2Ptr();
 
     // 获取剪枝表指针
-    s_p_pt_cross_C4 = ptm.getCrossC4PTPtr();
+    s_p_pt_cross_ins_C4 = ptm.getCrossInsC4PTPtr();
     s_p_pt_pair_C4E0 = ptm.getPairC4E0PTPtr();
     s_p_pt_cross_C4E0 = ptm.getCrossC4E0PTPtr();
     s_p_pt_cross_C4C5E0E1 = ptm.getCrossC4C5E0E1PTPtr();
@@ -135,7 +135,7 @@ struct PairSolver {
     p_mt_edge = s_p_mt_edge;
     p_mt_edge6 = s_p_mt_edge6;
     p_mt_corn2 = s_p_mt_corn2;
-    p_pt_cross_C4 = s_p_pt_cross_C4;
+    p_pt_cross_ins_C4 = s_p_pt_cross_ins_C4;
     p_pt_pair_C4E0 = s_p_pt_pair_C4E0;
     p_pt_cross_C4E0 = s_p_pt_cross_C4E0;
     p_pt_cross_C4C5E0E1 = s_p_pt_cross_C4C5E0E1;
@@ -215,7 +215,7 @@ struct PairSolver {
       int n1 = p_mt_edge4[i1 + mc];
       int n2 = p_mt_corn[i2 + mc];
       S1_CHECK(s1_cross);
-      if (p_pt_cross_C4[n1 + n2] >= depth) {
+      if (p_pt_cross_ins_C4[n1 + n2] >= depth) {
         S1_HIT(s1_cross);
         continue;
       }
@@ -226,7 +226,8 @@ struct PairSolver {
         continue;
       }
       if (depth == 1) {
-        if (p_pt_cross_C4[n1 + n2] == 0 && p_pt_pair_C4E0[n3 * 24 + n2] == 0)
+        if (p_pt_cross_ins_C4[n1 + n2] == 0 &&
+            p_pt_pair_C4E0[n3 * 24 + n2] == 0)
           return true;
       } else {
         if (search_1(n1, n2 * 18, n3 * 18, depth - 1, m, slot_s1))
@@ -258,7 +259,7 @@ struct PairSolver {
       int mc_p = conj_moves_flat[m][s_p];
       int n_im_p = p_mt_edge4[im_p + mc_p], n_ic_p = p_mt_corn[ic_p + mc_p];
       S2_CHECK(s2_cross);
-      if (p_pt_cross_C4[n_im_p + n_ic_p] >= depth) {
+      if (p_pt_cross_ins_C4[n_im_p + n_ic_p] >= depth) {
         S2_HIT(s2_cross);
         continue;
       }
@@ -305,7 +306,7 @@ struct PairSolver {
       int mc_p = conj_moves_flat[m][s_p];
       int n_im_p = p_mt_edge4[im_p + mc_p], n_ic_p = p_mt_corn[ic_p + mc_p];
       S3_CHECK(s3_cross);
-      if (p_pt_cross_C4[n_im_p + n_ic_p] >= depth) {
+      if (p_pt_cross_ins_C4[n_im_p + n_ic_p] >= depth) {
         S3_HIT(s3_cross);
         continue;
       }
@@ -317,10 +318,12 @@ struct PairSolver {
       }
       // NOTE: xcross1/2 变量计算保留用于递归，剪枝检查已移除 (剪枝率 0%)
       int mc_x1 = conj_moves_flat[m][s_x1];
-      int n_im_x1 = p_mt_edge4[im_x1 + mc_x1], n_ic_x1 = p_mt_corn[ic_x1 + mc_x1],
+      int n_im_x1 = p_mt_edge4[im_x1 + mc_x1],
+          n_ic_x1 = p_mt_corn[ic_x1 + mc_x1],
           n_ie_x1 = p_mt_edge[ie_x1 + mc_x1];
       int mc_x2 = conj_moves_flat[m][s_x2];
-      int n_im_x2 = p_mt_edge4[im_x2 + mc_x2], n_ic_x2 = p_mt_corn[ic_x2 + mc_x2],
+      int n_im_x2 = p_mt_edge4[im_x2 + mc_x2],
+          n_ic_x2 = p_mt_corn[ic_x2 + mc_x2],
           n_ie_x2 = p_mt_edge[ie_x2 + mc_x2];
       if (depth == 1) {
         if (p_pt_pair_C4E0[n_ie_p * 24 + n_ic_p] == 0)
@@ -329,8 +332,10 @@ struct PairSolver {
         if (search_3(
                 n_im_p, n_ic_p * 18, n_ie_p * 18, n_im_x1, n_ic_x1 * 18,
                 n_ie_x1 * 18, n_im_x2, n_ic_x2 * 18, n_ie_x2 * 18,
-                (s_v != -1) ? p_mt_edge6[i_e6 * 18 + conj_moves_flat[m][s_v]] : -1,
-                (s_v != -1) ? p_mt_corn2[i_c2 * 18 + conj_moves_flat[m][s_v]] : -1,
+                (s_v != -1) ? p_mt_edge6[i_e6 * 18 + conj_moves_flat[m][s_v]]
+                            : -1,
+                (s_v != -1) ? p_mt_corn2[i_c2 * 18 + conj_moves_flat[m][s_v]]
+                            : -1,
                 s_v, p_table_huge, depth - 1, m, s_p, s_x1, s_x2))
           return true;
       }
@@ -380,7 +385,7 @@ struct PairSolver {
       int mc_p = conj_moves_flat[m][s_p];
       int n_im_p = p_mt_edge4[im_p + mc_p], n_ic_p = p_mt_corn[ic_p + mc_p];
       S4_CHECK(s4_cross);
-      if (p_pt_cross_C4[n_im_p + n_ic_p] >= depth) {
+      if (p_pt_cross_ins_C4[n_im_p + n_ic_p] >= depth) {
         S4_HIT(s4_cross);
         continue;
       }
@@ -392,36 +397,44 @@ struct PairSolver {
       }
       // NOTE: xcross1/2/3 变量计算保留用于递归，剪枝检查已移除 (剪枝率 0%)
       int mc_x1 = conj_moves_flat[m][s_x1];
-      int n_im_x1 = p_mt_edge4[im_x1 + mc_x1], n_ic_x1 = p_mt_corn[ic_x1 + mc_x1],
+      int n_im_x1 = p_mt_edge4[im_x1 + mc_x1],
+          n_ic_x1 = p_mt_corn[ic_x1 + mc_x1],
           n_ie_x1 = p_mt_edge[ie_x1 + mc_x1];
       int mc_x2 = conj_moves_flat[m][s_x2];
-      int n_im_x2 = p_mt_edge4[im_x2 + mc_x2], n_ic_x2 = p_mt_corn[ic_x2 + mc_x2],
+      int n_im_x2 = p_mt_edge4[im_x2 + mc_x2],
+          n_ic_x2 = p_mt_corn[ic_x2 + mc_x2],
           n_ie_x2 = p_mt_edge[ie_x2 + mc_x2];
       int mc_x3 = conj_moves_flat[m][s_x3];
-      int n_im_x3 = p_mt_edge4[im_x3 + mc_x3], n_ic_x3 = p_mt_corn[ic_x3 + mc_x3],
+      int n_im_x3 = p_mt_edge4[im_x3 + mc_x3],
+          n_ic_x3 = p_mt_corn[ic_x3 + mc_x3],
           n_ie_x3 = p_mt_edge[ie_x3 + mc_x3];
       if (depth == 1) {
         if (p_pt_pair_C4E0[n_ie_p * 24 + n_ic_p] == 0)
           return true;
-      } else if (search_4(
-                     n_im_p, n_ic_p * 18, n_ie_p * 18, n_im_x1, n_ic_x1 * 18,
-                     n_ie_x1 * 18, n_im_x2, n_ic_x2 * 18, n_ie_x2 * 18, n_im_x3,
-                     n_ic_x3 * 18, n_ie_x3 * 18,
-                     (v1 != -1) ? p_mt_edge6[ie6_1 * 18 + conj_moves_flat[m][v1]]
-                                : -1,
-                     (v1 != -1) ? p_mt_corn2[ic2_1 * 18 + conj_moves_flat[m][v1]]
-                                : -1,
-                     v1, p1,
-                     (v2 != -1) ? p_mt_edge6[ie6_2 * 18 + conj_moves_flat[m][v2]]
-                                : -1,
-                     (v2 != -1) ? p_mt_corn2[ic2_2 * 18 + conj_moves_flat[m][v2]]
-                                : -1,
-                     v2, p2,
-                     (v3 != -1) ? p_mt_edge6[ie6_3 * 18 + conj_moves_flat[m][v3]]
-                                : -1,
-                     (v3 != -1) ? p_mt_corn2[ic2_3 * 18 + conj_moves_flat[m][v3]]
-                                : -1,
-                     v3, p3, depth - 1, m, s_p, s_x1, s_x2, s_x3))
+      } else if (search_4(n_im_p, n_ic_p * 18, n_ie_p * 18, n_im_x1,
+                          n_ic_x1 * 18, n_ie_x1 * 18, n_im_x2, n_ic_x2 * 18,
+                          n_ie_x2 * 18, n_im_x3, n_ic_x3 * 18, n_ie_x3 * 18,
+                          (v1 != -1)
+                              ? p_mt_edge6[ie6_1 * 18 + conj_moves_flat[m][v1]]
+                              : -1,
+                          (v1 != -1)
+                              ? p_mt_corn2[ic2_1 * 18 + conj_moves_flat[m][v1]]
+                              : -1,
+                          v1, p1,
+                          (v2 != -1)
+                              ? p_mt_edge6[ie6_2 * 18 + conj_moves_flat[m][v2]]
+                              : -1,
+                          (v2 != -1)
+                              ? p_mt_corn2[ic2_2 * 18 + conj_moves_flat[m][v2]]
+                              : -1,
+                          v2, p2,
+                          (v3 != -1)
+                              ? p_mt_edge6[ie6_3 * 18 + conj_moves_flat[m][v3]]
+                              : -1,
+                          (v3 != -1)
+                              ? p_mt_corn2[ic2_3 * 18 + conj_moves_flat[m][v3]]
+                              : -1,
+                          v3, p3, depth - 1, m, s_p, s_x1, s_x2, s_x3))
         return true;
     }
     return false;
@@ -434,7 +447,7 @@ struct PairSolver {
     VirtState st;
     for (int s1 = 0; s1 < 4; ++s1) {
       get_conjugated_indices_full(alg, s1, st);
-      tasks.push_back({s1, (int)p_pt_cross_C4[st.im + st.ic]});
+      tasks.push_back({s1, (int)p_pt_cross_ins_C4[st.im + st.ic]});
     }
     std::sort(tasks.begin(), tasks.end(),
               [](const Task1 &a, const Task1 &b) { return a.h < b.h; });
@@ -466,9 +479,9 @@ struct PairSolver {
           continue;
         get_conjugated_indices_full(alg, tgt, sp);
         get_conjugated_indices_full(alg, fix, sx);
-        int h1 = p_pt_cross_C4[sp.im + sp.ic];
-        int h2 =
-            get_prune_4bit(p_pt_cross_C4E0, (long long)(sx.im + sx.ic) * 24 + sx.ie);
+        int h1 = p_pt_cross_ins_C4[sp.im + sp.ic];
+        int h2 = get_prune_4bit(p_pt_cross_C4E0,
+                                (long long)(sx.im + sx.ic) * 24 + sx.ie);
         tasks.push_back({tgt, fix, std::max(h1, h2)});
       }
     }
@@ -507,7 +520,7 @@ struct PairSolver {
         get_conjugated_indices_full(alg, tgt, sp);
         get_conjugated_indices_full(alg, p[0], sx1);
         get_conjugated_indices_full(alg, p[1], sx2);
-        int h1 = p_pt_cross_C4[sp.im + sp.ic];
+        int h1 = p_pt_cross_ins_C4[sp.im + sp.ic];
         int h2 = get_prune_4bit(p_pt_cross_C4E0,
                                 (long long)(sx1.im + sx1.ic) * 24 + sx1.ie);
         int h3 = get_prune_4bit(p_pt_cross_C4E0,
@@ -577,7 +590,7 @@ struct PairSolver {
         if (k != tgt)
           fix.push_back(k);
       get_conjugated_indices_full(alg, tgt, sp);
-      int h_val = p_pt_cross_C4[sp.im + sp.ic];
+      int h_val = p_pt_cross_ins_C4[sp.im + sp.ic];
       for (int i = 0; i < 3; ++i) {
         get_conjugated_indices_full(alg, fix[i], s[i]);
         h_val =

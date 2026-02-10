@@ -223,8 +223,8 @@ struct xcross_analyzer {
     ptm.genPTCrossC4E0();
 
     // 生成/加载 EOCross 专用剪枝表
-    ptm.genPTCrossC4(); // Cross+C4 (EOCross 表)
-    ptm.genPTEP4EO12(); // Dependency+EO
+    ptm.genPTCrossInsC4(); // Cross+C4 Insertion (EOCross 表)
+    ptm.genPTEP4EO12();    // Dependency+EO
     // Plus Edge (参数化) // Plus Edge Right
     for (int i = 0; i < 3; ++i)
       ptm.genPTCrossCEE(i);

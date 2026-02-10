@@ -31,10 +31,10 @@ inline int get_prune_ptr(const unsigned char *table, long long index) {
 class PruneTableManager {
 private:
   // Cross相关剪枝表
-  std::vector<unsigned char> pt_cross;      // Cross基础剪枝表
-  std::vector<unsigned char> pt_cross_C4;   // Cross + C4剪枝表
-  std::vector<unsigned char> pt_pair_C4E0;  // Pair C4+E0剪枝表
-  std::vector<unsigned char> pt_cross_C4E0; // XCross C4+E0剪枝表
+  std::vector<unsigned char> pt_cross;        // Cross基础剪枝表
+  std::vector<unsigned char> pt_cross_ins_C4; // Cross + C4 F2L insertion剪枝表
+  std::vector<unsigned char> pt_pair_C4E0;    // Pair C4+E0剪枝表
+  std::vector<unsigned char> pt_cross_C4E0;   // XCross C4+E0剪枝表
 
   // 巨型剪枝表
   std::vector<unsigned char> pt_cross_C4C5E0E1; // 相邻槽剪枝表
@@ -82,8 +82,8 @@ private:
   std::vector<unsigned char> pt_pspair_CE[16];      // EC Pair: edge*4+corner
 
   // === EOCross 专用表 ===
-  // NOTE: eo_cross_c4使用不同生成函数，与pt_cross_C4不同
-  std::vector<unsigned char> pt_eoc_C4;       // Cross+C4 (EOCross版)
+  // NOTE: eo_cross使用不同生成函数，与pt_cross_ins_C4不同
+  std::vector<unsigned char> pt_eoc_ins_C4;   // Cross+C4 (EOCross版)
   std::vector<unsigned char> pt_ep4eo12;      // Dependency+EO
   std::vector<unsigned char> pt_cross_CEE[3]; // Plus Edge: Right/Diag/Left
   std::vector<unsigned char> pt_cross_CCE[3]; // Plus Corner: Right/Diag/Left
@@ -119,7 +119,9 @@ public:
 
   // === 新 Getter (返回 vector 引用) ===
   const std::vector<unsigned char> &getCrossPT() const { return pt_cross; }
-  const std::vector<unsigned char> &getCrossC4PT() const { return pt_cross_C4; }
+  const std::vector<unsigned char> &getCrossInsC4PT() const {
+    return pt_cross_ins_C4;
+  }
   const std::vector<unsigned char> &getPairC4E0PT() const {
     return pt_pair_C4E0;
   }
@@ -135,7 +137,9 @@ public:
 
   // === 新 Ptr Getter ===
   const unsigned char *getCrossPTPtr() const { return pt_cross.data(); }
-  const unsigned char *getCrossC4PTPtr() const { return pt_cross_C4.data(); }
+  const unsigned char *getCrossInsC4PTPtr() const {
+    return pt_cross_ins_C4.data();
+  }
   const unsigned char *getPairC4E0PTPtr() const { return pt_pair_C4E0.data(); }
   const unsigned char *getCrossC4E0PTPtr() const {
     return pt_cross_C4E0.data();
@@ -256,7 +260,7 @@ public:
   }
 
   // === EOCross Getters (新名) ===
-  const unsigned char *getEOCC4PTPtr() const { return pt_eoc_C4.data(); }
+  const unsigned char *getEOCInsC4PTPtr() const { return pt_eoc_ins_C4.data(); }
   const unsigned char *getEP4EO12PTPtr() const { return pt_ep4eo12.data(); }
   const unsigned char *getCrossCEEPTPtr(int i) const {
     return pt_cross_CEE[i].data();
@@ -270,7 +274,7 @@ public:
 
   // 生成函数 (新名)
   void genPTCross();
-  void genPTCrossC4();
+  void genPTCrossInsC4();
   void genPTPairC4E0();
   void genPTCrossC4E0();
   void genPTCrossC4C5E0E1();
@@ -327,9 +331,9 @@ private:
 };
 
 // --- 剪枝表生成函数 ---
-void createPTCrossC4(int idx1, int idx2, int sz1, int sz2, int depth,
-                     const std::vector<int> &t1, const std::vector<int> &t2,
-                     std::vector<unsigned char> &pt);
+void createPTCrossInsC4(int idx1, int idx2, int sz1, int sz2, int depth,
+                        const std::vector<int> &t1, const std::vector<int> &t2,
+                        std::vector<unsigned char> &pt);
 
 void createPTPairBase(int idx_e, int idx_c, int sz_e, int sz_c, int depth,
                       const std::vector<int> &t_edge,
