@@ -44,10 +44,6 @@ STAT_DECL(s4_xcross3); // S4: XCross 3 剪枝表
 STAT_DECL(s4_xcross4); // S4: XCross 4 剪枝表
 
 // --- 通用结构 ---
-struct SearchContext {
-  int current_max_depth = 0;
-};
-
 struct CrossSolver {
   const int *p_mt_edge2;
   const unsigned char *p_pt_cross;
@@ -60,7 +56,7 @@ struct CrossSolver {
     p_pt_cross = ptm.getCrossPTPtr();
   }
 
-  bool search(SearchContext &ctx, int i1, int i2, int depth, int prev) {
+  bool search(int i1, int i2, int depth, int prev) {
     const int *moves = valid_moves_flat[prev];
     const int count = valid_moves_count[prev];
     for (int k = 0; k < count; ++k) {
@@ -74,7 +70,7 @@ struct CrossSolver {
       if (depth == 1) {
         return true;
       }
-      if (search(ctx, n_i1 * 18, n_i2 * 18, depth - 1, m))
+      if (search(n_i1 * 18, n_i2 * 18, depth - 1, m))
         return true;
     }
     return false;
@@ -94,10 +90,8 @@ struct CrossSolver {
       int d_min = get_prune_ptr(p_pt_cross, idx);
       if (d_min == 0)
         continue;
-      SearchContext ctx;
       for (int d = d_min; d <= 8; ++d) {
-        ctx.current_max_depth = d;
-        if (search(ctx, i1 * 18, i2 * 18, d, 18)) {
+        if (search(i1 * 18, i2 * 18, d, 18)) {
           res[i] = d;
           break;
         }
@@ -222,7 +216,7 @@ struct XCrossSolver {
     i_c2_idx_dg = cur_c2_d / 18;
   }
 
-  bool search_1(SearchContext &ctx, int i1, int i2, int i3, int s1, int depth,
+  bool search_1(int i1, int i2, int i3, int s1, int depth,
                 int prev) {
     const int *moves = valid_moves_flat[prev];
     const int count = valid_moves_count[prev];
@@ -242,13 +236,13 @@ struct XCrossSolver {
       if (depth == 1) {
         return true;
       }
-      if (search_1(ctx, n_i1, n_i2 * 18, n_i3 * 18, s1, depth - 1, m))
+      if (search_1(n_i1, n_i2 * 18, n_i3 * 18, s1, depth - 1, m))
         return true;
     }
     return false;
   }
 
-  bool search_2(SearchContext &ctx, int i1a, int i2a, int i3a, int i4a, int i5a,
+  bool search_2(int i1a, int i2a, int i3a, int i4a, int i5a,
                 int s1, int i1b, int i2b, int i3b, int i4b, int i5b, int s2,
                 int t_idx1, int t_idx2, int i_e6, int i_c2, int v_adj,
                 const unsigned char *p_prune_active, int depth, int prev) {
@@ -282,7 +276,7 @@ struct XCrossSolver {
         return true;
       }
       if (search_2(
-              ctx, n_i1a, n_i2a * 18, n_i3a * 18, n_i4a * 18, n_i5a * 18, s1,
+                       n_i1a, n_i2a * 18, n_i3a * 18, n_i4a * 18, n_i5a * 18, s1,
               n_i1b, n_i2b * 18, n_i3b * 18, n_i4b * 18, n_i5b * 18, s2, t_idx1,
               t_idx2,
               (v_adj != -1) ? p_mt_edge6[i_e6 * 18 + conj_moves_flat[m][v_adj]]
@@ -295,7 +289,7 @@ struct XCrossSolver {
     return false;
   }
 
-  bool search_3(SearchContext &ctx, int i1a, int i2a, int i3a, int i4a_1,
+  bool search_3(int i1a, int i2a, int i3a, int i4a_1,
                 int i5a_1, int i6a, int i4a_2, int i5a_2, int s1, int i1b,
                 int i2b, int i3b, int i4b_1, int i5b_1, int i6b, int i4b_2,
                 int i5b_2, int s2, int i1c, int i2c, int i3c, int i4c_1,
@@ -367,7 +361,7 @@ struct XCrossSolver {
         return true;
       }
       if (search_3(
-              ctx, n_i1a, n_i2a * 18, n_i3a * 18, n_i4a_1 * 18, n_i5a_1 * 18,
+                       n_i1a, n_i2a * 18, n_i3a * 18, n_i4a_1 * 18, n_i5a_1 * 18,
               n_i6a * 18, n_i4a_2 * 18, n_i5a_2 * 18, s1, n_i1b, n_i2b * 18,
               n_i3b * 18, n_i4b_1 * 18, n_i5b_1 * 18, n_i6b * 18, n_i4b_2 * 18,
               n_i5b_2 * 18, s2, n_i1c, n_i2c * 18, n_i3c * 18, n_i4c_1 * 18,
@@ -393,7 +387,7 @@ struct XCrossSolver {
     return false;
   }
 
-  bool search_4(SearchContext &ctx, int i1a, int i2a, int i3a, int i4a, int i5a,
+  bool search_4(int i1a, int i2a, int i3a, int i4a, int i5a,
                 int i6a, int i1b, int i2b, int i3b, int i4b, int i5b, int i6b,
                 int i1c, int i2c, int i3c, int i4c, int i5c, int i6c, int i1d,
                 int i2d, int i3d, int i4d, int i5d, int i6d, int nb01_e,
@@ -480,7 +474,7 @@ struct XCrossSolver {
       if (depth == 1) {
         return true;
       }
-      if (search_4(ctx, n_i1a, n_i2a * 18, n_i3a * 18, n_i4a * 18, n_i5a * 18,
+      if (search_4(n_i1a, n_i2a * 18, n_i3a * 18, n_i4a * 18, n_i5a * 18,
                    n_i6a * 18, n_i1b, n_i2b * 18, n_i3b * 18, n_i4b * 18,
                    n_i5b * 18, n_i6b * 18, n_i1c, n_i2c * 18, n_i3c * 18,
                    n_i4c * 18, n_i5c * 18, n_i6c * 18, n_i1d, n_i2d * 18,
@@ -534,11 +528,9 @@ struct XCrossSolver {
             break;
           int res = 99;
           if (t.h > 0) {
-            SearchContext ctx;
-            int max_search = std::min(12, current_best - 1);
+                  int max_search = std::min(12, current_best - 1);
             for (int d = t.h; d <= max_search; ++d) {
-              ctx.current_max_depth = d;
-              if (search_1(ctx, initial_states[t.id].im,
+                    if (search_1(initial_states[t.id].im,
                            initial_states[t.id].ic * 18,
                            initial_states[t.id].ie * 18, t.id, d, 18)) {
                 res = d;
@@ -616,8 +608,7 @@ struct XCrossSolver {
             break;
           int res = 99;
           if (t.h > 0) {
-            SearchContext ctx;
-            int max_search = std::min(14, current_best - 1);
+                  int max_search = std::min(14, current_best - 1);
             int t1 = getPlusTableIdx(t.a, t.b);
             int t2 = getPlusTableIdx(t.b, t.a);
             int ea = get_correct_edge_start(t1, st[t.a].e0, st[t.a].e2,
@@ -641,8 +632,7 @@ struct XCrossSolver {
             }
             if (p_table_use) {
               for (int d = t.h; d <= max_search; ++d) {
-                ctx.current_max_depth = d;
-                if (search_2(ctx, st[t.a].im, st[t.a].ic * 18, st[t.a].e0 * 18,
+                        if (search_2(st[t.a].im, st[t.a].ic * 18, st[t.a].e0 * 18,
                              ea * 18, ca * 18, t.a, st[t.b].im, st[t.b].ic * 18,
                              st[t.b].e0 * 18, eb * 18, cb * 18, t.b, t1, t2,
                              ie6_use, ic2_use, t.v, p_table_use, d, 18)) {
@@ -743,8 +733,7 @@ struct XCrossSolver {
             break;
           int res = 99;
           if (t.h > 0) {
-            SearchContext ctx;
-            int max_search = std::min(16, current_best - 1);
+                  int max_search = std::min(16, current_best - 1);
             int t12 = getPlusTableIdx(t.a, t.b);
             int t21 = getPlusTableIdx(t.b, t.a);
             int t23 = getPlusTableIdx(t.b, t.c);
@@ -811,8 +800,7 @@ struct XCrossSolver {
             }
 
             for (int d = t.h; d <= max_search; ++d) {
-              ctx.current_max_depth = d;
-              if (search_3(ctx, st[t.a].im, st[t.a].ic * 18, st[t.a].e0 * 18,
+                    if (search_3(st[t.a].im, st[t.a].ic * 18, st[t.a].e0 * 18,
                            ea_b * 18, ca_b * 18, st[t.a].c6 * 18, ea_c * 18,
                            ca_c * 18, t.a, st[t.b].im, st[t.b].ic * 18,
                            st[t.b].e0 * 18, eb_a * 18, cb_a * 18,
@@ -891,11 +879,9 @@ struct XCrossSolver {
         int res = 0;
         if (max_h <= 16) {
           if (max_h > 0) {
-            SearchContext ctx;
-            for (int d = max_h; d <= 16; ++d) {
-              ctx.current_max_depth = d;
-              if (search_4(
-                      ctx, st[0].im, st[0].ic * 18, st[0].e0 * 18,
+                  for (int d = max_h; d <= 16; ++d) {
+                    if (search_4(
+                       st[0].im, st[0].ic * 18, st[0].e0 * 18,
                       st[0].e2 * 18, st[0].c5 * 18, st[0].c6 * 18, st[1].im,
                       st[1].ic * 18, st[1].e0 * 18, st[1].e2 * 18,
                       st[1].c5 * 18, st[1].c6 * 18, st[2].im, st[2].ic * 18,
