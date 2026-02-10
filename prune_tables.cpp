@@ -236,7 +236,7 @@ bool PruneTableManager::loadPseudoPairTables() {
     }
   }
 
-  // 3. 加载 EC ?(Pair C{4-7}_E{0-3})
+  // 3. 加载 EC 表 (Pair C{4-7}_E{0-3})
   for (int e = 0; e < 4; ++e) {
     for (int c = 0; c < 4; ++c) {
       int idx = e * 4 + c;
@@ -248,15 +248,15 @@ bool PruneTableManager::loadPseudoPairTables() {
   }
 
   // 4. 加载 Pseudo XCross Base (C4+E{0-3})
-  // 这组表用?Conj 优化，从 C4 视角追踪 XCross 状?
+  // 这组表用了 Conj 优化，从 C4 视角追踪 XCross 状态
   for (int e = 0; e < 4; ++e) {
     std::string fn = "pt_pscross_C4E" + std::to_string(e) + ".bin";
     if (!loadTable(pt_pscross_C4E[e], fn))
       return false;
   }
 
-  // 5. 加载 Aux ?(复用 Pseudo Analyzer ?Aux ?
-  // E2/C2/E3/C3 表已?loadPseudoTables 加载，此处确保已加载
+  // 5. 加载 Aux 表 (复用 Pseudo Analyzer 的 Aux 表)
+  // E2/C2/E3/C3 表已由 loadPseudoTables 加载，此处确保已加载
   if (pt_pscross_E0E1.empty()) {
     if (!loadTable(pt_pscross_E0E1, "pt_pscross_E0E1.bin")) {
       std::cout << "Warning: pt_pscross_E0E1.bin not found." << std::endl;
@@ -293,17 +293,17 @@ bool PruneTableManager::loadPseudoPairTables() {
 
 // 加载 EOCross Analyzer 所需的表
 // NOTE: 仅加载表到PruneTableManager，不负责生成
-// 表生成逻辑仍保留在eo_cross_analyzer.cpp?阶段2会迁?
+// 表生成逻辑仍保留在 eo_cross_analyzer.cpp，阶段2会迁移
 bool PruneTableManager::loadEOCrossTables() {
   // 1. Cross+C4 (EOCross专用版本 - 使用不同生成算法)
   if (!loadTable(pt_eoc_ins_C4, "pt_cross_ins_C4.bin"))
     return false;
 
-  // 2. Dependency+EO ?
+  // 2. Dependency+EO 表
   if (!loadTable(pt_ep4eo12, "pt_ep4eo12.bin"))
     return false;
 
-  // 3. Plus Edge ?(Right/Diag/Left)
+  // 3. Plus Edge 表 (Right/Diag/Left)
   const char *edge_files[] = {"pt_cross_C4E0E1.bin", "pt_cross_C4E0E2.bin",
                               "pt_cross_C4E0E3.bin"};
   for (int i = 0; i < 3; ++i) {
@@ -311,7 +311,7 @@ bool PruneTableManager::loadEOCrossTables() {
       return false;
   }
 
-  // 4. Plus Corner ?(Right/Diag/Left)
+  // 4. Plus Corner 表 (Right/Diag/Left)
   const char *corn_files[] = {"pt_cross_C4C5E0.bin", "pt_cross_C4C6E0.bin",
                               "pt_cross_C4C7E0.bin"};
   for (int i = 0; i < 3; ++i) {
@@ -319,18 +319,17 @@ bool PruneTableManager::loadEOCrossTables() {
       return false;
   }
 
-  // 5. 3-Corner ?
+  // 5. 3-Corner 表
   if (!loadTable(pt_cross_C4C5C6, "pt_cross_C4C5C6.bin"))
     return false;
 
   return true;
 }
 
-// --- 前向声明: Pseudo 表生成函?---
-void createPTPsCrossCorner(int index2, int depth,
-                           const std::vector<int> &table1,
-                           const std::vector<int> &table2,
-                           std::vector<unsigned char> &prune_table);
+// --- 前向声明: Pseudo 表生成函数 ---
+void createPTPsCrossCorn(int index2, int depth, const std::vector<int> &table1,
+                         const std::vector<int> &table2,
+                         std::vector<unsigned char> &prune_table);
 void createPTPsCrossInsC(int index3, int index2, int depth,
                          const std::vector<int> &table1,
                          const std::vector<int> &table2,
@@ -396,7 +395,7 @@ void PruneTableManager::genAllSequentially() {
   }
 
   // 6. Huge Diagonal (Needs Edge6, Corner2)
-  // 只要任意 analyzer 需?Diagonal 表就生成
+  // 只要任意 analyzer 需要 Diagonal 表就生成
   if (ENABLE_DIAGONAL_STD || ENABLE_DIAGONAL_PAIR || ENABLE_DIAGONAL_EO_CROSS) {
     if (!fileExists("pt_cross_C4C6E0E2.bin")) {
       mtm.loadMTEdge6();
@@ -413,10 +412,10 @@ void PruneTableManager::genAllSequentially() {
     mtm.loadMTEOCross();
     genPTEP4EO12();
     std::vector<unsigned char>().swap(pt_ep4eo12);
-    // NOTE: EOCross 移动表较小，保持加载不释?
+    // NOTE: EOCross 移动表较小，保持加载不释放
   }
 
-  // 7.1 EOCross Plus Edge (3 ? ?~1.22GB, Needs Cross, Corner, Edge)
+  // 7.1 EOCross Plus Edge (3 张, 每张 ~1.22GB, Needs Cross, Corner, Edge)
   {
     bool need_plus = !fileExists("pt_cross_C4E0E1.bin") ||
                      !fileExists("pt_cross_C4E0E2.bin") ||
@@ -454,7 +453,7 @@ void PruneTableManager::genAllSequentially() {
     }
   }
 
-  // 7.3 EOCross 3-Corner (1 ? ~1.22GB, Needs Cross, Corner)
+  // 7.3 EOCross 3-Corner (1 张, ~1.22GB, Needs Cross, Corner)
   if (!fileExists("pt_cross_C4C5C6.bin")) {
     mtm.loadMTEdge4();
     mtm.loadMTCorn();
@@ -720,8 +719,8 @@ void PruneTableManager::genPTPsCrossC(int c) {
   GenerationTimer timer;
   std::cout << "  Generating " << fn << "..." << std::endl;
   std::vector<unsigned char> temp;
-  createPTPsCrossCorner(CORNER_INDICES[c], 10, mtm.getMTEdge4(),
-                        mtm.getMTCorn(), temp);
+  createPTPsCrossCorn(CORNER_INDICES[c], 10, mtm.getMTEdge4(), mtm.getMTCorn(),
+                      temp);
   saveTable(temp, fn);
   timer.printElapsed(fn);
   mtm.releaseMTEdge4();
@@ -814,7 +813,7 @@ void PruneTableManager::genPTCross() {
         for (int j = 0; j < 18; ++j) {
           long long ni = (long long)edge2_mt[idx1 + j] * StateSpace::EDGE2 +
                          edge2_mt[idx2 + j];
-          // NOTE: 使用 CAS 避免竞态条?
+          // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected,
                                       (unsigned char)(d + 1));
@@ -890,9 +889,9 @@ void PruneTableManager::genPTCrossC4C5E0E1() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pt_cross_C4C5E0E1.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  createPTEdge6Corner2(StateSpace::EDGE6, StateSpace::CORNER2, 15,
-                       {0, 2, 16, 18, 20, 22}, {12, 15}, mtm.getMTEdge6(),
-                       mtm.getMTCorn2(), pt_cross_C4C5E0E1);
+  createPTEdge6Corn2(StateSpace::EDGE6, StateSpace::CORNER2, 15,
+                     {0, 2, 16, 18, 20, 22}, {12, 15}, mtm.getMTEdge6(),
+                     mtm.getMTCorn2(), pt_cross_C4C5E0E1);
   saveTable(pt_cross_C4C5E0E1, "pt_cross_C4C5E0E1.bin");
   timer.printElapsed("pt_cross_C4C5E0E1.bin");
 }
@@ -907,9 +906,9 @@ void PruneTableManager::genPTCrossC4C6E0E2() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pt_cross_C4C6E0E2.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  createPTEdge6Corner2(StateSpace::EDGE6, StateSpace::CORNER2, 15,
-                       {0, 4, 16, 18, 20, 22}, {12, 18}, mtm.getMTEdge6(),
-                       mtm.getMTCorn2(), pt_cross_C4C6E0E2);
+  createPTEdge6Corn2(StateSpace::EDGE6, StateSpace::CORNER2, 15,
+                     {0, 4, 16, 18, 20, 22}, {12, 18}, mtm.getMTEdge6(),
+                     mtm.getMTCorn2(), pt_cross_C4C6E0E2);
   saveTable(pt_cross_C4C6E0E2, "pt_cross_C4C6E0E2.bin");
   timer.printElapsed("pt_cross_C4C6E0E2.bin");
 }
@@ -921,8 +920,8 @@ void PruneTableManager::genPTEP4EO12() {
   std::cout << TAG_COLOR << "[PRUNE]" << ANSI_RESET
             << " Generating pt_ep4eo12.bin..." << std::endl;
   auto &mtm = MoveTableManager::getInstance();
-  // 状态空? EP4 (12*11*10*9 = 11880) x EO12 (2^11 = 2048)
-  // 初始状? EP4_SOLVED=11720, EO_SOLVED=0
+  // 状态空间: EP4 (12*11*10*9 = 11880) x EO12 (2^11 = 2048)
+  // 初始状态: EP4_SOLVED=11720, EO_SOLVED=0
   // 使用 MoveTableManager 中已加载的移动表
   createPTDim2(11720, 0, StateSpace::EP4, StateSpace::EO12, 11, mtm.getMTEP4(),
                mtm.getMTEOAlt(), pt_ep4eo12);
@@ -979,7 +978,7 @@ void PruneTableManager::genPTCrossCCE(int i) {
 }
 
 // === EOCross 3-Corner 生成函数 ===
-// NOTE: 使用 createPTCrossCCC，跟?C4+C5+C6 三个角块
+// NOTE: 使用 createPTCrossCCC，跟踪 C4+C5+C6 三个角块
 // 参数来源: eo_cross_analyzer_old.cpp:L310-L313
 
 void PruneTableManager::genPTCrossC4C5C6() {
@@ -1030,7 +1029,7 @@ void PruneTableManager::genPTPsCross() {
         for (int j = 0; j < 18; ++j) {
           long long ni = (long long)edge2_mt[idx1 + j] * StateSpace::EDGE2 +
                          edge2_mt[idx2 + j];
-          // NOTE: 使用 CAS 避免竞态条?
+          // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected,
                                       (unsigned char)(d + 1));
@@ -1083,9 +1082,9 @@ void PruneTableManager::genPTPsCrossE0E2() {
   int idx_e0_e2_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E0E2.resize(
       ((long long)StateSpace::CROSS * StateSpace::EDGE2 + 1) / 2, 0xFF);
-  createPTPsCrossEdges2(187520, idx_e0_e2_solved, StateSpace::CROSS,
-                        StateSpace::EDGE2, 11, mtm.getMTEdge4(),
-                        mtm.getMTEdge2(), pt_pscross_E0E2);
+  createPTPsCrossEdge2(187520, idx_e0_e2_solved, StateSpace::CROSS,
+                       StateSpace::EDGE2, 11, mtm.getMTEdge4(),
+                       mtm.getMTEdge2(), pt_pscross_E0E2);
   saveTable(pt_pscross_E0E2, "pt_pscross_E0E2.bin");
   timer.printElapsed("pt_pscross_E0E2.bin");
 }
@@ -1101,9 +1100,8 @@ void PruneTableManager::genPTPsCrossE0E1() {
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E0E1.resize(
       ((long long)StateSpace::CROSS * StateSpace::EDGE2 + 1) / 2, 0xFF);
-  createPTPsCrossEdges2(187520, idx_solved, StateSpace::CROSS,
-                        StateSpace::EDGE2, 11, mtm.getMTEdge4(),
-                        mtm.getMTEdge2(), pt_pscross_E0E1);
+  createPTPsCrossEdge2(187520, idx_solved, StateSpace::CROSS, StateSpace::EDGE2,
+                       11, mtm.getMTEdge4(), mtm.getMTEdge2(), pt_pscross_E0E1);
   saveTable(pt_pscross_E0E1, "pt_pscross_E0E1.bin");
   timer.printElapsed("pt_pscross_E0E1.bin");
 }
@@ -1119,9 +1117,8 @@ void PruneTableManager::genPTPsCrossE1E3() {
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E1E3.resize(
       ((long long)StateSpace::CROSS * StateSpace::EDGE2 + 1) / 2, 0xFF);
-  createPTPsCrossEdges2(187520, idx_solved, StateSpace::CROSS,
-                        StateSpace::EDGE2, 11, mtm.getMTEdge4(),
-                        mtm.getMTEdge2(), pt_pscross_E1E3);
+  createPTPsCrossEdge2(187520, idx_solved, StateSpace::CROSS, StateSpace::EDGE2,
+                       11, mtm.getMTEdge4(), mtm.getMTEdge2(), pt_pscross_E1E3);
   saveTable(pt_pscross_E1E3, "pt_pscross_E1E3.bin");
   timer.printElapsed("pt_pscross_E1E3.bin");
 }
@@ -1137,9 +1134,8 @@ void PruneTableManager::genPTPsCrossE0E3() {
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E0E3.resize(
       ((long long)StateSpace::CROSS * StateSpace::EDGE2 + 1) / 2, 0xFF);
-  createPTPsCrossEdges2(187520, idx_solved, StateSpace::CROSS,
-                        StateSpace::EDGE2, 11, mtm.getMTEdge4(),
-                        mtm.getMTEdge2(), pt_pscross_E0E3);
+  createPTPsCrossEdge2(187520, idx_solved, StateSpace::CROSS, StateSpace::EDGE2,
+                       11, mtm.getMTEdge4(), mtm.getMTEdge2(), pt_pscross_E0E3);
   saveTable(pt_pscross_E0E3, "pt_pscross_E0E3.bin");
   timer.printElapsed("pt_pscross_E0E3.bin");
 }
@@ -1155,9 +1151,8 @@ void PruneTableManager::genPTPsCrossE1E2() {
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E1E2.resize(
       ((long long)StateSpace::CROSS * StateSpace::EDGE2 + 1) / 2, 0xFF);
-  createPTPsCrossEdges2(187520, idx_solved, StateSpace::CROSS,
-                        StateSpace::EDGE2, 11, mtm.getMTEdge4(),
-                        mtm.getMTEdge2(), pt_pscross_E1E2);
+  createPTPsCrossEdge2(187520, idx_solved, StateSpace::CROSS, StateSpace::EDGE2,
+                       11, mtm.getMTEdge4(), mtm.getMTEdge2(), pt_pscross_E1E2);
   saveTable(pt_pscross_E1E2, "pt_pscross_E1E2.bin");
   timer.printElapsed("pt_pscross_E1E2.bin");
 }
@@ -1173,9 +1168,8 @@ void PruneTableManager::genPTPsCrossE2E3() {
   int idx_solved = array_to_index(target, 2, 2, 12);
   pt_pscross_E2E3.resize(
       ((long long)StateSpace::CROSS * StateSpace::EDGE2 + 1) / 2, 0xFF);
-  createPTPsCrossEdges2(187520, idx_solved, StateSpace::CROSS,
-                        StateSpace::EDGE2, 11, mtm.getMTEdge4(),
-                        mtm.getMTEdge2(), pt_pscross_E2E3);
+  createPTPsCrossEdge2(187520, idx_solved, StateSpace::CROSS, StateSpace::EDGE2,
+                       11, mtm.getMTEdge4(), mtm.getMTEdge2(), pt_pscross_E2E3);
   saveTable(pt_pscross_E2E3, "pt_pscross_E2E3.bin");
   timer.printElapsed("pt_pscross_E2E3.bin");
 }
@@ -1191,9 +1185,9 @@ void PruneTableManager::genPTPsCrossE0E1E2() {
   int idx_solved = array_to_index(target, 3, 2, 12);
   pt_pscross_E0E1E2.resize(
       ((long long)StateSpace::CROSS * StateSpace::EDGE3 + 1) / 2, 0xFF);
-  createPTPsCrossEdges3(187520, idx_solved, StateSpace::CROSS,
-                        StateSpace::EDGE3, 12, mtm.getMTEdge4(),
-                        mtm.getMTEdge3(), pt_pscross_E0E1E2);
+  createPTPsCrossEdge3(187520, idx_solved, StateSpace::CROSS, StateSpace::EDGE3,
+                       12, mtm.getMTEdge4(), mtm.getMTEdge3(),
+                       pt_pscross_E0E1E2);
   saveTable(pt_pscross_E0E1E2, "pt_pscross_E0E1E2.bin");
   timer.printElapsed("pt_pscross_E0E1E2.bin");
 }
@@ -1209,9 +1203,9 @@ void PruneTableManager::genPTPsCrossE1E2E3() {
   int idx_solved = array_to_index(target, 3, 2, 12);
   pt_pscross_E1E2E3.resize(
       ((long long)StateSpace::CROSS * StateSpace::EDGE3 + 1) / 2, 0xFF);
-  createPTPsCrossEdges3(187520, idx_solved, StateSpace::CROSS,
-                        StateSpace::EDGE3, 12, mtm.getMTEdge4(),
-                        mtm.getMTEdge3(), pt_pscross_E1E2E3);
+  createPTPsCrossEdge3(187520, idx_solved, StateSpace::CROSS, StateSpace::EDGE3,
+                       12, mtm.getMTEdge4(), mtm.getMTEdge3(),
+                       pt_pscross_E1E2E3);
   saveTable(pt_pscross_E1E2E3, "pt_pscross_E1E2E3.bin");
   timer.printElapsed("pt_pscross_E1E2E3.bin");
 }
@@ -1227,9 +1221,9 @@ void PruneTableManager::genPTPsCrossE0E2E3() {
   int idx_solved = array_to_index(target, 3, 2, 12);
   pt_pscross_E0E2E3.resize(
       ((long long)StateSpace::CROSS * StateSpace::EDGE3 + 1) / 2, 0xFF);
-  createPTPsCrossEdges3(187520, idx_solved, StateSpace::CROSS,
-                        StateSpace::EDGE3, 12, mtm.getMTEdge4(),
-                        mtm.getMTEdge3(), pt_pscross_E0E2E3);
+  createPTPsCrossEdge3(187520, idx_solved, StateSpace::CROSS, StateSpace::EDGE3,
+                       12, mtm.getMTEdge4(), mtm.getMTEdge3(),
+                       pt_pscross_E0E2E3);
   saveTable(pt_pscross_E0E2E3, "pt_pscross_E0E2E3.bin");
   timer.printElapsed("pt_pscross_E0E2E3.bin");
 }
@@ -1245,9 +1239,9 @@ void PruneTableManager::genPTPsCrossE0E1E3() {
   int idx_solved = array_to_index(target, 3, 2, 12);
   pt_pscross_E0E1E3.resize(
       ((long long)StateSpace::CROSS * StateSpace::EDGE3 + 1) / 2, 0xFF);
-  createPTPsCrossEdges3(187520, idx_solved, StateSpace::CROSS,
-                        StateSpace::EDGE3, 12, mtm.getMTEdge4(),
-                        mtm.getMTEdge3(), pt_pscross_E0E1E3);
+  createPTPsCrossEdge3(187520, idx_solved, StateSpace::CROSS, StateSpace::EDGE3,
+                       12, mtm.getMTEdge4(), mtm.getMTEdge3(),
+                       pt_pscross_E0E1E3);
   saveTable(pt_pscross_E0E1E3, "pt_pscross_E0E1E3.bin");
   timer.printElapsed("pt_pscross_E0E1E3.bin");
 }
@@ -1263,9 +1257,9 @@ void PruneTableManager::genPTPsCrossC4C6() {
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C4C6.resize(
       ((long long)StateSpace::CROSS * StateSpace::CORNER2 + 1) / 2, 0xFF);
-  createPTPsCrossCorners2(187520, idx_solved, StateSpace::CROSS,
-                          StateSpace::CORNER2, 11, mtm.getMTEdge4(),
-                          mtm.getMTCorn2(), pt_pscross_C4C6);
+  createPTPsCrossCorn2(187520, idx_solved, StateSpace::CROSS,
+                       StateSpace::CORNER2, 11, mtm.getMTEdge4(),
+                       mtm.getMTCorn2(), pt_pscross_C4C6);
   saveTable(pt_pscross_C4C6, "pt_pscross_C4C6.bin");
   timer.printElapsed("pt_pscross_C4C6.bin");
 }
@@ -1281,9 +1275,9 @@ void PruneTableManager::genPTPsCrossC5C7() {
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C5C7.resize(
       ((long long)StateSpace::CROSS * StateSpace::CORNER2 + 1) / 2, 0xFF);
-  createPTPsCrossCorners2(187520, idx_solved, StateSpace::CROSS,
-                          StateSpace::CORNER2, 11, mtm.getMTEdge4(),
-                          mtm.getMTCorn2(), pt_pscross_C5C7);
+  createPTPsCrossCorn2(187520, idx_solved, StateSpace::CROSS,
+                       StateSpace::CORNER2, 11, mtm.getMTEdge4(),
+                       mtm.getMTCorn2(), pt_pscross_C5C7);
   saveTable(pt_pscross_C5C7, "pt_pscross_C5C7.bin");
   timer.printElapsed("pt_pscross_C5C7.bin");
 }
@@ -1299,9 +1293,9 @@ void PruneTableManager::genPTPsCrossC4C5() {
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C4C5.resize(
       ((long long)StateSpace::CROSS * StateSpace::CORNER2 + 1) / 2, 0xFF);
-  createPTPsCrossCorners2(187520, idx_solved, StateSpace::CROSS,
-                          StateSpace::CORNER2, 11, mtm.getMTEdge4(),
-                          mtm.getMTCorn2(), pt_pscross_C4C5);
+  createPTPsCrossCorn2(187520, idx_solved, StateSpace::CROSS,
+                       StateSpace::CORNER2, 11, mtm.getMTEdge4(),
+                       mtm.getMTCorn2(), pt_pscross_C4C5);
   saveTable(pt_pscross_C4C5, "pt_pscross_C4C5.bin");
   timer.printElapsed("pt_pscross_C4C5.bin");
 }
@@ -1317,9 +1311,9 @@ void PruneTableManager::genPTPsCrossC4C7() {
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C4C7.resize(
       ((long long)StateSpace::CROSS * StateSpace::CORNER2 + 1) / 2, 0xFF);
-  createPTPsCrossCorners2(187520, idx_solved, StateSpace::CROSS,
-                          StateSpace::CORNER2, 11, mtm.getMTEdge4(),
-                          mtm.getMTCorn2(), pt_pscross_C4C7);
+  createPTPsCrossCorn2(187520, idx_solved, StateSpace::CROSS,
+                       StateSpace::CORNER2, 11, mtm.getMTEdge4(),
+                       mtm.getMTCorn2(), pt_pscross_C4C7);
   saveTable(pt_pscross_C4C7, "pt_pscross_C4C7.bin");
   timer.printElapsed("pt_pscross_C4C7.bin");
 }
@@ -1335,9 +1329,9 @@ void PruneTableManager::genPTPsCrossC5C6() {
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C5C6.resize(
       ((long long)StateSpace::CROSS * StateSpace::CORNER2 + 1) / 2, 0xFF);
-  createPTPsCrossCorners2(187520, idx_solved, StateSpace::CROSS,
-                          StateSpace::CORNER2, 11, mtm.getMTEdge4(),
-                          mtm.getMTCorn2(), pt_pscross_C5C6);
+  createPTPsCrossCorn2(187520, idx_solved, StateSpace::CROSS,
+                       StateSpace::CORNER2, 11, mtm.getMTEdge4(),
+                       mtm.getMTCorn2(), pt_pscross_C5C6);
   saveTable(pt_pscross_C5C6, "pt_pscross_C5C6.bin");
   timer.printElapsed("pt_pscross_C5C6.bin");
 }
@@ -1353,9 +1347,9 @@ void PruneTableManager::genPTPsCrossC6C7() {
   int idx_solved = array_to_index(target, 2, 3, 8);
   pt_pscross_C6C7.resize(
       ((long long)StateSpace::CROSS * StateSpace::CORNER2 + 1) / 2, 0xFF);
-  createPTPsCrossCorners2(187520, idx_solved, StateSpace::CROSS,
-                          StateSpace::CORNER2, 11, mtm.getMTEdge4(),
-                          mtm.getMTCorn2(), pt_pscross_C6C7);
+  createPTPsCrossCorn2(187520, idx_solved, StateSpace::CROSS,
+                       StateSpace::CORNER2, 11, mtm.getMTEdge4(),
+                       mtm.getMTCorn2(), pt_pscross_C6C7);
   saveTable(pt_pscross_C6C7, "pt_pscross_C6C7.bin");
   timer.printElapsed("pt_pscross_C6C7.bin");
 }
@@ -1371,9 +1365,9 @@ void PruneTableManager::genPTPsCrossC4C5C6() {
   int idx_solved = array_to_index(target, 3, 3, 8);
   pt_pscross_C4C5C6.resize(
       ((long long)StateSpace::CROSS * StateSpace::CORNER3 + 1) / 2, 0xFF);
-  createPTPsCrossCorners3(187520, idx_solved, StateSpace::CROSS,
-                          StateSpace::CORNER3, 13, mtm.getMTEdge4(),
-                          mtm.getMTCorn3(), pt_pscross_C4C5C6);
+  createPTPsCrossCorn3(187520, idx_solved, StateSpace::CROSS,
+                       StateSpace::CORNER3, 13, mtm.getMTEdge4(),
+                       mtm.getMTCorn3(), pt_pscross_C4C5C6);
   saveTable(pt_pscross_C4C5C6, "pt_pscross_C4C5C6.bin");
   timer.printElapsed("pt_pscross_C4C5C6.bin");
 }
@@ -1389,9 +1383,9 @@ void PruneTableManager::genPTPsCrossC4C5C7() {
   int idx_solved = array_to_index(target, 3, 3, 8);
   pt_pscross_C4C5C7.resize(
       ((long long)StateSpace::CROSS * StateSpace::CORNER3 + 1) / 2, 0xFF);
-  createPTPsCrossCorners3(187520, idx_solved, StateSpace::CROSS,
-                          StateSpace::CORNER3, 13, mtm.getMTEdge4(),
-                          mtm.getMTCorn3(), pt_pscross_C4C5C7);
+  createPTPsCrossCorn3(187520, idx_solved, StateSpace::CROSS,
+                       StateSpace::CORNER3, 13, mtm.getMTEdge4(),
+                       mtm.getMTCorn3(), pt_pscross_C4C5C7);
   saveTable(pt_pscross_C4C5C7, "pt_pscross_C4C5C7.bin");
   timer.printElapsed("pt_pscross_C4C5C7.bin");
 }
@@ -1407,9 +1401,9 @@ void PruneTableManager::genPTPsCrossC4C6C7() {
   int idx_solved = array_to_index(target, 3, 3, 8);
   pt_pscross_C4C6C7.resize(
       ((long long)StateSpace::CROSS * StateSpace::CORNER3 + 1) / 2, 0xFF);
-  createPTPsCrossCorners3(187520, idx_solved, StateSpace::CROSS,
-                          StateSpace::CORNER3, 13, mtm.getMTEdge4(),
-                          mtm.getMTCorn3(), pt_pscross_C4C6C7);
+  createPTPsCrossCorn3(187520, idx_solved, StateSpace::CROSS,
+                       StateSpace::CORNER3, 13, mtm.getMTEdge4(),
+                       mtm.getMTCorn3(), pt_pscross_C4C6C7);
   saveTable(pt_pscross_C4C6C7, "pt_pscross_C4C6C7.bin");
   timer.printElapsed("pt_pscross_C4C6C7.bin");
 }
@@ -1425,19 +1419,19 @@ void PruneTableManager::genPTPsCrossC5C6C7() {
   int idx_solved = array_to_index(target, 3, 3, 8);
   pt_pscross_C5C6C7.resize(
       ((long long)StateSpace::CROSS * StateSpace::CORNER3 + 1) / 2, 0xFF);
-  createPTPsCrossCorners3(187520, idx_solved, StateSpace::CROSS,
-                          StateSpace::CORNER3, 13, mtm.getMTEdge4(),
-                          mtm.getMTCorn3(), pt_pscross_C5C6C7);
+  createPTPsCrossCorn3(187520, idx_solved, StateSpace::CROSS,
+                       StateSpace::CORNER3, 13, mtm.getMTEdge4(),
+                       mtm.getMTCorn3(), pt_pscross_C5C6C7);
   saveTable(pt_pscross_C5C6C7, "pt_pscross_C5C6C7.bin");
   timer.printElapsed("pt_pscross_C5C6C7.bin");
 }
 
 // ... existing helper functions ...
 
-void createPTPsCrossCorners2(int idx_cr, int idx_c2, int sz_cr, int sz_c2,
-                             int depth, const std::vector<int> &t_cr,
-                             const std::vector<int> &t_c2,
-                             std::vector<unsigned char> &pt) {
+void createPTPsCrossCorn2(int idx_cr, int idx_c2, int sz_cr, int sz_c2,
+                          int depth, const std::vector<int> &t_cr,
+                          const std::vector<int> &t_c2,
+                          std::vector<unsigned char> &pt) {
   long long total = (long long)sz_cr * sz_c2;
   std::vector<unsigned char> tmp;
   try {
@@ -1478,7 +1472,7 @@ void createPTPsCrossCorners2(int idx_cr, int idx_c2, int sz_cr, int sz_c2,
           int n_cr = t_cr[base_cr + j] / 24;
           int n_c2 = t_c2[base_c2 + j];
           long long ni = (long long)n_cr * sz_c2 + n_c2;
-          // NOTE: 使用 CAS 避免竞态条?
+          // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -1497,10 +1491,10 @@ void createPTPsCrossCorners2(int idx_cr, int idx_c2, int sz_cr, int sz_c2,
       set_prune(pt, i, tmp[i]);
 }
 
-void createPTPsCrossCorners3(int idx_cr, int idx_c3, int sz_cr, int sz_c3,
-                             int depth, const std::vector<int> &t_cr,
-                             const std::vector<int> &t_c3,
-                             std::vector<unsigned char> &pt) {
+void createPTPsCrossCorn3(int idx_cr, int idx_c3, int sz_cr, int sz_c3,
+                          int depth, const std::vector<int> &t_cr,
+                          const std::vector<int> &t_c3,
+                          std::vector<unsigned char> &pt) {
   long long total = (long long)sz_cr * sz_c3;
   std::cout << "Allocating Corner3 Prune Table: " << total / 1024 / 1024
             << " MB" << std::endl;
@@ -1543,7 +1537,7 @@ void createPTPsCrossCorners3(int idx_cr, int idx_c3, int sz_cr, int sz_c3,
           int n_cr = t_cr[base_cr + j] / 24;
           int n_c3 = t_c3[base_c3 + j];
           long long ni = (long long)n_cr * sz_c3 + n_c3;
-          // NOTE: 使用 CAS 避免竞态条?
+          // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -1562,10 +1556,10 @@ void createPTPsCrossCorners3(int idx_cr, int idx_c3, int sz_cr, int sz_c3,
       set_prune(pt, i, tmp[i]);
 }
 
-void createPTPsCrossEdges3(int idx_cr, int idx_e3, int sz_cr, int sz_e3,
-                           int depth, const std::vector<int> &t_cr,
-                           const std::vector<int> &t_e3,
-                           std::vector<unsigned char> &pt) {
+void createPTPsCrossEdge3(int idx_cr, int idx_e3, int sz_cr, int sz_e3,
+                          int depth, const std::vector<int> &t_cr,
+                          const std::vector<int> &t_e3,
+                          std::vector<unsigned char> &pt) {
   long long total = (long long)sz_cr * sz_e3;
   std::cout << "Allocating Edge3 Prune Table: " << total / 1024 / 1024 << " MB"
             << std::endl;
@@ -1608,7 +1602,7 @@ void createPTPsCrossEdges3(int idx_cr, int idx_e3, int sz_cr, int sz_e3,
           int n_cr = t_cr[base_cr + j] / 24;
           int n_e3 = t_e3[base_e3 + j];
           long long ni = (long long)n_cr * sz_e3 + n_e3;
-          // NOTE: 使用 CAS 避免竞态条?
+          // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -1772,7 +1766,7 @@ void createPTCrossCE(int idx_cr, int idx_cn, int idx_ed, int sz_cr, int sz_cn,
           long long n_cr = t1[cur_cr + j];
           int n_cn = t2[cur_cn + j];
           long long ni = (n_cr + n_cn) * 24 + t3[idx3_base + j];
-          // NOTE: 使用 CAS 避免竞态条?
+          // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -1791,12 +1785,12 @@ void createPTCrossCE(int idx_cr, int idx_cn, int idx_ed, int sz_cr, int sz_cn,
       set_prune(pt, i, tmp[i]);
 }
 
-void createPTEdge6Corner2(int sz_e6, int sz_c2, int depth,
-                          const std::vector<int> &target_e_ids,
-                          const std::vector<int> &target_c_ids,
-                          const std::vector<int> &mt_e6,
-                          const std::vector<int> &mt_c2,
-                          std::vector<unsigned char> &pt) {
+void createPTEdge6Corn2(int sz_e6, int sz_c2, int depth,
+                        const std::vector<int> &target_e_ids,
+                        const std::vector<int> &target_c_ids,
+                        const std::vector<int> &mt_e6,
+                        const std::vector<int> &mt_c2,
+                        std::vector<unsigned char> &pt) {
   long long total = (long long)sz_e6 * sz_c2;
   std::cout << "  Allocating " << (total / 2 / 1024 / 1024)
             << " MB for Huge Table..." << std::endl;
@@ -1830,7 +1824,7 @@ void createPTEdge6Corner2(int sz_e6, int sz_c2, int depth,
           int n_e6 = mt_e6[base_e6 + j];
           int n_c2 = mt_c2[base_c2 + j];
           long long ni = (long long)n_e6 * sz_c2 + n_c2;
-          // NOTE: 使用 CAS 避免竞态条?
+          // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -1851,10 +1845,10 @@ void createPTEdge6Corner2(int sz_e6, int sz_c2, int depth,
   std::vector<unsigned char>().swap(tmp);
 }
 
-void createPTPsCrossEdges2(int idx_cr, int idx_e2, int sz_cr, int sz_e2,
-                           int depth, const std::vector<int> &t_cr,
-                           const std::vector<int> &t_e2,
-                           std::vector<unsigned char> &pt) {
+void createPTPsCrossEdge2(int idx_cr, int idx_e2, int sz_cr, int sz_e2,
+                          int depth, const std::vector<int> &t_cr,
+                          const std::vector<int> &t_e2,
+                          std::vector<unsigned char> &pt) {
   long long total = (long long)sz_cr * sz_e2;
   std::vector<unsigned char> tmp;
   try {
@@ -1895,7 +1889,7 @@ void createPTPsCrossEdges2(int idx_cr, int idx_e2, int sz_cr, int sz_e2,
           int n_cr = t_cr[base_cr + j] / 24;
           int n_e2 = t_e2[base_e2 + j];
           long long ni = (long long)n_cr * sz_e2 + n_e2;
-          // NOTE: 使用 CAS 避免竞态条?
+          // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -1914,7 +1908,7 @@ void createPTPsCrossEdges2(int idx_cr, int idx_e2, int sz_cr, int sz_e2,
       set_prune(pt, i, tmp[i]);
 }
 
-// --- 级联剪枝表生成函数实现 (from eo_cross_analyzer) ---
+// --- 剪枝表生成函数实现 (from eo_cross_analyzer) ---
 
 void createPTDim2(int idx1, int idx2, int sz1, int sz2, int depth,
                   const std::vector<int> &t1, const std::vector<int> &t2,
@@ -2008,7 +2002,7 @@ void createPTCrossCEX(int idx_cr, int idx_cn, int idx_ed, int idx_extra,
           int n_ex = t4[idx4_base + j];
 
           long long ni = ((n_cr + n_cn) * 24 + n_ed) * 24 + n_ex;
-          // NOTE: 使用 CAS 避免竞态条?
+          // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&tmp[ni], expected, nd);
         }
@@ -2104,15 +2098,14 @@ void createPTCrossCCC(int idx_cr, int idx_cn1, int idx_cn2, int idx_cn3,
       set_prune(pt, i, tmp[i]);
 }
 
-// --- Pseudo Cross/XCross/Pair 变体表生成函?---
+// --- Pseudo Cross/XCross/Pair 变体表生成函数 ---
 // NOTE: 以下函数用于生成 C{4-7} 变体的剪枝表
 
-// 生成 Pseudo Cross + Corner ?(例如: prune_table_pseudo_cross_C4.bin)
-// index2: corner 初始索引 (?12=C4, 15=C5, 18=C6, 21=C7)
-void createPTPsCrossCorner(int index2, int depth,
-                           const std::vector<int> &table1,
-                           const std::vector<int> &table2,
-                           std::vector<unsigned char> &prune_table) {
+// 生成 Pseudo Cross + Corner 表 (例如: prune_table_pseudo_cross_C4.bin)
+// index2: corner 初始索引 (如 12=C4, 15=C5, 18=C6, 21=C7)
+void createPTPsCrossCorn(int index2, int depth, const std::vector<int> &table1,
+                         const std::vector<int> &table2,
+                         std::vector<unsigned char> &prune_table) {
   long long size1 = StateSpace::CROSS, size2 = StateSpace::CORNER,
             size = size1 * size2;
   std::vector<unsigned char> temp_table(size, 255);
@@ -2136,7 +2129,7 @@ void createPTPsCrossCorner(int index2, int depth,
         int index2_tmp = (i % size2) * 18;
         for (int j = 0; j < 18; ++j) {
           int next_i = table1[index1_tmp + j] + table2[index2_tmp + j];
-          // NOTE: 使用 CAS 避免竞态条?
+          // NOTE: 使用 CAS 避免竞态条件
           unsigned char expected = 255;
           __sync_val_compare_and_swap(&temp_table[next_i], expected, nd);
         }
