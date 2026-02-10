@@ -670,10 +670,8 @@ struct XCrossSolver {
       int xc2_e1_n = p_mt_edge[xc2_e1 + mc];
       int xc2_e2_n = p_mt_edge[xc2_e2 + mc];
       int xc2_e3_n = p_mt_edge[xc2_e3 + mc];
-      int xc2_e_sel = (diff2 == 0)   ? xc2_e0_n
-                      : (diff2 == 1) ? xc2_e1_n
-                      : (diff2 == 2) ? xc2_e2_n
-                                     : xc2_e3_n;
+      int xc2_e_n[] = {xc2_e0_n, xc2_e1_n, xc2_e2_n, xc2_e3_n};
+      int xc2_e_sel = xc2_e_n[diff2];
 
       long long idx_xc2 = (long long)(xc2_cr_n + xc2_cn_n) * 24 + xc2_e_sel;
       int prune_xc2_tmp = get_prune(prune_xc2, idx_xc2);
@@ -935,10 +933,8 @@ struct XCrossSolver {
       int xc3_e1_n = p_mt_edge[xc3_e1 + mc];
       int xc3_e2_n = p_mt_edge[xc3_e2 + mc];
       int xc3_e3_n = p_mt_edge[xc3_e3 + mc];
-      int xc3_e_sel = (diff3 == 0)   ? xc3_e0_n
-                      : (diff3 == 1) ? xc3_e1_n
-                      : (diff3 == 2) ? xc3_e2_n
-                                     : xc3_e3_n;
+      int xc3_e_n[] = {xc3_e0_n, xc3_e1_n, xc3_e2_n, xc3_e3_n};
+      int xc3_e_sel = xc3_e_n[diff3];
 
       long long idx_xc3 = (long long)(xc3_cr_n + xc3_cn_n) * 24 + xc3_e_sel;
       int prune_xc3_tmp = get_prune(prune_xc3, idx_xc3);
@@ -1227,10 +1223,8 @@ struct XCrossSolver {
       int xc4_e1_n = p_mt_edge[xc4_e1 + mc];
       int xc4_e2_n = p_mt_edge[xc4_e2 + mc];
       int xc4_e3_n = p_mt_edge[xc4_e3 + mc];
-      int xc4_e_sel = (diff4 == 0)   ? xc4_e0_n
-                      : (diff4 == 1) ? xc4_e1_n
-                      : (diff4 == 2) ? xc4_e2_n
-                                     : xc4_e3_n;
+      int xc4_e_n[] = {xc4_e0_n, xc4_e1_n, xc4_e2_n, xc4_e3_n};
+      int xc4_e_sel = xc4_e_n[diff4];
 
       long long idx_xc4 = (long long)(xc4_cr_n + xc4_cn_n) * 24 + xc4_e_sel;
       // ++s4_xc4_checked; // 统计已禁用
