@@ -32,7 +32,7 @@
 - **适用范围**: `xxxcross_analyze`, `xxxxcross_analyze` 的 slot 组合枚举
 - **风险**: 低
 
-### 8. 跨阶段 Early Exit（级联搜索深度下界）
+### ~~8. 跨阶段 Early Exit（级联搜索深度下界）~~ ✅ 已完成
 
 - **原理**: 级联搜索中，更多约束只增不减步数（如 XXCross ≥ XCross）。用前一阶段的 best 做后一阶段的搜索起始深度下界
 - **适用范围**: 任何具有级联搜索阶段的 analyzer（如 XCross → XXCross → XXXCross → XXXXCross）
