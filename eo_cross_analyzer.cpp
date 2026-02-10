@@ -157,7 +157,7 @@ struct xcross_analyzer {
   // 静态成员：所有实例共享
   static inline bool s_initialized = false;
   // NOTE: 移动表和剪枝表已迁移到Manager，此处仅保留指针
-  static inline const int *s_p_mt_ep4 = nullptr;  // EP4 移动表指针
+  static inline const int *s_p_mt_ep4 = nullptr;      // EP4 移动表指针
   static inline const int *s_p_mt_eo12_alt = nullptr; // EO Alt 移动表指针
 
   static inline const int *s_p_mt_edge4 = nullptr;
@@ -167,7 +167,6 @@ struct xcross_analyzer {
       nullptr; // Edge6 Move Table (用于 Huge 表
   static inline const int *s_p_mt_corn2 =
       nullptr; // Corner2 Move Table (用于 Huge 表
-  static inline const unsigned char *s_p_pt_cross_C4 = nullptr;
   static inline const unsigned char *s_p_pt_ep4eo12 = nullptr;
   static inline const unsigned char *s_p_pt_cross_C4E0 = nullptr;
   static inline std::vector<const unsigned char *> s_p_pt_cross_CEE;
@@ -182,7 +181,7 @@ struct xcross_analyzer {
   const int *p_mt_edge4, *p_mt_corn, *p_mt_edge, *p_mt_ep4, *p_mt_eo12_alt;
   const int *p_mt_edge6 = nullptr,
             *p_mt_corn2 = nullptr; // Edge6/Corner2 Move Tables
-  const unsigned char *p_pt_cross_C4, *p_pt_ep4eo12;
+  const unsigned char *p_pt_ep4eo12;
   const unsigned char *p_pt_cross_C4E0 = nullptr;
   std::vector<const unsigned char *> p_pt_cross_CEE;
   std::vector<const unsigned char *> p_pt_cross_CCE;
@@ -236,7 +235,6 @@ struct xcross_analyzer {
     ptm.genPTCrossC4C5C6(); // 3-Corner
 
     // 获取剪枝表指针
-    s_p_pt_cross_C4 = ptm.getEOCC4PTPtr();
     s_p_pt_ep4eo12 = ptm.getEP4EO12PTPtr();
     s_p_pt_cross_C4E0 = ptm.getCrossC4E0PTPtr(); // 复用已有表
 
@@ -268,7 +266,6 @@ struct xcross_analyzer {
     p_mt_corn2 = s_p_mt_corn2;       // Corner2 Move Table
     p_mt_ep4 = s_p_mt_ep4;           // EP4 Move Table
     p_mt_eo12_alt = s_p_mt_eo12_alt; // EO Alt Move Table
-    p_pt_cross_C4 = s_p_pt_cross_C4;
     p_pt_ep4eo12 = s_p_pt_ep4eo12;
     p_pt_cross_C4E0 = s_p_pt_cross_C4E0;
     p_pt_cross_CEE = s_p_pt_cross_CEE;

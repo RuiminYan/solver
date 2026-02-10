@@ -23,7 +23,7 @@ mt_ep4.bin,mt_ep4,genMTEP4(),-,-,-,-,p_mt_ep4,Canon,835KB,EP4移动表
 
 --- Std/Pair/EOCross 共享表 ---,,,,,,,,,0KB,
 pt_cross.bin,pt_cross,genPTCross(),p_pt_cross(CrossSolver),-,p_pt_cross(CrossSolver),-,p_pt_cross,Canon,136KB,Cross剪枝表
-pt_cross_C4.bin,pt_cross_C4,genPTCrossC4(),-,p_pt_cross_C4,-,-,p_pt_cross_C4(XCross),Canon,4.35MB,Cross+C4
+pt_cross_C4.bin,pt_cross_C4,genPTCrossC4(),-,p_pt_cross_C4,-,-,-,Canon,4.35MB,Cross+C4
 pt_pair_C4E0.bin,pt_pair_C4E0,genPTPairC4E0(),-,p_pt_pair_C4E0,-,-,-,Canon,584B,Pair(C4+E0)
 pt_cross_C4E0.bin,pt_cross_C4E0,genPTCrossC4E0(),p_pt_cross_C4E0,p_pt_cross_C4E0,-,-,p_pt_cross_C4E0,Canon,52.2MB,XCross(C4+E0)
 pt_cross_C4C5E0E1.bin,pt_cross_C4C5E0E1,genPTCrossC4C5E0E1(),p_pt_cross_C4C5E0E1,p_pt_cross_C4C5E0E1,p_pt_cross_C4C5E0E1,-,p_pt_cross_C4C5E0E1,Canon,9.99GB,Huge邻近表
