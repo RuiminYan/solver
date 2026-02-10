@@ -431,9 +431,11 @@ struct XCrossSolver {
                              const std::vector<std::string> &rots) {
     std::vector<int> all_results;
     all_results.reserve(48);
+    // NOTE: 跨阶段 Early Exit — 前阶段 best 作为后阶段搜索起始深度下界
+    std::vector<int> xc_min, xxc_min, xxxc_min;
 
     { // 1. XC
-      std::vector<int> stage_min(rots.size(), 99);
+      xc_min.assign(rots.size(), 99);
       for (size_t r = 0; r < rots.size(); ++r) {
         std::vector<int> alg = alg_rotation(base_alg, rots[r]);
         struct SlotState {
@@ -483,13 +485,13 @@ struct XCrossSolver {
           if (res < current_best)
             current_best = res;
         }
-        stage_min[r] = current_best;
+        xc_min[r] = current_best;
       }
-      all_results.insert(all_results.end(), stage_min.begin(), stage_min.end());
+      all_results.insert(all_results.end(), xc_min.begin(), xc_min.end());
     }
 
     { // 2. XX-Cross
-      std::vector<int> stage_min(rots.size(), 99);
+      xxc_min.assign(rots.size(), 99);
       for (size_t r = 0; r < rots.size(); ++r) {
         std::vector<int> alg = alg_rotation(base_alg, rots[r]);
         struct FullSlot {
@@ -569,7 +571,9 @@ struct XCrossSolver {
               p_table_use = p_pt_cross_C4C6E0E2;
             }
             if (p_table_use) {
-              for (int d = t.h; d <= max_search; ++d) {
+              // 跨阶段下界：XXC 解 ≥ XC 解
+              int startD = std::max(t.h, xc_min[r]);
+              for (int d = startD; d <= max_search; ++d) {
                 if (search_2(st[t.a].im, st[t.a].ic * 18, st[t.a].e0 * 18,
                              ea * 18, ca * 18, t.a, st[t.b].im, st[t.b].ic * 18,
                              st[t.b].e0 * 18, eb * 18, cb * 18, t.b, t1, t2,
@@ -585,13 +589,13 @@ struct XCrossSolver {
           if (res < current_best)
             current_best = res;
         }
-        stage_min[r] = current_best;
+        xxc_min[r] = current_best;
       }
-      all_results.insert(all_results.end(), stage_min.begin(), stage_min.end());
+      all_results.insert(all_results.end(), xxc_min.begin(), xxc_min.end());
     }
 
     { // 3. XXX-Cross
-      std::vector<int> stage_min(rots.size(), 99);
+      xxxc_min.assign(rots.size(), 99);
       for (size_t r = 0; r < rots.size(); ++r) {
         std::vector<int> alg = alg_rotation(base_alg, rots[r]);
         struct FullSlot {
@@ -737,7 +741,9 @@ struct XCrossSolver {
               p_3 = p_pt_cross_C4C6E0E2;
             }
 
-            for (int d = t.h; d <= max_search; ++d) {
+            // 跨阶段下界：XXXC 解 ≥ XXC 解
+            int startD = std::max(t.h, xxc_min[r]);
+            for (int d = startD; d <= max_search; ++d) {
               if (search_3(
                       st[t.a].im, st[t.a].ic * 18, st[t.a].e0 * 18, ea_b * 18,
                       ca_b * 18, st[t.a].c6 * 18, ea_c * 18, ca_c * 18, t.a,
@@ -757,9 +763,9 @@ struct XCrossSolver {
           if (res < current_best)
             current_best = res;
         }
-        stage_min[r] = current_best;
+        xxxc_min[r] = current_best;
       }
-      all_results.insert(all_results.end(), stage_min.begin(), stage_min.end());
+      all_results.insert(all_results.end(), xxxc_min.begin(), xxxc_min.end());
     }
 
     { // 4. F2L
@@ -816,7 +822,9 @@ struct XCrossSolver {
         int res = 0;
         if (max_h <= 16) {
           if (max_h > 0) {
-            for (int d = max_h; d <= 16; ++d) {
+            // 跨阶段下界：F2L 解 ≥ XXXC 解
+            int startD = std::max(max_h, xxxc_min[r]);
+            for (int d = startD; d <= 16; ++d) {
               if (search_4(
                       st[0].im, st[0].ic * 18, st[0].e0 * 18, st[0].e2 * 18,
                       st[0].c5 * 18, st[0].c6 * 18, st[1].im, st[1].ic * 18,
