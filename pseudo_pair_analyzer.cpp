@@ -1163,9 +1163,7 @@ struct XCrossSolver {
   bool search_4(int arg_index1, int arg_index2, int arg_index4, int arg_index6,
                 int arg_index8, int arg_index9, int arg_index10,
                 int arg_index11, int arg_index12, int depth, int prev,
-                const unsigned char *prune1, const unsigned char *prune2,
-                const unsigned char *prune3, const unsigned char *prune4,
-                const unsigned char *edge_prune1,
+                const unsigned char *prune1, const unsigned char *edge_prune1,
                 const unsigned char *prune_xc4, int num_aux,
                 AuxState *aux_states, int xc4_cr, int xc4_cn, int xc4_e0,
                 int xc4_e1, int xc4_e2, int xc4_e3, int diff4) {
@@ -1268,10 +1266,9 @@ struct XCrossSolver {
       } else if (search_4(index1_tmp, index2_tmp * 18, index4_tmp * 18,
                           index6_tmp * 18, index8_tmp * 18, index9_tmp * 18,
                           index10_tmp * 18, index11_tmp * 18, index12_tmp * 18,
-                          depth - 1, i, prune1, prune2, prune3, prune4,
-                          edge_prune1, prune_xc4, num_aux, next_aux, xc4_cr_n,
-                          xc4_cn_n * 18, xc4_e0_n * 18, xc4_e1_n * 18,
-                          xc4_e2_n * 18, xc4_e3_n * 18, diff4))
+                          depth - 1, i, prune1, edge_prune1, prune_xc4, num_aux,
+                          next_aux, xc4_cr_n, xc4_cn_n * 18, xc4_e0_n * 18,
+                          xc4_e1_n * 18, xc4_e2_n * 18, xc4_e3_n * 18, diff4))
         return true;
     }
     return false;
@@ -1434,11 +1431,10 @@ struct XCrossSolver {
                       edge_prune1_tmp, prune_xc4_tmp});
         for (int d = start_depth; d <= max_length; d++) {
           if (search_4(index1, index2, index4, index6, index8, index9, index10,
-                       index11, index12, d, 18, p_prune1, p_prune2, p_prune3,
-                       p_prune4, p_edge_prune1, p_prune_xc4, num_aux, aux_init,
-                       st.cross, st.corner * 18, st.edge[0] * 18,
-                       st.edge[1] * 18, st.edge[2] * 18, st.edge[3] * 18,
-                       diff4)) {
+                       index11, index12, d, 18, p_prune1, p_edge_prune1,
+                       p_prune_xc4, num_aux, aux_init, st.cross, st.corner * 18,
+                       st.edge[0] * 18, st.edge[1] * 18, st.edge[2] * 18,
+                       st.edge[3] * 18, diff4)) {
             found = d;
             break;
           }
