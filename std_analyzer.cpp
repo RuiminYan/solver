@@ -45,9 +45,7 @@ STAT_DECL(s4_xcross4); // S4: XCross 4 剪枝表
 
 // --- 通用结构 ---
 struct SearchContext {
-  std::vector<int> sol_len;
   int current_max_depth = 0;
-  SearchContext() { sol_len.reserve(32); }
 };
 
 struct CrossSolver {
@@ -74,7 +72,6 @@ struct CrossSolver {
       if (get_prune_ptr(p_pt_cross, idx) >= depth)
         continue;
       if (depth == 1) {
-        ctx.sol_len.push_back(ctx.current_max_depth);
         return true;
       }
       if (search(ctx, n_i1 * 18, n_i2 * 18, depth - 1, m))
@@ -269,7 +266,6 @@ struct XCrossSolver {
         continue;
       }
       if (depth == 1) {
-        ctx.sol_len.push_back(ctx.current_max_depth);
         return true;
       }
       if (search_1(ctx, n_i1, n_i2 * 18, n_i3 * 18, s1, depth - 1, m))
@@ -309,7 +305,6 @@ struct XCrossSolver {
       int n_i4b = p_mt_edge[i4b + m2];
       int n_i5b = p_mt_corn[i5b + m2];
       if (depth == 1) {
-        ctx.sol_len.push_back(ctx.current_max_depth);
         return true;
       }
       if (search_2(
@@ -395,7 +390,6 @@ struct XCrossSolver {
       int n_i5c_2 = p_mt_corn[i5c_2 + m3];
 
       if (depth == 1) {
-        ctx.sol_len.push_back(ctx.current_max_depth);
         return true;
       }
       if (search_3(
@@ -510,7 +504,6 @@ struct XCrossSolver {
       int n_i6d = p_mt_corn[i6d + m3];
 
       if (depth == 1) {
-        ctx.sol_len.push_back(ctx.current_max_depth);
         return true;
       }
       if (search_4(ctx, n_i1a, n_i2a * 18, n_i3a * 18, n_i4a * 18, n_i5a * 18,
