@@ -276,8 +276,8 @@ struct XCrossSolver {
       int r1 = ((pslot2_arg)-slot_k + 4) % 4 + 4; // 映射到4-7 范围
       int r2 = ((pslot3_arg)-slot_k + 4) % 4 + 4;
       int r3 = ((pslot4_arg)-slot_k + 4) % 4 + 4;
-      int keys[] = {r1, r2, r3};
-      std::sort(keys, keys + 3);
+      std::vector<int> keys = {r1, r2, r3};
+      std::sort(keys.begin(), keys.end());
 
       // 使用静态AuxPrunerDef 替代 aux_registry.find
       const AuxPrunerDef *def_ptr = &aux_def_pscross_C4C5C6;
@@ -324,8 +324,8 @@ struct XCrossSolver {
       int r1 = (slot2_arg - slot_k + 4) % 4; // 映射到0-3 范围
       int r2 = (slot3_arg - slot_k + 4) % 4;
       int r3 = (slot4_arg - slot_k + 4) % 4;
-      int keys[] = {r1, r2, r3};
-      std::sort(keys, keys + 3);
+      std::vector<int> keys = {r1, r2, r3};
+      std::sort(keys.begin(), keys.end());
 
       // 使用静态AuxPrunerDef 替代 aux_registry.find
       const AuxPrunerDef *def_ptr = &aux_def_pscross_E0E1E2;
@@ -1423,16 +1423,14 @@ struct XCrossSolver {
                          std::vector<std::string> rotations) {
     stage_results.min_xxxxc.assign(6, 999);
     std::vector<int> base_alg = string_to_alg(scramble);
+    // 排除第 i 个后剩余的 3 个槽位
+    static constexpr int complement3[4][3] = {
+        {1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}};
+
     for (int i = 3; i >= 0; --i) {
-      std::vector<int> s_rem;
-      for (int k = 0; k < 4; ++k)
-        if (k != i)
-          s_rem.push_back(k);
+      const int *s_rem = complement3[i];
       for (int j = 0; j < 4; ++j) {
-        std::vector<int> p_rem;
-        for (int k = 0; k < 4; ++k)
-          if (k != j)
-            p_rem.push_back(k);
+        const int *p_rem = complement3[j];
         start_search_4(i, s_rem[0], s_rem[1], s_rem[2], j, p_rem[0], p_rem[1],
                        p_rem[2], p_pt_pscross_ins_C_diff[i * 4 + j],
                        p_pt_pscross_C[p_rem[0]], p_pt_pscross_C[p_rem[1]],
