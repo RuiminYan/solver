@@ -331,20 +331,19 @@ private:
 };
 
 // --- 剪枝表生成函数 ---
-void createPTCrossInsC4(int idx1, int idx2, int sz1, int sz2, int depth,
-                        const std::vector<int> &t1, const std::vector<int> &t2,
-                        std::vector<unsigned char> &pt);
+void createPTCrossInsC(int idx1, int idx2, int sz1, int sz2, int depth,
+                       const std::vector<int> &t1, const std::vector<int> &t2,
+                       std::vector<unsigned char> &pt);
 
-void createPTPairBase(int idx_e, int idx_c, int sz_e, int sz_c, int depth,
-                      const std::vector<int> &t_edge,
-                      const std::vector<int> &t_corn,
-                      std::vector<unsigned char> &pt);
+void createPTPair(int idx_e, int idx_c, int sz_e, int sz_c, int depth,
+                  const std::vector<int> &t_edge,
+                  const std::vector<int> &t_corn,
+                  std::vector<unsigned char> &pt);
 
-void createPTXCrossFull(int idx_cr, int idx_cn, int idx_ed, int sz_cr,
-                        int sz_cn, int sz_ed, int depth,
-                        const std::vector<int> &t1, const std::vector<int> &t2,
-                        const std::vector<int> &t3,
-                        std::vector<unsigned char> &pt, bool is_pseudo = false);
+void createPTCrossCE(int idx_cr, int idx_cn, int idx_ed, int sz_cr, int sz_cn,
+                     int sz_ed, int depth, const std::vector<int> &t1,
+                     const std::vector<int> &t2, const std::vector<int> &t3,
+                     std::vector<unsigned char> &pt, bool is_pseudo = false);
 
 void createPTPsCrossEdges2(int idx_cr, int idx_e2, int sz_cr, int sz_e2,
                            int depth, const std::vector<int> &t_cr,
@@ -367,26 +366,28 @@ void createPTPsCrossEdges3(int idx_cr, int idx_e3, int sz_cr, int sz_e3,
                            const std::vector<int> &t_e3,
                            std::vector<unsigned char> &pt);
 
-void createPTHuge(int sz_e6, int sz_c2, int depth,
-                  const std::vector<int> &target_e_ids,
-                  const std::vector<int> &target_c_ids,
-                  const std::vector<int> &mt_e6, const std::vector<int> &mt_c2,
-                  std::vector<unsigned char> &pt);
+void createPTEdge6Corner2(int sz_e6, int sz_c2, int depth,
+                          const std::vector<int> &target_e_ids,
+                          const std::vector<int> &target_c_ids,
+                          const std::vector<int> &mt_e6,
+                          const std::vector<int> &mt_c2,
+                          std::vector<unsigned char> &pt);
 
 // --- 级联剪枝表生成函数 (from eo_cross_analyzer) ---
 void createCascadedPT3(int i1, int i2, int s1, int s2, int depth,
                        const std::vector<int> &t1, const std::vector<int> &t2,
                        std::vector<unsigned char> &pt);
-void createPTXCrossPlus(int idx_cr, int idx_cn, int idx_ed, int idx_extra,
-                        int sz_cr, int sz_cn, int sz_ed, int sz_ex, int depth,
-                        const std::vector<int> &t1, const std::vector<int> &t2,
-                        const std::vector<int> &t3, const std::vector<int> &t4,
-                        std::vector<unsigned char> &pt);
-void createPTXCrossCorn3(int idx_cr, int idx_cn, int idx_c5, int idx_c6,
-                         int sz_cr, int sz_cn, int sz_c5, int sz_c6, int depth,
-                         const std::vector<int> &t1, const std::vector<int> &t2,
-                         const std::vector<int> &t_c5,
-                         const std::vector<int> &t_c6,
-                         std::vector<unsigned char> &pt);
+void createPTCrossCEX(int idx_cr, int idx_cn, int idx_ed, int idx_extra,
+                      int sz_cr, int sz_cn, int sz_ed, int sz_ex, int depth,
+                      const std::vector<int> &t1, const std::vector<int> &t2,
+                      const std::vector<int> &t3, const std::vector<int> &t4,
+                      std::vector<unsigned char> &pt);
+void createPTCrossCCC(int idx_cr, int idx_cn1, int idx_cn2, int idx_cn3,
+                      int sz_cr, int sz_cn1, int sz_cn2, int sz_cn3, int depth,
+                      const std::vector<int> &t_cr,
+                      const std::vector<int> &t_cn1,
+                      const std::vector<int> &t_cn2,
+                      const std::vector<int> &t_cn3,
+                      std::vector<unsigned char> &pt);
 
 #endif // PRUNE_TABLES_H

@@ -6,12 +6,12 @@ createMultiMoveTable,-,-,-,-,basic_t,-,-,-,mt_edge2/3/6 mt_corn2/3 mt_ep4,标准
 createMultiMoveTable2,-,-,-,-,basic_t,-,-,-,mt_edge4,预乘偏移移动表(步长24 空间换时间)
 
 --- 标准剪枝表引擎 ---,,,,,,,,,
-createPTCrossInsC4,Cross×Corner,sz1×sz2,9,10,MTEdge4(24),MTCorn(18),-,-,genPTCrossInsC4,Cross+1Corner(初始化含U系列插入操作)
-createPTPairBase,Edge×Corner,sz_e×sz_c,20,8,MTEdge(18),MTCorn(18),-,-,genPTPairC4E0,Pair(初始化含U系列插入操作)
-createPTXCrossFull,Cross×Corner×Edge,sz_cr×sz_cn×sz_ed,1或4,11,MTEdge4(24),MTCorn(18),MTEdge(18),-,genPTCrossC4E0 genPTPsCrossC4E,XCross核心引擎(is_pseudo区分标准/伪模式)
-createPTHuge,Edge6×Corner2,sz_e6×sz_c2,1,15,MTEdge6(18),MTCorn2(18),-,-,genPTCrossC4C5E0E1 genPTCrossC4C6E0E2,超大表(~20GB RAM)
-createPTXCrossPlus,Cross×Corner×Edge×Extra,sz_cr×sz_cn×sz_ed×sz_ex,1,14,MTEdge4(24),MTCorn(18),MTEdge(18),MTEdge或MTCorn(18),genPTCrossCEE(×3) genPTCrossCCE(×3),4维XCross扩展(Plus Edge/Plus Corner)
-createPTXCrossCorn3,Cross×C4×C5×C6,sz_cr×sz_cn×sz_c5×sz_c6,1,14,MTEdge4(24),MTCorn(18),MTCorn(18),MTCorn(18),genPTCrossC4C5C6,4维3-Corner表
+createPTCrossInsC,Cross×Corner,sz1×sz2,9,10,MTEdge4(24),MTCorn(18),-,-,genPTCrossInsC4,Cross+1Corner(初始化含U系列插入操作)
+createPTPair,Edge×Corner,sz_e×sz_c,20,8,MTEdge(18),MTCorn(18),-,-,genPTPairC4E0,Pair(初始化含U系列插入操作)
+createPTCrossCE,Cross×Corner×Edge,sz_cr×sz_cn×sz_ed,1或4,11,MTEdge4(24),MTCorn(18),MTEdge(18),-,genPTCrossC4E0 genPTPsCrossC4E,XCross核心引擎(is_pseudo区分标准/伪模式)
+createPTEdge6Corner2,Edge6×Corner2,sz_e6×sz_c2,1,15,MTEdge6(18),MTCorn2(18),-,-,genPTCrossC4C5E0E1 genPTCrossC4C6E0E2,超大表(~20GB RAM)
+createPTCrossCEX,Cross×Corner×Edge×Extra,sz_cr×sz_cn×sz_ed×sz_ex,1,14,MTEdge4(24),MTCorn(18),MTEdge(18),MTEdge或MTCorn(18),genPTCrossCEE(×3) genPTCrossCCE(×3),4维XCross扩展(Plus Edge/Plus Corner)
+createPTCrossCCC,Cross×Corner×Corner×Corner,sz_cr×sz_cn1×sz_cn2×sz_cn3,1,14,MTEdge4(24),MTCorn(18),MTCorn(18),MTCorn(18),genPTCrossC4C5C6,4维3-Corner表
 
 --- 级联剪枝表引擎 ---,,,,,,,,,
 createCascadedPT3,Dim1×Dim2,s1×s2,1,11,MTEP4(18),MTEOAlt(18),-,-,genPTEP4EO12,级联BFS(步长18+18)
