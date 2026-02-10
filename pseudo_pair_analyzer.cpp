@@ -239,7 +239,7 @@ struct XCrossSolver {
   // 用于将物理索引转换为 C4 基准的Conj 索引
   static void get_conj_state_xc(const std::vector<int> &alg, int pslot,
                                 ConjStateXC &out) {
-    int cur_mul = 187520 * 24;
+    int cur_mul = StateSpace::CROSS_SOLVED * StateSpace::CORNER;
     int cur_cn = 12; // 永远从C4 开始
     int cur_e[] = {0, 2, 4, 6};
 
@@ -298,7 +298,8 @@ struct XCrossSolver {
         std::vector<int> target = {12, 15, 18};
         int init_idx = array_to_index(target, 3, 3, 8);
         int cur_c3 = init_idx;
-        int cur_cr = 187520 * 24; // Solved Cross * 24
+        int cur_cr =
+            StateSpace::CROSS_SOLVED * StateSpace::CORNER; // Solved Cross * 24
 
         // 两级映射：先 conj_moves_flat，再 rot_map
         for (int m : alg) {
@@ -345,7 +346,8 @@ struct XCrossSolver {
         std::vector<int> target = {0, 2, 4};
         int init_idx = array_to_index(target, 3, 2, 12);
         int cur_e3 = init_idx;
-        int cur_cr = 187520 * 24; // Solved Cross * 24
+        int cur_cr =
+            StateSpace::CROSS_SOLVED * StateSpace::CORNER; // Solved Cross * 24
 
         // 两级映射：先 conj_moves_flat，再 rot_map
         for (int m : alg) {
@@ -418,7 +420,8 @@ struct XCrossSolver {
         const int *mapper = rot_map[rot_idx];
         int init_idx = array_to_index(target, 2, 3, 8);
         int cur_c2 = init_idx;
-        int cur_cr = 187520 * 24; // Solved Cross * 24
+        int cur_cr =
+            StateSpace::CROSS_SOLVED * StateSpace::CORNER; // Solved Cross * 24
 
         // 两级映射：先 conj_moves_flat，再 rot_map
         for (int m : alg) {
@@ -475,7 +478,8 @@ struct XCrossSolver {
         const int *mapper = rot_map[rot_idx];
         int init_idx = array_to_index(target, 2, 2, 12);
         int cur_e2 = init_idx;
-        int cur_cr = 187520 * 24; // Solved Cross * 24
+        int cur_cr =
+            StateSpace::CROSS_SOLVED * StateSpace::CORNER; // Solved Cross * 24
 
         // 两级映射：先 conj_moves_flat，再 rot_map
         for (int m : alg) {
@@ -564,7 +568,10 @@ struct XCrossSolver {
     slot1 = arg_slot1;
     pslot1 = arg_pslot1;
     max_length = 20;
-    std::vector<int> edge_index = {187520, 187520, 187520, 187520},
+    std::vector<int> edge_index = {StateSpace::CROSS_SOLVED,
+                                   StateSpace::CROSS_SOLVED,
+                                   StateSpace::CROSS_SOLVED,
+                                   StateSpace::CROSS_SOLVED},
                      single_edge_index = {0, 2, 4, 6},
                      corner_index = {12, 15, 18, 21};
     struct RotTask {
@@ -727,7 +734,10 @@ struct XCrossSolver {
     pslot1 = arg_pslot1;
     pslot2 = arg_pslot2;
     max_length = 20;
-    std::vector<int> edge_index = {187520, 187520, 187520, 187520},
+    std::vector<int> edge_index = {StateSpace::CROSS_SOLVED,
+                                   StateSpace::CROSS_SOLVED,
+                                   StateSpace::CROSS_SOLVED,
+                                   StateSpace::CROSS_SOLVED},
                      single_edge_index = {0, 2, 4, 6},
                      corner_index = {12, 15, 18, 21};
 
@@ -988,7 +998,10 @@ struct XCrossSolver {
     pslot2 = arg_pslot2;
     pslot3 = arg_pslot3;
     max_length = 20;
-    std::vector<int> edge_index = {187520, 187520, 187520, 187520},
+    std::vector<int> edge_index = {StateSpace::CROSS_SOLVED,
+                                   StateSpace::CROSS_SOLVED,
+                                   StateSpace::CROSS_SOLVED,
+                                   StateSpace::CROSS_SOLVED},
                      single_edge_index = {0, 2, 4, 6},
                      corner_index = {12, 15, 18, 21};
 
@@ -1281,7 +1294,10 @@ struct XCrossSolver {
     pslot3 = arg_pslot3;
     pslot4 = arg_pslot4;
     max_length = 20;
-    std::vector<int> edge_index = {187520, 187520, 187520, 187520},
+    std::vector<int> edge_index = {StateSpace::CROSS_SOLVED,
+                                   StateSpace::CROSS_SOLVED,
+                                   StateSpace::CROSS_SOLVED,
+                                   StateSpace::CROSS_SOLVED},
                      single_edge_index = {0, 2, 4, 6},
                      corner_index = {12, 15, 18, 21};
 

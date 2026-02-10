@@ -258,9 +258,23 @@ constexpr int EDGE3 = 10560;    // 3棱: 24 * 22 * 20
 constexpr int CORNER2 = 504;    // 2角: 24 * 21
 constexpr int CORNER3 = 9072;   // 3角: 24 * 21 * 18
 constexpr int CROSS = 190080;   // 4棱(Cross): 24 * 22 * 20 * 18
-constexpr int EDGE6 = 42577920; // 6棱组合移动表状态数
+constexpr int EDGE6 = 42577920; // 6棱: P(12,6) * 2^6 = 665280 * 64
 constexpr int EP4 = 11880;      // EP4: P(12,4) = 12 * 11 * 10 * 9
 constexpr int EO12 = 2048;      // EO12: 2^11
+
+// --- Solved State Indices ---
+// Cross 4 棱 {8,9,10,11} 还原态编码 = Lehmer({8,9,10,11}) * 2^4
+// = 8*(1+12+132+1320) * 16 = 11720 * 16
+constexpr int CROSS_SOLVED = 187520;
+// Edge2 两个分量：Cross 4 棱拆成 {8,9} 和 {10,11} 两组
+// 416 = Lehmer({8,9}) * 2^2 = 104 * 4
+// 520 = Lehmer({10,11}) * 2^2 = 130 * 4
+constexpr int EDGE2_A_SOLVED = 416;
+constexpr int EDGE2_B_SOLVED = 520;
+// EP4 中 {8,9,10,11} 的 Lehmer 秩（不含朝向）= 8*(1+12+132+1320)
+constexpr int EP4_SOLVED = 11720;
+// Edge6 仅位置空间 = P(12,6) = 12!/6!（不含朝向，区别于 EDGE6）
+constexpr int EDGE6_POS = 665280;
 } // namespace StateSpace
 
 // --- 槽位关系判断工具函数 ---

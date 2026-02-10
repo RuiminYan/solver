@@ -37,8 +37,8 @@ int trans_moves[4][4][18];
 
 // --- 镜像映射表(用于 Diff=3 -> Diff=1) ---
 int sym_corner2[StateSpace::CORNER2];
-int sym_edge6_pos[665280]; // 12P6
-int sym_edge6_ori[64];     // 2^6
+int sym_edge6_pos[StateSpace::EDGE6_POS]; // P(12,6)
+int sym_edge6_ori[64];                    // 2^6
 
 // 物理位置镜像映射 (L <-> R)
 // Edges: 0:BL, 1:BR, 2:FR, 3:FL, 4:UB, 5:UR, 6:UF, 7:UL, 8:DB, 9:DR, 10:DF,
@@ -76,7 +76,7 @@ void initMirrorTables() {
   // 2. Edge6 Position Mirror Table
   // Swap E0 <-> E1 roles
   std::vector<int> e_arr(6);
-  for (int i = 0; i < 665280; ++i) {
+  for (int i = 0; i < StateSpace::EDGE6_POS; ++i) {
     index_to_array(e_arr, i, 6, 1, 12); // Only position
     // e_arr[0]=E0, e_arr[1]=E1, ...
 
@@ -301,7 +301,8 @@ struct XCrossSolver {
 
   void get_conjugated_indices_all(const std::vector<int> &alg, int slot_k,
                                   ConjState &out) {
-    int cur_mul = 187520 * 24, cur_cn = 12 * 18;
+    int cur_mul = StateSpace::CROSS_SOLVED * StateSpace::CORNER,
+        cur_cn = 12 * 18;
     int cur_e[] = {0, 2, 4, 6};
     for (int m : alg) {
       int mc = conj_moves_flat[m][slot_k];
@@ -405,7 +406,9 @@ struct XCrossSolver {
             if (found_def) {
               def_ptr = found_def;
               int conjugated_idx = 0;
-              int virtual_cross_scaled = 187520 * 24; // Solved Cross * 24
+              int virtual_cross_scaled =
+                  StateSpace::CROSS_SOLVED *
+                  StateSpace::CORNER; // Solved Cross * 24
               const int *mapper = nullptr;
 
               if (is_corner3) {
@@ -517,7 +520,8 @@ struct XCrossSolver {
 
         const AuxPrunerDef *def_ptr = nullptr;
         int conjugated_idx = -1;
-        int virtual_cross_scaled = 187520 * 24;
+        int virtual_cross_scaled =
+            StateSpace::CROSS_SOLVED * StateSpace::CORNER;
         const int *mapper = nullptr;
 
         // Case 1: 两个都是棱块 (0-3)

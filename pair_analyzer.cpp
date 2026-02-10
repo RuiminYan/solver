@@ -52,9 +52,8 @@ struct PairSolver {
   const unsigned char *p_pt_cross_C4C5E0E1, *p_pt_cross_C4C6E0E2;
 
   // 常量定义 (以 Slot 0 为基准)
-  const int IDX_MULTI_BASE = 187520; // Cross 已还原
-  const int IDX_C4 = 12;             // 基准角块 (DBL)
-  const int IDX_E0 = 0;              // 基准棱块 (BL)
+  const int IDX_C4 = 12; // 基准角块 (DBL)
+  const int IDX_E0 = 0;  // 基准棱块 (BL)
 
   // Huge Table Solved Indices
   int IDX_SOLVED_E6_NB;
@@ -159,7 +158,7 @@ struct PairSolver {
 
   void get_conjugated_indices_full(const std::vector<int> &alg, int slot_k,
                                    VirtState &vs) {
-    int cur_mul = IDX_MULTI_BASE * 24;
+    int cur_mul = StateSpace::CROSS_SOLVED * StateSpace::CORNER;
     int cur_corn = IDX_C4 * 18;
     int cur_e0 = IDX_E0 * 18;
     int cur_e6_n = IDX_SOLVED_E6_NB * 18;

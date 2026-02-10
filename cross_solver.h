@@ -50,7 +50,7 @@ struct CrossSolver {
     std::vector<int> res(rots.size(), 0);
     for (size_t i = 0; i < rots.size(); ++i) {
       std::vector<int> alg = alg_rotation(base_alg, rots[i]);
-      int i1 = 416, i2 = 520;
+      int i1 = StateSpace::EDGE2_A_SOLVED, i2 = StateSpace::EDGE2_B_SOLVED;
       for (int m : alg) {
         i1 = p_mt_edge2[i1 * 18 + m];
         i2 = p_mt_edge2[i2 * 18 + m];

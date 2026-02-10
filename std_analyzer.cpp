@@ -108,7 +108,7 @@ struct XCrossSolver {
                                   int &i_e4, int &i_e6, int &i_c5, int &i_c6,
                                   int &i_c7, int &i_e6_idx_nb, int &i_c2_idx_nb,
                                   int &i_e6_idx_dg, int &i_c2_idx_dg) {
-    int cur_mul = 187520 * 24;
+    int cur_mul = StateSpace::CROSS_SOLVED * StateSpace::CORNER;
     int cur_cn = 12 * 18;
     int cur_e0 = 0;
     int cur_e2 = 2;

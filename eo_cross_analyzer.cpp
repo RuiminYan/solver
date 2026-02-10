@@ -78,8 +78,8 @@ struct CrossSolver {
 
   void get_indices_sym(const std::vector<int> &alg, int sym_idx, int &i1,
                        int &i2, int &i_eo) {
-    i1 = 416;
-    i2 = 520;
+    i1 = StateSpace::EDGE2_A_SOLVED;
+    i2 = StateSpace::EDGE2_B_SOLVED;
     i_eo = 0;
     for (int m : alg) {
       int conj_m = sym_moves_flat[m][sym_idx];
@@ -189,7 +189,6 @@ struct XCrossSolver {
   const unsigned char *p_pt_cross_C4C5E0E1 = nullptr; // Huge Neighbor 表
   const unsigned char *p_pt_cross_C4C6E0E2 = nullptr; // Huge Diagonal 表
 
-  const int SOLVED_MULTI = 187520 * 24;
   const int SOLVED_CORNER = 12;
   const int SOLVED_EDGE = 0;
 
@@ -280,10 +279,10 @@ struct XCrossSolver {
                              int &i_dep, int &i_eo, int *track_e, int *track_c,
                              int &i_e6_nb, int &i_c2_nb, // Huge Neighbor 状态
                              int &i_e6_dg, int &i_c2_dg) { // Huge Diagonal 状态
-    i1 = SOLVED_MULTI;
+    i1 = StateSpace::CROSS_SOLVED * StateSpace::CORNER;
     i2 = SOLVED_CORNER;
     i3 = SOLVED_EDGE;
-    i_dep = 11720;
+    i_dep = StateSpace::EP4_SOLVED;
     i_eo = 0;
 
     track_e[0] = 2;
