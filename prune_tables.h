@@ -77,9 +77,10 @@ private:
   std::vector<unsigned char> pt_pscross_C5C6C7; // Newly Added
 
   // === PseudoPair 专用表 ===
-  std::vector<unsigned char> pt_pscross_C[4];       // Cross + C{4-7}
-  std::vector<unsigned char> pt_pscross_C_diff[16]; // XC: diff*4+corner_offset
-  std::vector<unsigned char> pt_pspair_CE[16];      // EC Pair: edge*4+corner
+  std::vector<unsigned char> pt_pscross_C[4]; // Cross + C{4-7}
+  std::vector<unsigned char>
+      pt_pscross_ins_C_diff[16];               // XC: diff*4+corner_offset
+  std::vector<unsigned char> pt_pspair_CE[16]; // EC Pair: edge*4+corner
 
   // === EOCross 专用表 ===
   // NOTE: eo_cross使用不同生成函数，与pt_cross_ins_C4不同
@@ -252,8 +253,8 @@ public:
   const unsigned char *getPsCrossCPTPtr(int c) const {
     return pt_pscross_C[c].data();
   }
-  const unsigned char *getPsCrossCDiffPTPtr(int idx) const {
-    return pt_pscross_C_diff[idx].data();
+  const unsigned char *getPsCrossInsCDiffPTPtr(int idx) const {
+    return pt_pscross_ins_C_diff[idx].data();
   }
   const unsigned char *getPsPairECPTPtr(int idx) const {
     return pt_pspair_CE[idx].data();
@@ -319,8 +320,8 @@ public:
   void genPTPsCrossC5C6C7();
   // PseudoPair 变体生成函数
   void genPTPsCrossC(int c); // Cross+Corner 变体 (c=0..3 → C4..C7)
-  void genPTPsCrossCDiff(int c, int e); // XCross 变体 (c=0..3, e=0..3)
-  void genPTPsPairCE(int c, int e);     // Pair 变体 (c=0..3, e=0..3)
+  void genPTPsCrossInsCDiff(int c, int e); // XCross 变体 (c=0..3, e=0..3)
+  void genPTPsPairCE(int c, int e);        // Pair 变体 (c=0..3, e=0..3)
 
 private:
   // 文件操作

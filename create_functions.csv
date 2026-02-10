@@ -18,7 +18,7 @@ createPTDim2,Dim1×Dim2,sz1×sz2,1,11,MTEP4(18),MTEOAlt(18),-,-,genPTEP4EO12,通
 
 --- Pseudo Cross/XCross 引擎 ---,,,,,,,,,
 createPTPsCrossCorner,Cross×Corner,190080×24,4,10,MTEdge4(24),MTCorn(18),-,-,genPTPsCrossC(×4),Pseudo Cross+1Corner(4个D偏移初始化)
-createPTPsCrossXCross,Cross×Corner,190080×24,4×4=16,10,MTEdge4(24),MTCorn(18),-,-,genPTPsCrossCDiff(×16),Pseudo XCross(含U插入+D偏移+边块展开)
+createPTPsCrossInsC,Cross×Corner,190080×24,4×4=16,10,MTEdge4(24),MTCorn(18),-,-,genPTPsCrossInsCDiff(×16),Pseudo XCross(含U插入+D偏移+边块展开)
 createPTPsPair,Edge×Corner,size1×size2,4×4=16,8,MTEdge(18),MTCorn(18),-,-,genPTPsPairCE(×16),Pseudo Pair(含U插入+D偏移+边块展开)
 
 --- Pseudo Aux 表引擎 ---,,,,,,,,,

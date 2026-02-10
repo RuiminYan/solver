@@ -47,7 +47,7 @@ struct xcross_analyzer2 {
   // [重构] 改用 Manager 统一管理的指针(方案A)
   static const unsigned char *p_pt_pscross_C[4]; // Cross + C{4-7}
   static const unsigned char
-      *p_pt_pscross_C_diff[16]; // XCross C{4-7} into slot{0-3}
+      *p_pt_pscross_ins_C_diff[16]; // XCross C{4-7} into slot{0-3}
   static const unsigned char *p_pt_pspair_CE[16]; // Pair C{4-7}_E{0-3}
   static const unsigned char
       *p_pt_pscross_C4E[4]; // Pseudo XCross Base (C4+E{0-3})
@@ -199,7 +199,7 @@ struct xcross_analyzer2 {
 
     // 2. 获取 XCross Prune Tables 指针
     for (int idx = 0; idx < 16; ++idx) {
-      p_pt_pscross_C_diff[idx] = ptm.getPsCrossCDiffPTPtr(idx);
+      p_pt_pscross_ins_C_diff[idx] = ptm.getPsCrossInsCDiffPTPtr(idx);
     }
 
     // 3. 获取 Pair Prune Tables 指针
@@ -653,7 +653,7 @@ struct xcross_analyzer2 {
     for (int slot1_tmp = 0; slot1_tmp < 4; slot1_tmp++) {
       for (int pslot1_tmp = 0; pslot1_tmp < 4; pslot1_tmp++) {
         int idx = slot1_tmp * 4 + pslot1_tmp;
-        start_search_1(slot1_tmp, pslot1_tmp, p_pt_pscross_C_diff[idx],
+        start_search_1(slot1_tmp, pslot1_tmp, p_pt_pscross_ins_C_diff[idx],
                        p_pt_pspair_CE[idx], rotations, base_alg);
       }
     }
@@ -867,7 +867,7 @@ struct xcross_analyzer2 {
             if (pslot1_tmp == pslot2_tmp)
               continue;
             start_search_2(slot1_tmp, slot2_tmp, pslot1_tmp, pslot2_tmp,
-                           p_pt_pscross_C_diff[slot1_tmp * 4 + pslot1_tmp],
+                           p_pt_pscross_ins_C_diff[slot1_tmp * 4 + pslot1_tmp],
                            p_pt_pscross_C[pslot2_tmp],
                            p_pt_pspair_CE[slot1_tmp * 4 + pslot1_tmp],
                            rotations, base_alg);
@@ -1154,7 +1154,7 @@ struct xcross_analyzer2 {
             start_search_3(slot1_tmp, slot_tmps_set[i][0], slot_tmps_set[i][1],
                            pslot1_tmp, pslot_tmps_set[j][0],
                            pslot_tmps_set[j][1],
-                           p_pt_pscross_C_diff[slot1_tmp * 4 + pslot1_tmp],
+                           p_pt_pscross_ins_C_diff[slot1_tmp * 4 + pslot1_tmp],
                            p_pt_pspair_CE[slot1_tmp * 4 + pslot1_tmp],
                            rotations, base_alg);
           }
@@ -1471,7 +1471,7 @@ struct xcross_analyzer2 {
           if (k != j)
             p_rem.push_back(k);
         start_search_4(i, s_rem[0], s_rem[1], s_rem[2], j, p_rem[0], p_rem[1],
-                       p_rem[2], p_pt_pscross_C_diff[i * 4 + j],
+                       p_rem[2], p_pt_pscross_ins_C_diff[i * 4 + j],
                        p_pt_pscross_C[p_rem[0]], p_pt_pscross_C[p_rem[1]],
                        p_pt_pscross_C[p_rem[2]], p_pt_pspair_CE[i * 4 + j],
                        rotations, base_alg);
@@ -1484,7 +1484,7 @@ bool xcross_analyzer2::tables_initialized = false;
 
 // [重构] 指针数组静态定义(从 Manager 获取)
 const unsigned char *xcross_analyzer2::p_pt_pscross_C[4] = {nullptr};
-const unsigned char *xcross_analyzer2::p_pt_pscross_C_diff[16] = {nullptr};
+const unsigned char *xcross_analyzer2::p_pt_pscross_ins_C_diff[16] = {nullptr};
 const unsigned char *xcross_analyzer2::p_pt_pspair_CE[16] = {nullptr};
 const unsigned char *xcross_analyzer2::p_pt_pscross_C4E[4] = {nullptr};
 

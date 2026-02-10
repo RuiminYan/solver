@@ -229,9 +229,9 @@ bool PruneTableManager::loadPseudoPairTables() {
   for (int e = 0; e < 4; ++e) {
     for (int c = 0; c < 4; ++c) {
       int idx = e * 4 + c;
-      std::string fn = "pt_pscross_C" + std::to_string(c + 4) + "_diff" +
+      std::string fn = "pt_pscross_ins_C" + std::to_string(c + 4) + "_diff" +
                        std::to_string(e) + ".bin";
-      if (!loadTable(pt_pscross_C_diff[idx], fn))
+      if (!loadTable(pt_pscross_ins_C_diff[idx], fn))
         return false;
     }
   }
@@ -331,10 +331,10 @@ void createPTPsCrossCorner(int index2, int depth,
                            const std::vector<int> &table1,
                            const std::vector<int> &table2,
                            std::vector<unsigned char> &prune_table);
-void createPTPsCrossXCross(int index3, int index2, int depth,
-                           const std::vector<int> &table1,
-                           const std::vector<int> &table2,
-                           std::vector<unsigned char> &prune_table);
+void createPTPsCrossInsC(int index3, int index2, int depth,
+                         const std::vector<int> &table1,
+                         const std::vector<int> &table2,
+                         std::vector<unsigned char> &prune_table);
 void createPTPsPair(int index1, int index2, int size1, int size2, int depth,
                     const std::vector<int> &table1,
                     const std::vector<int> &table2,
@@ -694,7 +694,7 @@ void PruneTableManager::genAllSequentially() {
   // 23. XCross 变体 (16张: C{4-7}_diff{0-3})
   for (int c = 0; c < 4; ++c)
     for (int e = 0; e < 4; ++e)
-      genPTPsCrossCDiff(c, e);
+      genPTPsCrossInsCDiff(c, e);
   // 24. Pair 变体 (16张: C{4-7}_E{0-3})
   for (int c = 0; c < 4; ++c)
     for (int e = 0; e < 4; ++e)
@@ -728,11 +728,11 @@ void PruneTableManager::genPTPsCrossC(int c) {
   mtm.releaseMTCorn();
 }
 
-void PruneTableManager::genPTPsCrossCDiff(int c, int e) {
-  std::string fn = "pt_pscross_C" + std::to_string(c + 4) + "_diff" +
+void PruneTableManager::genPTPsCrossInsCDiff(int c, int e) {
+  std::string fn = "pt_pscross_ins_C" + std::to_string(c + 4) + "_diff" +
                    std::to_string(e) + ".bin";
   int idx = e * 4 + c;
-  if (loadTable(pt_pscross_C_diff[idx], fn))
+  if (loadTable(pt_pscross_ins_C_diff[idx], fn))
     return;
   if (fileExists(fn))
     return;
@@ -742,8 +742,8 @@ void PruneTableManager::genPTPsCrossCDiff(int c, int e) {
   GenerationTimer timer;
   std::cout << "  Generating " << fn << "..." << std::endl;
   std::vector<unsigned char> temp;
-  createPTPsCrossXCross(EDGE_INDICES[e], CORNER_INDICES[c], 10,
-                        mtm.getMTEdge4(), mtm.getMTCorn(), temp);
+  createPTPsCrossInsC(EDGE_INDICES[e], CORNER_INDICES[c], 10, mtm.getMTEdge4(),
+                      mtm.getMTCorn(), temp);
   saveTable(temp, fn);
   timer.printElapsed(fn);
   mtm.releaseMTEdge4();
@@ -2104,13 +2104,13 @@ void createPTPsCrossCorner(int index2, int depth,
       set_prune(prune_table, i, temp_table[i]);
 }
 
-// 生成 Pseudo XCross ?(例如: pt_pscross_C4_diff0.bin)
+// 生成 Pseudo XCross 表(例如: pt_pscross_ins_C4_diff0.bin)
 // index3: edge 初始索引 (0, 2, 4, 6 for E0-E3)
 // index2: corner 初始索引 (12, 15, 18, 21 for C4-C7)
-void createPTPsCrossXCross(int index3, int index2, int depth,
-                           const std::vector<int> &table1,
-                           const std::vector<int> &table2,
-                           std::vector<unsigned char> &prune_table) {
+void createPTPsCrossInsC(int index3, int index2, int depth,
+                         const std::vector<int> &table1,
+                         const std::vector<int> &table2,
+                         std::vector<unsigned char> &prune_table) {
   long long size1 = 190080, size2 = 24, size = size1 * size2;
   std::vector<unsigned char> temp_table(size, 255);
 
