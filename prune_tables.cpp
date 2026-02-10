@@ -1578,24 +1578,25 @@ void createPTPsCrossEdges3(int idx_cr, int idx_e3, int sz_cr, int sz_e3,
 }
 
 // 1. Cross + C4 Insertion (Base)
-void createPTCrossInsC(int idx1, int idx2, int sz1, int sz2, int depth,
-                       const std::vector<int> &t1, const std::vector<int> &t2,
+void createPTCrossInsC(int idx_cr, int idx_cn, int sz_cr, int sz_cn, int depth,
+                       const std::vector<int> &t_cr,
+                       const std::vector<int> &t_cn,
                        std::vector<unsigned char> &pt) {
-  long long total = (long long)sz1 * sz2;
+  long long total = (long long)sz_cr * sz_cn;
   std::fill(pt.begin(), pt.end(), 255);
   std::vector<std::string> am = {"L U L'", "L U' L'", "B' U B", "B' U' B"};
-  pt[(long long)idx1 * sz2 + idx2] = 0;
+  pt[(long long)idx_cr * sz_cn + idx_cn] = 0;
   for (const auto &s : am) {
-    int i1 = idx1 * 24, i2 = idx2;
+    int i_cr = idx_cr * 24, i_cn = idx_cn;
     for (int m : string_to_alg(s)) {
-      i1 = t1[i1 + m];
-      i2 = t2[i2 * 18 + m];
+      i_cr = t_cr[i_cr + m];
+      i_cn = t_cn[i_cn * 18 + m];
     }
-    pt[(long long)i1 / 24 * sz2 + i2] = 0;
-    int base1 = i1, base2 = i2 * 18;
-    pt[t1[base1] + t2[base2]] = 0;
-    pt[t1[base1 + 1] + t2[base2 + 1]] = 0;
-    pt[t1[base1 + 2] + t2[base2 + 2]] = 0;
+    pt[(long long)i_cr / 24 * sz_cn + i_cn] = 0;
+    int base_cr = i_cr, base_cn = i_cn * 18;
+    pt[t_cr[base_cr] + t_cn[base_cn]] = 0;
+    pt[t_cr[base_cr + 1] + t_cn[base_cn + 1]] = 0;
+    pt[t_cr[base_cr + 2] + t_cn[base_cn + 2]] = 0;
   }
   DistributionPrinter dp(total);
   for (int d = 0; d < depth; ++d) {
@@ -1606,10 +1607,10 @@ void createPTCrossInsC(int idx1, int idx2, int sz1, int sz2, int depth,
       dp.progress(i, total, d);
       if (pt[i] == d) {
         cnt++;
-        int i1 = (i / sz2) * 24;
-        int i2 = (i % sz2) * 18;
+        int i_cr = (i / sz_cn) * 24;
+        int i_cn = (i % sz_cn) * 18;
         for (int j = 0; j < 18; ++j) {
-          long long ni = (long long)t1[i1 + j] + t2[i2 + j];
+          long long ni = (long long)t_cr[i_cr + j] + t_cn[i_cn + j];
           if (pt[ni] == 255)
             pt[ni] = nd;
         }

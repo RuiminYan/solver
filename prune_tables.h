@@ -331,8 +331,9 @@ private:
 };
 
 // --- 剪枝表生成函数 ---
-void createPTCrossInsC(int idx1, int idx2, int sz1, int sz2, int depth,
-                       const std::vector<int> &t1, const std::vector<int> &t2,
+void createPTCrossInsC(int idx_cr, int idx_cn, int sz_cr, int sz_cn, int depth,
+                       const std::vector<int> &t_cr,
+                       const std::vector<int> &t_cn,
                        std::vector<unsigned char> &pt);
 
 void createPTPair(int idx_ed, int idx_cn, int sz_ed, int sz_cn, int depth,
