@@ -426,7 +426,9 @@ struct PairSolver {
     return min_v;
   }
 
-  int solve_2_group(const std::vector<int> &alg, int bound) {
+  // lowerBound: 跨阶段下界 — XCross+Pair 解 ≥ Cross+Pair 解
+  int solve_2_group(const std::vector<int> &alg, int bound,
+                    int lowerBound = 0) {
     std::vector<Task2> tasks;
     VirtState sp, sx;
     for (int fix = 0; fix < 4; ++fix) {
@@ -452,7 +454,8 @@ struct PairSolver {
       if (t.h == 0 && get_prune(p_pt_pair_C4E0, sp.ie * 24 + sp.ic) == 0)
         return 0;
       int max_search = std::min(18, min_v - 1);
-      for (int d = t.h; d <= max_search; ++d) {
+      int startD = std::max(t.h, lowerBound);
+      for (int d = startD; d <= max_search; ++d) {
         if (search_2(sp.im, sp.ic * 18, sp.ie * 18, sx.im, sx.ic * 18,
                      sx.ie * 18, d, 18, t.s1, t.s2)) {
           if (d < min_v)
@@ -464,7 +467,9 @@ struct PairSolver {
     return min_v;
   }
 
-  int solve_3_group(const std::vector<int> &alg, int bound) {
+  // lowerBound: 跨阶段下界 — XXCross+Pair 解 ≥ XCross+Pair 解
+  int solve_3_group(const std::vector<int> &alg, int bound,
+                    int lowerBound = 0) {
     std::vector<Task3> tasks;
     std::vector<std::vector<int>> pairs = {{0, 1}, {0, 2}, {0, 3},
                                            {1, 2}, {1, 3}, {2, 3}};
@@ -526,7 +531,8 @@ struct PairSolver {
         p_use = p_pt_cross_C4C6E0E2;
       }
       int max_search = std::min(18, min_v - 1);
-      for (int d = t.h; d <= max_search; ++d) {
+      int startD = std::max(t.h, lowerBound);
+      for (int d = startD; d <= max_search; ++d) {
         if (search_3(sp.im, sp.ic * 18, sp.ie * 18, ie6_use, ic2_use, v_use,
                      p_use, d, 18, t.s1)) {
           if (d < min_v)
@@ -538,7 +544,9 @@ struct PairSolver {
     return min_v;
   }
 
-  int solve_4_group(const std::vector<int> &alg, int bound) {
+  // lowerBound: 跨阶段下界 — XXXCross+Pair 解 ≥ XXCross+Pair 解
+  int solve_4_group(const std::vector<int> &alg, int bound,
+                    int lowerBound = 0) {
     std::vector<Task4> tasks;
     VirtState sp, s[3], st_v;
     for (int tgt = 0; tgt < 4; ++tgt) {
@@ -608,7 +616,8 @@ struct PairSolver {
         }
       }
       int max_search = std::min(18, min_v - 1);
-      for (int d = t.h; d <= max_search; ++d) {
+      int startD = std::max(t.h, lowerBound);
+      for (int d = startD; d <= max_search; ++d) {
         if (search_4(sp.im, sp.ic * 18, sp.ie * 18, ie6[0], ic2[0], v[0], p[0],
                      ie6[1], ic2[1], v[1], p[1], ie6[2], ic2[2], v[2], p[2], d,
                      18, t.s1)) {
@@ -680,25 +689,31 @@ struct PairSolverWrapper {
   std::string solve(const std::vector<int> &alg, const std::string &id) {
     std::ostringstream oss;
     oss << id;
+    // NOTE: 跨阶段 Early Exit — 收集前阶段结果作为后阶段搜索起始深度下界
+    std::vector<int> cp_res(rots.size()), xcp_res(rots.size()),
+        xxcp_res(rots.size());
     // Cross + Pair
-    for (const auto &r : rots) {
-      std::vector<int> a = alg_rotation(alg, r);
-      oss << "," << solver.solve_1_group(a, 99);
+    for (size_t i = 0; i < rots.size(); ++i) {
+      std::vector<int> a = alg_rotation(alg, rots[i]);
+      cp_res[i] = solver.solve_1_group(a, 99);
+      oss << "," << cp_res[i];
     }
     // XCross + Pair
-    for (const auto &r : rots) {
-      std::vector<int> a = alg_rotation(alg, r);
-      oss << "," << solver.solve_2_group(a, 99);
+    for (size_t i = 0; i < rots.size(); ++i) {
+      std::vector<int> a = alg_rotation(alg, rots[i]);
+      xcp_res[i] = solver.solve_2_group(a, 99, cp_res[i]);
+      oss << "," << xcp_res[i];
     }
     // XXCross + Pair
-    for (const auto &r : rots) {
-      std::vector<int> a = alg_rotation(alg, r);
-      oss << "," << solver.solve_3_group(a, 99);
+    for (size_t i = 0; i < rots.size(); ++i) {
+      std::vector<int> a = alg_rotation(alg, rots[i]);
+      xxcp_res[i] = solver.solve_3_group(a, 99, xcp_res[i]);
+      oss << "," << xxcp_res[i];
     }
     // XXXCross + Pair
-    for (const auto &r : rots) {
-      std::vector<int> a = alg_rotation(alg, r);
-      oss << "," << solver.solve_4_group(a, 99);
+    for (size_t i = 0; i < rots.size(); ++i) {
+      std::vector<int> a = alg_rotation(alg, rots[i]);
+      oss << "," << solver.solve_4_group(a, 99, xxcp_res[i]);
     }
     return oss.str();
   }
