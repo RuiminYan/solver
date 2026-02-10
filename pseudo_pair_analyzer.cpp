@@ -193,24 +193,24 @@ struct XCrossSolver {
     // Edge3 移动表
     mtm.loadMTEdge3();
     p_mt_edge3 = mtm.getMTEdge3Ptr();
-    p_pt_pscross_E0E1E2 = ptm.getPsCrossE0E1E2PTPtr();
+    p_pt_pscross_E0E1E2 = ptm.getPsCrossEdge3PTPtr(0, 1, 2);
 
     // Corner3 移动表
     mtm.loadMTCorn3();
     p_mt_corn3 = mtm.getMTCorn3Ptr();
-    p_pt_pscross_C4C5C6 = ptm.getPsCrossC4C5C6PTPtr();
+    p_pt_pscross_C4C5C6 = ptm.getPsCrossCorner3PTPtr(4, 5, 6);
 
     // Corner2 移动表
     mtm.loadMTCorn2();
     p_mt_corn2 = mtm.getMTCorn2Ptr();
-    p_pt_pscross_C4C5 = ptm.getPsCrossC4C5PTPtr();
-    p_pt_pscross_C4C6 = ptm.getPsCrossC4C6PTPtr();
+    p_pt_pscross_C4C5 = ptm.getPsCrossCorner2PTPtr(4, 5);
+    p_pt_pscross_C4C6 = ptm.getPsCrossCorner2PTPtr(4, 6);
 
     // Edge2 移动表
     mtm.loadMTEdge2();
     p_mt_edge2 = mtm.getMTEdge2Ptr();
-    p_pt_pscross_E0E1 = ptm.getPsCrossE0E1PTPtr();
-    p_pt_pscross_E0E2 = ptm.getPsCrossE0E2PTPtr();
+    p_pt_pscross_E0E1 = ptm.getPsCrossEdge2PTPtr(0, 1);
+    p_pt_pscross_E0E2 = ptm.getPsCrossEdge2PTPtr(0, 2);
 
     // 6. 初始化静态AuxPrunerDef 对象
     aux_def_pscross_C4C5C6 = {p_pt_pscross_C4C5C6, p_mt_corn3,

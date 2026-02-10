@@ -1,11 +1,11 @@
 文件名,管理层变量名,generator,Std变量名,Pair变量名,Pseudo变量名,PseudoPair变量名,EOCross变量名,加载状态,大小,说明,步长,存储值,查表方式,编码类型
 
-===== 加载状态说明 =====,,,,,,,,,0KB,
+===== 加载状态说明 =====,,,,,,,,,,
 Canon,"规范表,实际加载到内存",,,,,,,,
 Conj,"共轭复用表,不加载,运行时通过rot_map映射到规范表",,,,,,,,
 Zombie,"僵尸表,生成但完全不使用,仅用于调试",,,,,,,,
 
-===== 移动表MT (Move Tables) =====,,,,,,,,,0KB,
+===== 移动表 (Move Tables) =====,,,,,,,,,,
 mt_edge.bin,mt_edge,genMTEdge(),-,-,p_mt_edge,p_mt_edge,p_mt_edge,Canon,<100KB,单棱移动表,18,2*pos+eo,table[val*18+move],原始
 mt_corn.bin,mt_corn,genMTCorn(),-,-,p_mt_corn,p_mt_corn,p_mt_corn,Canon,<100KB,单角移动表,18,3*pos+co,table[val*18+move],原始
 mt_edge4.bin,mt_edge4,genMTEdge4(),p_mt_edge4,p_mt_edge4,p_mt_edge4,p_mt_edge4,p_mt_edge4,Canon,17.4MB,Edge4移动表,24,index*24,table[val+move],预乘
@@ -19,9 +19,8 @@ mt_eo12_alt.bin,mt_eo12_alt,genMTEOAlt(),-,-,-,-,p_mt_eo12_alt,Canon,144KB,EO Al
 mt_ep1.bin,mt_ep1,genMTEP1(),-,-,-,-,-,Canon,<100KB,EP1移动表,18,position,table[val*18+move],原始
 mt_ep4.bin,mt_ep4,genMTEP4(),-,-,-,-,p_mt_ep4,Canon,835KB,EP4移动表,18,index,table[val*18+move],原始
 
-===== 剪枝表PT (Prune Tables) =====,,,,,,,,,0KB,
-
---- Std/Pair/EOCross 共享表 ---,,,,,,,,,0KB,
+===== 剪枝表 (Prune Tables) =====,,,,,,,,,,
+--- Std/Pair/EOCross 共享表 ---,,,,,,,,,,
 pt_cross.bin,pt_cross,genPTCross(),p_pt_cross(CrossSolver),-,p_pt_cross(CrossSolver),-,p_pt_cross,Canon,136KB,Cross剪枝表
 pt_cross_ins_C4.bin,pt_cross_ins_C4,genPTCrossInsC4(),-,p_pt_cross_ins_C4,-,-,-,Canon,2.17MB,Cross+C4 Insertion
 pt_pair_C4E0.bin,pt_pair_C4E0,genPTPairC4E0(),-,p_pt_pair_C4E0,-,-,-,Canon,292B,Pair(C4+E0)
@@ -29,14 +28,14 @@ pt_cross_C4E0.bin,pt_cross_C4E0,genPTCrossC4E0(),p_pt_cross_C4E0,p_pt_cross_C4E0
 pt_cross_C4C5E0E1.bin,pt_cross_C4C5E0E1,genPTCrossC4C5E0E1(),p_pt_cross_C4C5E0E1,p_pt_cross_C4C5E0E1,-,-,p_pt_cross_C4C5E0E1,Canon,9.99GB,Huge邻近表
 pt_cross_C4C6E0E2.bin,pt_cross_C4C6E0E2,genPTCrossC4C6E0E2(),p_pt_cross_C4C6E0E2,p_pt_cross_C4C6E0E2,-,-,p_pt_cross_C4C6E0E2,Canon,9.99GB,Huge对角表
 
---- Pseudo 基础表 ---,,,,,,,,,0KB,
+--- Pseudo 基础表 ---,,,,,,,,,,
 pt_pscross.bin,pt_pscross,genPTPsCross(),-,-,p_pt_pscross(CrossSolver),-,-,Canon,136KB,Pseudo Cross
 pt_pscross_C4E0.bin,pt_pscross_C4E[0],genPTPsCrossC4E(0),-,-,p_pt_pscross_C4E[0],p_pt_pscross_C4E[0],-,Canon,52.2MB,包含4种diff
 pt_pscross_C4E1.bin,pt_pscross_C4E[1],genPTPsCrossC4E(1),-,-,p_pt_pscross_C4E[1],p_pt_pscross_C4E[1],-,Canon,52.2MB,包含4种diff
 pt_pscross_C4E2.bin,pt_pscross_C4E[2],genPTPsCrossC4E(2),-,-,p_pt_pscross_C4E[2],p_pt_pscross_C4E[2],-,Canon,52.2MB,包含4种diff
 pt_pscross_C4E3.bin,pt_pscross_C4E[3],genPTPsCrossC4E(3),-,-,p_pt_pscross_C4E[3],p_pt_pscross_C4E[3],-,Canon,52.2MB,包含4种diff
 
---- Pseudo Aux Edge2 表 ---,,,,,,,,,0KB,
+--- Pseudo Aux Edge2 表 ---,,,,,,,,,,
 pt_pscross_E0E1.bin,pt_pscross_E0E1,genPTPsCrossE0E1(),-,-,p_pt_pscross_E0E1,p_pt_pscross_E0E1,-,Canon,47.8MB,Edge2相邻规范表
 pt_pscross_E0E2.bin,pt_pscross_E0E2,genPTPsCrossE0E2(),-,-,p_pt_pscross_E0E2,p_pt_pscross_E0E2,-,Canon,47.8MB,Edge2对角规范表
 pt_pscross_E0E3.bin,pt_pscross_E0E3,genPTPsCrossE0E3(),-,-,-,-,-,Zombie,47.8MB,僵尸表(不使用)
@@ -44,13 +43,13 @@ pt_pscross_E1E2.bin,pt_pscross_E1E2,genPTPsCrossE1E2(),-,-,-,-,-,Zombie,47.8MB,�
 pt_pscross_E1E3.bin,pt_pscross_E1E3,genPTPsCrossE1E3(),-,-,-,-,-,Zombie,47.8MB,僵尸表(不使用)
 pt_pscross_E2E3.bin,pt_pscross_E2E3,genPTPsCrossE2E3(),-,-,-,-,-,Zombie,47.8MB,僵尸表(不使用)
 
---- Pseudo Aux Edge3 表 ---,,,,,,,,,0KB,
+--- Pseudo Aux Edge3 表 ---,,,,,,,,,,
 pt_pscross_E0E1E2.bin,pt_pscross_E0E1E2,genPTPsCrossE0E1E2(),-,-,p_pt_pscross_E0E1E2,p_pt_pscross_E0E1E2,-,Canon,957MB,Edge3规范表
 pt_pscross_E0E1E3.bin,pt_pscross_E0E1E3,genPTPsCrossE0E1E3(),-,-,→p_pt_pscross_E0E1E2 via rot,-,-,Zombie,957MB,僵尸表(不使用)
 pt_pscross_E0E2E3.bin,pt_pscross_E0E2E3,genPTPsCrossE0E2E3(),-,-,→p_pt_pscross_E0E1E2 via rot,-,-,Zombie,957MB,僵尸表(不使用)
 pt_pscross_E1E2E3.bin,pt_pscross_E1E2E3,genPTPsCrossE1E2E3(),-,-,→p_pt_pscross_E0E1E2 via rot,-,-,Zombie,957MB,僵尸表(不使用)
 
---- Pseudo Aux Corner2 表 ---,,,,,,,,,0KB,
+--- Pseudo Aux Corner2 表 ---,,,,,,,,,,
 pt_pscross_C4C5.bin,pt_pscross_C4C5,genPTPsCrossC4C5(),-,-,p_pt_pscross_C4C5,p_pt_pscross_C4C5,-,Canon,45.6MB,Corner2邻接规范表
 pt_pscross_C4C6.bin,pt_pscross_C4C6,genPTPsCrossC4C6(),-,-,p_pt_pscross_C4C6,p_pt_pscross_C4C6,-,Canon,45.6MB,Corner2对角规范表
 pt_pscross_C4C7.bin,pt_pscross_C4C7,genPTPsCrossC4C7(),-,-,→p_pt_pscross_C4C5 via rot,-,-,Zombie,45.6MB,僵尸表(不使用)
@@ -58,13 +57,13 @@ pt_pscross_C5C6.bin,pt_pscross_C5C6,genPTPsCrossC5C6(),-,-,→p_pt_pscross_C4C5 
 pt_pscross_C5C7.bin,pt_pscross_C5C7,genPTPsCrossC5C7(),-,-,→p_pt_pscross_C4C6 via rot,-,-,Zombie,45.6MB,僵尸表(不使用)
 pt_pscross_C6C7.bin,pt_pscross_C6C7,genPTPsCrossC6C7(),-,-,→p_pt_pscross_C4C5 via rot,-,-,Zombie,45.6MB,僵尸表(不使用)
 
---- Pseudo Aux Corner3 表 ---,,,,,,,,,0KB,
+--- Pseudo Aux Corner3 表 ---,,,,,,,,,,
 pt_pscross_C4C5C6.bin,pt_pscross_C4C5C6,genPTPsCrossC4C5C6(),-,-,p_pt_pscross_C4C5C6,p_pt_pscross_C4C5C6,-,Canon,822MB,Corner3规范表
 pt_pscross_C4C5C7.bin,pt_pscross_C4C5C7,genPTPsCrossC4C5C7(),-,-,→p_pt_pscross_C4C5C6 via rot,-,-,Zombie,822MB,僵尸表(不使用)
 pt_pscross_C4C6C7.bin,pt_pscross_C4C6C7,genPTPsCrossC4C6C7(),-,-,→p_pt_pscross_C4C5C6 via rot,-,-,Zombie,822MB,僵尸表(不使用)
 pt_pscross_C5C6C7.bin,pt_pscross_C5C6C7,genPTPsCrossC5C6C7(),-,-,→p_pt_pscross_C4C5C6 via rot,-,-,Zombie,822MB,僵尸表(不使用)
 
---- PseudoPair 变体表 ---,,,,,,,,,0KB,
+--- PseudoPair 变体表 ---,,,,,,,,,,
 pt_pscross_C4.bin,pt_pscross_C[0],genPTPsCrossC(0),-,-,-,p_pt_pscross_C[0],-,Canon,2.17MB,包含4种diff
 pt_pscross_C5.bin,pt_pscross_C[1],genPTPsCrossC(1),-,-,-,p_pt_pscross_C[1],-,Canon,2.17MB,包含4种diff
 pt_pscross_C6.bin,pt_pscross_C[2],genPTPsCrossC(2),-,-,-,p_pt_pscross_C[2],-,Canon,2.17MB,包含4种diff
@@ -102,7 +101,7 @@ pt_pspair_C7E1.bin,pt_pspair_CE[1*4+3],genPTPsPairCE(3,1),-,-,-,p_pt_pspair_CE[1
 pt_pspair_C7E2.bin,pt_pspair_CE[2*4+3],genPTPsPairCE(3,2),-,-,-,p_pt_pspair_CE[2*4+3],-,Canon,296B,
 pt_pspair_C7E3.bin,pt_pspair_CE[3*4+3],genPTPsPairCE(3,3),-,-,-,p_pt_pspair_CE[3*4+3],-,Canon,296B,
 
---- EOCross 专用表 ---,,,,,,,,,0KB,
+--- EOCross 专用表 ---,,,,,,,,,,
 pt_ep4eo12.bin,pt_ep4eo12,genPTEP4EO12(),-,-,-,-,p_pt_ep4eo12,Canon,11.6MB,EO Dependency表
 pt_cross_C4E0E1.bin,pt_cross_CEE[0],genPTCrossCEE(0),-,-,-,-,p_pt_cross_CEE[0],Canon,1.22GB,EO Plus Edge(Right)
 pt_cross_C4E0E2.bin,pt_cross_CEE[1],genPTCrossCEE(1),-,-,-,-,p_pt_cross_CEE[1],Canon,1.22GB,EO Plus Edge(Diag)

@@ -241,7 +241,8 @@ XXXXCross 已还原，且剩余4个棱块色向正确。
 * 测试命令: `cmd /c "echo scramble_1000.txt | std_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
 * 计算时间: ~6s
-* 测试文件: scramble_1000.txt
+* 输入文件: scramble_1000.txt
+* 输出文件: scramble_1000_std.csv
 * 正确结果 (表头 + 前20行数据): 
 id,cross_z0,cross_z1,cross_z2,cross_z3,cross_x1,cross_x3,xcross_z0,xcross_z1,xcross_z2,xcross_z3,xcross_x1,xcross_x3,xxcross_z0,xxcross_z1,xxcross_z2,xxcross_z3,xxcross_x1,xxcross_x3,xxxcross_z0,xxxcross_z1,xxxcross_z2,xxxcross_z3,xxxcross_x1,xxxcross_x3,xxxxcross_z0,xxxxcross_z1,xxxxcross_z2,xxxxcross_z3,xxxxcross_x1,xxxxcross_x3
 22001,6,6,6,5,7,5,7,7,8,7,9,7,9,10,10,9,10,9,11,11,11,12,12,10,14,14,14,13,14,14
@@ -269,7 +270,8 @@ id,cross_z0,cross_z1,cross_z2,cross_z3,cross_x1,cross_x3,xcross_z0,xcross_z1,xcr
 * 测试命令: `cmd /c "echo scramble_1000.txt | pseudo_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
 * 执行时间: ~3s
-* 测试文件: scramble_1000.txt
+* 输入文件: scramble_1000.txt
+* 输出文件: scramble_1000_pseudo.csv
 * 正确结果 (表头 + 前20行数据):
 id,pseudo_cross_z0,pseudo_cross_z1,pseudo_cross_z2,pseudo_cross_z3,pseudo_cross_x1,pseudo_cross_x3,pseudo_xcross_z0,pseudo_xcross_z1,pseudo_xcross_z2,pseudo_xcross_z3,pseudo_xcross_x1,pseudo_xcross_x3,pseudo_xxcross_z0,pseudo_xxcross_z1,pseudo_xxcross_z2,pseudo_xxcross_z3,pseudo_xxcross_x1,pseudo_xxcross_x3,pseudo_xxxcross_z0,pseudo_xxxcross_z1,pseudo_xxxcross_z2,pseudo_xxxcross_z3,pseudo_xxxcross_x1,pseudo_xxxcross_x3
 22001,5,6,6,4,7,5,6,7,7,5,8,6,8,8,8,8,9,8,10,11,11,10,11,10
@@ -297,7 +299,8 @@ id,pseudo_cross_z0,pseudo_cross_z1,pseudo_cross_z2,pseudo_cross_z3,pseudo_cross_
 * 测试命令: `cmd /c "echo scramble_1000.txt | pair_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
 * 执行时间: ~1.3s
-* 测试文件: scramble_1000.txt
+* 输入文件: scramble_1000.txt
+* 输出文件: scramble_1000_pair.csv
 * 正确结果 (表头 + 前20行数据):
 id,cross_pair_z0,cross_pair_z1,cross_pair_z2,cross_pair_z3,cross_pair_x1,cross_pair_x3,xcross_pair_z0,xcross_pair_z1,xcross_pair_z2,xcross_pair_z3,xcross_pair_x1,xcross_pair_x3,xxcross_pair_z0,xxcross_pair_z1,xxcross_pair_z2,xxcross_pair_z3,xxcross_pair_x1,xxcross_pair_x3,xxxcross_pair_z0,xxxcross_pair_z1,xxxcross_pair_z2,xxxcross_pair_z3,xxxcross_pair_x1,xxxcross_pair_x3
 22001,7,7,7,5,8,5,9,7,8,8,9,8,10,11,10,10,11,10,11,13,13,13,13,12
@@ -325,7 +328,8 @@ id,cross_pair_z0,cross_pair_z1,cross_pair_z2,cross_pair_z3,cross_pair_x1,cross_p
 * 测试命令: `cmd /c "echo scramble_100.txt | pseudo_pair_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
 * 执行时间: ~36s
-* 测试文件: scramble_100.txt
+* 输入文件: scramble_100.txt
+* 输出文件: scramble_100_pseudo_pair.csv
 * 正确结果 (表头 + 前20行数据):
 id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_pair_z2,pseudo_cross_pseudo_pair_z3,pseudo_cross_pseudo_pair_x1,pseudo_cross_pseudo_pair_x3,pseudo_xcross_pseudo_pair_z0,pseudo_xcross_pseudo_pair_z1,pseudo_xcross_pseudo_pair_z2,pseudo_xcross_pseudo_pair_z3,pseudo_xcross_pseudo_pair_x1,pseudo_xcross_pseudo_pair_x3,pseudo_xxcross_pseudo_pair_z0,pseudo_xxcross_pseudo_pair_z1,pseudo_xxcross_pseudo_pair_z2,pseudo_xxcross_pseudo_pair_z3,pseudo_xxcross_pseudo_pair_x1,pseudo_xxcross_pseudo_pair_x3,pseudo_xxxcross_pseudo_pair_z0,pseudo_xxxcross_pseudo_pair_z1,pseudo_xxxcross_pseudo_pair_z2,pseudo_xxxcross_pseudo_pair_z3,pseudo_xxxcross_pseudo_pair_x1,pseudo_xxxcross_pseudo_pair_x3
 22001,6,6,6,4,7,5,7,7,7,6,8,6,9,9,9,8,9,9,10,11,11,11,11,11
@@ -353,7 +357,8 @@ id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_p
 * 测试命令: `cmd /c "echo scramble_20.txt | eo_cross_analyzer.exe"`
 * 加载移动表和剪枝表时间: 小于1min
 * 执行时间: 13s
-* 测试文件: scramble_20.txt
+* 输入文件: scramble_20.txt
+* 输出文件: scramble_20_eo_cross.csv
 * 正确结果 (表头 + 前20行数据):
 id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xcross_z0,eo_xcross_z1,eo_xcross_z2,eo_xcross_z3,eo_xcross_x1,eo_xcross_x3,eo_xxcross_z0,eo_xxcross_z1,eo_xxcross_z2,eo_xxcross_z3,eo_xxcross_x1,eo_xxcross_x3,eo_xxxcross_z0,eo_xxxcross_z1,eo_xxxcross_z2,eo_xxxcross_z3,eo_xxxcross_x1,eo_xxxcross_x3,eo_xxxxcross_z0,eo_xxxxcross_z1,eo_xxxxcross_z2,eo_xxxxcross_z3,eo_xxxxcross_x1,eo_xxxxcross_x3
 22001,8,6,7,6,8,7,8,8,8,9,9,9,11,10,11,9,11,10,12,11,12,13,12,12,15,15,15,14,15,14

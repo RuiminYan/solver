@@ -27,6 +27,17 @@ inline int get_prune_ptr(const unsigned char *table, long long index) {
   return (table[index >> 1] >> ((index & 1) << 2)) & 0xF;
 }
 
+// --- 组合索引函数 ---
+// C(4,2) 字典序索引: {0,1}->0, {0,2}->1, {0,3}->2, {1,2}->3, {1,3}->4, {2,3}->5
+inline int pairIdx(int a, int b) {
+  int lo = std::min(a, b), hi = std::max(a, b);
+  return lo * (7 - lo) / 2 + hi - lo - 1;
+}
+
+// C(4,3) 字典序索引: {0,1,2}->0, {0,1,3}->1, {0,2,3}->2, {1,2,3}->3
+// 等价于 a+b+c-3 (因为三元素之和唯一确定缺失元素)
+inline int tripleIdx(int a, int b, int c) { return a + b + c - 3; }
+
 // --- 剪枝表管理器 ---
 class PruneTableManager {
 private:
@@ -44,37 +55,12 @@ private:
   std::vector<unsigned char> pt_pscross; // Pseudo Cross 剪枝表
   std::vector<unsigned char>
       pt_pscross_C4E[4]; // Pseudo Cross 基础表 (C4+E0..E3)
-  std::vector<unsigned char>
-      pt_pscross_E0E2; // Pseudo Cross + E0,E2 对棱表 (已有)
-  std::vector<unsigned char> pt_pscross_E1E3; // 对棱表 (新增)
 
-  // 邻棱表
-  std::vector<unsigned char> pt_pscross_E0E1; // 邻棱 (已有)
-  std::vector<unsigned char> pt_pscross_E0E3; // 邻棱 (新增)
-  std::vector<unsigned char> pt_pscross_E1E2; // 邻棱 (新增)
-  std::vector<unsigned char> pt_pscross_E2E3; // 邻棱 (新增)
-
-  // Edge3 Triples
-  std::vector<unsigned char> pt_pscross_E0E1E2; // 基准
-  std::vector<unsigned char> pt_pscross_E0E1E3; // Newly Added
-  std::vector<unsigned char> pt_pscross_E0E2E3; // Newly Added
-  std::vector<unsigned char> pt_pscross_E1E2E3; // Newly Added
-
-  // 新增对角表 (F2L Corner Pairs)
-  std::vector<unsigned char> pt_pscross_C4C6; // 对角 (已有)
-  std::vector<unsigned char> pt_pscross_C5C7; // 对角 (新增)
-
-  // 新增邻角表
-  std::vector<unsigned char> pt_pscross_C4C5; // 邻角 (已有)
-  std::vector<unsigned char> pt_pscross_C4C7; // 邻角 (新增)
-  std::vector<unsigned char> pt_pscross_C5C6; // 邻角 (新增)
-  std::vector<unsigned char> pt_pscross_C6C7; // 邻角 (新增)
-
-  // Corner3 Triples
-  std::vector<unsigned char> pt_pscross_C4C5C6; // 基准
-  std::vector<unsigned char> pt_pscross_C4C5C7; // Newly Added
-  std::vector<unsigned char> pt_pscross_C4C6C7; // Newly Added
-  std::vector<unsigned char> pt_pscross_C5C6C7; // Newly Added
+  // Pseudo 组合表 (数组化，按 pairIdx/tripleIdx 索引)
+  std::vector<unsigned char> pt_pscross_Edge2[6];   // Edge2: 6种棱对组合
+  std::vector<unsigned char> pt_pscross_Corner2[6]; // Corner2: 6种角对组合
+  std::vector<unsigned char> pt_pscross_Edge3[4]; // Edge3: 4种棱三元组合
+  std::vector<unsigned char> pt_pscross_Corner3[4]; // Corner3: 4种角三元组合
 
   // === PseudoPair 专用表 ===
   std::vector<unsigned char> pt_pscross_C[4]; // Cross + C{4-7}
@@ -152,102 +138,43 @@ public:
     return pt_cross_C4C6E0E2.data();
   }
 
-  // === 新 Pseudo Getter (Ptr) ===
+  // === Pseudo Getter/Has (数组化) ===
   const unsigned char *getPsCrossPTPtr() const { return pt_pscross.data(); }
   const unsigned char *getPsCrossC4EPTPtr(int i) const {
     return pt_pscross_C4E[i].data();
   }
-  const unsigned char *getPsCrossE0E2PTPtr() const {
-    return pt_pscross_E0E2.data();
+
+  // Edge2: 参数为棱块编号 (0-3)
+  const unsigned char *getPsCrossEdge2PTPtr(int a, int b) const {
+    return pt_pscross_Edge2[pairIdx(a, b)].data();
   }
-  const unsigned char *getPsCrossE1E3PTPtr() const {
-    return pt_pscross_E1E3.data();
+  bool hasPsCrossEdge2PT(int a, int b) const {
+    return !pt_pscross_Edge2[pairIdx(a, b)].empty();
   }
 
-  // 邻棱表 Getters
-  const unsigned char *getPsCrossE0E1PTPtr() const {
-    return pt_pscross_E0E1.data();
+  // Corner2: 参数为角块编号 (4-7)
+  const unsigned char *getPsCrossCorner2PTPtr(int a, int b) const {
+    return pt_pscross_Corner2[pairIdx(a - 4, b - 4)].data();
   }
-  const unsigned char *getPsCrossE0E3PTPtr() const {
-    return pt_pscross_E0E3.data();
-  }
-  const unsigned char *getPsCrossE1E2PTPtr() const {
-    return pt_pscross_E1E2.data();
-  }
-  const unsigned char *getPsCrossE2E3PTPtr() const {
-    return pt_pscross_E2E3.data();
+  bool hasPsCrossCorner2PT(int a, int b) const {
+    return !pt_pscross_Corner2[pairIdx(a - 4, b - 4)].empty();
   }
 
-  // Edge3 Getters
-  const unsigned char *getPsCrossE0E1E2PTPtr() const {
-    return pt_pscross_E0E1E2.data();
+  // Edge3: 参数为棱块编号 (0-3)
+  const unsigned char *getPsCrossEdge3PTPtr(int a, int b, int c) const {
+    return pt_pscross_Edge3[tripleIdx(a, b, c)].data();
   }
-  const unsigned char *getPsCrossE1E2E3PTPtr() const {
-    return pt_pscross_E1E2E3.data();
-  }
-  const unsigned char *getPsCrossE0E2E3PTPtr() const {
-    return pt_pscross_E0E2E3.data();
-  }
-  const unsigned char *getPsCrossE0E1E3PTPtr() const {
-    return pt_pscross_E0E1E3.data();
+  bool hasPsCrossEdge3PT(int a, int b, int c) const {
+    return !pt_pscross_Edge3[tripleIdx(a, b, c)].empty();
   }
 
-  // 对角表 Getters
-  const unsigned char *getPsCrossC4C6PTPtr() const {
-    return pt_pscross_C4C6.data();
+  // Corner3: 参数为角块编号 (4-7)
+  const unsigned char *getPsCrossCorner3PTPtr(int a, int b, int c) const {
+    return pt_pscross_Corner3[tripleIdx(a - 4, b - 4, c - 4)].data();
   }
-  const unsigned char *getPsCrossC5C7PTPtr() const {
-    return pt_pscross_C5C7.data();
+  bool hasPsCrossCorner3PT(int a, int b, int c) const {
+    return !pt_pscross_Corner3[tripleIdx(a - 4, b - 4, c - 4)].empty();
   }
-  // 邻角表 Getters
-  const unsigned char *getPsCrossC4C5PTPtr() const {
-    return pt_pscross_C4C5.data();
-  }
-  const unsigned char *getPsCrossC4C7PTPtr() const {
-    return pt_pscross_C4C7.data();
-  }
-  const unsigned char *getPsCrossC5C6PTPtr() const {
-    return pt_pscross_C5C6.data();
-  }
-  const unsigned char *getPsCrossC6C7PTPtr() const {
-    return pt_pscross_C6C7.data();
-  }
-
-  // Corner3 Getters
-  const unsigned char *getPsCrossC4C5C6PTPtr() const {
-    return pt_pscross_C4C5C6.data();
-  }
-  const unsigned char *getPsCrossC4C5C7PTPtr() const {
-    return pt_pscross_C4C5C7.data();
-  }
-  const unsigned char *getPsCrossC4C6C7PTPtr() const {
-    return pt_pscross_C4C6C7.data();
-  }
-  const unsigned char *getPsCrossC5C6C7PTPtr() const {
-    return pt_pscross_C5C6C7.data();
-  }
-
-  // HasChecks (新名)
-  bool hasPsCrossE0E2PT() const { return !pt_pscross_E0E2.empty(); }
-  bool hasPsCrossE1E3PT() const { return !pt_pscross_E1E3.empty(); }
-  bool hasPsCrossE0E1PT() const { return !pt_pscross_E0E1.empty(); }
-  bool hasPsCrossE0E3PT() const { return !pt_pscross_E0E3.empty(); }
-  bool hasPsCrossE1E2PT() const { return !pt_pscross_E1E2.empty(); }
-  bool hasPsCrossE2E3PT() const { return !pt_pscross_E2E3.empty(); }
-  bool hasPsCrossE0E1E2PT() const { return !pt_pscross_E0E1E2.empty(); }
-  bool hasPsCrossE1E2E3PT() const { return !pt_pscross_E1E2E3.empty(); }
-  bool hasPsCrossE0E2E3PT() const { return !pt_pscross_E0E2E3.empty(); }
-  bool hasPsCrossE0E1E3PT() const { return !pt_pscross_E0E1E3.empty(); }
-  bool hasPsCrossC4C6PT() const { return !pt_pscross_C4C6.empty(); }
-  bool hasPsCrossC5C7PT() const { return !pt_pscross_C5C7.empty(); }
-  bool hasPsCrossC4C5PT() const { return !pt_pscross_C4C5.empty(); }
-  bool hasPsCrossC4C7PT() const { return !pt_pscross_C4C7.empty(); }
-  bool hasPsCrossC5C6PT() const { return !pt_pscross_C5C6.empty(); }
-  bool hasPsCrossC6C7PT() const { return !pt_pscross_C6C7.empty(); }
-  bool hasPsCrossC4C5C6PT() const { return !pt_pscross_C4C5C6.empty(); }
-  bool hasPsCrossC4C5C7PT() const { return !pt_pscross_C4C5C7.empty(); }
-  bool hasPsCrossC4C6C7PT() const { return !pt_pscross_C4C6C7.empty(); }
-  bool hasPsCrossC5C6C7PT() const { return !pt_pscross_C5C6C7.empty(); }
 
   // === PseudoPair Getters (新名) ===
   const unsigned char *getPsCrossCPTPtr(int c) const {
@@ -292,32 +219,11 @@ public:
   // Pseudo 生成函数
   void genPTPsCross();
   void genPTPsCrossC4E(int offset_idx);
-  // 对棱表生成函数
-  void genPTPsCrossE0E2();
-  void genPTPsCrossE1E3();
-  // 邻棱表生成函数
-  void genPTPsCrossE0E1();
-  void genPTPsCrossE0E3();
-  void genPTPsCrossE1E2();
-  void genPTPsCrossE2E3();
-  // Edge3 Generators
-  void genPTPsCrossE0E1E2();
-  void genPTPsCrossE1E2E3();
-  void genPTPsCrossE0E2E3();
-  void genPTPsCrossE0E1E3();
-  // 对角生成函数
-  void genPTPsCrossC4C6();
-  void genPTPsCrossC5C7();
-  // 邻角生成函数
-  void genPTPsCrossC4C5();
-  void genPTPsCrossC4C7();
-  void genPTPsCrossC5C6();
-  void genPTPsCrossC6C7();
-  // Corner3 Generators
-  void genPTPsCrossC4C5C6();
-  void genPTPsCrossC4C5C7();
-  void genPTPsCrossC4C6C7();
-  void genPTPsCrossC5C6C7();
+  // Pseudo 组合表生成函数 (参数化)
+  void genPTPsCrossEdge2(int a, int b);          // 棱对: a,b ∈ {0..3}
+  void genPTPsCrossCorner2(int a, int b);        // 角对: a,b ∈ {4..7}
+  void genPTPsCrossEdge3(int a, int b, int c);   // 棱三元: a,b,c ∈ {0..3}
+  void genPTPsCrossCorner3(int a, int b, int c); // 角三元: a,b,c ∈ {4..7}
   // PseudoPair 变体生成函数
   void genPTPsCrossC(int c); // Cross+Corner 变体 (c=0..3 → C4..C7)
   void genPTPsCrossInsCDiff(int c, int e); // XCross 变体 (c=0..3, e=0..3)
