@@ -822,6 +822,8 @@ struct XCrossSolver {
         index6 *= 18;
         int start_depth =
             std::max({prune1_tmp, prune2_tmp, edge_prune1_tmp, prune_xc2_tmp});
+        // 跨阶段下界：XXC 解 ≥ XC 解
+        start_depth = std::max(start_depth, stage_results.min_xc[r]);
         for (int d = start_depth; d <= max_depth; d++) {
           if (search_2(index1, index2, index4, index5, index6, d, 18, p_prune1,
                        p_edge_prune1, p_prune_xc2, st.cross, st.corner * 18,
@@ -1093,6 +1095,8 @@ struct XCrossSolver {
         index9 *= 18;
         int start_depth =
             std::max({prune1_tmp, edge_prune1_tmp, prune_xc3_tmp});
+        // 跨阶段下界：XXXC 解 ≥ XXC 解
+        start_depth = std::max(start_depth, stage_results.min_xxc[r]);
         for (int d = start_depth; d <= max_depth; d++) {
           if (search_3(index1, index2, index7, index8, index9, d, 18, p_prune1,
                        p_edge_prune1, p_prune_xc3, num_aux, aux_init, st.cross,
@@ -1405,6 +1409,8 @@ struct XCrossSolver {
         int start_depth =
             std::max({prune1_tmp, prune2_tmp, prune3_tmp, prune4_tmp,
                       edge_prune1_tmp, prune_xc4_tmp});
+        // 跨阶段下界：XXXXC 解 ≥ XXXC 解
+        start_depth = std::max(start_depth, stage_results.min_xxxc[r]);
         for (int d = start_depth; d <= max_depth; d++) {
           if (search_4(index1, index2, index4, index6, index8, index9, index10,
                        index11, index12, d, 18, p_prune1, p_edge_prune1,
