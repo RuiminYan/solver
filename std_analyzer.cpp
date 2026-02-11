@@ -195,14 +195,10 @@ struct XCrossSolver {
     for (int k = 0; k < count; ++k) {
       int m = moves[k];
       COUNT_NODE
-      if (v_adj != -1 && p_prune_active) {
-        int mv = conj_moves_flat[m][v_adj];
-        int n_ie6 = p_mt_edge6[i_e6 * 18 + mv];
-        int n_ic2 = p_mt_corn2[i_c2 * 18 + mv];
-        if (get_prune(p_prune_active,
-                      (long long)n_ie6 * StateSpace::CORNER2 + n_ic2) >= depth)
-          continue;
-      }
+      int n_ie6 = -1, n_ic2 = -1;
+      if (hugeTablePrunes(v_adj, p_prune_active, i_e6, i_c2, m, depth,
+                          p_mt_edge6, p_mt_corn2, n_ie6, n_ic2))
+        continue;
       int m1 = conj_moves_flat[m][s1];
       int n_i1a = p_mt_edge4[i1a + m1];
       int n_i2a = p_mt_corn[i2a + m1];
@@ -218,15 +214,11 @@ struct XCrossSolver {
       if (depth == 1) {
         return true;
       }
-      if (search_2(
-              n_i1a, n_i2a * 18, n_i3a * 18, n_i4a * 18, n_i5a * 18, s1, n_i1b,
-              n_i2b * 18, n_i3b * 18, n_i4b * 18, n_i5b * 18, s2, t_idx1,
-              t_idx2,
-              (v_adj != -1) ? p_mt_edge6[i_e6 * 18 + conj_moves_flat[m][v_adj]]
-                            : -1,
-              (v_adj != -1) ? p_mt_corn2[i_c2 * 18 + conj_moves_flat[m][v_adj]]
-                            : -1,
-              v_adj, p_prune_active, depth - 1, m))
+      if (search_2(n_i1a, n_i2a * 18, n_i3a * 18, n_i4a * 18, n_i5a * 18, s1,
+                   n_i1b, n_i2b * 18, n_i3b * 18, n_i4b * 18, n_i5b * 18, s2,
+                   t_idx1, t_idx2, (v_adj != -1) ? n_ie6 : -1,
+                   (v_adj != -1) ? n_ic2 : -1, v_adj, p_prune_active, depth - 1,
+                   m))
         return true;
     }
     return false;
@@ -247,27 +239,18 @@ struct XCrossSolver {
     for (int k = 0; k < count; ++k) {
       int m = moves[k];
       COUNT_NODE
-      if (v12 != -1 && p_table_12) {
-        int mx = conj_moves_flat[m][v12];
-        if (get_prune(p_table_12, (long long)p_mt_edge6[i_e6_12 * 18 + mx] *
-                                          StateSpace::CORNER2 +
-                                      p_mt_corn2[i_c2_12 * 18 + mx]) >= depth)
-          continue;
-      }
-      if (v23 != -1 && p_table_23) {
-        int mx = conj_moves_flat[m][v23];
-        if (get_prune(p_table_23, (long long)p_mt_edge6[i_e6_23 * 18 + mx] *
-                                          StateSpace::CORNER2 +
-                                      p_mt_corn2[i_c2_23 * 18 + mx]) >= depth)
-          continue;
-      }
-      if (v31 != -1 && p_table_31) {
-        int mx = conj_moves_flat[m][v31];
-        if (get_prune(p_table_31, (long long)p_mt_edge6[i_e6_31 * 18 + mx] *
-                                          StateSpace::CORNER2 +
-                                      p_mt_corn2[i_c2_31 * 18 + mx]) >= depth)
-          continue;
-      }
+      int n_ie6_12 = -1, n_ic2_12 = -1;
+      if (hugeTablePrunes(v12, p_table_12, i_e6_12, i_c2_12, m, depth,
+                          p_mt_edge6, p_mt_corn2, n_ie6_12, n_ic2_12))
+        continue;
+      int n_ie6_23 = -1, n_ic2_23 = -1;
+      if (hugeTablePrunes(v23, p_table_23, i_e6_23, i_c2_23, m, depth,
+                          p_mt_edge6, p_mt_corn2, n_ie6_23, n_ic2_23))
+        continue;
+      int n_ie6_31 = -1, n_ic2_31 = -1;
+      if (hugeTablePrunes(v31, p_table_31, i_e6_31, i_c2_31, m, depth,
+                          p_mt_edge6, p_mt_corn2, n_ie6_31, n_ic2_31))
+        continue;
 
       int m1 = conj_moves_flat[m][s1];
       int n_i1a = p_mt_edge4[i1a + m1];
@@ -300,28 +283,17 @@ struct XCrossSolver {
       if (depth == 1) {
         return true;
       }
-      if (search_3(
-              n_i1a, n_i2a * 18, n_i3a * 18, n_i4a_1 * 18, n_i5a_1 * 18,
-              n_i6a * 18, n_i4a_2 * 18, n_i5a_2 * 18, s1, n_i1b, n_i2b * 18,
-              n_i3b * 18, n_i4b_1 * 18, n_i5b_1 * 18, n_i6b * 18, n_i4b_2 * 18,
-              n_i5b_2 * 18, s2, n_i1c, n_i2c * 18, n_i3c * 18, n_i4c_1 * 18,
-              n_i5c_1 * 18, n_i6c * 18, n_i4c_2 * 18, n_i5c_2 * 18, s3, t12,
-              t21, t23, t32,
-              (v12 != -1) ? p_mt_edge6[i_e6_12 * 18 + conj_moves_flat[m][v12]]
-                          : -1,
-              (v12 != -1) ? p_mt_corn2[i_c2_12 * 18 + conj_moves_flat[m][v12]]
-                          : -1,
-              v12, p_table_12,
-              (v23 != -1) ? p_mt_edge6[i_e6_23 * 18 + conj_moves_flat[m][v23]]
-                          : -1,
-              (v23 != -1) ? p_mt_corn2[i_c2_23 * 18 + conj_moves_flat[m][v23]]
-                          : -1,
-              v23, p_table_23,
-              (v31 != -1) ? p_mt_edge6[i_e6_31 * 18 + conj_moves_flat[m][v31]]
-                          : -1,
-              (v31 != -1) ? p_mt_corn2[i_c2_31 * 18 + conj_moves_flat[m][v31]]
-                          : -1,
-              v31, p_table_31, depth - 1, m))
+      if (search_3(n_i1a, n_i2a * 18, n_i3a * 18, n_i4a_1 * 18, n_i5a_1 * 18,
+                   n_i6a * 18, n_i4a_2 * 18, n_i5a_2 * 18, s1, n_i1b,
+                   n_i2b * 18, n_i3b * 18, n_i4b_1 * 18, n_i5b_1 * 18,
+                   n_i6b * 18, n_i4b_2 * 18, n_i5b_2 * 18, s2, n_i1c,
+                   n_i2c * 18, n_i3c * 18, n_i4c_1 * 18, n_i5c_1 * 18,
+                   n_i6c * 18, n_i4c_2 * 18, n_i5c_2 * 18, s3, t12, t21, t23,
+                   t32, (v12 != -1) ? n_ie6_12 : -1,
+                   (v12 != -1) ? n_ic2_12 : -1, v12, p_table_12,
+                   (v23 != -1) ? n_ie6_23 : -1, (v23 != -1) ? n_ic2_23 : -1,
+                   v23, p_table_23, (v31 != -1) ? n_ie6_31 : -1,
+                   (v31 != -1) ? n_ic2_31 : -1, v31, p_table_31, depth - 1, m))
         return true;
     }
     return false;

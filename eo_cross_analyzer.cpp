@@ -395,14 +395,9 @@ struct XCrossSolver {
 
       // Check 0: Huge 表(最前置，剪枝力最强)
       int n_ie6 = -1, n_ic2 = -1;
-      if (v_huge != -1 && p_huge_active) {
-        int mv = conj_moves_flat[m][v_huge];
-        n_ie6 = p_mt_edge6[i_e6 * 18 + mv];
-        n_ic2 = p_mt_corn2[i_c2 * 18 + mv];
-        if (get_prune(p_huge_active,
-                      (long long)n_ie6 * StateSpace::CORNER2 + n_ic2) >= depth)
-          continue;
-      }
+      if (hugeTablePrunes(v_huge, p_huge_active, i_e6, i_c2, m, depth,
+                          p_mt_edge6, p_mt_corn2, n_ie6, n_ic2))
+        continue;
 
       // Check 1: Dep + EO
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];
@@ -483,14 +478,9 @@ struct XCrossSolver {
 
       // --- Check 0: Huge 表(最前置) ---
       int n_ie6 = -1, n_ic2 = -1;
-      if (v_huge != -1 && p_huge_active) {
-        int mv = conj_moves_flat[m][v_huge];
-        n_ie6 = p_mt_edge6[i_e6 * 18 + mv];
-        n_ic2 = p_mt_corn2[i_c2 * 18 + mv];
-        if (get_prune(p_huge_active,
-                      (long long)n_ie6 * StateSpace::CORNER2 + n_ic2) >= depth)
-          continue;
-      }
+      if (hugeTablePrunes(v_huge, p_huge_active, i_e6, i_c2, m, depth,
+                          p_mt_edge6, p_mt_corn2, n_ie6, n_ic2))
+        continue;
 
       // --- Check 1: Dep + EO ---
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];
@@ -587,14 +577,9 @@ struct XCrossSolver {
 
       // --- Check 0: Huge 表(最前置) ---
       int n_ie6 = -1, n_ic2 = -1;
-      if (v_huge != -1 && p_huge_active) {
-        int mv = conj_moves_flat[m][v_huge];
-        n_ie6 = p_mt_edge6[i_e6 * 18 + mv];
-        n_ic2 = p_mt_corn2[i_c2 * 18 + mv];
-        if (get_prune(p_huge_active,
-                      (long long)n_ie6 * StateSpace::CORNER2 + n_ic2) >= depth)
-          continue;
-      }
+      if (hugeTablePrunes(v_huge, p_huge_active, i_e6, i_c2, m, depth,
+                          p_mt_edge6, p_mt_corn2, n_ie6, n_ic2))
+        continue;
 
       // --- Check 1: Dep + EO ---
       int nd = p_mt_ep4[i_dep + m], neo = p_mt_eo12_alt[i_eo + m];

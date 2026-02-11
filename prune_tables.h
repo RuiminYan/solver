@@ -122,6 +122,22 @@ inline int get_prune(const unsigned char *table, long long index) {
   return (table[index >> 1] >> ((index & 1) << 2)) & 0xF;
 }
 
+// Huge 表剪枝检查：对 (Edge6, Corner2) 做 conj 变换后查表
+// 返回 true 表示应剪枝（即 prune >= depth，调用方应 continue）
+// out_e6/out_c2 接收变换后的新索引，用于递归传递
+inline bool hugeTablePrunes(int conj, const unsigned char *table,
+                            int e6, int c2, int move, int depth,
+                            const int *mt_e6, const int *mt_c2,
+                            int &out_e6, int &out_c2) {
+  if (conj == -1 || !table)
+    return false;
+  int mx = conj_moves_flat[move][conj];
+  out_e6 = mt_e6[e6 * 18 + mx];
+  out_c2 = mt_c2[c2 * 18 + mx];
+  return get_prune(table, (long long)out_e6 * StateSpace::CORNER2 + out_c2) >=
+         depth;
+}
+
 // --- 组合索引函数 ---
 // C(4,2) 字典序索引: {0,1}->0, {0,2}->1, {0,3}->2, {1,2}->3, {1,3}->4, {2,3}->5
 inline int pairIdx(int a, int b) {

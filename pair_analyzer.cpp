@@ -156,8 +156,8 @@ struct PairSolver {
     int ic2_dg; // Corn2 index (Diagonal)
   };
 
-  void get_conjugated_indices_full(const std::vector<int> &alg, int slot_k,
-                                   VirtState &vs) {
+  void get_conjugated_indices_all(const std::vector<int> &alg, int slot_k,
+                                  VirtState &vs) {
     int cur_mul = StateSpace::CROSS_SOLVED * StateSpace::CORNER;
     int cur_corn = IDX_C4 * 18;
     int cur_e0 = IDX_E0 * 18;
@@ -274,15 +274,12 @@ struct PairSolver {
     for (int k = 0; k < count; ++k) {
       COUNT_NODE
       int m = moves[k];
-      if (s_v != -1 && p_table_huge) {
-        int mv = conj_moves_flat[m][s_v];
-        S3_CHECK(s3_huge);
-        if (get_prune(p_table_huge, (long long)p_mt_edge6[i_e6 * 18 + mv] *
-                                            StateSpace::CORNER2 +
-                                        p_mt_corn2[i_c2 * 18 + mv]) >= depth) {
-          S3_HIT(s3_huge);
-          continue;
-        }
+      int n_ie6 = -1, n_ic2 = -1;
+      S3_CHECK(s3_huge);
+      if (hugeTablePrunes(s_v, p_table_huge, i_e6, i_c2, m, depth, p_mt_edge6,
+                          p_mt_corn2, n_ie6, n_ic2)) {
+        S3_HIT(s3_huge);
+        continue;
       }
       int mc_p = conj_moves_flat[m][s_p];
       int n_im_p = p_mt_edge4[im_p + mc_p], n_ic_p = p_mt_corn[ic_p + mc_p];
@@ -301,13 +298,9 @@ struct PairSolver {
         if (get_prune(p_pt_pair_C4E0, n_ie_p * 24 + n_ic_p) == 0)
           return true;
       } else {
-        if (search_3(
-                n_im_p, n_ic_p * 18, n_ie_p * 18,
-                (s_v != -1) ? p_mt_edge6[i_e6 * 18 + conj_moves_flat[m][s_v]]
-                            : -1,
-                (s_v != -1) ? p_mt_corn2[i_c2 * 18 + conj_moves_flat[m][s_v]]
-                            : -1,
-                s_v, p_table_huge, depth - 1, m, s_p))
+        if (search_3(n_im_p, n_ic_p * 18, n_ie_p * 18, (s_v != -1) ? n_ie6 : -1,
+                     (s_v != -1) ? n_ic2 : -1, s_v, p_table_huge, depth - 1, m,
+                     s_p))
           return true;
       }
     }
@@ -323,35 +316,26 @@ struct PairSolver {
     for (int k = 0; k < count; ++k) {
       COUNT_NODE
       int m = moves[k];
-      if (v1 != -1 && p1) {
-        int mx = conj_moves_flat[m][v1];
-        S4_CHECK(s4_huge1);
-        if (get_prune(p1, (long long)p_mt_edge6[ie6_1 * 18 + mx] *
-                                  StateSpace::CORNER2 +
-                              p_mt_corn2[ic2_1 * 18 + mx]) >= depth) {
-          S4_HIT(s4_huge1);
-          continue;
-        }
+      int n_ie6_1 = -1, n_ic2_1 = -1;
+      S4_CHECK(s4_huge1);
+      if (hugeTablePrunes(v1, p1, ie6_1, ic2_1, m, depth, p_mt_edge6,
+                          p_mt_corn2, n_ie6_1, n_ic2_1)) {
+        S4_HIT(s4_huge1);
+        continue;
       }
-      if (v2 != -1 && p2) {
-        int mx = conj_moves_flat[m][v2];
-        S4_CHECK(s4_huge2);
-        if (get_prune(p2, (long long)p_mt_edge6[ie6_2 * 18 + mx] *
-                                  StateSpace::CORNER2 +
-                              p_mt_corn2[ic2_2 * 18 + mx]) >= depth) {
-          S4_HIT(s4_huge2);
-          continue;
-        }
+      int n_ie6_2 = -1, n_ic2_2 = -1;
+      S4_CHECK(s4_huge2);
+      if (hugeTablePrunes(v2, p2, ie6_2, ic2_2, m, depth, p_mt_edge6,
+                          p_mt_corn2, n_ie6_2, n_ic2_2)) {
+        S4_HIT(s4_huge2);
+        continue;
       }
-      if (v3 != -1 && p3) {
-        int mx = conj_moves_flat[m][v3];
-        S4_CHECK(s4_huge3);
-        if (get_prune(p3, (long long)p_mt_edge6[ie6_3 * 18 + mx] *
-                                  StateSpace::CORNER2 +
-                              p_mt_corn2[ic2_3 * 18 + mx]) >= depth) {
-          S4_HIT(s4_huge3);
-          continue;
-        }
+      int n_ie6_3 = -1, n_ic2_3 = -1;
+      S4_CHECK(s4_huge3);
+      if (hugeTablePrunes(v3, p3, ie6_3, ic2_3, m, depth, p_mt_edge6,
+                          p_mt_corn2, n_ie6_3, n_ic2_3)) {
+        S4_HIT(s4_huge3);
+        continue;
       }
       int mc_p = conj_moves_flat[m][s_p];
       int n_im_p = p_mt_edge4[im_p + mc_p], n_ic_p = p_mt_corn[ic_p + mc_p];
@@ -370,26 +354,10 @@ struct PairSolver {
         if (get_prune(p_pt_pair_C4E0, n_ie_p * 24 + n_ic_p) == 0)
           return true;
       } else if (search_4(n_im_p, n_ic_p * 18, n_ie_p * 18,
-                          (v1 != -1)
-                              ? p_mt_edge6[ie6_1 * 18 + conj_moves_flat[m][v1]]
-                              : -1,
-                          (v1 != -1)
-                              ? p_mt_corn2[ic2_1 * 18 + conj_moves_flat[m][v1]]
-                              : -1,
-                          v1, p1,
-                          (v2 != -1)
-                              ? p_mt_edge6[ie6_2 * 18 + conj_moves_flat[m][v2]]
-                              : -1,
-                          (v2 != -1)
-                              ? p_mt_corn2[ic2_2 * 18 + conj_moves_flat[m][v2]]
-                              : -1,
-                          v2, p2,
-                          (v3 != -1)
-                              ? p_mt_edge6[ie6_3 * 18 + conj_moves_flat[m][v3]]
-                              : -1,
-                          (v3 != -1)
-                              ? p_mt_corn2[ic2_3 * 18 + conj_moves_flat[m][v3]]
-                              : -1,
+                          (v1 != -1) ? n_ie6_1 : -1, (v1 != -1) ? n_ic2_1 : -1,
+                          v1, p1, (v2 != -1) ? n_ie6_2 : -1,
+                          (v2 != -1) ? n_ic2_2 : -1, v2, p2,
+                          (v3 != -1) ? n_ie6_3 : -1, (v3 != -1) ? n_ic2_3 : -1,
                           v3, p3, depth - 1, m, s_p))
         return true;
     }
@@ -402,7 +370,7 @@ struct PairSolver {
     std::vector<Task1> tasks;
     VirtState st;
     for (int s1 = 0; s1 < 4; ++s1) {
-      get_conjugated_indices_full(alg, s1, st);
+      get_conjugated_indices_all(alg, s1, st);
       tasks.push_back({s1, get_prune(p_pt_cross_ins_C4, st.im + st.ic)});
     }
     std::sort(tasks.begin(), tasks.end(),
@@ -411,7 +379,7 @@ struct PairSolver {
     for (const auto &t : tasks) {
       if (t.h >= min_v)
         continue;
-      get_conjugated_indices_full(alg, t.s1, st);
+      get_conjugated_indices_all(alg, t.s1, st);
       if (t.h == 0 && get_prune(p_pt_pair_C4E0, st.ie * 24 + st.ic) == 0)
         return 0;
       int max_search = std::min(18, min_v - 1);
@@ -435,8 +403,8 @@ struct PairSolver {
       for (int tgt = 0; tgt < 4; ++tgt) {
         if (fix == tgt)
           continue;
-        get_conjugated_indices_full(alg, tgt, sp);
-        get_conjugated_indices_full(alg, fix, sx);
+        get_conjugated_indices_all(alg, tgt, sp);
+        get_conjugated_indices_all(alg, fix, sx);
         int h1 = get_prune(p_pt_cross_ins_C4, sp.im + sp.ic);
         int h2 =
             get_prune(p_pt_cross_C4E0, (long long)(sx.im + sx.ic) * 24 + sx.ie);
@@ -449,8 +417,8 @@ struct PairSolver {
     for (const auto &t : tasks) {
       if (t.h >= min_v)
         continue;
-      get_conjugated_indices_full(alg, t.s1, sp);
-      get_conjugated_indices_full(alg, t.s2, sx);
+      get_conjugated_indices_all(alg, t.s1, sp);
+      get_conjugated_indices_all(alg, t.s2, sx);
       if (t.h == 0 && get_prune(p_pt_pair_C4E0, sp.ie * 24 + sp.ic) == 0)
         return 0;
       int max_search = std::min(18, min_v - 1);
@@ -478,9 +446,9 @@ struct PairSolver {
       for (int tgt = 0; tgt < 4; ++tgt) {
         if (tgt == p[0] || tgt == p[1])
           continue;
-        get_conjugated_indices_full(alg, tgt, sp);
-        get_conjugated_indices_full(alg, p[0], sx1);
-        get_conjugated_indices_full(alg, p[1], sx2);
+        get_conjugated_indices_all(alg, tgt, sp);
+        get_conjugated_indices_all(alg, p[0], sx1);
+        get_conjugated_indices_all(alg, p[1], sx2);
         int h1 = get_prune(p_pt_cross_ins_C4, sp.im + sp.ic);
         int h2 = get_prune(p_pt_cross_C4E0,
                            (long long)(sx1.im + sx1.ic) * 24 + sx1.ie);
@@ -489,13 +457,13 @@ struct PairSolver {
         int h_huge = 0;
         int v = getNeighborView(p[0], p[1]);
         if (v != -1) {
-          get_conjugated_indices_full(alg, v, st_v);
+          get_conjugated_indices_all(alg, v, st_v);
           h_huge = get_prune(p_pt_cross_C4C5E0E1,
                              (long long)st_v.ie6_nb * StateSpace::CORNER2 +
                                  st_v.ic2_nb);
         } else if (p_pt_cross_C4C6E0E2) {
           v = getDiagonalView(p[0], p[1]);
-          get_conjugated_indices_full(alg, v, st_v);
+          get_conjugated_indices_all(alg, v, st_v);
           h_huge = get_prune(p_pt_cross_C4C6E0E2,
                              (long long)st_v.ie6_dg * StateSpace::CORNER2 +
                                  st_v.ic2_dg);
@@ -509,9 +477,9 @@ struct PairSolver {
     for (const auto &t : tasks) {
       if (t.h >= min_v)
         continue;
-      get_conjugated_indices_full(alg, t.s1, sp);
-      get_conjugated_indices_full(alg, t.s2, sx1);
-      get_conjugated_indices_full(alg, t.s3, sx2);
+      get_conjugated_indices_all(alg, t.s1, sp);
+      get_conjugated_indices_all(alg, t.s2, sx1);
+      get_conjugated_indices_all(alg, t.s3, sx2);
       if (t.h == 0 && get_prune(p_pt_pair_C4E0, sp.ie * 24 + sp.ic) == 0)
         return 0;
       int ie6_use = -1, ic2_use = -1, v_use = -1;
@@ -519,13 +487,13 @@ struct PairSolver {
       VirtState st_tmp;
       if (getNeighborView(t.s2, t.s3) != -1) {
         v_use = getNeighborView(t.s2, t.s3);
-        get_conjugated_indices_full(alg, v_use, st_tmp);
+        get_conjugated_indices_all(alg, v_use, st_tmp);
         ie6_use = st_tmp.ie6_nb;
         ic2_use = st_tmp.ic2_nb;
         p_use = p_pt_cross_C4C5E0E1;
       } else if (p_pt_cross_C4C6E0E2) {
         v_use = getDiagonalView(t.s2, t.s3);
-        get_conjugated_indices_full(alg, v_use, st_tmp);
+        get_conjugated_indices_all(alg, v_use, st_tmp);
         ie6_use = st_tmp.ie6_dg;
         ic2_use = st_tmp.ic2_dg;
         p_use = p_pt_cross_C4C6E0E2;
@@ -554,10 +522,10 @@ struct PairSolver {
       for (int k = 0; k < 4; ++k)
         if (k != tgt)
           fix.push_back(k);
-      get_conjugated_indices_full(alg, tgt, sp);
+      get_conjugated_indices_all(alg, tgt, sp);
       int h_val = get_prune(p_pt_cross_ins_C4, sp.im + sp.ic);
       for (int i = 0; i < 3; ++i) {
-        get_conjugated_indices_full(alg, fix[i], s[i]);
+        get_conjugated_indices_all(alg, fix[i], s[i]);
         h_val = std::max(
             h_val, get_prune(p_pt_cross_C4E0,
                              (long long)(s[i].im + s[i].ic) * 24 + s[i].ie));
@@ -566,14 +534,14 @@ struct PairSolver {
         for (int j = i + 1; j < 3; ++j) {
           int v = getNeighborView(fix[i], fix[j]);
           if (v != -1) {
-            get_conjugated_indices_full(alg, v, st_v);
+            get_conjugated_indices_all(alg, v, st_v);
             h_val = std::max(
                 h_val, get_prune(p_pt_cross_C4C5E0E1,
                                  (long long)st_v.ie6_nb * StateSpace::CORNER2 +
                                      st_v.ic2_nb));
           } else if (p_pt_cross_C4C6E0E2) {
             v = getDiagonalView(fix[i], fix[j]);
-            get_conjugated_indices_full(alg, v, st_v);
+            get_conjugated_indices_all(alg, v, st_v);
             h_val = std::max(
                 h_val, get_prune(p_pt_cross_C4C6E0E2,
                                  (long long)st_v.ie6_dg * StateSpace::CORNER2 +
@@ -589,10 +557,10 @@ struct PairSolver {
     for (const auto &t : tasks) {
       if (t.h >= min_v)
         continue;
-      get_conjugated_indices_full(alg, t.s1, sp);
-      get_conjugated_indices_full(alg, t.s2, s[0]);
-      get_conjugated_indices_full(alg, t.s3, s[1]);
-      get_conjugated_indices_full(alg, t.s4, s[2]);
+      get_conjugated_indices_all(alg, t.s1, sp);
+      get_conjugated_indices_all(alg, t.s2, s[0]);
+      get_conjugated_indices_all(alg, t.s3, s[1]);
+      get_conjugated_indices_all(alg, t.s4, s[2]);
       if (t.h == 0 && get_prune(p_pt_pair_C4E0, sp.ie * 24 + sp.ic) == 0)
         return 0;
       int ie6[3], ic2[3], v[3];
@@ -603,13 +571,13 @@ struct PairSolver {
         v[i] = -1;
         if (getNeighborView(pairs[i][0], pairs[i][1]) != -1) {
           v[i] = getNeighborView(pairs[i][0], pairs[i][1]);
-          get_conjugated_indices_full(alg, v[i], st_tmp);
+          get_conjugated_indices_all(alg, v[i], st_tmp);
           ie6[i] = st_tmp.ie6_nb;
           ic2[i] = st_tmp.ic2_nb;
           p[i] = p_pt_cross_C4C5E0E1;
         } else if (p_pt_cross_C4C6E0E2) {
           v[i] = getDiagonalView(pairs[i][0], pairs[i][1]);
-          get_conjugated_indices_full(alg, v[i], st_tmp);
+          get_conjugated_indices_all(alg, v[i], st_tmp);
           ie6[i] = st_tmp.ie6_dg;
           ic2[i] = st_tmp.ic2_dg;
           p[i] = p_pt_cross_C4C6E0E2;
