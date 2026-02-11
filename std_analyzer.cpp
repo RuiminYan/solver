@@ -67,6 +67,44 @@ struct XCrossSolver {
     int v12, v23, v31;
   };
 
+  // NOTE: search_4 每个视角的 6 个状态索引
+  // 隐含 slot = 数组下标 (0,1,2,3)
+  struct SlotView4 {
+    int im;  // Edge4（已含步幅偏移，直接与 p_mt_edge4 配合）
+    int ic;  // Corner
+    int ie;  // Edge
+    int ex;  // Extra Edge
+    int cx1; // Extra Corner 1
+    int cx2; // Extra Corner 2
+  };
+
+  // NOTE: Huge 剪枝的 (Edge6, Corner2) 状态对
+  struct HugePair {
+    int e6; // Edge6 状态索引
+    int c2; // Corner2 状态索引
+  };
+
+  // NOTE: search_3 每个视角的 8 个状态索引 + slot 编号
+  struct SlotView3 {
+    int im;     // Edge4
+    int ic;     // Corner
+    int ie;     // Edge
+    int ex1;    // Extra Edge - Plus 1
+    int cx1;    // Extra Corner - Plus 1
+    int cx_mid; // Corner 中间值 (c6)
+    int ex2;    // Extra Edge - Plus 2
+    int cx2;    // Extra Corner - Plus 2
+    int slot;   // conj slot 号
+  };
+
+  // NOTE: search_3 的 Huge 状态（含 conj 视角和表指针）
+  struct HugeState {
+    int e6;                     // Edge6 状态索引
+    int c2;                     // Corner2 状态索引
+    int conj;                   // conj slot 号
+    const unsigned char *table; // 剪枝表指针
+  };
+
   XCrossSolver() {
     auto &mtm = MoveTableManager::getInstance();
     auto &ptm = PruneTableManager::getInstance();
@@ -224,87 +262,9 @@ struct XCrossSolver {
     return false;
   }
 
-  bool search_3(int i1a, int i2a, int i3a, int i4a_1, int i5a_1, int i6a,
-                int i4a_2, int i5a_2, int s1, int i1b, int i2b, int i3b,
-                int i4b_1, int i5b_1, int i6b, int i4b_2, int i5b_2, int s2,
-                int i1c, int i2c, int i3c, int i4c_1, int i5c_1, int i6c,
-                int i4c_2, int i5c_2, int s3, int t12, int t21, int t23,
-                int t32, int i_e6_12, int i_c2_12, int v12,
-                const unsigned char *p_table_12, int i_e6_23, int i_c2_23,
-                int v23, const unsigned char *p_table_23, int i_e6_31,
-                int i_c2_31, int v31, const unsigned char *p_table_31,
-                int depth, int prev) {
-    const int *moves = valid_moves_flat[prev];
-    const int count = valid_moves_count[prev];
-    for (int k = 0; k < count; ++k) {
-      int m = moves[k];
-      COUNT_NODE
-      int n_ie6_12 = -1, n_ic2_12 = -1;
-      if (hugeTablePrunes(v12, p_table_12, i_e6_12, i_c2_12, m, depth,
-                          p_mt_edge6, p_mt_corn2, n_ie6_12, n_ic2_12))
-        continue;
-      int n_ie6_23 = -1, n_ic2_23 = -1;
-      if (hugeTablePrunes(v23, p_table_23, i_e6_23, i_c2_23, m, depth,
-                          p_mt_edge6, p_mt_corn2, n_ie6_23, n_ic2_23))
-        continue;
-      int n_ie6_31 = -1, n_ic2_31 = -1;
-      if (hugeTablePrunes(v31, p_table_31, i_e6_31, i_c2_31, m, depth,
-                          p_mt_edge6, p_mt_corn2, n_ie6_31, n_ic2_31))
-        continue;
-
-      int m1 = conj_moves_flat[m][s1];
-      int n_i1a = p_mt_edge4[i1a + m1];
-      int n_i2a = p_mt_corn[i2a + m1];
-      int n_i3a = p_mt_edge[i3a + m1];
-      int n_i5a_1 = p_mt_corn[i5a_1 + m1];
-      int n_i6a = p_mt_corn[i6a + m1];
-      int n_i4a_1 = p_mt_edge[i4a_1 + m1];
-      int n_i4a_2 = p_mt_edge[i4a_2 + m1];
-      int n_i5a_2 = p_mt_corn[i5a_2 + m1];
-      int m2 = conj_moves_flat[m][s2];
-      int n_i1b = p_mt_edge4[i1b + m2];
-      int n_i2b = p_mt_corn[i2b + m2];
-      int n_i3b = p_mt_edge[i3b + m2];
-      int n_i6b = p_mt_corn[i6b + m2];
-      int n_i4b_1 = p_mt_edge[i4b_1 + m2];
-      int n_i5b_1 = p_mt_corn[i5b_1 + m2];
-      int n_i4b_2 = p_mt_edge[i4b_2 + m2];
-      int n_i5b_2 = p_mt_corn[i5b_2 + m2];
-      int m3 = conj_moves_flat[m][s3];
-      int n_i1c = p_mt_edge4[i1c + m3];
-      int n_i2c = p_mt_corn[i2c + m3];
-      int n_i3c = p_mt_edge[i3c + m3];
-      int n_i6c = p_mt_corn[i6c + m3];
-      int n_i4c_1 = p_mt_edge[i4c_1 + m3];
-      int n_i5c_1 = p_mt_corn[i5c_1 + m3];
-      int n_i4c_2 = p_mt_edge[i4c_2 + m3];
-      int n_i5c_2 = p_mt_corn[i5c_2 + m3];
-
-      if (depth == 1) {
-        return true;
-      }
-      if (search_3(n_i1a, n_i2a * 18, n_i3a * 18, n_i4a_1 * 18, n_i5a_1 * 18,
-                   n_i6a * 18, n_i4a_2 * 18, n_i5a_2 * 18, s1, n_i1b,
-                   n_i2b * 18, n_i3b * 18, n_i4b_1 * 18, n_i5b_1 * 18,
-                   n_i6b * 18, n_i4b_2 * 18, n_i5b_2 * 18, s2, n_i1c,
-                   n_i2c * 18, n_i3c * 18, n_i4c_1 * 18, n_i5c_1 * 18,
-                   n_i6c * 18, n_i4c_2 * 18, n_i5c_2 * 18, s3, t12, t21, t23,
-                   t32, (v12 != -1) ? n_ie6_12 : -1,
-                   (v12 != -1) ? n_ic2_12 : -1, v12, p_table_12,
-                   (v23 != -1) ? n_ie6_23 : -1, (v23 != -1) ? n_ic2_23 : -1,
-                   v23, p_table_23, (v31 != -1) ? n_ie6_31 : -1,
-                   (v31 != -1) ? n_ic2_31 : -1, v31, p_table_31, depth - 1, m))
-        return true;
-    }
-    return false;
-  }
-
-  bool search_4(int i1a, int i2a, int i3a, int i4a, int i5a, int i6a, int i1b,
-                int i2b, int i3b, int i4b, int i5b, int i6b, int i1c, int i2c,
-                int i3c, int i4c, int i5c, int i6c, int i1d, int i2d, int i3d,
-                int i4d, int i5d, int i6d, int nb01_e, int nb01_c, int nb12_e,
-                int nb12_c, int nb23_e, int nb23_c, int nb30_e, int nb30_c,
-                int dg02_e, int dg02_c, int dg13_e, int dg13_c, int depth,
+  // NOTE: search_3 参数结构化 — 42 参数 → views[3] + huge[3] + depth + prev
+  // t12/t21/t23/t32 在函数体内未被使用，已移除
+  bool search_3(const SlotView3 views[3], HugeState huge[3], int depth,
                 int prev) {
     const int *moves = valid_moves_flat[prev];
     const int count = valid_moves_count[prev];
@@ -312,88 +272,122 @@ struct XCrossSolver {
       int m = moves[k];
       COUNT_NODE
 
-      int m0 = conj_moves_flat[m][0];
-      int n_nb01_e = p_mt_edge6[nb01_e * 18 + m0];
-      int n_nb01_c = p_mt_corn2[nb01_c * 18 + m0];
-      if (get_prune(p_pt_cross_C4C5E0E1,
-                    (long long)n_nb01_e * StateSpace::CORNER2 + n_nb01_c) >=
-          depth)
-        continue;
-      int m1 = conj_moves_flat[m][1];
-      int n_nb12_e = p_mt_edge6[nb12_e * 18 + m1];
-      int n_nb12_c = p_mt_corn2[nb12_c * 18 + m1];
-      if (get_prune(p_pt_cross_C4C5E0E1,
-                    (long long)n_nb12_e * StateSpace::CORNER2 + n_nb12_c) >=
-          depth)
-        continue;
-      int m2 = conj_moves_flat[m][2];
-      int n_nb23_e = p_mt_edge6[nb23_e * 18 + m2];
-      int n_nb23_c = p_mt_corn2[nb23_c * 18 + m2];
-      if (get_prune(p_pt_cross_C4C5E0E1,
-                    (long long)n_nb23_e * StateSpace::CORNER2 + n_nb23_c) >=
-          depth)
-        continue;
-      int m3 = conj_moves_flat[m][3];
-      int n_nb30_e = p_mt_edge6[nb30_e * 18 + m3];
-      int n_nb30_c = p_mt_corn2[nb30_c * 18 + m3];
-      if (get_prune(p_pt_cross_C4C5E0E1,
-                    (long long)n_nb30_e * StateSpace::CORNER2 + n_nb30_c) >=
-          depth)
+      // --- Huge 剪枝 (3 对) ---
+      HugeState n_huge[3];
+      bool pruned = false;
+      for (int i = 0; i < 3; ++i) {
+        n_huge[i].conj = huge[i].conj;
+        n_huge[i].table = huge[i].table;
+        int n_e6 = -1, n_c2 = -1;
+        if (hugeTablePrunes(huge[i].conj, huge[i].table, huge[i].e6, huge[i].c2,
+                            m, depth, p_mt_edge6, p_mt_corn2, n_e6, n_c2)) {
+          pruned = true;
+          break;
+        }
+        n_huge[i].e6 = (huge[i].conj != -1) ? n_e6 : -1;
+        n_huge[i].c2 = (huge[i].conj != -1) ? n_c2 : -1;
+      }
+      if (pruned)
         continue;
 
-      int n_dg02_e = p_mt_edge6[dg02_e * 18 + m0];
-      int n_dg02_c = p_mt_corn2[dg02_c * 18 + m0];
-      if (p_pt_cross_C4C6E0E2) {
-        if (get_prune(p_pt_cross_C4C6E0E2,
-                      (long long)n_dg02_e * StateSpace::CORNER2 + n_dg02_c) >=
-            depth)
-          continue;
+      // --- 3 个视角的 move-table lookup ---
+      SlotView3 nv[3];
+      for (int i = 0; i < 3; ++i) {
+        int mi = conj_moves_flat[m][views[i].slot];
+        nv[i].im = p_mt_edge4[views[i].im + mi];
+        nv[i].ic = p_mt_corn[views[i].ic + mi];
+        nv[i].ie = p_mt_edge[views[i].ie + mi];
+        nv[i].ex1 = p_mt_edge[views[i].ex1 + mi];
+        nv[i].cx1 = p_mt_corn[views[i].cx1 + mi];
+        nv[i].cx_mid = p_mt_corn[views[i].cx_mid + mi];
+        nv[i].ex2 = p_mt_edge[views[i].ex2 + mi];
+        nv[i].cx2 = p_mt_corn[views[i].cx2 + mi];
+        nv[i].slot = views[i].slot;
       }
-      int n_dg13_e = p_mt_edge6[dg13_e * 18 + m1];
-      int n_dg13_c = p_mt_corn2[dg13_c * 18 + m1];
-      if (p_pt_cross_C4C6E0E2) {
-        if (get_prune(p_pt_cross_C4C6E0E2,
-                      (long long)n_dg13_e * StateSpace::CORNER2 + n_dg13_c) >=
-            depth)
-          continue;
-      }
-
-      int n_i1a = p_mt_edge4[i1a + m0];
-      int n_i2a = p_mt_corn[i2a + m0];
-      int n_i3a = p_mt_edge[i3a + m0];
-      int n_i4a = p_mt_edge[i4a + m0];
-      int n_i5a = p_mt_corn[i5a + m0];
-      int n_i6a = p_mt_corn[i6a + m0];
-      int n_i1b = p_mt_edge4[i1b + m1];
-      int n_i2b = p_mt_corn[i2b + m1];
-      int n_i3b = p_mt_edge[i3b + m1];
-      int n_i4b = p_mt_edge[i4b + m1];
-      int n_i5b = p_mt_corn[i5b + m1];
-      int n_i6b = p_mt_corn[i6b + m1];
-      int n_i1c = p_mt_edge4[i1c + m2];
-      int n_i2c = p_mt_corn[i2c + m2];
-      int n_i3c = p_mt_edge[i3c + m2];
-      int n_i4c = p_mt_edge[i4c + m2];
-      int n_i5c = p_mt_corn[i5c + m2];
-      int n_i6c = p_mt_corn[i6c + m2];
-      int n_i1d = p_mt_edge4[i1d + m3];
-      int n_i2d = p_mt_corn[i2d + m3];
-      int n_i3d = p_mt_edge[i3d + m3];
-      int n_i4d = p_mt_edge[i4d + m3];
-      int n_i5d = p_mt_corn[i5d + m3];
-      int n_i6d = p_mt_corn[i6d + m3];
 
       if (depth == 1) {
         return true;
       }
-      if (search_4(n_i1a, n_i2a * 18, n_i3a * 18, n_i4a * 18, n_i5a * 18,
-                   n_i6a * 18, n_i1b, n_i2b * 18, n_i3b * 18, n_i4b * 18,
-                   n_i5b * 18, n_i6b * 18, n_i1c, n_i2c * 18, n_i3c * 18,
-                   n_i4c * 18, n_i5c * 18, n_i6c * 18, n_i1d, n_i2d * 18,
-                   n_i3d * 18, n_i4d * 18, n_i5d * 18, n_i6d * 18, n_nb01_e,
-                   n_nb01_c, n_nb12_e, n_nb12_c, n_nb23_e, n_nb23_c, n_nb30_e,
-                   n_nb30_c, n_dg02_e, n_dg02_c, n_dg13_e, n_dg13_c, depth - 1,
-                   m))
+      // 递归：新状态需要乘步幅 18
+      SlotView3 nv_rec[3];
+      for (int i = 0; i < 3; ++i) {
+        nv_rec[i] = {nv[i].im,       nv[i].ic * 18,  nv[i].ie * 18,
+                     nv[i].ex1 * 18, nv[i].cx1 * 18, nv[i].cx_mid * 18,
+                     nv[i].ex2 * 18, nv[i].cx2 * 18, nv[i].slot};
+      }
+      if (search_3(nv_rec, n_huge, depth - 1, m))
+        return true;
+    }
+    return false;
+  }
+
+  // NOTE: search_4 参数结构化 — 38 参数 → views[4] + nb[4] + dg[2] + depth +
+  // prev
+  bool search_4(const SlotView4 views[4], HugePair nb[4], HugePair dg[2],
+                int depth, int prev) {
+    const int *moves = valid_moves_flat[prev];
+    const int count = valid_moves_count[prev];
+    for (int k = 0; k < count; ++k) {
+      int m = moves[k];
+      COUNT_NODE
+
+      // --- Huge Neighbor 剪枝 (4对，conj slot = 数组下标) ---
+      HugePair n_nb[4];
+      bool pruned = false;
+      for (int i = 0; i < 4; ++i) {
+        int mi = conj_moves_flat[m][i];
+        n_nb[i].e6 = p_mt_edge6[nb[i].e6 * 18 + mi];
+        n_nb[i].c2 = p_mt_corn2[nb[i].c2 * 18 + mi];
+        if (get_prune(p_pt_cross_C4C5E0E1,
+                      (long long)n_nb[i].e6 * StateSpace::CORNER2 +
+                          n_nb[i].c2) >= depth) {
+          pruned = true;
+          break;
+        }
+      }
+      if (pruned)
+        continue;
+
+      // --- Huge Diagonal 剪枝 (2对，conj slot = 0, 1) ---
+      HugePair n_dg[2];
+      for (int i = 0; i < 2; ++i) {
+        int mi = conj_moves_flat[m][i];
+        n_dg[i].e6 = p_mt_edge6[dg[i].e6 * 18 + mi];
+        n_dg[i].c2 = p_mt_corn2[dg[i].c2 * 18 + mi];
+        if (p_pt_cross_C4C6E0E2) {
+          if (get_prune(p_pt_cross_C4C6E0E2,
+                        (long long)n_dg[i].e6 * StateSpace::CORNER2 +
+                            n_dg[i].c2) >= depth) {
+            pruned = true;
+            break;
+          }
+        }
+      }
+      if (pruned)
+        continue;
+
+      // --- 4 个视角的 move-table lookup (conj slot = 数组下标) ---
+      SlotView4 nv[4];
+      for (int i = 0; i < 4; ++i) {
+        int mi = conj_moves_flat[m][i];
+        nv[i].im = p_mt_edge4[views[i].im + mi];
+        nv[i].ic = p_mt_corn[views[i].ic + mi];
+        nv[i].ie = p_mt_edge[views[i].ie + mi];
+        nv[i].ex = p_mt_edge[views[i].ex + mi];
+        nv[i].cx1 = p_mt_corn[views[i].cx1 + mi];
+        nv[i].cx2 = p_mt_corn[views[i].cx2 + mi];
+      }
+
+      if (depth == 1) {
+        return true;
+      }
+      // 递归：新状态需要乘步幅 18
+      SlotView4 nv_rec[4];
+      for (int i = 0; i < 4; ++i) {
+        nv_rec[i] = {nv[i].im,      nv[i].ic * 18,  nv[i].ie * 18,
+                     nv[i].ex * 18, nv[i].cx1 * 18, nv[i].cx2 * 18};
+      }
+      if (search_4(nv_rec, n_nb, n_dg, depth - 1, m))
         return true;
     }
     return false;
@@ -715,16 +709,18 @@ struct XCrossSolver {
 
             // 跨阶段下界：XXXC 解 ≥ XXC 解
             int startD = std::max(t.h, xxc_min[r]);
+            SlotView3 s3_views[3] = {
+                {st[t.a].im, st[t.a].ic * 18, st[t.a].e0 * 18, ea_b * 18,
+                 ca_b * 18, st[t.a].c6 * 18, ea_c * 18, ca_c * 18, t.a},
+                {st[t.b].im, st[t.b].ic * 18, st[t.b].e0 * 18, eb_a * 18,
+                 cb_a * 18, st[t.b].c6 * 18, eb_c * 18, cb_c * 18, t.b},
+                {st[t.c].im, st[t.c].ic * 18, st[t.c].e0 * 18, ec_b * 18,
+                 cc_b * 18, st[t.c].c6 * 18, ec_a * 18, cc_a * 18, t.c}};
+            HugeState s3_huge[3] = {{i_e6_1, i_c2_1, t.v12, p_1},
+                                    {i_e6_2, i_c2_2, t.v23, p_2},
+                                    {i_e6_3, i_c2_3, t.v31, p_3}};
             for (int d = startD; d <= max_search; ++d) {
-              if (search_3(
-                      st[t.a].im, st[t.a].ic * 18, st[t.a].e0 * 18, ea_b * 18,
-                      ca_b * 18, st[t.a].c6 * 18, ea_c * 18, ca_c * 18, t.a,
-                      st[t.b].im, st[t.b].ic * 18, st[t.b].e0 * 18, eb_a * 18,
-                      cb_a * 18, st[t.b].c6 * 18, eb_c * 18, cb_c * 18, t.b,
-                      st[t.c].im, st[t.c].ic * 18, st[t.c].e0 * 18, ec_b * 18,
-                      cc_b * 18, st[t.c].c6 * 18, ec_a * 18, cc_a * 18, t.c,
-                      t12, t21, t23, t32, i_e6_1, i_c2_1, t.v12, p_1, i_e6_2,
-                      i_c2_2, t.v23, p_2, i_e6_3, i_c2_3, t.v31, p_3, d, 18)) {
+              if (search_3(s3_views, s3_huge, d, 18)) {
                 res = d;
                 break;
               }
@@ -796,18 +792,19 @@ struct XCrossSolver {
           if (max_h > 0) {
             // 跨阶段下界：F2L 解 ≥ XXXC 解
             int startD = std::max(max_h, xxxc_min[r]);
+            SlotView4 views[4];
+            for (int i = 0; i < 4; ++i) {
+              views[i] = {st[i].im,      st[i].ic * 18, st[i].e0 * 18,
+                          st[i].e2 * 18, st[i].c5 * 18, st[i].c6 * 18};
+            }
+            HugePair nb[4] = {{st[0].ie6_nb, st[0].ic2_nb},
+                              {st[1].ie6_nb, st[1].ic2_nb},
+                              {st[2].ie6_nb, st[2].ic2_nb},
+                              {st[3].ie6_nb, st[3].ic2_nb}};
+            HugePair dg[2] = {{st[0].ie6_dg, st[0].ic2_dg},
+                              {st[1].ie6_dg, st[1].ic2_dg}};
             for (int d = startD; d <= 16; ++d) {
-              if (search_4(
-                      st[0].im, st[0].ic * 18, st[0].e0 * 18, st[0].e2 * 18,
-                      st[0].c5 * 18, st[0].c6 * 18, st[1].im, st[1].ic * 18,
-                      st[1].e0 * 18, st[1].e2 * 18, st[1].c5 * 18,
-                      st[1].c6 * 18, st[2].im, st[2].ic * 18, st[2].e0 * 18,
-                      st[2].e2 * 18, st[2].c5 * 18, st[2].c6 * 18, st[3].im,
-                      st[3].ic * 18, st[3].e0 * 18, st[3].e2 * 18,
-                      st[3].c5 * 18, st[3].c6 * 18, st[0].ie6_nb, st[0].ic2_nb,
-                      st[1].ie6_nb, st[1].ic2_nb, st[2].ie6_nb, st[2].ic2_nb,
-                      st[3].ie6_nb, st[3].ic2_nb, st[0].ie6_dg, st[0].ic2_dg,
-                      st[1].ie6_dg, st[1].ic2_dg, d, 18)) {
+              if (search_4(views, nb, dg, d, 18)) {
                 res = d;
                 break;
               }
