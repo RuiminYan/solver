@@ -60,6 +60,8 @@ set "INPUT_FILE=%~2"
 set "EXE_FILE=%~3"
 set "OUTPUT_CSV=%~4"
 set "GOLDEN_FILE=%~5"
+REM NOTE: timing 文件名从 output_csv 推导 (.csv -> _timing.txt)
+set "TIMING_FILE=%~n4_timing.txt"
 
 echo [TEST] %TEST_NAME%
 
@@ -111,19 +113,28 @@ set LINE_NUM=0
     )
 ) > "%TEMP_FILE%"
 
+REM Read timing info and build suffix string outside if-blocks
+REM NOTE: 避免在 if 块内使用含 ) 的字符串，否则 batch 会把 ) 当作 if 的闭合括号
+set "TIME_SUFFIX="
+if exist "%TIMING_FILE%" (
+    set /p TIMING_INFO=<"%TIMING_FILE%"
+)
+if defined TIMING_INFO set "TIME_SUFFIX= [!TIMING_INFO!s]"
+
 REM Compare with golden file
 fc /w "%TEMP_FILE%" "%GOLDEN_FILE%" >nul 2>&1
 if %errorlevel% equ 0 (
-    echo   PASS
+    echo   PASS!TIME_SUFFIX!
     set /a PASS_COUNT+=1
 ) else (
-    echo   FAIL - output differs from golden file
+    echo   FAIL - output differs from golden file!TIME_SUFFIX!
     echo   Run: fc "%TEMP_FILE%" "%GOLDEN_FILE%" to see differences
     set /a FAIL_COUNT+=1
 )
 
-REM Clean up temp file
+REM Clean up temp and timing files
 del "%TEMP_FILE%" 2>nul
+del "%TIMING_FILE%" 2>nul
 
 echo.
 goto :eof

@@ -196,8 +196,8 @@ inline void printSummaryTable(int totalTasks, long long totalNodes,
  *   suffix - 输出文件后缀，如 "_std", "_pair"
  */
 template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
-  // FIXME: 防止 OpenMP 线程栈溢出（search_3/4 递归深度最大 16 层，每帧 ~500 字节）
-  // NOTE: 16MB 每线程 = 2000 倍余量，总共 256MB (16 线程)
+  // FIXME: 防止 OpenMP 线程栈溢出（search_3/4 递归深度最大 16 层，每帧 ~500
+  // 字节） NOTE: 16MB 每线程 = 2000 倍余量，总共 256MB (16 线程)
   _putenv("OMP_STACKSIZE=16M");
 
   // 1. 全局初始化
@@ -389,6 +389,12 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
               << " Processing complete!" << ANSI_RESET << std::endl;
 
     outfile.close();
+
+    // NOTE: 写入计时文件供 verify.bat 等自动化测试读取纯计算时间
+    {
+      std::ofstream timingFile(basename + suffix + "_timing.txt");
+      timingFile << std::fixed << std::setprecision(2) << totalDuration;
+    }
 
     // 数据预览
     printDataPreview(outputFilename, 6);
