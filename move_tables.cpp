@@ -184,8 +184,10 @@ void MoveTableManager::genAllSequentially() {
 
 bool MoveTableManager::loadTable(std::vector<int> &table,
                                  const std::string &filename) {
+  // NOTE: 自动拼接 TABLE_DIR 前缀，调用方只需传裸文件名
+  std::string path = std::string(TABLE_DIR) + filename;
   // NOTE: 移动表不显示进度条（第三个参数false）
-  if (load_vector_chunked(table, filename, false)) {
+  if (load_vector_chunked(table, path, false)) {
     // 计算并打印表大小
     size_t size_bytes = table.size() * sizeof(int);
     std::cout << TAG_COLOR << "[LOAD]" << ANSI_RESET << " ("
@@ -197,7 +199,9 @@ bool MoveTableManager::loadTable(std::vector<int> &table,
 
 void MoveTableManager::saveTable(const std::vector<int> &table,
                                  const std::string &filename) {
-  save_vector_chunked(table, filename);
+  // NOTE: 自动拼接 TABLE_DIR 前缀
+  std::string path = std::string(TABLE_DIR) + filename;
+  save_vector_chunked(table, path);
 }
 
 void MoveTableManager::genMTEdge() {

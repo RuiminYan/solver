@@ -31,10 +31,12 @@ void PruneTableManager::initialize() {
 }
 
 unsigned char *PruneTableManager::loadTableMMap(const std::string &filename) {
+  // NOTE: 自动拼接 TABLE_DIR 前缀
+  std::string path = std::string(TABLE_DIR) + filename;
 #ifdef _WIN32
   std::cout << "MMap loading " << filename << "..." << std::endl;
-  HANDLE hFile = CreateFile(filename.c_str(), GENERIC_READ, FILE_SHARE_READ,
-                            NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  HANDLE hFile = CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL,
+                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (hFile == INVALID_HANDLE_VALUE) {
     std::cout << "  Failed to open file." << std::endl;
     return nullptr;
@@ -549,7 +551,9 @@ void PruneTableManager::genPTPsPairCE(int c, int e) {
 
 bool PruneTableManager::loadTable(std::vector<unsigned char> &table,
                                   const std::string &filename) {
-  if (load_vector_chunked(table, filename)) {
+  // NOTE: 自动拼接 TABLE_DIR 前缀，调用方只需传裸文件名
+  std::string path = std::string(TABLE_DIR) + filename;
+  if (load_vector_chunked(table, path)) {
     // 计算并打印表大小
     size_t size_bytes = table.size() * sizeof(unsigned char);
     std::cout << TAG_COLOR << "[LOAD]" << ANSI_RESET << " ("
@@ -561,7 +565,9 @@ bool PruneTableManager::loadTable(std::vector<unsigned char> &table,
 
 void PruneTableManager::saveTable(const std::vector<unsigned char> &table,
                                   const std::string &filename) {
-  save_vector_chunked(table, filename);
+  // NOTE: 自动拼接 TABLE_DIR 前缀
+  std::string path = std::string(TABLE_DIR) + filename;
+  save_vector_chunked(table, path);
 }
 
 void PruneTableManager::genPTCross() {

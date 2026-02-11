@@ -40,6 +40,10 @@
 // --- 日志标签统一颜色（蓝色）---
 #define TAG_COLOR "\033[34m"
 
+// 表文件存储目录前缀
+// NOTE: 所有 .bin 文件统一存放在此目录下，避免与源码混合
+constexpr const char *TABLE_DIR = "tables/";
+
 // --- Logo 和打印函数 ---
 void printCuberootLogo();
 void printTableInfo(const std::string &category, const std::string &filename,

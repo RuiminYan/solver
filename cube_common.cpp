@@ -7,8 +7,10 @@
 // --- Logo 和打印函数实现 ---
 
 // 检查文件是否存在
+// NOTE: 自动拼接 TABLE_DIR 前缀，调用方只需传裸文件名
 bool fileExists(const std::string &filename) {
-  std::ifstream f(filename);
+  std::string path = std::string(TABLE_DIR) + filename;
+  std::ifstream f(path);
   return f.good();
 }
 
