@@ -125,10 +125,9 @@ inline int get_prune(const unsigned char *table, long long index) {
 // Huge 表剪枝检查：对 (Edge6, Corner2) 做 conj 变换后查表
 // 返回 true 表示应剪枝（即 prune >= depth，调用方应 continue）
 // out_e6/out_c2 接收变换后的新索引，用于递归传递
-inline bool hugeTablePrunes(int conj, const unsigned char *table,
-                            int e6, int c2, int move, int depth,
-                            const int *mt_e6, const int *mt_c2,
-                            int &out_e6, int &out_c2) {
+inline bool hugeTablePrunes(int conj, const unsigned char *table, int e6,
+                            int c2, int move, int depth, const int *mt_e6,
+                            const int *mt_c2, int &out_e6, int &out_c2) {
   if (conj == -1 || !table)
     return false;
   int mx = conj_moves_flat[move][conj];
@@ -215,24 +214,6 @@ public:
   // 顺序生成所有表
   void genAllSequentially();
 
-  // === 新 Getter (返回 vector 引用) ===
-  const std::vector<unsigned char> &getCrossPT() const { return pt_cross; }
-  const std::vector<unsigned char> &getCrossInsC4PT() const {
-    return pt_cross_ins_C4;
-  }
-  const std::vector<unsigned char> &getPairC4E0PT() const {
-    return pt_pair_C4E0;
-  }
-  const std::vector<unsigned char> &getCrossC4E0PT() const {
-    return pt_cross_C4E0;
-  }
-  const std::vector<unsigned char> &getCrossC4C5E0E1PT() const {
-    return pt_cross_C4C5E0E1;
-  }
-  const std::vector<unsigned char> &getCrossC4C6E0E2PT() const {
-    return pt_cross_C4C6E0E2;
-  }
-
   // === 新 Ptr Getter ===
   const unsigned char *getCrossPTPtr() const { return pt_cross.data(); }
   const unsigned char *getCrossInsC4PTPtr() const {
@@ -299,7 +280,7 @@ public:
   }
 
   // === EOCross Getters (新名) ===
-  const unsigned char *getEOCInsC4PTPtr() const { return pt_eoc_ins_C4.data(); }
+
   const unsigned char *getEP4EO12PTPtr() const { return pt_ep4eo12.data(); }
   const unsigned char *getCrossCEEPTPtr(int i) const {
     return pt_cross_CEE[i].data();
