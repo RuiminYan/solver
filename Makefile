@@ -8,7 +8,7 @@
 CXX      = g++
 CXXFLAGS = -std=c++17 -O3 -mavx2 -fopenmp -Wall -Wextra
 LDFLAGS  = -fopenmp
-LDLIBS   = -lpsapi
+
 
 # Common object files shared by all targets
 COMMON_OBJS = cube_common.o move_tables.o prune_tables.o prune_create.o
@@ -26,7 +26,7 @@ all: $(TARGETS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 %.exe: %.o $(COMMON_OBJS)
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	$(CXX) $(LDFLAGS) -o $@ $^
 
 # --- Header dependencies ---
 # Base layer
