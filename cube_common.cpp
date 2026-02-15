@@ -39,34 +39,6 @@ void printTableInfo(const std::string &category, const std::string &filename,
             << ")" << std::endl;
 }
 
-// 打印CUBEROOT Logo（像素艺术+渐变色，类似GEMINI风格）
-void printCuberootLogo() {
-  // 渐变色：从蓝紫到粉红（类似GEMINI风格）
-  const char *gradients[] = {
-      "\033[38;5;63m",  // 蓝紫色
-      "\033[38;5;99m",  // 紫色
-      "\033[38;5;135m", // 淡紫色
-      "\033[38;5;171m", // 粉紫色
-      "\033[38;5;207m", // 粉色
-      "\033[38;5;213m"  // 淡粉色
-  };
-
-  // CUBEROOT LOGO 精美像素艺术字体（使用ASCII字符@，兼容所有终端）
-  const char *lines[] = {
-      " @@@@   @    @  @@@@@   @@@@  @@@@@    @@@@    @@@@   @@@@@@",
-      "@@  @@  @    @  @    @  @     @    @  @@  @@  @@  @@    @@  ",
-      "@@      @    @  @@@@@   @@@@  @@@@@   @    @  @    @    @@  ",
-      "@@      @    @  @    @  @     @  @    @    @  @    @    @@  ",
-      "@@  @@  @    @  @    @  @     @   @   @@  @@  @@  @@    @@  ",
-      " @@@@    @@@@   @@@@@   @@@@  @    @   @@@@    @@@@     @@  "};
-
-  std::cout << std::endl;
-  for (int i = 0; i < 6; ++i) {
-    std::cout << gradients[i] << lines[i] << ANSI_RESET << std::endl;
-  }
-  std::cout << std::endl;
-}
-
 // --- 全局变量定义 ---
 int valid_moves_flat[20][18];
 int valid_moves_count[20];

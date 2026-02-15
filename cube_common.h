@@ -44,8 +44,9 @@
 // NOTE: 所有 .bin 文件统一存放在此目录下，避免与源码混合
 constexpr const char *TABLE_DIR = "tables/";
 
-// --- Logo 和打印函数 ---
-void printCuberootLogo();
+// --- Logo ---
+#include "logo.h"
+
 void printTableInfo(const std::string &category, const std::string &filename,
                     size_t sizeBytes);
 bool fileExists(const std::string &filename);
