@@ -53,6 +53,6 @@ table_generator.o: table_generator.cpp $(COMMON_HEADERS) move_tables.h prune_tab
 
 # --- Clean ---
 clean:
-	del /Q *.o *.exe 2>nul
+	powershell -NoProfile -Command "Remove-Item -Path *.o, *.exe -ErrorAction SilentlyContinue"
 
 .PHONY: all clean

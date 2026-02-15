@@ -2,12 +2,12 @@
 
 ## 编译方法
 
-```cmd
+```powershell
 # 编译所有目标
-build.bat
+.\build.ps1
 
 # 清理编译文件
-clean.bat
+.\clean.ps1
 ```
 ## 块的定义
 
@@ -226,9 +226,9 @@ XXXXCross 已还原，且剩余4个棱块色向正确。
 ## 编译
 
 
-```cmd
+```powershell
 # 编译所有目标（并行）
-.\build.bat
+.\build.ps1
 
 # 或直接使用 Makefile
 mingw32-make -j8
@@ -240,13 +240,13 @@ mingw32-make std_analyzer.exe
 mingw32-make clean
 ```
 
-> `build.bat` 是 `mingw32-make -j8` 的包装，支持增量编译（只重新编译修改过的文件）。
+> `build.ps1` 是 `mingw32-make -j8` 的包装，支持增量编译（只重新编译修改过的文件）。
 
 ## 测试
 
 ### 自动化验证
-```cmd
-.\verify.bat
+```powershell
+.\verify.ps1
 ```
 运行所有 analyzer，自动对比输出 CSV 的前 21 行（表头 + 前 20 行数据）与 `golden/` 目录中的正确结果。
 
@@ -254,7 +254,7 @@ mingw32-make clean
 执行后会生成对应的csv, 检查csv与正确结果是否一致。
 
 ### std_analyzer.cpp
-* 测试命令: `cmd /c "echo scramble_1000.txt | std_analyzer.exe"`
+* 测试命令: `"scramble_1000.txt" | .\std_analyzer.exe`
 * 加载移动表和剪枝表时间: 小于1min
 * 计算时间: ~6s
 * 输入文件: scramble_1000.txt
@@ -283,7 +283,7 @@ id,cross_z0,cross_z1,cross_z2,cross_z3,cross_x1,cross_x3,xcross_z0,xcross_z1,xcr
 41001,5,5,6,4,5,5,7,6,7,6,7,6,9,8,9,7,7,8,10,10,11,9,10,10,13,11,13,12,12,13
 
 ### pseudo_analyzer.cpp
-* 测试命令: `cmd /c "echo scramble_1000.txt | pseudo_analyzer.exe"`
+* 测试命令: `"scramble_1000.txt" | .\pseudo_analyzer.exe`
 * 加载移动表和剪枝表时间: 小于1min
 * 执行时间: ~3s
 * 输入文件: scramble_1000.txt
@@ -312,7 +312,7 @@ id,pseudo_cross_z0,pseudo_cross_z1,pseudo_cross_z2,pseudo_cross_z3,pseudo_cross_
 41001,4,5,5,4,4,4,5,5,6,6,5,5,7,7,8,7,6,6,10,9,10,9,9,9
 
 ### pair_analyzer.cpp
-* 测试命令: `cmd /c "echo scramble_1000.txt | pair_analyzer.exe"`
+* 测试命令: `"scramble_1000.txt" | .\pair_analyzer.exe`
 * 加载移动表和剪枝表时间: 小于1min
 * 执行时间: ~1.3s
 * 输入文件: scramble_1000.txt
@@ -341,7 +341,7 @@ id,cross_pair_z0,cross_pair_z1,cross_pair_z2,cross_pair_z3,cross_pair_x1,cross_p
 41001,6,5,7,5,6,6,8,6,8,7,7,7,10,8,10,9,7,8,12,10,12,11,10,11
 
 ### pseudo_pair_analyzer.cpp
-* 测试命令: `cmd /c "echo scramble_100.txt | pseudo_pair_analyzer.exe"`
+* 测试命令: `"scramble_100.txt" | .\pseudo_pair_analyzer.exe`
 * 加载移动表和剪枝表时间: 小于1min
 * 执行时间: ~3s
 * 输入文件: scramble_100.txt
@@ -370,7 +370,7 @@ id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_p
 41001,4,5,5,4,4,5,5,5,6,6,5,5,8,7,8,8,6,6,11,10,11,10,9,9
 
 ### eo_cross_analyzer.cpp
-* 测试命令: `cmd /c "echo scramble_20.txt | eo_cross_analyzer.exe"`
+* 测试命令: `"scramble_20.txt" | .\eo_cross_analyzer.exe`
 * 加载移动表和剪枝表时间: 小于1min
 * 执行时间: 7.9s
 * 输入文件: scramble_20.txt

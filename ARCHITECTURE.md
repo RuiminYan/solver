@@ -88,7 +88,7 @@ prune_tables.o ─┘
 g++ -std=c++17 -O3 -fopenmp -Wall -Wextra
 ```
 
-构建脚本：`build.bat`（编译全部）、`clean.bat`（清理编译产物）
+构建脚本：`build.ps1`（编译全部）、`clean.ps1`（清理编译产物）
 
 ---
 
