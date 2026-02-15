@@ -390,9 +390,11 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
 
     outfile.close();
 
-    // NOTE: 写入计时文件供 verify.bat 等自动化测试读取纯计算时间
+    // NOTE: 写入临时目录的计时文件供 verify.ps1 等自动化测试读取纯计算时间
     {
-      std::ofstream timingFile(basename + suffix + "_timing.txt");
+      std::string tempDir = std::getenv("TEMP") ? std::getenv("TEMP") : ".";
+      std::ofstream timingFile(tempDir + "\\" + basename + suffix +
+                               "_timing.txt");
       timingFile << std::fixed << std::setprecision(2) << totalDuration;
     }
 
