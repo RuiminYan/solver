@@ -9,6 +9,10 @@
 
 #include <iostream>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 // 打印CUBEROOT Logo（像素艺术+渐变色，类似GEMINI风格）
 inline void printCuberootLogo() {
   // 渐变色：从蓝紫到粉红（类似GEMINI风格）
@@ -40,6 +44,12 @@ inline void printCuberootLogo() {
 // 打印CUBEROOT Logo（方块像素风格，类似Claude Code风格）
 // NOTE: 使用 Unicode █ 字符填充，暖橙/赤陶色配色
 inline void printCuberootLogoBlock() {
+  // NOTE: Windows 默认 codepage 无法显示 Unicode █，强制切换为 UTF-8
+#ifdef _WIN32
+  UINT origCp = GetConsoleOutputCP();
+  SetConsoleOutputCP(CP_UTF8);
+#endif
+
   // 暖橙色（与 Claude Code 赤陶/橙色风格一致）
   const char *color = "\033[38;5;208m";
   const char *reset = "\033[0m";
@@ -65,6 +75,10 @@ inline void printCuberootLogoBlock() {
     std::cout << color << rootLine[i] << reset << std::endl;
   }
   std::cout << std::endl;
+
+#ifdef _WIN32
+  SetConsoleOutputCP(origCp);
+#endif
 }
 
 #endif // LOGO_H
