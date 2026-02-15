@@ -14,31 +14,168 @@
 #endif
 
 // 打印CUBEROOT Logo（像素艺术+渐变色，类似GEMINI风格）
-inline void printCuberootLogo() {
-  // 渐变色：从蓝紫到粉红（类似GEMINI风格）
-  const char *gradients[] = {
-      "\033[38;5;63m",  // 蓝紫色
-      "\033[38;5;99m",  // 紫色
-      "\033[38;5;135m", // 淡紫色
-      "\033[38;5;171m", // 粉紫色
-      "\033[38;5;207m", // 粉色
-      "\033[38;5;213m"  // 淡粉色
+#include <algorithm>
+#include <cmath>
+#include <string>
+#include <vector>
+
+// NOTE: printCuberootLogo 的辅助类型和函数，隔离在 detail 命名空间避免污染全局
+namespace logo_detail {
+
+struct Color {
+  int r, g, b;
+};
+
+// 官方配色插值: Hot Pink -> Light Purple -> Pale Blue -> Cyan
+inline Color getColor(float t) {
+  Color colors[] = {
+      {255, 113, 204}, // 热力粉 (Hot Pink)
+      {195, 153, 242}, // 浅紫 (Light Purple)
+      {153, 186, 242}, // 淡蓝 (Pale Blue)
+      {85, 225, 255}   // 青天蓝 (Cyan)
   };
+  int n = 3;
+  float scaledT = t * n;
+  int i = (int)scaledT;
+  if (i >= n)
+    return colors[n];
+  if (i < 0)
+    return colors[0];
+  float f = scaledT - i;
+  Color c1 = colors[i];
+  Color c2 = colors[i + 1];
+  // 线性平滑插值计算
+  return {(int)(c1.r + (c2.r - c1.r) * f), (int)(c1.g + (c2.g - c1.g) * f),
+          (int)(c1.b + (c2.b - c1.b) * f)};
+}
 
-  // CUBEROOT LOGO 精美像素艺术字体（使用ASCII字符@，兼容所有终端）
-  const char *lines[] = {
-      " @@@@   @    @  @@@@@   @@@@  @@@@@    @@@@    @@@@   @@@@@@",
-      "@@  @@  @    @  @    @  @     @    @  @@  @@  @@  @@    @@  ",
-      "@@      @    @  @@@@@   @@@@  @@@@@   @    @  @    @    @@  ",
-      "@@      @    @  @    @  @     @  @    @    @  @    @    @@  ",
-      "@@  @@  @    @  @    @  @     @   @   @@  @@  @@  @@    @@  ",
-      " @@@@    @@@@   @@@@@   @@@@  @    @   @@@@    @@@@     @@  "};
+// 纯手工打磨的 Block 像素字模 (10x10)
+inline std::vector<std::string> getLetter(char c) {
+  if (c == 'C')
+    return {"##########", "##########", "####      ", "####      ",
+            "####      ", "####      ", "####      ", "####      ",
+            "##########", "##########"};
+  if (c == 'U')
+    return {"####  ####", "####  ####", "####  ####", "####  ####",
+            "####  ####", "####  ####", "####  ####", "####  ####",
+            "##########", "##########"};
+  if (c == 'B')
+    return {"########  ", "##########", "####  ####", "####  ####",
+            "########  ", "########  ", "####  ####", "####  ####",
+            "##########", "########  "};
+  if (c == 'E')
+    return {"##########", "##########", "####      ", "####      ",
+            "########  ", "########  ", "####      ", "####      ",
+            "##########", "##########"};
+  if (c == 'R')
+    return {"########  ", "##########", "####  ####", "####  ####",
+            "##########", "########  ", "####  ####", "####  ####",
+            "####  ####", "####  ####"};
+  if (c == 'O')
+    return {"##########", "##########", "####  ####", "####  ####",
+            "####  ####", "####  ####", "####  ####", "####  ####",
+            "##########", "##########"};
+  if (c == 'T')
+    return {"##########", "##########", "   ####   ", "   ####   ",
+            "   ####   ", "   ####   ", "   ####   ", "   ####   ",
+            "   ####   ", "   ####   "};
+  return std::vector<std::string>(10, "          ");
+}
 
-  std::cout << std::endl;
-  for (int i = 0; i < 6; ++i) {
-    std::cout << gradients[i] << lines[i] << "\033[0m" << std::endl;
+// 核心渲染器：光栅投射与渐变着色
+inline void printWord(const std::string &word) {
+  int numLetters = word.length();
+  int charW = 10;
+  int gap = 2; // 完美匹配原图紧凑的视觉间距
+  int width = numLetters * charW + (numLetters - 1) * gap;
+
+  // 阴影空间位移: 严格向左2列，向下1行
+  int dx = -2;
+  int dy = 1;
+
+  int gridW = width + std::abs(dx);
+  int gridH = 10 + std::abs(dy);
+
+  // 前景字符缓冲
+  std::vector<std::vector<int>> fg(10, std::vector<int>(width, 0));
+
+  for (int i = 0; i < numLetters; ++i) {
+    std::vector<std::string> letter = getLetter(word[i]);
+    int startX = i * (charW + gap);
+    for (int y = 0; y < 10; ++y) {
+      for (int x = 0; x < charW; ++x) {
+        if (letter[y][x] == '#')
+          fg[y][startX + x] = 1;
+      }
+    }
   }
-  std::cout << std::endl;
+
+  // 最终合成画布: 0 = 空白, 1 = 底层阴影, 2 = 前景实体
+  std::vector<std::vector<int>> canvas(gridH, std::vector<int>(gridW, 0));
+
+  // Pass 1: 首先绘制底层阴影，使其永远垫底
+  for (int y = 0; y < 10; ++y) {
+    for (int x = 0; x < width; ++x) {
+      if (fg[y][x]) {
+        canvas[y + dy][x + std::abs(dx) + dx] = 1;
+      }
+    }
+  }
+
+  // Pass 2: 将前景实体覆盖上去
+  for (int y = 0; y < 10; ++y) {
+    for (int x = 0; x < width; ++x) {
+      if (fg[y][x]) {
+        canvas[y][x + std::abs(dx)] = 2;
+      }
+    }
+  }
+
+  // Pass 3: 应用 TrueColor 线性着色并直接推送到终端
+  for (int y = 0; y < gridH; ++y) {
+    std::cout << "  "; // 适当留白，保持优美的呼吸感
+    for (int x = 0; x < gridW; ++x) {
+      int val = canvas[y][x];
+      if (val == 0) {
+        std::cout << " ";
+      } else {
+        // 利用绝对 X 坐标进行色彩插值，使阴影和主体颜色无缝映射
+        float t = (float)x / (gridW - 1);
+        Color c = getColor(t);
+
+        // 输出 ANSI 24-bit TrueColor 转义代码
+        std::cout << "\033[38;2;" << c.r << ";" << c.g << ";" << c.b << "m";
+
+        if (val == 2) {
+          std::cout << "\xE2\x96\x88"; // █ (Solid Block)
+        } else {
+          std::cout << "\xE2\x96\x91"; // ░ (Light Shade / 半调阴影)
+        }
+      }
+    }
+    std::cout << "\033[0m\n"; // 重置终端色彩
+  }
+}
+
+} // namespace logo_detail
+
+// 打印CUBEROOT Logo（Gemini CLI 风格：Block 像素字体 + 粉紫蓝青渐变 +
+// 半调阴影）
+inline void printCuberootLogo() {
+#ifdef _WIN32
+  UINT origCp = GetConsoleOutputCP();
+  SetConsoleOutputCP(CP_UTF8);
+#endif
+
+  std::cout << "\n";
+  logo_detail::printWord("CUBE");
+  std::cout << "\n";
+  logo_detail::printWord("ROOT");
+  std::cout << "\n";
+
+#ifdef _WIN32
+  SetConsoleOutputCP(origCp);
+#endif
 }
 
 // 打印CUBEROOT Logo（方块像素风格，类似Claude Code风格）
