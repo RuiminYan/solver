@@ -160,6 +160,220 @@ inline void printWord(const std::string &word) {
 
 } // namespace logo_detail
 
+// 打印 CubeRoot 图标 Logo V4（³√ 工业根号骨架 + 3×3 魔方发光矩阵 +
+// 像素抖动渐变投影） NOTE: 基于 Box-Drawing 工程风格，使用 Unicode Block/Shade
+// 字符 + ANSI 24-bit TrueColor
+inline void printCuberootLogoV4() {
+#ifdef _WIN32
+  UINT origCp = GetConsoleOutputCP();
+  SetConsoleOutputCP(CP_UTF8);
+
+  HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+  DWORD dwMode = 0;
+  if (hOut != INVALID_HANDLE_VALUE && GetConsoleMode(hOut, &dwMode)) {
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    SetConsoleMode(hOut, dwMode);
+  }
+#endif
+
+  // [像素掩膜设计图] : 将三维结构展开为绝对坐标的编译期常量
+  // 工业根号骨架 : 1, 2, 3, L, J
+  // 抖动渐变投影 : S(▓), M(▒), W(░)
+  // 魔方发光矩阵 : A(Red), B(Blue), a/m/w(Red Shade), b/n/q(Blue Shade)
+  // 工程连接总线 : c(╗), d(╠), e(╚), f(╦), g(╝), h(═), i(║)
+  const char *layout[] = {
+      "         1333331         333333333333333333333333333333333333333333",
+      "        22   333        33SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+      "           13332       33SSMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM",
+      "        11   3331     33SSMM                                       ",
+      "         2333332     33SSMM       AAAAAAc  AAAAAAc  AAAAAAc        ",
+      "                    33SSMM        AAAAAAdhhAAAAAAdhhAAAAAAi        ",
+      "                   33SSMM         aaammwi  aaammwi  aaammwi        ",
+      "                  33SSMM          ehhfhhg  ehhfhhg  ehhfhhg        ",
+      "                 33SSMM              i        i        i           ",
+      "                33SSMM            BBBBBBc  AAAAAAc  BBBBBBc        ",
+      "               33SSMM             BBBBBBdhhAAAAAAdhhBBBBBBi        ",
+      "              33SSMM              bbbnnqi  aaammwi  bbbnnqi        ",
+      "             33SSMM               ehhfhhg  ehhfhhg  ehhfhhg        ",
+      "   1331     33SSMM                   i        i        i           ",
+      " 12 2331   33SSMM                 BBBBBBc  AAAAAAc  BBBBBBc        ",
+      "     2331333SSMM                  BBBBBBdhhAAAAAAdhhBBBBBBi        ",
+      "      23333SSMM                   bbbnnqi  aaammwi  bbbnnqi        ",
+      "       233SSMM                    ehhhhhg  ehhhhhg  ehhhhhg        "};
+
+  std::cout << "\n\n";
+
+  for (int y = 0; y < 18; ++y) {
+    std::cout << "    "; // 左侧视觉留白
+
+    for (int x = 0; layout[y][x] != '\0'; ++x) {
+      char c = layout[y][x];
+      if (c == ' ') {
+        std::cout << " ";
+        continue;
+      }
+
+      int r = 255, g = 255, b = 255;
+      const char *utf8Str = " ";
+
+      switch (c) {
+      // 1. 钛灰质感线条 (Radical 巨型根号骨架与数字3)
+      case '1':
+        r = 160;
+        g = 165;
+        b = 170;
+        utf8Str = "\xE2\x96\x84"; // ▄ (Lower half block)
+        break;
+      case '2':
+        r = 160;
+        g = 165;
+        b = 170;
+        utf8Str = "\xE2\x96\x80"; // ▀ (Upper half block)
+        break;
+      case '3':
+        r = 160;
+        g = 165;
+        b = 170;
+        utf8Str = "\xE2\x96\x88"; // █ (Full block)
+        break;
+      // 2. Gemini 像素抖动渐变投影 (计算动态 X轴 归一化渐变)
+      case 'S':
+      case 'M':
+      case 'W': {
+        float t = (float)x / 66.0f; // 光谱平滑步进
+        if (t < 0.333f) {
+          float f = t / 0.333f;
+          r = (int)(255 + (195 - 255) * f);
+          g = (int)(113 + (153 - 113) * f);
+          b = (int)(204 + (242 - 204) * f);
+        } else if (t < 0.666f) {
+          float f = (t - 0.333f) / 0.333f;
+          r = (int)(195 + (153 - 195) * f);
+          g = (int)(153 + (186 - 153) * f);
+          b = (int)(242 + (242 - 242) * f);
+        } else {
+          float f = (t - 0.666f) / 0.334f;
+          r = (int)(153 + (85 - 153) * f);
+          g = (int)(186 + (225 - 186) * f);
+          b = (int)(242 + (255 - 242) * f);
+        }
+        if (c == 'S')
+          utf8Str = "\xE2\x96\x93"; // ▓ (Dark Shade)
+        else if (c == 'M')
+          utf8Str = "\xE2\x96\x92"; // ▒ (Medium Shade)
+        else if (c == 'W')
+          utf8Str = "\xE2\x96\x91"; // ░ (Light Shade)
+        break;
+      }
+
+      // 3. Matrix R/B 发光体与物理衰减阴影
+      case 'A':
+        r = 229;
+        g = 57;
+        b = 53;
+        utf8Str = "\xE2\x96\x88"; // █ (Red Matrix)
+        break;
+      case 'a':
+        r = 150;
+        g = 20;
+        b = 20;
+        utf8Str = "\xE2\x96\x93"; // ▓ (Red Shade)
+        break;
+      case 'm':
+        r = 110;
+        g = 15;
+        b = 15;
+        utf8Str = "\xE2\x96\x92"; // ▒ (Red Shade)
+        break;
+      case 'w':
+        r = 70;
+        g = 10;
+        b = 10;
+        utf8Str = "\xE2\x96\x91"; // ░ (Red Shade)
+        break;
+
+      case 'B':
+        r = 30;
+        g = 136;
+        b = 229;
+        utf8Str = "\xE2\x96\x88"; // █ (Blue Matrix)
+        break;
+      case 'b':
+        r = 20;
+        g = 100;
+        b = 180;
+        utf8Str = "\xE2\x96\x93"; // ▓ (Blue Shade)
+        break;
+      case 'n':
+        r = 15;
+        g = 70;
+        b = 130;
+        utf8Str = "\xE2\x96\x92"; // ▒ (Blue Shade)
+        break;
+      case 'q':
+        r = 10;
+        g = 40;
+        b = 80;
+        utf8Str = "\xE2\x96\x91"; // ░ (Blue Shade)
+        break;
+
+      // 4. 模块化重金属架构与端子排线
+      case 'c':
+        r = 100;
+        g = 105;
+        b = 110;
+        utf8Str = "\xE2\x95\x97"; // ╗ (U+2557)
+        break;
+      case 'd':
+        r = 100;
+        g = 105;
+        b = 110;
+        utf8Str = "\xE2\x95\xA0"; // ╠ (U+2560)
+        break;
+      case 'e':
+        r = 100;
+        g = 105;
+        b = 110;
+        utf8Str = "\xE2\x95\x9A"; // ╚ (U+255A)
+        break;
+      case 'f':
+        r = 100;
+        g = 105;
+        b = 110;
+        utf8Str = "\xE2\x95\xA6"; // ╦ (U+2566)
+        break;
+      case 'g':
+        r = 100;
+        g = 105;
+        b = 110;
+        utf8Str = "\xE2\x95\x9D"; // ╝ (U+255D)
+        break;
+      case 'h':
+        r = 100;
+        g = 105;
+        b = 110;
+        utf8Str = "\xE2\x95\x90"; // ═ (U+2550)
+        break;
+      case 'i':
+        r = 100;
+        g = 105;
+        b = 110;
+        utf8Str = "\xE2\x95\x91"; // ║ (U+2551)
+        break;
+      }
+
+      // ANSI TrueColor 直写
+      std::cout << "\033[38;2;" << r << ";" << g << ";" << b << "m" << utf8Str;
+    }
+    std::cout << "\033[0m\n";
+  }
+  std::cout << "\n\n";
+
+#ifdef _WIN32
+  SetConsoleOutputCP(origCp);
+#endif
+}
+
 // 打印CUBEROOT Logo（Gemini CLI 风格：Block 像素字体 + 粉紫蓝青渐变 +
 // 半调阴影）
 inline void printCuberootLogo() {
