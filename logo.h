@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+// CUBEROOT 图案
 // 打印 CubeRoot 图标 Logo V4（³√ 工业根号骨架 + 3×3 魔方发光矩阵 +
 // 像素抖动渐变投影） NOTE: 基于 Box-Drawing 工程风格，使用 Unicode Block/Shade
 // 字符 + ANSI 24-bit TrueColor
@@ -64,8 +65,6 @@ inline void printCuberootLogoV4() {
   std::cout << "\n\n";
 
   for (int y = 0; y < 18; ++y) {
-    std::cout << "    "; // 左侧视觉留白
-
     for (int x = 0; layout[y][x] != '\0'; ++x) {
       char c = layout[y][x];
       if (c == ' ') {
@@ -375,6 +374,7 @@ inline void printWord(const std::string &word) {
 
 } // namespace logo_detail
 
+// CUBEROOT 文字 (GEMINI 风格)
 // 打印CUBEROOT Logo（Gemini CLI 风格：Block 像素字体 + 粉紫蓝青渐变 +
 // 半调阴影）
 inline void printCuberootLogo() {
@@ -394,6 +394,7 @@ inline void printCuberootLogo() {
 #endif
 }
 
+// CUBEROOT 文字 (CLAUDE CODE 风格)
 // 打印CUBEROOT Logo（方块像素风格，类似Claude Code风格）
 // NOTE: 使用 Unicode █ 字符 + 双线阴影 (Draw Box Chars) 实现，24-bit 赤陶色
 inline void printCuberootLogoBlock() {
