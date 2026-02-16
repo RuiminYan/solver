@@ -298,12 +298,6 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
         double nps = (dt > 0.001) ? nodes / dt / 1000000.0 : 0;
         double progress = (total > 0) ? (double)completed * 100.0 / total : 0;
 
-        // 构建进度条
-        int barWidth = 30;
-        int filled = static_cast<int>(progress / 100.0 * barWidth);
-        std::string bar(filled, '#');
-        bar += std::string(barWidth - filled, '-');
-
         // ANSI 输出
         // NOTE: 完全使用 C 风格字符数组，避免任何 std::string 内存分配问题
         char etaBuf[64];
@@ -329,15 +323,12 @@ template <typename SolverT> void run_analyzer_app(const std::string &suffix) {
           snprintf(etaBuf, sizeof(etaBuf), "...");
         }
 
-        // 使用固定宽度输出，用空格填充确保覆盖旧内容，无需抽象的 ANSI 序列
+        // 使用固定宽度输出，用空格填充确保覆盖旧内容
         char line1[100], line2[100];
-        snprintf(line1, sizeof(line1), "%s[PROG] [%s] %.1f%% (%d/%d)%s",
-                 ANSI_YELLOW, bar.c_str(), progress, completed, total,
-                 ANSI_RESET);
+        snprintf(line1, sizeof(line1), "%s[PROG] %.1f%% (%d/%d)%s", ANSI_YELLOW,
+                 progress, completed, total, ANSI_RESET);
         snprintf(line2, sizeof(line2), "%s       NPS: %.2f M/s | ETA: %-12s%s",
                  ANSI_MAGENTA, nps, etaBuf, ANSI_RESET);
-        //                                    ^^^^^ ETA
-        //                                    固定12字符宽度，不足用空格填充
         std::cout << line1 << "\n" << line2 << "\r\033[A" << std::flush;
       }
     });

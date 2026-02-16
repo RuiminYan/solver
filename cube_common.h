@@ -179,19 +179,10 @@ bool load_vector_chunked(std::vector<T> &vec, const std::string &filename,
     remain -= to_read;
 
     if (show_progress) {
-      // 计算进度百分比
       double progress = (double)(total_bytes - remain) / total_bytes * 100.0;
-      int bar_width = 30;
-      int filled = (int)(progress / 100.0 * bar_width);
-
-      // 构建进度条字符串
-      std::string bar(filled, '#');
-      bar += std::string(bar_width - filled, '-');
-
-      // ANSI 蓝色输出: \033[34m ... \033[0m
-      printf("\033[34m[LOAD]\033[0m (%.2f GB) %s: [%s] %.1f%%\r",
+      printf("\033[34m[LOAD]\033[0m (%.2f GB) %s: %.1f%%\r",
              (double)file_size / (1024.0 * 1024.0 * 1024.0),
-             display_name.c_str(), bar.c_str(), progress);
+             display_name.c_str(), progress);
       fflush(stdout);
     }
   }
