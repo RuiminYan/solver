@@ -11,3 +11,6 @@
 *.csv
 !table_naming.csv
 output.txt
+
+# Others
+*.2do

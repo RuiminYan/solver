@@ -9,6 +9,12 @@
 # 清理编译文件
 .\clean.ps1
 ```
+
+编译 logo
+```powershell
+g++ -o test_logo.exe test_logo.cpp -O2
+```
+
 ## 块的定义
 
 ### 角块

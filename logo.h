@@ -13,7 +13,6 @@
 #include <windows.h>
 #endif
 
-// 打印CUBEROOT Logo（像素艺术+渐变色，类似GEMINI风格）
 #include <algorithm>
 #include <cmath>
 #include <string>
