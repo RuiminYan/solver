@@ -206,8 +206,11 @@ static void init_rot_maps() {
 
 // --- 初始化矩阵 ---
 static void init_symmetry_matrix() {
-  std::vector<std::string> rot_names = {"",  "y",   "z2", "z2 y", "z'", "z' y",
-                                        "z", "z y", "x'", "x' y", "x",  "x y"};
+  // NOTE: 12 个 sym slot = 6 底色 × 2 EO 取向(不带 y / 带 y)
+  // 底色顺序按标准 cubing 记号 z^n / x^n: identity → Y, z → R, z2 → W,
+  // z' → O, x → B, x' → G,与 5 份 CSV 表头 _z0/_z1/_z2/_z3/_x1/_x3 对齐
+  std::vector<std::string> rot_names = {"",   "y",    "z",  "z y",  "z2", "z2 y",
+                                        "z'", "z' y", "x",  "x y",  "x'", "x' y"};
   for (int m = 0; m < 18; ++m) {
     for (int s = 0; s < 12; ++s) {
       std::vector<int> rotated = alg_rotation({m}, rot_names[s]);

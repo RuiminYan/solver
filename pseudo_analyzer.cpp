@@ -1150,8 +1150,10 @@ struct XCrossSolver {
 
 // --- PseudoSolverWrapper: 封装 Pseudo 求解器的统一接口 ---
 struct PseudoSolverWrapper {
-  static inline std::vector<std::string> rots = {"",  "z2", "z'",
-                                                 "z", "x'", "x"};
+  // NOTE: 标准 cubing 记号,index k 对应 z^k / x^k:
+  //   _z0=identity → Y, _z1=z → R, _z2=z2 → W, _z3=z' → O, _x1=x → B, _x3=x' → G
+  static inline std::vector<std::string> rots = {"",   "z",  "z2",
+                                                 "z'", "x",  "x'"};
 
   CrossSolver crossSolver{true}; // NOTE: isPseudo=true 使用 PsCross 表
   XCrossSolver xcrossSolver;

@@ -824,9 +824,10 @@ struct XCrossSolver {
 // --- StdSolver: 封装 CrossSolver 和 XCrossSolver 的统一接口 ---
 // NOTE: 此类满足 analyzer_executor.h 中 run_analyzer_app 模板的要求
 struct StdSolver {
-  // 旋转列表：对应 _z0, _z1, _z2, _z3, _x1, _x3 后缀
-  static inline std::vector<std::string> rots = {"",  "z2", "z'",
-                                                 "z", "x'", "x"};
+  // NOTE: 标准 cubing 记号,index k 对应 z^k / x^k:
+  //   _z0=identity → Y, _z1=z → R, _z2=z2 → W, _z3=z' → O, _x1=x → B, _x3=x' → G
+  static inline std::vector<std::string> rots = {"",   "z",  "z2",
+                                                 "z'", "x",  "x'"};
 
   CrossSolver crossSolver;
   XCrossSolver xcrossSolver;

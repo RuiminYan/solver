@@ -1483,23 +1483,9 @@ std::string analyzer_compute(XCrossSolver &xcs, std::string scramble,
                              std::string id) {
   xcs.stage_results = XCrossSolver::StageResults();
 
-  std::vector<std::string> rotations;
-  std::string rot_set = "DULRFB";
-  for (char c_tmp : rot_set) {
-    std::string c(1, c_tmp);
-    if (c == "D")
-      rotations.emplace_back("");
-    else if (c == "U")
-      rotations.emplace_back("z2");
-    else if (c == "L")
-      rotations.emplace_back("z'");
-    else if (c == "R")
-      rotations.emplace_back("z");
-    else if (c == "F")
-      rotations.emplace_back("x'");
-    else
-      rotations.emplace_back("x");
-  }
+  // NOTE: 标准 cubing 记号 z^k / x^k,index k 对应 CSV 表头的 _zk / _xk:
+  //   _z0=identity → Y, _z1=z → R, _z2=z2 → W, _z3=z' → O, _x1=x → B, _x3=x' → G
+  std::vector<std::string> rotations = {"", "z", "z2", "z'", "x", "x'"};
   xcs.xcross_analyze(scramble, rotations);
   xcs.xxcross_analyze(scramble, rotations);
   xcs.xxxcross_analyze(scramble, rotations);
@@ -1533,8 +1519,12 @@ std::string analyzer_compute(XCrossSolver &xcs, std::string scramble,
 
 // --- PseudoPairSolverWrapper: 封装XCrossSolver的统一接口 ---
 struct PseudoPairSolverWrapper {
-  static inline std::vector<std::string> rots = {"",  "z2", "z'",
-                                                 "z", "x'", "x"};
+  // NOTE: 此 rots 是死代码;实际跑 CSV 走的是 analyzer_compute()
+  // (见本文件 1486 行起)。这里保留并对齐,避免后人改 analyzer_compute 后忘了同步
+  // 标准 cubing 记号,index k 对应 z^k / x^k:
+  //   _z0=identity → Y, _z1=z → R, _z2=z2 → W, _z3=z' → O, _x1=x → B, _x3=x' → G
+  static inline std::vector<std::string> rots = {"",   "z",  "z2",
+                                                 "z'", "x",  "x'"};
 
   XCrossSolver analyzer;
 

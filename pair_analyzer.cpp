@@ -603,8 +603,10 @@ struct PairSolver {
 // NOTE: 此类满足 analyzer_executor.h 中 run_analyzer_app 模板的要求
 struct PairSolverWrapper {
   // 旋转列表：对应 _z0, _z1, _z2, _z3, _x1, _x3 后缀
-  static inline std::vector<std::string> rots = {"",  "z2", "z'",
-                                                 "z", "x'", "x"};
+  // NOTE: 标准 cubing 记号,index k 对应 z^k / x^k:
+  //   _z0=identity → Y, _z1=z → R, _z2=z2 → W, _z3=z' → O, _x1=x → B, _x3=x' → G
+  static inline std::vector<std::string> rots = {"",   "z",  "z2",
+                                                 "z'", "x",  "x'"};
 
   PairSolver solver;
 
@@ -636,20 +638,20 @@ struct PairSolverWrapper {
     PairSolver::static_init();
   }
 
-  // CSV 表头：使用 snake_case 和对称旋转后缀
+  // CSV 表头：列名后缀直接用 rotation 字符串(自描述,无歧义)
+  // NOTE: 与现存 pair.csv on disk 兼容(stage = crossp/xcp/xxcp/xxxcp;
+  // 首列 = scramble),JS 端聚合脚本按这套老风格读;改这里之前先确认 build.ts
   static std::string get_csv_header() {
-    std::vector<std::string> suffixes = {"_z0", "_z1", "_z2",
-                                         "_z3", "_x1", "_x3"};
     std::ostringstream oss;
-    oss << "id";
-    for (const auto &s : suffixes)
-      oss << ",cross_pair" << s;
-    for (const auto &s : suffixes)
-      oss << ",xcross_pair" << s;
-    for (const auto &s : suffixes)
-      oss << ",xxcross_pair" << s;
-    for (const auto &s : suffixes)
-      oss << ",xxxcross_pair" << s;
+    oss << "scramble";
+    for (const auto &r : rots)
+      oss << ",crossp_" << r;
+    for (const auto &r : rots)
+      oss << ",xcp_" << r;
+    for (const auto &r : rots)
+      oss << ",xxcp_" << r;
+    for (const auto &r : rots)
+      oss << ",xxxcp_" << r;
     return oss.str();
   }
 
