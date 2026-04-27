@@ -824,10 +824,10 @@ struct XCrossSolver {
 // --- StdSolver: 封装 CrossSolver 和 XCrossSolver 的统一接口 ---
 // NOTE: 此类满足 analyzer_executor.h 中 run_analyzer_app 模板的要求
 struct StdSolver {
-  // NOTE: 标准 cubing 记号,index k 对应 z^k / x^k:
-  //   _z0=identity → Y, _z1=z → R, _z2=z2 → W, _z3=z' → O, _x1=x → B, _x3=x' → G
-  static inline std::vector<std::string> rots = {"",   "z",  "z2",
-                                                 "z'", "x",  "x'"};
+  // NOTE: 物理列顺序按 /solver UI 排:identity, z2, z', z, x', x → Y, W, O, R, G, B
+  // get_csv_header() 给每列贴 z^n / x^n 标签,(列名, 数据) 对上 z^k 标准
+  static inline std::vector<std::string> rots = {"",   "z2", "z'",
+                                                 "z",  "x'", "x"};
 
   CrossSolver crossSolver;
   XCrossSolver xcrossSolver;
@@ -857,11 +857,13 @@ struct StdSolver {
     }
   }
 
-  // CSV 表头：使用 snake_case 和对称旋转后缀
-  // NOTE: 格式为 id,cross_z0,cross_z1,...,xcross_z0,...,f2l_x3
+  // CSV 表头:列顺序按 /solver UI 排(None / z2 / z' / z / x' / x)。
+  // 后缀 _zn / _xn 对应 z^n / x^n 标准 cubing 记号,(列名, 数据) 对得上:
+  //   _z0=Y, _z2=W, _z3=O, _z1=R, _x3=G, _x1=B
+  // NOTE: 格式为 id,cross_z0,cross_z2,...,f2l_x1
   static std::string get_csv_header() {
-    std::vector<std::string> suffixes = {"_z0", "_z1", "_z2",
-                                         "_z3", "_x1", "_x3"};
+    std::vector<std::string> suffixes = {"_z0", "_z2", "_z3",
+                                         "_z1", "_x3", "_x1"};
     std::ostringstream oss;
     oss << "id";
     for (const auto &s : suffixes)

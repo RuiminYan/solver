@@ -1483,9 +1483,9 @@ std::string analyzer_compute(XCrossSolver &xcs, std::string scramble,
                              std::string id) {
   xcs.stage_results = XCrossSolver::StageResults();
 
-  // NOTE: 标准 cubing 记号 z^k / x^k,index k 对应 CSV 表头的 _zk / _xk:
-  //   _z0=identity → Y, _z1=z → R, _z2=z2 → W, _z3=z' → O, _x1=x → B, _x3=x' → G
-  std::vector<std::string> rotations = {"", "z", "z2", "z'", "x", "x'"};
+  // NOTE: 物理列顺序按 /solver UI 排:identity, z2, z', z, x', x → Y, W, O, R, G, B
+  // get_csv_header() 给每列贴 z^n / x^n 标签,(列名, 数据) 对上 z^k 标准
+  std::vector<std::string> rotations = {"", "z2", "z'", "z", "x'", "x"};
   xcs.xcross_analyze(scramble, rotations);
   xcs.xxcross_analyze(scramble, rotations);
   xcs.xxxcross_analyze(scramble, rotations);
@@ -1521,10 +1521,9 @@ std::string analyzer_compute(XCrossSolver &xcs, std::string scramble,
 struct PseudoPairSolverWrapper {
   // NOTE: 此 rots 是死代码;实际跑 CSV 走的是 analyzer_compute()
   // (见本文件 1486 行起)。这里保留并对齐,避免后人改 analyzer_compute 后忘了同步
-  // 标准 cubing 记号,index k 对应 z^k / x^k:
-  //   _z0=identity → Y, _z1=z → R, _z2=z2 → W, _z3=z' → O, _x1=x → B, _x3=x' → G
-  static inline std::vector<std::string> rots = {"",   "z",  "z2",
-                                                 "z'", "x",  "x'"};
+  // 物理列顺序按 /solver UI 排:identity, z2, z', z, x', x → Y, W, O, R, G, B
+  static inline std::vector<std::string> rots = {"",   "z2", "z'",
+                                                 "z",  "x'", "x"};
 
   XCrossSolver analyzer;
 
@@ -1533,9 +1532,11 @@ struct PseudoPairSolverWrapper {
     XCrossSolver::initialize_tables();
   }
 
+  // CSV 表头:列顺序按 /solver UI 排(None / z2 / z' / z / x' / x)。
+  // 后缀 _zn / _xn 对应 z^n / x^n: _z0=Y, _z2=W, _z3=O, _z1=R, _x3=G, _x1=B
   static std::string get_csv_header() {
-    std::vector<std::string> suffixes = {"_z0", "_z1", "_z2",
-                                         "_z3", "_x1", "_x3"};
+    std::vector<std::string> suffixes = {"_z0", "_z2", "_z3",
+                                         "_z1", "_x3", "_x1"};
     std::ostringstream oss;
     oss << "id";
     for (const auto &s : suffixes)

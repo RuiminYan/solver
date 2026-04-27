@@ -1095,9 +1095,11 @@ struct EOCrossSolverWrapper {
     XCrossSolver::static_init();
   }
 
+  // CSV 表头:列顺序按 /solver UI 排(None / z2 / z' / z / x' / x)。
+  // 后缀 _zn / _xn 对应 z^n / x^n: _z0=Y, _z2=W, _z3=O, _z1=R, _x3=G, _x1=B
   static std::string get_csv_header() {
-    std::vector<std::string> suffixes = {"_z0", "_z1", "_z2",
-                                         "_z3", "_x1", "_x3"};
+    std::vector<std::string> suffixes = {"_z0", "_z2", "_z3",
+                                         "_z1", "_x3", "_x1"};
     std::ostringstream oss;
     oss << "id";
     for (const auto &s : suffixes)

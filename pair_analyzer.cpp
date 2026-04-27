@@ -603,10 +603,10 @@ struct PairSolver {
 // NOTE: 此类满足 analyzer_executor.h 中 run_analyzer_app 模板的要求
 struct PairSolverWrapper {
   // 旋转列表：对应 _z0, _z1, _z2, _z3, _x1, _x3 后缀
-  // NOTE: 标准 cubing 记号,index k 对应 z^k / x^k:
-  //   _z0=identity → Y, _z1=z → R, _z2=z2 → W, _z3=z' → O, _x1=x → B, _x3=x' → G
-  static inline std::vector<std::string> rots = {"",   "z",  "z2",
-                                                 "z'", "x",  "x'"};
+  // NOTE: 物理列顺序按 /solver UI 排:identity, z2, z', z, x', x → Y, W, O, R, G, B
+  // get_csv_header() 给每列贴 z^n / x^n 标签,(列名, 数据) 对上 z^k 标准
+  static inline std::vector<std::string> rots = {"",   "z2", "z'",
+                                                 "z",  "x'", "x"};
 
   PairSolver solver;
 
@@ -638,20 +638,21 @@ struct PairSolverWrapper {
     PairSolver::static_init();
   }
 
-  // CSV 表头：列名后缀直接用 rotation 字符串(自描述,无歧义)
-  // NOTE: 与现存 pair.csv on disk 兼容(stage = crossp/xcp/xxcp/xxxcp;
-  // 首列 = scramble),JS 端聚合脚本按这套老风格读;改这里之前先确认 build.ts
+  // CSV 表头:列顺序由 rots[] 决定(自描述,后缀直接用 rotation 字符串)。
+  // stage 前缀 cross_pair / xcross_pair / xxcross_pair / xxxcross_pair,
+  // 跟其他 4 份 analyzer 的命名风格(stage 全展开)统一。首列 scramble。
+  // NOTE: build.ts 的 ANGLE_COLOR_PAIR + stages 数组按这套读
   static std::string get_csv_header() {
     std::ostringstream oss;
     oss << "scramble";
     for (const auto &r : rots)
-      oss << ",crossp_" << r;
+      oss << ",cross_pair_" << r;
     for (const auto &r : rots)
-      oss << ",xcp_" << r;
+      oss << ",xcross_pair_" << r;
     for (const auto &r : rots)
-      oss << ",xxcp_" << r;
+      oss << ",xxcross_pair_" << r;
     for (const auto &r : rots)
-      oss << ",xxxcp_" << r;
+      oss << ",xxxcross_pair_" << r;
     return oss.str();
   }
 
