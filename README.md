@@ -266,7 +266,7 @@ mingw32-make clean
 * 输入文件: scramble_1000.txt
 * 输出文件: scramble_1000_std.csv
 * 正确结果 (表头 + 前20行数据): 
-id,cross_z0,cross_z1,cross_z2,cross_z3,cross_x1,cross_x3,xcross_z0,xcross_z1,xcross_z2,xcross_z3,xcross_x1,xcross_x3,xxcross_z0,xxcross_z1,xxcross_z2,xxcross_z3,xxcross_x1,xxcross_x3,xxxcross_z0,xxxcross_z1,xxxcross_z2,xxxcross_z3,xxxcross_x1,xxxcross_x3,xxxxcross_z0,xxxxcross_z1,xxxxcross_z2,xxxxcross_z3,xxxxcross_x1,xxxxcross_x3
+id,cross_z0,cross_z2,cross_z3,cross_z1,cross_x3,cross_x1,xcross_z0,xcross_z2,xcross_z3,xcross_z1,xcross_x3,xcross_x1,xxcross_z0,xxcross_z2,xxcross_z3,xxcross_z1,xxcross_x3,xxcross_x1,xxxcross_z0,xxxcross_z2,xxxcross_z3,xxxcross_z1,xxxcross_x3,xxxcross_x1,xxxxcross_z0,xxxxcross_z2,xxxxcross_z3,xxxxcross_z1,xxxxcross_x3,xxxxcross_x1
 22001,6,6,6,5,7,5,7,7,8,7,9,7,9,10,10,9,10,9,11,11,11,12,12,10,14,14,14,13,14,14
 23001,6,6,6,6,5,5,7,7,6,8,7,5,10,9,8,9,9,8,12,11,11,11,12,11,13,13,12,13,14,12
 24001,6,6,7,7,6,6,8,7,8,8,8,7,10,9,10,9,10,9,12,11,11,11,12,11,14,14,14,13,13,14
@@ -295,7 +295,7 @@ id,cross_z0,cross_z1,cross_z2,cross_z3,cross_x1,cross_x3,xcross_z0,xcross_z1,xcr
 * 输入文件: scramble_1000.txt
 * 输出文件: scramble_1000_pseudo.csv
 * 正确结果 (表头 + 前20行数据):
-id,pseudo_cross_z0,pseudo_cross_z1,pseudo_cross_z2,pseudo_cross_z3,pseudo_cross_x1,pseudo_cross_x3,pseudo_xcross_z0,pseudo_xcross_z1,pseudo_xcross_z2,pseudo_xcross_z3,pseudo_xcross_x1,pseudo_xcross_x3,pseudo_xxcross_z0,pseudo_xxcross_z1,pseudo_xxcross_z2,pseudo_xxcross_z3,pseudo_xxcross_x1,pseudo_xxcross_x3,pseudo_xxxcross_z0,pseudo_xxxcross_z1,pseudo_xxxcross_z2,pseudo_xxxcross_z3,pseudo_xxxcross_x1,pseudo_xxxcross_x3
+id,pseudo_cross_z0,pseudo_cross_z2,pseudo_cross_z3,pseudo_cross_z1,pseudo_cross_x3,pseudo_cross_x1,pseudo_xcross_z0,pseudo_xcross_z2,pseudo_xcross_z3,pseudo_xcross_z1,pseudo_xcross_x3,pseudo_xcross_x1,pseudo_xxcross_z0,pseudo_xxcross_z2,pseudo_xxcross_z3,pseudo_xxcross_z1,pseudo_xxcross_x3,pseudo_xxcross_x1,pseudo_xxxcross_z0,pseudo_xxxcross_z2,pseudo_xxxcross_z3,pseudo_xxxcross_z1,pseudo_xxxcross_x3,pseudo_xxxcross_x1
 22001,5,6,6,4,7,5,6,7,7,5,8,6,8,8,8,8,9,8,10,11,11,10,11,10
 23001,6,6,5,5,5,5,6,6,5,7,6,5,8,7,6,9,9,7,10,9,7,11,10,10
 24001,5,6,6,6,6,5,7,6,8,6,7,6,9,8,10,8,8,8,11,10,11,10,10,10
@@ -324,7 +324,7 @@ id,pseudo_cross_z0,pseudo_cross_z1,pseudo_cross_z2,pseudo_cross_z3,pseudo_cross_
 * 输入文件: scramble_1000.txt
 * 输出文件: scramble_1000_pair.csv
 * 正确结果 (表头 + 前20行数据):
-id,cross_pair_z0,cross_pair_z1,cross_pair_z2,cross_pair_z3,cross_pair_x1,cross_pair_x3,xcross_pair_z0,xcross_pair_z1,xcross_pair_z2,xcross_pair_z3,xcross_pair_x1,xcross_pair_x3,xxcross_pair_z0,xxcross_pair_z1,xxcross_pair_z2,xxcross_pair_z3,xxcross_pair_x1,xxcross_pair_x3,xxxcross_pair_z0,xxxcross_pair_z1,xxxcross_pair_z2,xxxcross_pair_z3,xxxcross_pair_x1,xxxcross_pair_x3
+scramble,cross_pair_,cross_pair_z2,cross_pair_z',cross_pair_z,cross_pair_x',cross_pair_x,xcross_pair_,xcross_pair_z2,xcross_pair_z',xcross_pair_z,xcross_pair_x',xcross_pair_x,xxcross_pair_,xxcross_pair_z2,xxcross_pair_z',xxcross_pair_z,xxcross_pair_x',xxcross_pair_x,xxxcross_pair_,xxxcross_pair_z2,xxxcross_pair_z',xxxcross_pair_z,xxxcross_pair_x',xxxcross_pair_x
 22001,7,7,7,5,8,5,9,7,8,8,9,8,10,11,10,10,11,10,11,13,13,13,13,12
 23001,6,6,6,6,5,5,7,8,6,8,8,6,10,9,8,10,10,9,12,12,12,13,12,12
 24001,7,7,7,7,7,6,9,8,8,9,8,8,10,9,10,10,11,9,13,12,12,11,13,12
@@ -353,7 +353,7 @@ id,cross_pair_z0,cross_pair_z1,cross_pair_z2,cross_pair_z3,cross_pair_x1,cross_p
 * 输入文件: scramble_100.txt
 * 输出文件: scramble_100_pseudo_pair.csv
 * 正确结果 (表头 + 前20行数据):
-id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_pair_z2,pseudo_cross_pseudo_pair_z3,pseudo_cross_pseudo_pair_x1,pseudo_cross_pseudo_pair_x3,pseudo_xcross_pseudo_pair_z0,pseudo_xcross_pseudo_pair_z1,pseudo_xcross_pseudo_pair_z2,pseudo_xcross_pseudo_pair_z3,pseudo_xcross_pseudo_pair_x1,pseudo_xcross_pseudo_pair_x3,pseudo_xxcross_pseudo_pair_z0,pseudo_xxcross_pseudo_pair_z1,pseudo_xxcross_pseudo_pair_z2,pseudo_xxcross_pseudo_pair_z3,pseudo_xxcross_pseudo_pair_x1,pseudo_xxcross_pseudo_pair_x3,pseudo_xxxcross_pseudo_pair_z0,pseudo_xxxcross_pseudo_pair_z1,pseudo_xxxcross_pseudo_pair_z2,pseudo_xxxcross_pseudo_pair_z3,pseudo_xxxcross_pseudo_pair_x1,pseudo_xxxcross_pseudo_pair_x3
+id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z2,pseudo_cross_pseudo_pair_z3,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_pair_x3,pseudo_cross_pseudo_pair_x1,pseudo_xcross_pseudo_pair_z0,pseudo_xcross_pseudo_pair_z2,pseudo_xcross_pseudo_pair_z3,pseudo_xcross_pseudo_pair_z1,pseudo_xcross_pseudo_pair_x3,pseudo_xcross_pseudo_pair_x1,pseudo_xxcross_pseudo_pair_z0,pseudo_xxcross_pseudo_pair_z2,pseudo_xxcross_pseudo_pair_z3,pseudo_xxcross_pseudo_pair_z1,pseudo_xxcross_pseudo_pair_x3,pseudo_xxcross_pseudo_pair_x1,pseudo_xxxcross_pseudo_pair_z0,pseudo_xxxcross_pseudo_pair_z2,pseudo_xxxcross_pseudo_pair_z3,pseudo_xxxcross_pseudo_pair_z1,pseudo_xxxcross_pseudo_pair_x3,pseudo_xxxcross_pseudo_pair_x1
 22001,6,6,6,4,7,5,7,7,7,6,8,6,9,9,9,8,9,9,10,11,11,11,11,11
 23001,6,6,5,5,5,5,6,7,5,7,7,5,8,7,7,9,9,8,10,10,10,11,12,11
 24001,6,6,6,6,6,5,7,7,8,6,7,7,9,8,10,8,8,8,12,11,11,11,12,12
@@ -382,7 +382,7 @@ id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_p
 * 输入文件: scramble_20.txt
 * 输出文件: scramble_20_eo.csv
 * 正确结果 (表头 + 前20行数据):
-id,eo_cross_z0,eo_cross_z1,eo_cross_z2,eo_cross_z3,eo_cross_x1,eo_cross_x3,eo_xcross_z0,eo_xcross_z1,eo_xcross_z2,eo_xcross_z3,eo_xcross_x1,eo_xcross_x3,eo_xxcross_z0,eo_xxcross_z1,eo_xxcross_z2,eo_xxcross_z3,eo_xxcross_x1,eo_xxcross_x3,eo_xxxcross_z0,eo_xxxcross_z1,eo_xxxcross_z2,eo_xxxcross_z3,eo_xxxcross_x1,eo_xxxcross_x3,eo_xxxxcross_z0,eo_xxxxcross_z1,eo_xxxxcross_z2,eo_xxxxcross_z3,eo_xxxxcross_x1,eo_xxxxcross_x3
+id,eo_cross_z0,eo_cross_z2,eo_cross_z3,eo_cross_z1,eo_cross_x3,eo_cross_x1,eo_xcross_z0,eo_xcross_z2,eo_xcross_z3,eo_xcross_z1,eo_xcross_x3,eo_xcross_x1,eo_xxcross_z0,eo_xxcross_z2,eo_xxcross_z3,eo_xxcross_z1,eo_xxcross_x3,eo_xxcross_x1,eo_xxxcross_z0,eo_xxxcross_z2,eo_xxxcross_z3,eo_xxxcross_z1,eo_xxxcross_x3,eo_xxxcross_x1,eo_xxxxcross_z0,eo_xxxxcross_z2,eo_xxxxcross_z3,eo_xxxxcross_z1,eo_xxxxcross_x3,eo_xxxxcross_x1
 22001,8,6,7,6,8,7,8,8,8,9,9,9,11,10,11,9,11,10,12,11,12,13,12,12,15,15,15,14,15,14
 23001,7,6,7,7,7,7,8,7,7,9,8,7,10,9,9,11,9,10,12,12,11,12,12,12,13,15,13,15,14,14
 24001,8,7,7,8,7,8,9,9,9,8,9,8,11,10,11,9,11,10,12,12,12,13,12,13,14,14,14,14,14,14
